@@ -1,12 +1,3 @@
-USE [bodb02]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_CurrencySel]    Script Date: 3/15/2016 8:41:43 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_CurrencySel    Script Date: 2/14/2014 10:46:41  ******/
-
 ALTER PROCEDURE [dbo].[Acc_CurrencySel]
 AS
 /*
@@ -14,9 +5,10 @@ AS
 	Task: Select all currencies without unsed and overlapped ones.
 	DB: DBEXT.BODB02
 	Revisions:
-	- 20140214@Francis: Add currencies with exchangeid = 27, 28
-	- 20150918@Francis: Add currency with exchangeid = 13 
-	- 20160315@Winnie: Add MKK
+		- 20140214@Francis: Add currencies with exchangeid = 27, 28
+		- 20150918@Francis: Add currency with exchangeid = 13 
+		- 20160315@Winnie: Add MKK
+		- 20170327@Elodie: Add HK$ [Redmine: #74110]
 */
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from interfering with SELECT statements.
@@ -46,4 +38,6 @@ BEGIN
 	select exchangeid, code, currency from exchange where code = 'CNY' and currency = 'RMB' 
 	union   
 	select exchangeid, code, currency from exchange where code = 'MMK' and currency = 'MKK'
+	union   
+	select exchangeid, code, currency from exchange where code = 'HKD' and currency = 'HK$'
 END
