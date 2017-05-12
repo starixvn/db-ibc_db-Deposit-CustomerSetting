@@ -147,7 +147,8 @@ Revisions:
  - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
  - 20151124@Winnie:Change for AG Casino Single wallet Feature #43672
  - 20160412@Helen: insert the Setting of Voidbridge of new member into the DCS database after 1st deposit. [Redmine: #55057]
-
+ - 20170227@Winnie: support Cash out. [Redmine: #72107]
+ - 20170512@Winnie:  Change the default odds group for Leon [Redmine: #76427]
 Param's Explanation:    
 ? @CustID: return new 12bet Player Cust ID    
 ? @Username: return new 12bet Player User name    
@@ -949,11 +950,12 @@ BEGIN
 	--20141212@Jamie: Set ugroup = a for Alog (USD,GBP) [redmine:#25577]    
 	--20150928@Victor: Set uGroup = C for all new Asiabet88 KRW members [redmine: 44141]
 	    
-	SELECT @ugroup = CASE WHEN @site = 'Asiabet88' AND  @currency IN (3,6) THEN 'b'     
-		   --WHEN @site = 'alog' AND  @currency IN (3,12) THEN 'd'      
-		   WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'
-		   ELSE 'a'    
-		   END    
+	SELECT @ugroup = 
+	CASE	WHEN @site = 'Asiabet88' AND  @currency IN (3,6) THEN 'b' 	
+			WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'
+			WHEN @site = 'Leon' THEN 'b'
+			ELSE 'a'    
+	END    
 	     
 	--Will check the usergroup here    
 	--MinBet, MaxBet, Commission get from CA Agent    
@@ -2074,7 +2076,7 @@ BEGIN
 	select @username = replace(@username, ' ', '')    
 	*/    
 	--20140812: Change rule generate username    
-	IF @UserName NOT LIKE '%BetTrade%' OR @UserName IS NULL  
+	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%') OR @UserName IS NULL  
 	BEGIN  
 	SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
 	IF @UserName = ''    
