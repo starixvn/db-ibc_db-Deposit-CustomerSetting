@@ -24,7 +24,7 @@ AS
   - 20140919@Patrick: Error when convert data  
   - 20140924@Patrick: Fix bug handle for case new agent  
   - 20150717@Winnie: Change for exclude bettrade ACC  
-  - 20170304@Winnie:  Change for exclude CashOut ACC
+  - 20170304@Winnie:  Change for exclude CashOut ACC [Redmine: #72107]
  Parameters Explanation:  
 */  
   
