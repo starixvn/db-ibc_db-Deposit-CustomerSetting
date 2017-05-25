@@ -1,10 +1,10 @@
 USE CustDB
 GO
 
-ALTER PROCEDURE dbo.Acc_3rdProductUpdSuperStatus @ProductID INT
+ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] @ProductID INT
 	, @CustID INT
 	, @IsEnable BIT
-	, @ApplyToMember BIT = 0
+	, @ApplyToMember BIT = 0	
 	, @UserID INT
 	, @IP VARCHAR(40)
 	, @Langkey VARCHAR(10) = 'en-US'
@@ -21,7 +21,7 @@ AS
 		- 20151026@Jim: support feature #44780
 		- 20151105@Patrick: Support RnG Game & rename field named DisableMicroGame to DisableMicroGameLC
 		- 20160803@Winnie: #61777 BetTrade new commercial term
-
+		- 20170227@Winnie: Add CashOut [RedmineID: #71727]
 	Param's Explanation:
 */
 BEGIN
@@ -29,7 +29,7 @@ BEGIN
 
 	DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT, @LogSPData VARCHAR(MAX)
 		, @TrackingValue2 VARCHAR(MAX), @IsEnabled_Old BIT = 0, @ProductName VARCHAR(50), @CurrRow INT = 1
-		, @RowPerBatch INT = 10000, @RowCount INT = 0
+		, @RowPerBatch INT = 10000, @RowCount INT = 0,@DisableDownlines BIT,@HasDownline BIT = 0 ,@DisableDownlines_Old BIT = 0
 
 	CREATE TABLE #CustList (RowNo INT IDENTITY(1, 1), CustID INT)
 
@@ -50,12 +50,11 @@ BEGIN
 		WHERE CustID = @CustID
 		
 		--check concurrent users
-		IF @IsEnable = @IsEnabled_Old
+		IF (@IsEnabled_Old = @IsEnable )
 		BEGIN
-			SELECT @ErrMsg = 'Invalid data because it has changed by some other people. Please refresh the page.'
-			RETURN
-		END
-
+			SELECT @ErrMsg = 'Invalid data because it has changed by some other people. Please refresh the page.'			
+			RETURN		
+		END	
 		--check upline status
 		DECLARE @UplineStatus BIT
 		IF @RoleId = 1
@@ -237,386 +236,13 @@ BEGIN
 				RETURN
 			END
 		END
+		
+		EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
+										,@CustID	=@CustID
+										,@UserID	=@UserID
+										,@ErrMsg	=@ErrMsg
 
-		IF (@ProductId = 13) -- bettrade
-		BEGIN
-			SELECT a.userName + 'BetTrade' AS UserName, a.custid AS recommend, a.mrecommend, a.currency, a.site, a.refcode1
-				, a.refcode2, a.ugroup, b.[closed], b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger], b.[DisableHorseRacing]
-				, b.[DisableFinancial], b.[DisableCasino], b.[SyncCasino], b.[danger2], b.[danger3], b.[DisableOutright], b.[DisableOpenTote]
-				, b.[maxpermatch151_OT], b.[MaxPerMatch99MP], b.[DisableBingo], b.[DisableNumber], b.[maxpermatch161], b.[SyncBingo]
-				, b.[MaxPerBall161], b.[MaxPerMatch151_AU], b.[MaxPerMatch152_UK], b.[MaxPerMatch152_AU], b.[MaxPerMatch153_AU]
-				, b.[Disable151_AU], b.[Disable152_UK], b.[Disable152_AU], b.[Disable153_AU], b.[MaxTransferP2P], b.[IsAutoResetP2P]
-				, b.[DisableP2P], b.[DisableFunP2P], b.[DisableLiveCasino], b.[SyncLiveCasino], b.[maxpermatch180], b.[DisableVirtualSports]
-				, b.[HideVirtualSports], b.[Abnormal], b.[isAutoResetLiveCasino], b.[MaxWinLiveCasino], b.[DoubleCommLosing]
-			INTO #tempBettrade
-			FROM Customer a(NOLOCK)
-				INNER JOIN custInfo b(NOLOCK)
-				ON a.custid = b.custid
-			WHERE a.srecommend = @CustID
-				AND a.roleid = 2
-				AND a.username NOT LIKE '%' + a.site + '%' + 'ACC%'
-				AND (
-					NOT EXISTS (
-						SELECT 1
-						FROM custInfo WITH (NOLOCK)
-						WHERE username = a.userName + 'BetTrade'
-						)
-					)
-				AND (
-					NOT EXISTS (
-						SELECT 1
-						FROM customer WITH (NOLOCK)
-						WHERE username = a.userName + 'BetTrade'
-						)
-					)
-				AND (
-					NOT EXISTS (
-						SELECT 1
-						FROM custsub WITH (NOLOCK)
-						WHERE username = a.userName + 'BetTrade'
-						)
-					)
 
-			INSERT INTO [dbo].[Customer] ([username], [username2], creatdate, creator, currency, roleid, srecommend, mrecommend
-				, recommend, site, refcode1, refcode2, ugroup)
-			SELECT [username], b.site + '$' + [username], GETDATE(), @UserId, b.Currency, 1, @CustId, b.mrecommend, b.recommend
-				, b.site, refcode1, refcode2, ugroup
-			FROM #tempBettrade b
-			WHERE NOT EXISTS (
-					SELECT TOP 1 1
-					FROM Customer(NOLOCK)
-					WHERE username = b.username
-					)
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not insert customer 1'
-
-				RETURN
-			END
-
-			INSERT INTO [dbo].[custInfo] ([username], [custid], [currency], [roleid], [srecommend], [mrecommend], [recommend], [closed]
-				, [MatchLimit], [VirtualMultiplier], [Enabled], [danger], [DisableHorseRacing], [DisableFinancial], [DisableCasino]
-				, [SyncCasino], [danger2], [danger3], [DisableOutright], [DisableOpenTote], [maxpermatch151_OT], [MaxPerMatch99MP]
-				, [DisableBingo], [DisableNumber], [maxpermatch161], [SyncBingo], [MaxPerBall161], [MaxPerMatch151_AU], [MaxPerMatch152_UK]
-				, [MaxPerMatch152_AU], [MaxPerMatch153_AU], [Disable151_AU], [Disable152_UK], [Disable152_AU], [Disable153_AU]
-				, [MaxTransferP2P], [IsAutoResetP2P], [DisableP2P], [DisableFunP2P], [DisableLiveCasino], [SyncLiveCasino], [maxpermatch180]
-				, [DisableVirtualSports], [HideVirtualSports], [Abnormal], [isAutoResetLiveCasino], [MaxWinLiveCasino], [DoubleCommLosing], credit)
-			SELECT a.[username], a.[custid], a.[currency], a.[roleid], a.[srecommend], a.[mrecommend], a.[recommend], b.[closed]
-				, b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger], b.[DisableHorseRacing], b.[DisableFinancial], b.[DisableCasino]
-				, b.[SyncCasino], b.[danger2], b.[danger3], b.[DisableOutright], b.[DisableOpenTote], b.[maxpermatch151_OT], b.[MaxPerMatch99MP]
-				, b.[DisableBingo], b.[DisableNumber], b.[maxpermatch161], b.[SyncBingo], b.[MaxPerBall161], b.[MaxPerMatch151_AU]
-				, b.[MaxPerMatch152_UK], b.[MaxPerMatch152_AU], b.[MaxPerMatch153_AU], b.[Disable151_AU], b.[Disable152_UK], b.[Disable152_AU]
-				, b.[Disable153_AU], b.[MaxTransferP2P], b.[IsAutoResetP2P], b.[DisableP2P], b.[DisableFunP2P], b.[DisableLiveCasino]
-				, b.[SyncLiveCasino], b.[maxpermatch180], b.[DisableVirtualSports], b.[HideVirtualSports], b.[Abnormal], b.[isAutoResetLiveCasino]
-				, b.[MaxWinLiveCasino], b.[DoubleCommLosing], 0
-			FROM Customer(NOLOCK) a
-				INNER JOIN #tempBettrade b
-				ON a.username = b.username
-			WHERE NOT EXISTS (
-					SELECT TOP 1 1
-					FROM custInfo(NOLOCK)
-					WHERE username = a.username
-						OR custid = a.custid
-					)
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not insert custinfo'
-
-				DELETE a
-				FROM Customer a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM custInfo a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				RETURN
-			END
-
-			INSERT INTO [dbo].[BetTradeCust] ([Custid])
-			SELECT b.[Custid]
-			FROM #tempBettrade a
-				INNER JOIN Customer(NOLOCK) b
-				ON a.username = b.username
-			WHERE NOT EXISTS (
-					SELECT TOP 1 1
-					FROM [BetTradeCust](NOLOCK)
-					WHERE custid = b.custid
-					)
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not insert BetTradeCust'
-
-				DELETE a
-				FROM Customer a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM custInfo a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM [BetTradeCust] a(NOLOCK)
-					INNER JOIN Customer(NOLOCK) c
-					ON a.custid = c.Custid
-					INNER JOIN #tempBettrade b
-					ON c.username = b.username
-
-				RETURN
-			END
-
-			INSERT INTO [dbo].[BetTradeComm] ([Agentid], [IsBA], [BetTradeComm], [Licenseecomm],HouseDeductionRate,HousePT)
-			SELECT a.recommend, 0, 0.03, 0.03,0.015,0.5
-			FROM #tempBettrade a
-			WHERE NOT EXISTS (
-					SELECT TOP 1 1
-					FROM [BetTradeComm](NOLOCK)
-					WHERE [Agentid] = a.recommend
-						AND [IsBA] = 0
-					)
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not insert BetTradeComm'
-
-				DELETE a
-				FROM Customer a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM custInfo a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM [BetTradeCust] a(NOLOCK)
-					INNER JOIN Customer(NOLOCK) c
-					ON a.custid = c.Custid
-					INNER JOIN #tempBettrade b
-					ON c.username = b.username
-
-				DELETE a
-				FROM [BetTradeComm] a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.AgentId = b.recommend
-				WHERE IsBA = 0
-
-				RETURN
-			END
-
-			INSERT INTO [dbo].[BetTradeComm] ([Agentid], [IsBA], [BetTradeComm], [Licenseecomm],HouseDeductionRate,HousePT)
-			SELECT a.recommend, 1, 0.03, 0,0.015,0.5
-			FROM #tempBettrade a
-			WHERE NOT EXISTS (
-					SELECT TOP 1 1
-					FROM [BetTradeComm](NOLOCK)
-					WHERE [Agentid] = a.recommend
-						AND [IsBA] = 1
-					)
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not insert BetTradeComm'
-
-				DELETE a
-				FROM Customer a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM custInfo a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.username = b.username
-
-				DELETE a
-				FROM [BetTradeCust] a(NOLOCK)
-					INNER JOIN Customer(NOLOCK) c
-					ON a.custid = c.Custid
-					INNER JOIN #tempBettrade b
-					ON c.username = b.username
-
-				DELETE a
-				FROM [BetTradeComm] a(NOLOCK)
-					INNER JOIN #tempBettrade b
-					ON a.AgentId = b.recommend
-
-				RETURN
-			END
-
-			DECLARE @bettradeUserName VARCHAR(50), @bettradeCustId INT, @bettradeAgentId INT, @bettradeCurrency INT
-				, @Site VARCHAR(100), @ErrCode VARCHAR(100)
-
-			WHILE EXISTS (
-					SELECT TOP 1 1
-					FROM #tempBettrade
-					)
-			BEGIN
-				SELECT TOP 1 @bettradeUserName = a.UserName, @bettradeCustId = b.custid, @bettradeAgentId = b.recommend
-					, @bettradeCurrency = b.currency, @Site = b.site
-				FROM #tempBettrade a
-					INNER JOIN Customer b WITH (NOLOCK)
-					ON a.username = b.username
-
-				----Insert Dep_Custsetting
-				INSERT INTO [dbo].[Dep_CustSetting] ([custid], [bettype], [sporttype], [islive], [apositiontaking], [mpositiontaking]
-					, [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [minbet], [maxbet])
-				SELECT @bettradeCustId, [bettype], [sporttype], [islive], [apositiontaking], [mpositiontaking], [spositiontaking]
-					, [playerdiscount], [discount], [adiscount], [sdiscount], [minbet], [maxbet]
-				FROM [Dep_CustSetting] a(NOLOCK)
-				WHERE custid = @bettradeAgentId
-					AND NOT EXISTS (
-						SELECT TOP 1 1
-						FROM [Dep_CustSetting] b(NOLOCK)
-						WHERE b.custid = @bettradeCustId
-							AND a.bettype = b.bettype
-							AND a.sporttype = b.sporttype
-							AND a.islive = b.islive
-						)
-
-				---------------------------------------------------------------------------------  
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert BetTradeCust'
-
-					DELETE a
-					FROM Customer a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.username = b.username
-
-					DELETE a
-					FROM custInfo a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.username = b.username
-
-					DELETE a
-					FROM [BetTradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempBettrade b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [Dep_CustSetting] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempBettrade b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [BetTradeComm] a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.AgentId = b.recommend
-
-					RETURN
-				END
-
-				---------------------------------------------------------------------------------  
-				-- Insert Balance
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID
-
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert BetTradeCust'
-
-					DELETE a
-					FROM Customer a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.username = b.username
-
-					DELETE a
-					FROM custInfo a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.username = b.username
-
-					DELETE a
-					FROM [BetTradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempBettrade b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [Dep_CustSetting] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempBettrade b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [BetTradeComm] a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.AgentId = b.recommend
-
-					EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid   
-
-					RETURN
-				END
-
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID
-
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert BetTradeCust'
-
-					DELETE a
-					FROM Customer a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.username = b.username
-
-					DELETE a
-					FROM custInfo a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.username = b.username
-
-					DELETE a
-					FROM [BetTradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempBettrade b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [Dep_CustSetting] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempBettrade b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [BetTradeComm] a(NOLOCK)
-						INNER JOIN #tempBettrade b
-						ON a.AgentId = b.recommend
-
-					EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid   
-
-					EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID
-
-					RETURN
-				END
-
-				--Copy Customer Info to DBLIC.bodb_Licensee.dbo.LicenseeCustinfo
-				EXEC DBLIC.bodb_Licensee.dbo.Lrf_CustomerInfoIns @CustID = @bettradeCustId
-					, @Recommend = @bettradeAgentId, @Username = @bettradeUserName
-					, @Username2 = @bettradeUserName, @Currency = @bettradeCurrency
-
-				--Set default player comm  
-				EXEC DBLIC.bodb_Licensee.dbo.Lrf_CustomerSetDefaultComm @LicenseeName = @site
-					, @CustID = @CustID, @ErrCode = @ErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-				DELETE
-				FROM #tempBettrade
-				WHERE UserName = @bettradeUserName
-			END
-					--end bettrade
-		END
 
 		IF @IsEnable = 0
 			SET @ApplyToMember = 1
