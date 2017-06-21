@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@creator INT,
 	@username VARCHAR(30),
@@ -62,14 +63,6 @@
 	@MaxPerBallv161 MONEY = 0,
 	--HRFO
 	@MaxPerMatchv154 MONEY,
-	--Virtual Sport
-	@MaxPerMatchv180 MONEY = 0,
-	@MaxPerMatchv181 MONEY = 0,
-	@MaxPerMatchv182 MONEY = 0,
-	@MaxPerMatchv183 MONEY = 0,
-	@MaxPerMatchv184 MONEY = 0,
-	@MaxPerMatchv185 MONEY = 0,
-	@MaxPerMatchv186 MONEY = 0,
 	
 	--Horse Racing PT
 	@v151IBCPositiontaking_31 smallmoney = 0,--AutoIBCPT151_SA
@@ -88,7 +81,7 @@
 	@DisableFUNP2P BIT = 0,
 	@ISAUTORESETP2P BIT = 0,
 	@Disable162_1101 BIT = 0,
-	@DisableVirtualSports BIT = 0,
+	
 	@DisableCasinoBonus BIT = 0,
 	
 	@DisableHRFO BIT = 0,
@@ -121,6 +114,7 @@ Revisions:
 	- 20150309@Johnson: separate virtual rate settings by sporttype , bettype [RedmineID #31927]
 	- 20151029@Billy: Change to new VirtualRate structure [Redmine: #46541]
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
+	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	
 Param's Explanation:
 • @ErrCode:
@@ -267,12 +261,12 @@ INSERT INTO [dbo].[custinfo](
 	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch44], [maxpermatch201],[maxpermatch151],[maxpermatch151_OT], MaxPerMatch151_AU, MaxPerMatch152_UK, MaxPerMatch152_AU, MaxPerMatch153_AU, [maxpermatch99]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
 	,DisableHorseRacing,DisableOpenTote,Disable151_AU,Disable152_UK,Disable152_AU,Disable153_AU,DisableFinancial, DisableOutright, DisableCasino, DisableNumber,DisableBingo
-	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3,DisableP2P,DisableFunP2P,ISAUTORESETP2P,DisableLiveCasino, DisableVirtualSports,maxpermatch180,maxpermatch181,maxpermatch182,maxpermatch183,maxpermatch184,maxpermatch185,maxpermatch186,DisableCasinoBonus,DisableHRFixedOdds,maxpermatch154,HideKeno)
+	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3,DisableP2P,DisableFunP2P,ISAUTORESETP2P,DisableLiveCasino, DisableCasinoBonus,DisableHRFixedOdds,maxpermatch154,HideKeno)
 VALUES(
 	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11,@MaxPerMatchv44, @MaxPerMatchv201,@MaxPerMatchv151_31, @MaxPerMatchv151_41,@MaxPerMatchv151_51, @MaxPerMatchv152_41, @MaxPerMatchv152_51, @MaxPerMatchv153_51, @MaxPerMatchv99
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier, 
 	@Disable151_31,@Disable151_41,@Disable151_51,@Disable152_41,@Disable152_51,@Disable153_51,@DisableFinancial,@DisableOutright, @DisableCasino, @DisableNumber,@DisableBingo
-	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3,@DisableP2P,@DisableFUNP2P,@ISAUTORESETP2P, @Disable162_1101,@DisableVirtualSports,@MaxPerMatchv180,@MaxPerMatchv181,@MaxPerMatchv182,@MaxPerMatchv183,@MaxPerMatchv184,@MaxPerMatchv185,@MaxPerMatchv186,@DisableCasinoBonus,@DisableHRFO,@MaxPerMatchv154,@HideKeno)
+	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3,@DisableP2P,@DisableFUNP2P,@ISAUTORESETP2P, @Disable162_1101,@DisableCasinoBonus,@DisableHRFO,@MaxPerMatchv154,@HideKeno)
 
 IF @@ERROR <> 0
 BEGIN 
@@ -300,5 +294,4 @@ BEGIN
 	RETURN
 END
 GO
-
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerInsUserInfo] TO [vnteam] AS [dbo]

@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_DisableStatUpd] 
 	  @CustID			INT
 	, @IsDisabled	VARCHAR(MAX)
@@ -170,16 +171,18 @@ BEGIN
 		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
 		SELECT psp.SportType
 			, psp.BetType
-			, dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
+			
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			
 			, CASE 	
-					WHEN @downlines = 0	THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder),0)
+					WHEN @downlines = 0	THEN  ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)),0)
 					ELSE ISNULL((
 							SELECT TOP 1 1
 							FROM dbo.custInfo ci WITH (NOLOCK)
 								INNER JOIN dbo.Dep_CustProductStatus cps_temp WITH (NOLOCK) ON ci.custid = cps_temp.CustID
 							WHERE srecommend = @CustID	AND roleid = 3
-								AND dbo.f_GetProductStatus(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) = 1
+								
+								AND (SELECT value FROM  dbo.f_CustSetting_ProductStatusSel (cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 							), 0)
 								
 				 END AS IsDisabledDownline
@@ -201,16 +204,16 @@ BEGIN
 		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
 		SELECT psp.SportType
 			, psp.BetType
-			, dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			
 			, CASE 	
-					WHEN @downlines = 0	THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder),0)
+					WHEN @downlines = 0	THEN ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)),0)
 					ELSE ISNULL((
 							SELECT TOP 1 1
 							FROM dbo.custInfo ci WITH (NOLOCK)
 								INNER JOIN dbo.Dep_CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 							WHERE mrecommend = @CustID	AND roleid = 2
-								AND dbo.f_GetProductStatus(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) = 1
+								AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel (cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 							), 0)
 								
 				 END AS IsDisabledDownline
@@ -232,16 +235,16 @@ BEGIN
 		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
 		SELECT psp.SportType
 			, psp.BetType
-			, dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			
 			, CASE 	
-						WHEN @downlines = 0	THEN ISNULL(dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder),0)
+						WHEN @downlines = 0	THEN ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)),0)
 						ELSE ISNULL((
 								SELECT TOP 1 1
 								FROM dbo.custInfo ci WITH (NOLOCK)
 									INNER JOIN dbo.Dep_CustProductStatus cps_temp ON ci.custid = cps_temp.CustID
 								WHERE recommend = @CustID	AND roleid = 1
-									AND dbo.f_GetProductStatus(cps_temp.bitmapIsDisabled, PSP.bitmapOrder) = 1
+									AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel (cps_temp.bitmapIsDisabled, PSP.bitmapOrder)) = 1
 								), 0)
 								
 				 END AS IsDisabledDownline
@@ -257,7 +260,7 @@ BEGIN
 		INSERT INTO #OldDisableStatTbl (SportType,BetType,IsDisabled,IsDisabledDownline)
 		SELECT psp.SportType
 			, psp.BetType
-			, dbo.f_GetProductStatus(stt.bitmapIsDisabled, PSP.bitmapOrder) AS IsDisabled
+			, (SELECT value FROM dbo.f_CustSetting_ProductStatusSel (stt.bitmapIsDisabled, PSP.bitmapOrder)) AS IsDisabled
 			
 			, 0 IsDisabledDownline
 		

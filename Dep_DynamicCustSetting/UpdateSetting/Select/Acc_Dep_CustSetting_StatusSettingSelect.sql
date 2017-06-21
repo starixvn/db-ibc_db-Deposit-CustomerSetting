@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT = NULL
@@ -7,7 +8,7 @@ AS
 /*
 	Created: 20160405@Helen
 	Task : Implementing Setting for Deposit customer
-	DB: DBCUST/CustDB, DBAGE/bodb02
+	DB: DBCUST/CustDB, DBACC/bodb02
 	Original:
 
 	Revisions:
