@@ -892,7 +892,7 @@ BEGIN
 	  ,@v161discount  = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN discount ELSE 0 END)    
 	FROM Dep_CustSetting3rd WITH(NOLOCK)    
 	WHERE custid = @recommend AND islive=0    
-	 AND bettype IN (31,41,51,81,1201,1220,1231) AND sporttype IN (151,152,153,161)    
+	 AND bettype IN (31,41,51,81) AND sporttype IN (151,152,153,161)    
 	     
 	    
 	SELECT  @v253discount_1 = MAX(CASE WHEN groupid = 1 THEN discount ELSE 0 END)    
@@ -1231,7 +1231,7 @@ BEGIN
 	  ,@v161mlivepositiontaking_90 = MAX(CASE WHEN bettype = 90 AND sporttype = 161 AND isLive = 1 THEN mpositiontaking ELSE 0 END)    
 	      
 	FROM Dep_Custsetting3rd WITH(NOLOCK)    
-	WHERE custid = @recommend and bettype IN (31,32,41,42,51,52,81,83,85,86,87,88,89,90,1201,1220,1231) and sporttype IN (151,152,153,161)    
+	WHERE custid = @recommend and bettype IN (31,32,41,42,51,52,81,83,85,86,87,88,89,90) and sporttype IN (151,152,153,161)    
 	    
 	--- Live casino, Keno    
 	SELECT  @v162apositiontaking_1101 = MAX(CASE WHEN bettype = 1101 AND sporttype = 162 THEN apositiontaking ELSE 0 END)     
@@ -1485,7 +1485,7 @@ BEGIN
 	    
 	FROM Dep_CustSetting3rd cs WITH (NOLOCK)    
 	 INNER JOIN custinfo ci WITH (NOLOCK) on (cs.CustID = ci.CustID or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)     
-	WHERE ci.custid = @recommend AND cs.bettype IN (31,41,51,81,1201,1220,1231) and cs.sporttype IN (151,152,153,161)    
+	WHERE ci.custid = @recommend AND cs.bettype IN (31,41,51,81) and cs.sporttype IN (151,152,153,161)    
 	    
 	Select     
 	 @MaxMaxperMatch = IsNull(Min(case when cs.MaxPerMatch = 0 then NULL else cs.MaxPerMatch end),0),     
