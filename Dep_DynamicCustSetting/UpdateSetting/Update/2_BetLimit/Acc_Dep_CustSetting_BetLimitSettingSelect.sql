@@ -19,7 +19,7 @@ AS
 	*/
 BEGIN
 	
-	DECLARE @Currency TINYINT, @RoleID INT
+	DECLARE @Currency TINYINT, @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT
 	
 	CREATE TABLE #SportBettypeFilter (productID INT,SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
 	
@@ -30,34 +30,67 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #SportBettypeFilter)
 	BEGIN
 	
-		SELECT @Currency = Currency, @RoleID = roleid
+		SELECT @Currency = Currency, @RoleID = roleid, @srecommend = srecommend, @mrecommend = mrecommend, @recommend = @recommend
 		FROM dbo.Customer c WITH(NOLOCK)
 		WHERE c.custID = @CustID
 	
-		IF @RoleID IN (2,3,4)
+		IF @RoleID = 3
+			SET @UplineID = @srecommend
+		ELSE IF @RoleID = 2
+			SET @UplineID = @mrecommend
+		ELSE IF @RoleID = 1
+			SET @UplineID = @recommend		
+		
+		IF @RoleID = 4
 		BEGIN
-			SELECT ft.SportType
-				, ft.BetType
-				, bl.MinBet
-				, bl.MaxBet
-				, bl.MaxPerMatch
-				, pbs.MinBet AS MinBetMin
+			SELECT ft.SportType  
+				, ft.BetType  
+				, bl.MinBet  
+				, bl.MaxBet  
+				, bl.MaxPerMatch  
+				, pbs.MinBet AS MinBetMin  
+				, pbs.maxbet AS MaxBetMax  
+				, pbs.maxpermatch AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
 				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 				INNER JOIN dbo.Dep_ProductBetSetting pbs WITH (NOLOCK) ON pbs.SportType = bl.sporttype AND pbs.BetType = bl.bettype AND pbs.Currency = @Currency
 			WHERE bl.custid = @CustID
 		END
-		ELSE IF @RoleID = 1
+		
+		ELSE IF @RoleID IN (2,3)
 		BEGIN
-			SELECT pdt.SportType  
-				, pdt.BetType  
+			SELECT ft.SportType  
+				, ft.BetType  
 				, bl.MinBet  
 				, bl.MaxBet  
 				, bl.MaxPerMatch  
-			FROM #SportBettypeFilter pdt WITH (NOLOCK)  
-				INNER JOIN dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK) ON pdt.SportType = bl.sporttype AND pdt.BetType = bl.bettype  
-			WHERE bl.custid = @CustID  
+				, CASE  WHEN sbl.minbet > pbs.MinBet  THEN sbl.minbet  ELSE pbs.MinBet  END AS MinBetMin  
+				, sbl.maxbet AS MaxBetMax  
+				, sbl.maxpermatch AS MaxPerMatchMax
+			FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+				INNER JOIN dbo.Dep_ProductBetSetting pbs WITH (NOLOCK) ON pbs.SportType = bl.sporttype AND pbs.BetType = bl.bettype AND pbs.Currency = @Currency
+				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @UplineID  
 				
+			WHERE bl.custid = @CustID
+			
+			
+		END
+		ELSE IF @RoleID = 1
+		BEGIN
+			SELECT ft.SportType  
+				, ft.BetType  
+				, bl.MinBet  
+				, bl.MaxBet  
+				, bl.MaxPerMatch  
+				, CASE  WHEN sbl.minbet > pbs.MinBet  THEN sbl.minbet  ELSE pbs.MinBet  END AS MinBetMin  
+				, sbl.maxbet AS MaxBetMax  
+				, sbl.maxpermatch AS MaxPerMatchMax
+			FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+				INNER JOIN dbo.Dep_ProductBetSetting pbs WITH (NOLOCK) ON pbs.SportType = bl.sporttype AND pbs.BetType = bl.bettype AND pbs.Currency = @Currency
+				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @UplineID  
+			WHERE bl.custid = @CustID
 		END
 	END
 	
