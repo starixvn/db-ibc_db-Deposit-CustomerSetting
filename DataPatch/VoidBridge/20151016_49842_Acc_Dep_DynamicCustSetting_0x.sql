@@ -1,0 +1,54 @@
+/*
+	Created: 20160405@Helen
+	Task: Create exec rep SPs Acc_Dep_DynamicCustSetting_00~09 for DCS Deposit
+	DB: DBCust/DB06/DBTP
+*/
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_00]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_01]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_02]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_03]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_04]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_05]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_06]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_07]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_08]
+AS
+SELECT CURRENT_TIMESTAMP
+GO
+
+CREATE PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
+AS
+SELECT CURRENT_TIMESTAMP
