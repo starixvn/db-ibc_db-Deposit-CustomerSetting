@@ -32,26 +32,28 @@ BEGIN
 		OR dbo.f_CheckRepTable('Dep_ProductStatusProfile') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustProductStatus') = 0 
 	
-		OR dbo.f_CheckRepTable('GameGroup') = 0
-		OR dbo.f_CheckRepTable('Dep_StakeLevel') = 0
-		OR dbo.f_CheckRepTable('Dep_CustStakeLevel_Agent') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 0 
+		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 
+		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 
 			
 	   )
 		RETURN
 	
-	DECLARE @ProductProfileList VARCHAR(200) = '1,2,3'
-	, @ProductID INT = 22 -- VB
+	DECLARE @ProductProfileList VARCHAR(200) = '9,10,11'
+	, @ProductID INT = 5 -- VS
+	, @SportType SMALLINT = 180
 	-- For ProductStatus param
+	, @bitmapOrder INT
 	, @IsProductStatus BIT = 1
 	, @IsDisable BIT = 0
 	, @IsHidden BIT = 0
 	
 	-- For PT param
 	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 93
+	, @SuperPT SMALLINT = 85
 	-- For StakelevelGroup params
-	, @IsStakeLevelGroup BIT = 1
+	--, @IsStakeLevelGroup BIT = 1
+	-- For Betting Limit
+	, @IsBetLimit BIT = 1
 	
 	CREATE TABLE #tblCust (custid int,agentid int, roleid int) 
 
@@ -136,62 +138,45 @@ BEGIN
 	BEGIN
 		PRINT 'Status'
 		-- Update if exists
+		SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
+		
 		UPDATE T 
-				SET bitmapIsDisabled = dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
-					, bitmapIsHidden = dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+				SET bitmapIsDisabled = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
+				, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+			
+				
 		FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
 			INNER JOIN #tblCust C ON C.custid = T.custid
 		
 		-- Insert new	
 		INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
 		SELECT	c.custid
-				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, 1,0) AS bitmapIsDisabled
-				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, 1,0)  AS bitmapIsHidden
+				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0) AS bitmapIsDisabled
+				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden
 		FROM #tblCust C
 		WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T (NOLOCK) WHERE t.custid = c.custid)
 		
 	END	
 
-	-- StakeLevelGroup
-	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 8) AND @IsStakeLevelGroup = 1
+	-- Betting Limit
+	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 2) AND @IsBetLimit = 1
 	BEGIN
-		PRINT 'StakeLevelGroup'
-		-- Insert NEW for level 1
-		INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList)
-		SELECT C.custid,T.SportType,T.BetType,StakeLevelListID
-		FROM #tblCust C
-			CROSS JOIN (SELECT T.SportType,t.BetType AS Bettype, STUFF(T1.StakeLevelList,1,1,'') AS StakeLevelListID
-						FROM #ProductSettingDetail_tmp T
-							CROSS APPLY ( SELECT ',' + CONVERT(VARCHAR(20),sl.StakeLevelID)
-											FROM GameGroup G (NOLOCK) 
-												INNER JOIN Dep_StakeLevel SL (NOLOCK) ON SL.GameGroupID = G.GameGroupID AND sl.ExchangeID = @currency
-										WHERE T.SportType = G.RefSportType AND SL.GameTypeID = T.BetType AND g.IsDeposit = 1 AND g.GroupName = 'Level 1'
-										FOR XML PATH('')
-										) AS T1 (StakeLevelList)
-						WHERE T.SettingType = 8 ) AS T
-		WHERE C.roleid= 4
+		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, c.maxpermatch180					 
+		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
+			INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
+		WHERE ci.roleid IN (2,3,4)
 		
-		INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList)
-		SELECT C.custid,T.SportType,T.BetType, T.StakeLevelList
-		FROM #tblCust C
-			CROSS JOIN (SELECT csla.SportType,csla.BetType,csla.StakeLevelList
-						 FROM dbo.Dep_CustStakeLevel_Agent AS csla WITH (NOLOCK) 
-							INNER JOIN #ProductSettingDetail_tmp T ON csla.SportType = t.SportType AND T.BetType = CSLA.BetType AND T.SettingType = 8
-						 WHERE CustID = @srecommend) AS T
-		WHERE c.roleid IN (2,3)
-		
-		INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList)
-		SELECT C.custid,csla.SportType,csla.BetType, L.list
-		FROM #tblCust C
-			INNER JOIN dbo.Dep_CustStakeLevel_Agent AS csla WITH (NOLOCK) ON C.agentid = csla.CustID
-			INNER JOIN #ProductSettingDetail_tmp T ON csla.SportType = t.SportType AND T.BetType = CSLA.BetType AND T.SettingType = 8			 
-			
-			CROSS APPLY(SELECT TOP 1 ss.val list
-						FROM 	dbo.strSplit(csla.StakeLevelList, ',') AS ss
-							INNER JOIN Dep_StakeLevel sl WITH (NOLOCK) ON ss.val = sl.StakeLevelID  
-						ORDER BY sl.MaxStake, sl.MinStake, SL.GameGroupID
-						) AS L					
-		WHERE C.roleid = 1				
+		--Member Level
+		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, c.maxpermatch180			
+		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+			INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
+			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType		
+		WHERE ci.roleid = 1			
 		
 	END
 
@@ -206,7 +191,7 @@ GO
 ------------------------------------------------------	
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
-DECLARE @ProductID INT = 22, @SportType INT = 212
+DECLARE @ProductID INT = 5
 
 CREATE TABLE #Supers_Offered (custid int)
 INSERT INTO #Supers_Offered (custid)
@@ -215,7 +200,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType = @SportType
+WHERE PSD.SportType IN (180,181,182,183,184,185,186)
  
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
@@ -226,7 +211,7 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('Zzun88', 'Webet138', 'ISC888')
+	AND site in ('spondemo')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
@@ -254,7 +239,7 @@ GO
 ---
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 22, @SportType INT = 212
+DECLARE @ProductID INT = 5
 
 CREATE TABLE #Supers_Offered (custid int)
 
@@ -264,7 +249,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType = @SportType
+WHERE PSD.SportType IN (180,181,182,183,184,185,186)
  
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
@@ -275,7 +260,7 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('Zzun88', 'Webet138', 'ISC888')
+	AND site in ('spondemo')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
