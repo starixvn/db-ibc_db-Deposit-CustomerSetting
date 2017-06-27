@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 (
 	@custid INT OUTPUT,
@@ -1651,4 +1651,6 @@ BEGIN
 	--DROP TABLE #KenoPT
 
 END
+GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Com] TO [bodbAdminNet] AS [dbo]
 GO

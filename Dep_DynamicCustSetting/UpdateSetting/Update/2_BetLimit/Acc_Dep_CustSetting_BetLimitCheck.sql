@@ -259,26 +259,25 @@ BEGIN
 		RETURN
 
 	--Check all setting >=0
-	IF EXISTS(SELECT TOP 1 1 
-			FROM @ErrorSportTypeTbl tmp
-				LEFT JOIN dbo.Dep_ProductBetSetting pb WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
-					
-			WHERE	tmp.MinBet		< 0
-				OR tmp.MaxBet		< 0
-				OR tmp.MaxPerMatch	< 0
-				OR (
-						(
-							tmp.MinBet	<> 0
-							OR tmp.MaxBet	<> 0
-							OR tmp.MaxPerMatch	<> 0
-						)
-						AND
-						(
-							tmp.MinBet		< ISNULL(pb.MinBet,0)
-							OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-							OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
-						)
-					))
+	IF EXISTS(	SELECT TOP 1 1 
+				FROM @ErrorSportTypeTbl tmp
+					LEFT JOIN dbo.Dep_ProductBetSetting pb WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
+				WHERE	tmp.MinBet		< 0
+					OR tmp.MaxBet		< 0
+					OR tmp.MaxPerMatch	< 0
+					OR (
+							(
+								tmp.MinBet	<> 0
+								OR tmp.MaxBet	<> 0
+								OR tmp.MaxPerMatch	<> 0
+							)
+							AND
+							(
+								tmp.MinBet		< ISNULL(pb.MinBet,0)
+								OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
+								OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
+							)
+						))
 	BEGIN
 		SET @xml = (
 				SELECT 10003 AS '@MsgID'

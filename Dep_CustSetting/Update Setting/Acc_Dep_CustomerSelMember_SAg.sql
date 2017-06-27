@@ -484,9 +484,6 @@ BEGIN
 		@MaxPerMatchv99MP			= ci.MaxPerMatch99MP,
 		@MaxPerMatchv161			= ci.MaxPerMatch161,
 		@MaxPerBallv161				= ci.MaxPerBall161,
-		
-		--@MaxPerMatchv180 			= ci.MaxPerMatch180,
-		
 		@v151MaxPerMatch_31			= ci.MaxPerMatch151,
 		@v151MaxPerMatch_41			= ci.MaxPerMatch151_OT,
 		@v151MaxPerMatch_51			= ci.MaxPerMatch151_AU,

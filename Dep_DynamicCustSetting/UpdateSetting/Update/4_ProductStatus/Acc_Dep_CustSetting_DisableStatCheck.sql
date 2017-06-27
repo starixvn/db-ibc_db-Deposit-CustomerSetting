@@ -140,3 +140,5 @@ GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatCheck] TO [bodbDownlineNet]
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatCheck] TO [bodbExtAccNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatCheck] TO [bodbLicenseeNet]

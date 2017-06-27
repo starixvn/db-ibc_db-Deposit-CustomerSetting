@@ -939,17 +939,6 @@ BEGIN
 		@MaxPerMatchv161 = @MaxPerMatchv161,	
 		@MaxPerBallv161 = @MaxPerBallv161,
 		
-		/*
-		--Virtual Sport
-		
-		@MaxPerMatchv180 = @v180MaxPerMatch,
-		@MaxPerMatchv181 = @v181MaxPerMatch,
-		@MaxPerMatchv182 = @v182MaxPerMatch,
-		@MaxPerMatchv183 = @v183MaxPerMatch,
-		@MaxPerMatchv184 = @v184MaxPerMatch,
-		@MaxPerMatchv185 = @v185MaxPerMatch,
-		@MaxPerMatchv186 = @v186MaxPerMatch,
-		*/
 		--v151
 		@MaxPerMatchv151_31 = @v151maxpermatch_31,
 		@MaxPerMatchv151_41 = @v151maxpermatch_41,
@@ -1606,36 +1595,7 @@ BEGIN
 	'MaxBv153_51="'+ COALESCE(CAST(@v153maxbet_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv153_51="'+ COALESCE(CAST(@v153maxpermatch_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	@str_bet+
-	/*
-	'MinBv180="'+ COALESCE(CAST(@v180MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv180="'+ COALESCE(CAST(@v180MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv180="'+ COALESCE(CAST(@v180MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'MinBv181="'+ COALESCE(CAST(@v181MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv181="'+ COALESCE(CAST(@v181MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv181="'+ COALESCE(CAST(@v181MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'MinBv182="'+ COALESCE(CAST(@v182MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv182="'+ COALESCE(CAST(@v182MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv182="'+ COALESCE(CAST(@v182MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'MinBv183="'+ COALESCE(CAST(@v183MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv183="'+ COALESCE(CAST(@v183MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv183="'+ COALESCE(CAST(@v183MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'MinBv184="'+ COALESCE(CAST(@v184MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv184="'+ COALESCE(CAST(@v184MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv184="'+ COALESCE(CAST(@v184MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'MinBv185="'+ COALESCE(CAST(@v185MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv185="'+ COALESCE(CAST(@v185MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv185="'+ COALESCE(CAST(@v185MaxPerMatch AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'MinBv186="'+ COALESCE(CAST(@v186MinBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv186="'+ COALESCE(CAST(@v186MaxBet AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv186="'+ COALESCE(CAST(@v186MaxPerMatch AS VARCHAR(50)),SPACE(1)) */
-	 ' />'
+	@str_bet + ' />'
 	
 	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 		@UserID = @Creator,

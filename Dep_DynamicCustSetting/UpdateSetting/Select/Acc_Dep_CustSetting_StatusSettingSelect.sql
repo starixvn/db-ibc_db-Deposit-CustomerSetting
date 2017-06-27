@@ -8,7 +8,7 @@ AS
 /*
 	Created: 20160405@Helen
 	Task : Implementing Setting for Deposit customer
-	DB: DBCUST/CustDB, DBAGE/bodb02
+	DB: DBCUST/CustDB, DBACC/bodb02
 	Original:
 
 	Revisions:
@@ -179,7 +179,7 @@ BEGIN
 				, 1 IsSyncedDownline
 				, 1 IsSyncedUpline
 			FROM dbo.Dep_ProductSetting pds WITH (NOLOCK)
-			INNER JOIN dbo.Dep_ProductSettingDetail pdt WITH (NOLOCK) ON pds.ProductSettingID = pdt.ProductSettingID
+				INNER JOIN dbo.Dep_ProductSettingDetail pdt WITH (NOLOCK) ON pds.ProductSettingID = pdt.ProductSettingID
 				INNER JOIN #SportBettypeFilter ft ON pdt.SportType = ft.sporttype
 													AND pdt.BetType = ft.bettype
 													AND pdt.IsLive = ft.islive
