@@ -34,6 +34,7 @@ BEGIN
 	
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 
+		OR dbo.f_CheckRepTable('Dep_ProductBetSetting') = 0
 			
 	   )
 		RETURN
@@ -167,7 +168,7 @@ BEGIN
 			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
 			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
 			LEFT JOIN Dep_ProductBetSetting PBS WITH (NOLOCK) ON PBS.Currency = C.currency AND PBS.Sporttype = dest.SportType AND PBS.Bettype = dest.BetType
-		WHERE ci.roleid IN (4,3,2)
+		WHERE ci.roleid IN (4,3,2) AND dest.SettingType = 2
 		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
@@ -176,7 +177,7 @@ BEGIN
 			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
 			INNER JOIN Dep_CustBetSetting_Agent Upline WITH (NOLOCK) ON Upline.CustID = c.recommend
 			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON Upline.Sporttype = dest.SportType AND Upline.Bettype = dest.BetType
-		WHERE ci.roleid = 1			
+		WHERE ci.roleid = 1	AND dest.SettingType = 2		
 		
 	END
 
@@ -211,9 +212,10 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo')
+	--AND site in ('spondemo')
 	AND custid <= @max_custid
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency = 20
 
 WHILE (1 = 1)
 BEGIN
@@ -260,9 +262,10 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo')
+	--AND site in ('spondemo')
 	AND custid <= @max_custid
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency = 20
 
 WHILE (1 = 1)
 BEGIN

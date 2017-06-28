@@ -213,9 +213,10 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo')
+	--AND site in ('spondemo')
 	AND custid <= @max_custid
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency = 20
 
 WHILE (1 = 1)
 BEGIN
@@ -262,9 +263,10 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo')
+	--AND site in ('spondemo')
 	AND custid <= @max_custid
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency = 20
 
 WHILE (1 = 1)
 BEGIN
