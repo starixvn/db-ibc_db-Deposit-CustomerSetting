@@ -16,8 +16,8 @@ AS
 BEGIN	
 	SET NOCOUNT ON
 	
-	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'DBCUST') RETURN	-- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'DBCUST') RETURN -- run at DBCUST only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'SITDBCUST') RETURN	-- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'SITDBCUST') RETURN -- run at DBCUST only
 	
 	
 	IF (dbo.f_CheckRepTable('Dep_CustSettingMode') = 0
