@@ -103,13 +103,13 @@ CREATE TABLE [dbo].[Dep_CustBetSetting_Member](
 
 GO
 
-ALTER TABLE [dbo].[Dep_CustBetSetting_Member] ADD  DEFAULT ((0)) FOR [MinBet]
+ALTER TABLE [dbo].[Dep_CustBetSetting_Member] ADD CONSTRAINT [DF_Dep_CustBetSetting_Member_MinBet] DEFAULT ((0)) FOR [MinBet]
 GO
 
-ALTER TABLE [dbo].[Dep_CustBetSetting_Member] ADD  DEFAULT ((0)) FOR [MaxBet]
+ALTER TABLE [dbo].[Dep_CustBetSetting_Member] ADD CONSTRAINT [DF_Dep_CustBetSetting_Member_MaxBet] DEFAULT ((0)) FOR [MaxBet]
 GO
 
-ALTER TABLE [dbo].[Dep_CustBetSetting_Member] ADD  DEFAULT ((0)) FOR [MaxPerMatch]
+ALTER TABLE [dbo].[Dep_CustBetSetting_Member] ADD CONSTRAINT [DF_Dep_CustBetSetting_Member_MaxPerMatch]  DEFAULT ((0)) FOR [MaxPerMatch]
 GO
 CREATE TABLE [dbo].[Dep_CustBetSetting_Agent](
 	[CustID] [int] NOT NULL,
@@ -126,11 +126,11 @@ CREATE TABLE [dbo].[Dep_CustBetSetting_Agent](
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [Dep_CustBetSetting_Agent_Table]
 ) ON [Dep_CustBetSetting_Agent_Table]
 GO
-ALTER TABLE [dbo].[Dep_CustBetSetting_Agent] ADD  DEFAULT ((0)) FOR [MinBet]
+ALTER TABLE [dbo].[Dep_CustBetSetting_Agent] ADD CONSTRAINT [DF_Dep_CustBetSetting_Agent_MinBet]  DEFAULT ((0)) FOR [MinBet]
 GO
-ALTER TABLE [dbo].[Dep_CustBetSetting_Agent] ADD  DEFAULT ((0)) FOR [MaxBet]
+ALTER TABLE [dbo].[Dep_CustBetSetting_Agent] ADD CONSTRAINT [DF_Dep_CustBetSetting_Agent_MaxBet]  DEFAULT ((0)) FOR [MaxBet]
 GO
-ALTER TABLE [dbo].[Dep_CustBetSetting_Agent] ADD  DEFAULT ((0)) FOR [MaxPerMatch]
+ALTER TABLE [dbo].[Dep_CustBetSetting_Agent] ADD CONSTRAINT [DF_Dep_CustBetSetting_Agent_MaxPerMatch]  DEFAULT ((0)) FOR [MaxPerMatch]
 GO
 CREATE TABLE [dbo].[Dep_ProductBetSetting](
 	[Sporttype] [int] NOT NULL,
@@ -151,10 +151,18 @@ CREATE TABLE [dbo].[Dep_ProductBetSetting](
 ) ON [Dep_ProductBetSetting_table]
 
 GO
-
 ALTER TABLE [dbo].[Dep_ProductBetSetting] ADD  CONSTRAINT [DF_Dep_ProductBetSetting_Minbet]  DEFAULT ((0)) FOR [MinBet]
 GO
-
+ALTER TABLE [dbo].[Dep_ProductBetSetting] ADD  CONSTRAINT [DF_Dep_ProductBetSetting_MaxBet]  DEFAULT ((0)) FOR [MaxBet]
+GO
+ALTER TABLE [dbo].[Dep_ProductBetSetting] ADD  CONSTRAINT [DF_Dep_ProductBetSetting_MaxPerMatch]  DEFAULT ((0)) FOR [MaxPerMatch]
+GO
+ALTER TABLE [dbo].[Dep_ProductBetSetting] ADD  CONSTRAINT [DF_Dep_ProductBetSetting_DefaultMinBet]  DEFAULT ((0)) FOR [DefaultMinBet]
+GO
+ALTER TABLE [dbo].[Dep_ProductBetSetting] ADD  CONSTRAINT [DF_Dep_ProductBetSetting_DefaultMaxBet]  DEFAULT ((0)) FOR [DefaultMaxBet]
+GO
+ALTER TABLE [dbo].[Dep_ProductBetSetting] ADD  CONSTRAINT [DF_Dep_ProductBetSetting_DefaultMaxPerMatch]  DEFAULT ((0)) FOR [DefaultMaxPerMatch]
+GO
 
 
 
