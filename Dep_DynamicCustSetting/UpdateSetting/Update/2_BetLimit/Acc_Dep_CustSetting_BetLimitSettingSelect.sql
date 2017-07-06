@@ -30,7 +30,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #SportBettypeFilter)
 	BEGIN
 	
-		SELECT @Currency = Currency, @RoleID = roleid, @srecommend = srecommend, @mrecommend = mrecommend, @recommend = @recommend
+		SELECT @Currency = Currency, @RoleID = roleid, @srecommend = srecommend, @mrecommend = mrecommend, @recommend = recommend
 		FROM dbo.Customer c WITH(NOLOCK)
 		WHERE c.custID = @CustID
 	
