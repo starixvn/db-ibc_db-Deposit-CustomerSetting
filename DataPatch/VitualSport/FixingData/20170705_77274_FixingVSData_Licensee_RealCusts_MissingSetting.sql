@@ -32,6 +32,7 @@ FROM Dep_CustSetting3rd CS WITH (NOLOCK)
 	INNER JOIN #Cust_tmp_mansion88_Terminated C ON CS.custid = C.CustID AND CS.sporttype = 180
 	CROSS JOIN #SportMissing S 
 WHERE S.SportType <> 180 
+	AND NOT EXISTS (SELECT 1 FROM Dep_CustSetting3rd WHERE custid = cs.custid AND sporttype = cs.sporttype AND bettype = cs.bettype)
 
 -- Process for 10410920
 INSERT INTO Dep_CustSetting3rd (custid, bettype, sporttype, islive, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount, minbet, maxbet)
@@ -39,6 +40,7 @@ SELECT CS.custid, S.bettype, S.sporttype, islive, apositiontaking, mpositiontaki
 FROM Dep_CustSetting3rd CS WITH (NOLOCK)
 	CROSS JOIN #SportMissing S 
 WHERE S.SportType <> 180 AND CS.sporttype = 180 AND CS.custid = 10410920
+	AND NOT EXISTS (SELECT 1 FROM Dep_CustSetting3rd WHERE custid = cs.custid AND sporttype = cs.sporttype AND bettype = cs.bettype)
 
 -- Process for orther
 CREATE TABLE #Cust_tmp_other ( CustID INT,recommend INT)
@@ -56,6 +58,7 @@ SELECT C.custid, CS.bettype, CS.sporttype, islive, apositiontaking, mpositiontak
 FROM Dep_CustSetting3rd CS (NOLOCK)
 	INNER JOIN #Cust_tmp_other C ON CS.custid = C.recommend
 WHERE CS.sporttype IN (180,181,182,183,184,185,186)	
+	AND NOT EXISTS (SELECT 1 FROM Dep_CustSetting3rd WHERE custid = cs.custid AND sporttype = cs.sporttype AND bettype = cs.bettype)
 
 DROP TABLE #Cust_tmp_mansion88_Terminated
 
