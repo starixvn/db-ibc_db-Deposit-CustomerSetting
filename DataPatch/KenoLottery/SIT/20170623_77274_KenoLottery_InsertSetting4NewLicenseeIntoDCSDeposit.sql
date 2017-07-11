@@ -164,20 +164,18 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 2) AND @IsBetLimit = 1
 	BEGIN
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, dest.sporttype, dest.bettype, ISNULL(PBS.minbet,0), ISNULL(PBS.maxbet,0), ISNULL(PBS.maxpermatch,0)
+		SELECT ci.custid, dest.sporttype, dest.bettype, 1, 1000, 10000
 		FROM #tblCust ci WITH(NOLOCK) 
 			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
 			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
-			INNER JOIN Dep_ProductBetSetting PBS WITH (NOLOCK) ON PBS.Currency = C.currency AND PBS.Sporttype = dest.SportType AND PBS.Bettype = dest.BetType
 		WHERE ci.roleid IN (4,3,2) AND dest.SettingType = 2
 		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, dest.sporttype, dest.bettype, Upline.minbet, Upline.maxbet, Upline.maxpermatch
+		SELECT ci.custid, dest.sporttype, dest.bettype, 1, 1000, 10000
 		FROM #tblCust ci WITH(NOLOCK) 
 			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
-			INNER JOIN Dep_CustBetSetting_Agent Upline WITH (NOLOCK) ON Upline.CustID = c.recommend
-			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON Upline.Sporttype = dest.SportType AND Upline.Bettype = dest.BetType
+			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
 		WHERE ci.roleid = 1	AND dest.SettingType = 2		
 		
 	END
