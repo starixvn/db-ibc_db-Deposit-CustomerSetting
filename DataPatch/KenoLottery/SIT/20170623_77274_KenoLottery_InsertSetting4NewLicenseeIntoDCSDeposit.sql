@@ -216,6 +216,19 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND currency = 20
 
+
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
+
+
 WHILE (1 = 1)
 BEGIN
 	UPDATE TOP (1) #supers
@@ -225,7 +238,11 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
-
+	
+	SET @index = @index + 1
+	
+	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
+	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
 	WAITFOR DELAY '00:00:00.280'			
@@ -266,6 +283,17 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND currency = 20
 
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
+
 WHILE (1 = 1)
 BEGIN
 	UPDATE TOP (1) #supers
@@ -275,6 +303,10 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
+	
+	SET @index = @index + 1
+	
+	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
 		
