@@ -48,12 +48,11 @@ BEGIN
 				, bl.MinBet  
 				, bl.MaxBet  
 				, bl.MaxPerMatch  
-				, pbs.MinBet AS MinBetMin  
-				, pbs.maxbet AS MaxBetMax  
-				, pbs.maxpermatch AS MaxPerMatchMax
+				, bl.MinBet AS MinBetMin  
+				, bl.maxbet AS MaxBetMax  
+				, bl.maxpermatch AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
 				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-				INNER JOIN dbo.Dep_ProductBetSetting pbs WITH (NOLOCK) ON pbs.SportType = bl.sporttype AND pbs.BetType = bl.bettype AND pbs.Currency = @Currency
 			WHERE bl.custid = @CustID
 		END
 		
@@ -64,14 +63,12 @@ BEGIN
 				, bl.MinBet  
 				, bl.MaxBet  
 				, bl.MaxPerMatch  
-				, CASE  WHEN sbl.minbet > pbs.MinBet  THEN sbl.minbet  ELSE pbs.MinBet  END AS MinBetMin  
+				, sbl.minbet MinBetMin  
 				, sbl.maxbet AS MaxBetMax  
 				, sbl.maxpermatch AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
 				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-				INNER JOIN dbo.Dep_ProductBetSetting pbs WITH (NOLOCK) ON pbs.SportType = bl.sporttype AND pbs.BetType = bl.bettype AND pbs.Currency = @Currency
 				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @UplineID  
-				
 			WHERE bl.custid = @CustID
 			
 			
@@ -83,12 +80,11 @@ BEGIN
 				, bl.MinBet  
 				, bl.MaxBet  
 				, bl.MaxPerMatch  
-				, CASE  WHEN sbl.minbet > pbs.MinBet  THEN sbl.minbet  ELSE pbs.MinBet  END AS MinBetMin  
+				, sbl.minbet AS MinBetMin  
 				, sbl.maxbet AS MaxBetMax  
 				, sbl.maxpermatch AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
 				INNER JOIN dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-				INNER JOIN dbo.Dep_ProductBetSetting pbs WITH (NOLOCK) ON pbs.SportType = bl.sporttype AND pbs.BetType = bl.bettype AND pbs.Currency = @Currency
 				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @UplineID  
 			WHERE bl.custid = @CustID
 		END
