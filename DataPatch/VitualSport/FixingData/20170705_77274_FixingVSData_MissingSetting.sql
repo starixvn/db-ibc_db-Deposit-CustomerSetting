@@ -73,10 +73,7 @@ BEGIN
 	
 	SET NOCOUNT OFF
 END
-
--- END STEP 1: DEPLOY THIS SP @ DBCUST.CustDB -------
-
-------------------------------------------------------	
--- BEGIN STEP 2: Run this SP at dbcust -----
+GO
+-- Run this SP at dbcust -----
 EXEC Acc_Custsetting3rd_19 
 
