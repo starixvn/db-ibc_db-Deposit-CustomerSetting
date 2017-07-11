@@ -5,13 +5,20 @@
 */
 USE CustDB
 GO
-
+-- BEGIN STEP 1: Deploy this SP at DBCUST.CustDB, Run only in the FIRST running
 ALTER PROCEDURE Acc_Custsetting3rd_19
+( 
+	@target VARCHAR(20)
+)
+
 AS
 BEGIN
 	
 	SET NOCOUNT ON
-
+	
+	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'DBCUST') RETURN	-- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'DBCUST') RETURN -- run at DBCUST only
+	
 	IF dbo.f_CheckRepTable('Dep_CustSetting3rd') = 0
 		RETURN	
 
@@ -74,3 +81,16 @@ BEGIN
 	
 	SET NOCOUNT OFF
 END
+
+-- END STEP 1: DEPLOY THIS SP @ DBCUST.CustDB -------
+
+------------------------------------------------------	
+-- BEGIN STEP 2: Run this SP at replicated DB: DB06, DBTP -----
+--------------------------------------------------------------------------------------
+EXEC Acc_Custsetting3rd_19 @target = 'REPLICATED' 	
+
+-- END STEP 2: Run this SP at replicated DB: DB06, DBTP -----
+-----------------------------------------------------------------------------------
+-- BEGIN STEP 3: Run this SP at DBCust -----
+-------------------------------------------------
+EXEC Acc_Custsetting3rd_19 @target = 'DBCUST'
