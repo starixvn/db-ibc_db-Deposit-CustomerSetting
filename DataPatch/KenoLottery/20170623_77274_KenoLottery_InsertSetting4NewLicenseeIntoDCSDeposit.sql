@@ -16,8 +16,8 @@ AS
 BEGIN	
 	SET NOCOUNT ON
 	
-	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'DBCUST') RETURN	-- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'DBCUST') RETURN -- run at DBCUST only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'SITDBCUST') RETURN	-- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'SITDBCUST') RETURN -- run at DBCUST only
 	
 	
 	IF (dbo.f_CheckRepTable('Dep_CustSettingMode') = 0
@@ -39,9 +39,9 @@ BEGIN
 	   )
 		RETURN
 	
-	DECLARE @ProductProfileList VARCHAR(200) = '12,13'
-	, @ProductID INT = 27 -- Betradar
-	--, @SportType SMALLINT = 180
+	DECLARE @ProductProfileList VARCHAR(200) = '15,16,17'
+	, @ProductID INT = 28 -- Keno Lottery
+	, @SportType SMALLINT = 220
 	-- For ProductStatus param
 	, @bitmapOrder INT
 	, @IsProductStatus BIT = 1
@@ -135,7 +135,7 @@ BEGIN
 	END	
 
 	-- Status Process
-	/*
+	
 	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 4) AND @IsProductStatus = 1	
 	BEGIN
 		PRINT 'Status'
@@ -159,25 +159,23 @@ BEGIN
 		WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T (NOLOCK) WHERE t.custid = c.custid)
 		
 	END	
-	*/
+	
 	-- Betting Limit
 	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 2) AND @IsBetLimit = 1
 	BEGIN
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, dest.sporttype, dest.bettype, ISNULL(PBS.minbet,0), ISNULL(PBS.maxbet,0), ISNULL(PBS.maxpermatch,0)
+		SELECT ci.custid, dest.sporttype, dest.bettype, 1, 1000, 10000
 		FROM #tblCust ci WITH(NOLOCK) 
 			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
 			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
-			INNER JOIN Dep_ProductBetSetting PBS WITH (NOLOCK) ON PBS.Currency = C.currency AND PBS.Sporttype = dest.SportType AND PBS.Bettype = dest.BetType
 		WHERE ci.roleid IN (4,3,2) AND dest.SettingType = 2
 		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, dest.sporttype, dest.bettype, Upline.minbet, Upline.maxbet, Upline.maxpermatch
+		SELECT ci.custid, dest.sporttype, dest.bettype, 1, 1000, 10000
 		FROM #tblCust ci WITH(NOLOCK) 
 			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
-			INNER JOIN Dep_CustBetSetting_Agent Upline WITH (NOLOCK) ON Upline.CustID = c.recommend
-			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON Upline.Sporttype = dest.SportType AND Upline.Bettype = dest.BetType
+			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
 		WHERE ci.roleid = 1	AND dest.SettingType = 2		
 		
 	END
@@ -193,7 +191,7 @@ GO
 ------------------------------------------------------	
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
-DECLARE @ProductID INT = 27
+DECLARE @ProductID INT = 28
 
 CREATE TABLE #Supers_Offered (custid int)
 INSERT INTO #Supers_Offered (custid)
@@ -202,7 +200,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType IN (190,191)
+WHERE PSD.SportType IN (220)
  
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
@@ -213,10 +211,23 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	--AND site in ('spondemo')
+	AND site in ('spondemo','Athena000')
 	AND custid <= @max_custid
 	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND currency = 20
+
+
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
+
 
 WHILE (1 = 1)
 BEGIN
@@ -227,7 +238,11 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
-
+	
+	SET @index = @index + 1
+	
+	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
+	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
 	WAITFOR DELAY '00:00:00.280'			
@@ -242,7 +257,7 @@ GO
 ---
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 27
+DECLARE @ProductID INT = 28
 
 CREATE TABLE #Supers_Offered (custid int)
 
@@ -252,7 +267,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType IN (190,191)
+WHERE PSD.SportType IN (220)
  
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
@@ -263,10 +278,21 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	--AND site in ('spondemo')
+	AND site in ('spondemo','Athena000')
 	AND custid <= @max_custid
 	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND currency = 20
+
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
 WHILE (1 = 1)
 BEGIN
@@ -277,6 +303,10 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
+	
+	SET @index = @index + 1
+	
+	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
 		

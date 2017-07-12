@@ -26,16 +26,16 @@ GO
 INSERT INTO [dbo].[Dep_ProductSettingDetail] (ProductSettingID,SportType,BetType,IsLive,MaxDefaultValue,SettingStatus)
 VALUES 
 	-- Keno Lottery
-	(15,220,1031,0,0,1)
+	(15,220,1021,0,0,1)
 	-- PT
-	,(16,220,1031,0,0,1)
+	,(16,220,1021,0,0,1)
 	-- Bet Setting
-	,(17,220,1031,0,0,1)
+	,(17,220,1021,0,0,1)
 	
 GO
 
 INSERT INTO [dbo].Dep_ProductStatusProfile (Sporttype,Bettype,bitmapOrder)
-VALUES (220,1031,6) -- Keno Lotery
+VALUES (220,1021,6) -- Keno Lotery
 		
 GO
 
