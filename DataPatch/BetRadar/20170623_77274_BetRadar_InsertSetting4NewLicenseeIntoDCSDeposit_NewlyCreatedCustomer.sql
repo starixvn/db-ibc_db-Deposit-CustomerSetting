@@ -7,25 +7,34 @@
 ------------------------------------------------------
 DECLARE @ProductID INT = 27 -- VS
 
-CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
+CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 
-DECLARE @max_custid INT, @srecommend INT,  @currency int ,@SportType INT = 180,@BetType INT = 1201, @bitmapOrder INT
+DECLARE @max_custid INT, @srecommend INT,  @currency INT ,@SportType INT = 190, @bitmapOrder INT
+
 SELECT   @max_custid= xxx ---input maxcustid
 
 SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
-CREATE TABLE #tblCust_member (custid int,agentid int, roleid int,currency INT,srecommend INT) 
 
-INSERT INTO #tblCust_member (custid,agentid,roleid,currency,srecommend)			
-SELECT ci.custid,ci.recommend,roleid,ci.currency, ci.srecommend
+CREATE TABLE #tblCust_member (custid INT,agentid INT, roleid INT,currency INT,srecommend INT,maxpermatch180 MONEY) 
+
+INSERT INTO #tblCust_member (custid,agentid,roleid,currency,srecommend,maxpermatch180)			
+SELECT ci.custid,ci.recommend,roleid,ci.currency, ci.srecommend,CI.maxpermatch180
 FROM custInfo CI WITH(NOLOCK)
-	INNER JOIN Dep_CustSuper CS with(nolock) ON ci.srecommend = cs.custid
+	INNER JOIN Dep_CustSuper CS WITH(NOLOCK) ON ci.srecommend = cs.custid
 WHERE ci.mrecommend NOT IN (SELECT custid FROM custinfo cs1 WITH(NOLOCK)
 						   WHERE cs1.srecommend=ci.srecommend and cs1.username like '%Acc%' and cs1.roleid=3 )
 	AND ci.custid > @max_custid
-	AND cs.site in ('spondemo')
+	AND cs.site in ('12Bet')
 	AND ci.roleid = 1
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
-						   
+
+
+SELECT ps.SettingType,psd.SportType,psd.BetType
+INTO #ProductSettingDetail_tmp
+FROM Dep_ProductSetting ps WITH (NOLOCK) 
+	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
+WHERE ps.ProductID= @ProductID AND ps.SettingType = 2
+							   
 -- PT processing
 PRINT 'PT'
 -- For Member
@@ -48,16 +57,16 @@ SELECT	c.custid
 		, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0) AS bitmapIsDisabled
 		, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden
 FROM #tblCust_member C
-WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T (NOLOCK) WHERE t.custid = c.custid)
+WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T WITH (NOLOCK) WHERE t.custid = c.custid)
 
 PRINT 'Betting Limit'
 
 INSERT INTO Dep_CustBetSetting_Member (CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-SELECT c.custid, csla.sporttype, csla.bettype, csla.minbet, csla.maxbet, csla.MaxPerMatch
-FROM #tblCust_member C
-	INNER JOIN dbo.Dep_CustBetSetting_Agent AS csla WITH (NOLOCK) ON C.agentid = csla.CustID  
-WHERE csla.SportType IN (190,191,199)
-	AND NOT EXISTS (SELECT 1 FROM Dep_CustBetSetting_Member cslm WITH (NOLOCK) WHERE cslm.CustID = C.custid AND cslm.SportType = csla.SportType AND cslm.BetType = csla.BetType)
-	
+SELECT c.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, c.maxpermatch180
+FROM #tblCust_member c
+	INNER JOIN dbo.Dep_CustSetting3rd AS cs WITH (NOLOCK) ON cs.custid = c.CustID  AND cs.sporttype = 180
+	CROSS JOIN #ProductSettingDetail_tmp psd
+WHERE NOT EXISTS (SELECT 1 FROM Dep_CustBetSetting_Member cslm WITH (NOLOCK) WHERE cslm.CustID = C.custid AND psd.SportType = cslm.SportType AND psd.BetType = cslm.BetType)
+			
 DROP TABLE #tblCust_member
 

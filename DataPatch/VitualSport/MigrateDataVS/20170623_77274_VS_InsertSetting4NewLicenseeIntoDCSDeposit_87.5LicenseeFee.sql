@@ -8,7 +8,7 @@
 
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
  	 @srecommend INT
-	, @currency int
+	, @currency INT
 	, @max_custid INT
 	, @target VARCHAR(20)
 	
@@ -49,16 +49,24 @@ BEGIN
 	
 	-- For PT param
 	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 85
+	, @SuperPT SMALLINT = 87.5
 	-- For StakelevelGroup params
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
 	, @IsBetLimit BIT = 1
 	
-	CREATE TABLE #tblCust (custid int,agentid int, roleid int) 
+	CREATE TABLE #tblCust (custid INT, roleid INT
+							, maxpermatch180 MONEY
+							, maxpermatch181 MONEY
+							, maxpermatch182 MONEY
+							, maxpermatch183 MONEY
+							, maxpermatch184 MONEY
+							, maxpermatch185 MONEY
+							, maxpermatch186 MONEY
+						)
 
-	INSERT INTO #tblCust			
-	SELECT custid,recommend,roleid
+	INSERT INTO #tblCust (custid,roleid, maxpermatch180, maxpermatch181 , maxpermatch182,  maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186 )			
+	SELECT custid,roleid, maxpermatch180, maxpermatch181 , maxpermatch182,  maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186 
 	FROM custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
@@ -117,7 +125,7 @@ BEGIN
 			
 			--Insert new PT Group
 			INSERT INTO Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
-			SELECT ci.agentid,psd.SportType,psd.BetType,0,0,0,@SuperPT
+			SELECT ci.custid,psd.SportType,psd.BetType,0,0,0,@SuperPT
 			FROM #tblCust ci
 					CROSS JOIN #ProductSettingDetail_tmp psd 
 			WHERE psd.SettingType = 1 
@@ -161,27 +169,63 @@ BEGIN
 	-- Betting Limit
 	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 2) AND @IsBetLimit = 1
 	BEGIN
+		
+		CREATE TABLE #SportTypeCheck (SportType SMALLINT, BetType SMALLINT, MaxPerMatchName VARCHAR(200), PRIMARY KEY (SportType,Bettype) )	
+		INSERT INTO #SportTypeCheck 
+		VALUES
+			(180,1201,'maxpermatch180'),
+			(181,1231,'maxpermatch181'),
+			(182,1231,'maxpermatch182'),
+			(183,1231,'maxpermatch183'),
+			(184,1231,'maxpermatch184'),
+			(185,1231,'maxpermatch185'),
+			(186,1220,'maxpermatch186')
+		
+		
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, c.maxpermatch180					 
+		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, a.maxpermatch					 
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
 			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
-			INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
 			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
+			CROSS APPLY( VALUES
+					('maxpermatch180',ci.maxpermatch180),
+					('maxpermatch181',ci.maxpermatch181),
+					('maxpermatch182',ci.maxpermatch182),
+					('maxpermatch183',ci.maxpermatch183),
+					('maxpermatch184',ci.maxpermatch184),
+					('maxpermatch185',ci.maxpermatch185),
+					('maxpermatch186',ci.maxpermatch186)
+             ) AS A(columnname, maxpermatch)
+           
+           INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = s.SportType AND dest.BetType = s.BetType
+    
 		WHERE ci.roleid IN (2,3,4)
 		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, c.maxpermatch180			
+		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, a.maxpermatch					 
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
-			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-			INNER JOIN custInfo c WITH(NOLOCK) ON cs.CustID = c.custid
-			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType		
+			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
+			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
+			CROSS APPLY( VALUES
+					('maxpermatch180',ci.maxpermatch180),
+					('maxpermatch181',ci.maxpermatch181),
+					('maxpermatch182',ci.maxpermatch182),
+					('maxpermatch183',ci.maxpermatch183),
+					('maxpermatch184',ci.maxpermatch184),
+					('maxpermatch185',ci.maxpermatch185),
+					('maxpermatch186',ci.maxpermatch186)
+             ) AS A(columnname, maxpermatch)
+           
+           INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = s.SportType AND dest.BetType = s.BetType
+    
 		WHERE ci.roleid = 1			
 		
 	END
 
 	DROP TABLE #ProductSettingDetail_tmp
 	DROP TABLE #tblCust
+	DROP TABLE #SportTypeCheck
 
 END	
 
@@ -193,7 +237,7 @@ GO
 --------------------------------------------------------------------------------------
 DECLARE @ProductID INT = 5
 
-CREATE TABLE #Supers_Offered (custid int)
+CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
 FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
@@ -202,18 +246,29 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType IN (180,181,182,183,184,185,186)
  
-CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
+CREATE TABLE #supers (custid INT, currency INT, isfinished bit default(0))
 
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT 
 SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
-FROM  Dep_CustSuper with(nolock) 
+FROM  Dep_CustSuper WITH (NOLOCK) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo')
+	AND site in ('HAIFA')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
 WHILE (1 = 1)
 BEGIN
@@ -224,7 +279,11 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
-
+	
+	SET @index = @index + 1
+	
+	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
+	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
 	WAITFOR DELAY '00:00:00.280'			
@@ -241,28 +300,40 @@ GO
 -------------------------------------------------
 DECLARE @ProductID INT = 5
 
-CREATE TABLE #Supers_Offered (custid int)
+CREATE TABLE #Supers_Offered (custid INT)
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
 FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
-	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
+	INNER JOIN Dep_CustSuper c WITH (NOLOCK) ON c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType IN (180,181,182,183,184,185,186)
  
-CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
+CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
+DECLARE @max_custid INT, @srecommend INT, @site VARCHAR (50), @currency INT 
 SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo')
+	AND site in ('HAIFA')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+
+
+-- For deployer info
+DECLARE @super_cnt INT, @index INT = 0
+
+SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+
+DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
+
+DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
+
+RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
 WHILE (1 = 1)
 BEGIN
@@ -273,6 +344,10 @@ BEGIN
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
+	
+	SET @index = @index + 1
+	
+	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
 		
