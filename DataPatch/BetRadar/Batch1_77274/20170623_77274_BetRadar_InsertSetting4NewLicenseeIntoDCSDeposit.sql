@@ -35,7 +35,6 @@ BEGIN
 	
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 
-		OR dbo.f_CheckRepTable('Dep_ProductBetSetting') = 0
 			
 	   )
 		RETURN

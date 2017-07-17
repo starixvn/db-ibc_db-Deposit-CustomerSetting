@@ -1,7 +1,8 @@
 /*
-	Created: 20170324@Helen
-	Task: insert the Setting of Voidbridge of new licensees into the DCS database.
+	Created: 20170626@Helen
+	Task: insert the Setting of VS of new licensees into the DCS database.
 	Redmine: https://redmine.nexcel.vn/issues/77274
+	DB: DBCUST/CUSTDB
 */ 
 -- BEGIN STEP 1: Deploy this SP at DBCUST.CustDB, Run only in the FIRST running
 ------------------------------------------------------
@@ -54,6 +55,8 @@ BEGIN
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
 	, @IsBetLimit BIT = 1
+	
+	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
 	CREATE TABLE #tblCust (custid INT, roleid INT
 							, maxpermatch180 MONEY
@@ -127,7 +130,7 @@ BEGIN
 			INSERT INTO Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
 			SELECT ci.custid,psd.SportType,psd.BetType,0,0,0,@SuperPT
 			FROM #tblCust ci
-					CROSS JOIN #ProductSettingDetail_tmp psd 
+				CROSS JOIN #ProductSettingDetail_tmp psd 
 			WHERE psd.SettingType = 1 
 				AND ci.roleid = 2					
 			
@@ -146,8 +149,7 @@ BEGIN
 	BEGIN
 		PRINT 'Status'
 		-- Update if exists
-		SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
-		
+				
 		UPDATE T 
 				SET bitmapIsDisabled = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
 				, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)

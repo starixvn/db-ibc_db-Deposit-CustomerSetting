@@ -18,7 +18,7 @@ INSERT INTO #supers(custid,site)
 SELECT custid,Site
 FROM  Dep_CustSuper WITH(NOLOCK) 
 WHERE  site in ('12Bet')
-		AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 
 CREATE TABLE #tblCust (custid INT, roleid INT
