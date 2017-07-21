@@ -13,10 +13,10 @@ DECLARE @max_custid INT, @srecommend INT,  @currency INT ,@SportType INT = 180,@
 SELECT   @max_custid= xxx ---input maxcustid
 
 SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
-CREATE TABLE #tblCust_member (custid INT,agentid INT, roleid INT,currency INT,srecommend INT, DisableVirtualSports BIT) 
+CREATE TABLE #tblCust_member (custid INT,roleid INT) 
 
-INSERT INTO #tblCust_member (custid,agentid,roleid,currency,srecommend,DisableVirtualSports)			
-SELECT ci.custid,ci.recommend,roleid,ci.currency, ci.srecommend,ci.DisableVirtualSports
+INSERT INTO #tblCust_member (custid,roleid)			
+SELECT ci.custid,roleid
 FROM custInfo CI WITH(NOLOCK)
 	INNER JOIN Dep_CustSuper CS WITH(NOLOCK) ON ci.srecommend = cs.custid
 WHERE ci.mrecommend NOT IN (SELECT custid FROM custinfo cs1 WITH(NOLOCK)
@@ -43,24 +43,26 @@ PRINT 'Status'
 -- Update if exists
 UPDATE T 
 		SET bitmapIsDisabled = CASE
-									WHEN C.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+									WHEN CI.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
 									ELSE (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
 								END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
 			, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
 				
 FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
 	INNER JOIN #tblCust_member C ON C.custid = T.custid
+	INNER JOIN custInfo CI WITH (NOLOCK) ON CI.custid = C.custid
 
 -- Insert new	
 INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
 SELECT	c.custid
 		, CASE	
-				WHEN C.DisableVirtualSports = 0 THEN dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
+				WHEN CI.DisableVirtualSports = 0 THEN dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 				ELSE dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1) 
 		END AS bitmapIsDisabled
 				
 		, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden
 FROM #tblCust_member C
+	INNER JOIN custInfo CI WITH (NOLOCK) ON CI.custid = C.custid
 WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T (NOLOCK) WHERE t.custid = c.custid)
 
 PRINT 'Betting Limit'
