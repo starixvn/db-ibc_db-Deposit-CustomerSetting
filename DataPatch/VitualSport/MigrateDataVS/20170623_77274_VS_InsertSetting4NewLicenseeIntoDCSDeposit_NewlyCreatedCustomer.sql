@@ -13,10 +13,10 @@ DECLARE @max_custid INT, @srecommend INT,  @currency INT ,@SportType INT = 180,@
 SELECT   @max_custid= xxx ---input maxcustid
 
 SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
-CREATE TABLE #tblCust_member (custid INT,roleid INT) 
+CREATE TABLE #tblCust_member (custid INT PRIMARY KEY) 
 
-INSERT INTO #tblCust_member (custid,roleid)			
-SELECT ci.custid,roleid
+INSERT INTO #tblCust_member (custid)			
+SELECT ci.custid
 FROM custInfo CI WITH(NOLOCK)
 	INNER JOIN Dep_CustSuper CS WITH(NOLOCK) ON ci.srecommend = cs.custid
 WHERE ci.mrecommend NOT IN (SELECT custid FROM custinfo cs1 WITH(NOLOCK)
