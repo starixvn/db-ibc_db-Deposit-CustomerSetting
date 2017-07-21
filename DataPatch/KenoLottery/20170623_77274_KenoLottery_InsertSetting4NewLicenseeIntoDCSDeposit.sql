@@ -34,7 +34,6 @@ BEGIN
 	
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 
-		OR dbo.f_CheckRepTable('Dep_ProductBetSetting') = 0
 			
 	   )
 		RETURN
@@ -50,7 +49,7 @@ BEGIN
 	
 	-- For PT param
 	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 85
+	, @SuperPT SMALLINT = 90
 	-- For StakelevelGroup params
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit

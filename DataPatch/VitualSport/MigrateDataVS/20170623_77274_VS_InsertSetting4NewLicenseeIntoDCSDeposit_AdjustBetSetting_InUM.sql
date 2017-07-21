@@ -36,15 +36,7 @@ VALUES
 	(185,1231,'maxpermatch185'),
 	(186,1220,'maxpermatch186')
 
-CREATE TABLE #tblCust (custid INT, roleid INT
-							, maxpermatch180 MONEY
-							, maxpermatch181 MONEY
-							, maxpermatch182 MONEY
-							, maxpermatch183 MONEY
-							, maxpermatch184 MONEY
-							, maxpermatch185 MONEY
-							, maxpermatch186 MONEY
-						)
+CREATE TABLE #tblCust (custid INT, roleid INT)
 
 
 
@@ -73,8 +65,8 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	INSERT INTO #tblCust (custid,roleid, maxpermatch180, maxpermatch181 , maxpermatch182,  maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186 )			
-	SELECT custid,roleid, maxpermatch180, maxpermatch181 , maxpermatch182,  maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186 
+	INSERT INTO #tblCust (custid,roleid )			
+	SELECT custid,roleid
 	FROM custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
@@ -86,17 +78,18 @@ BEGIN
 		, maxbet = cs.maxbet
 		, maxpermatch = a.maxpermatch
 	FROM Dep_CustBetSetting_Agent cbs WITH (ROWLOCK,UPDLOCK) 
+		INNER JOIN custInfo C WITH (NOLOCK) ON cbs.CustID = C.custid
 		INNER JOIN #tblCust CI WITH (NOLOCK) ON cbs.CustID = ci.custid 
 		INNER JOIN Dep_CustSetting3rd cs WITH(NOLOCK) ON cbs.CustID = cs.custid AND cbs.SportType = cs.sporttype AND cbs.BetType = cs.bettype
 		INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON  cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
 		CROSS APPLY( VALUES
-				('maxpermatch180',ci.maxpermatch180),
-				('maxpermatch181',ci.maxpermatch181),
-				('maxpermatch182',ci.maxpermatch182),
-				('maxpermatch183',ci.maxpermatch183),
-				('maxpermatch184',ci.maxpermatch184),
-				('maxpermatch185',ci.maxpermatch185),
-				('maxpermatch186',ci.maxpermatch186)
+				('maxpermatch180',C.maxpermatch180),
+				('maxpermatch181',C.maxpermatch181),
+				('maxpermatch182',C.maxpermatch182),
+				('maxpermatch183',C.maxpermatch183),
+				('maxpermatch184',C.maxpermatch184),
+				('maxpermatch185',C.maxpermatch185),
+				('maxpermatch186',C.maxpermatch186)
 		 ) AS A(columnname, maxpermatch)
 	   
 	   INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = s.SportType AND dest.BetType = s.BetType
@@ -110,17 +103,18 @@ BEGIN
 		, maxpermatch = a.maxpermatch
 	
 	FROM Dep_CustBetSetting_Member cbs WITH (ROWLOCK,UPDLOCK) 
+		INNER JOIN custInfo C WITH (NOLOCK) ON cbs.CustID = C.custid
 		INNER JOIN Dep_CustSetting3rd cs WITH(NOLOCK) ON cbs.CustID = cs.custid AND cbs.SportType = cs.sporttype AND cbs.BetType = cs.bettype
 		INNER JOIN #tblCust CI WITH (NOLOCK) ON cbs.CustID = ci.custid 
 		INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON  cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
 		CROSS APPLY( VALUES
-				('maxpermatch180',ci.maxpermatch180),
-				('maxpermatch181',ci.maxpermatch181),
-				('maxpermatch182',ci.maxpermatch182),
-				('maxpermatch183',ci.maxpermatch183),
-				('maxpermatch184',ci.maxpermatch184),
-				('maxpermatch185',ci.maxpermatch185),
-				('maxpermatch186',ci.maxpermatch186)
+				('maxpermatch180',C.maxpermatch180),
+				('maxpermatch181',C.maxpermatch181),
+				('maxpermatch182',C.maxpermatch182),
+				('maxpermatch183',C.maxpermatch183),
+				('maxpermatch184',C.maxpermatch184),
+				('maxpermatch185',C.maxpermatch185),
+				('maxpermatch186',C.maxpermatch186)
 		 ) AS A(columnname, maxpermatch)
 	   
 	   INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = s.SportType AND dest.BetType = s.BetType

@@ -58,19 +58,10 @@ BEGIN
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
-	CREATE TABLE #tblCust (custid INT, roleid INT
-							, maxpermatch180 MONEY
-							, maxpermatch181 MONEY
-							, maxpermatch182 MONEY
-							, maxpermatch183 MONEY
-							, maxpermatch184 MONEY
-							, maxpermatch185 MONEY
-							, maxpermatch186 MONEY
-							, DisableVirtualSports BIT
-						)
+	CREATE TABLE #tblCust (custid INT,roleID INT)
 
-	INSERT INTO #tblCust (custid,roleid, maxpermatch180, maxpermatch181 , maxpermatch182,  maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186,DisableVirtualSports )			
-	SELECT custid,roleid, maxpermatch180, maxpermatch181 , maxpermatch182,  maxpermatch183, maxpermatch184, maxpermatch185, maxpermatch186, DisableVirtualSports 
+	INSERT INTO #tblCust (custid,roleID)			
+	SELECT custid,roleID
 	FROM custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
@@ -153,13 +144,15 @@ BEGIN
 				
 		UPDATE T 
 				SET bitmapIsDisabled = CASE 
-											WHEN C.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+											WHEN CI.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
 											ELSE (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
 										END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
 				, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
 			
 		FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
 			INNER JOIN #tblCust C ON C.custid = T.custid
+			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
+			
 		 	
 		
 		-- Insert new	
@@ -167,12 +160,13 @@ BEGIN
 		SELECT	c.custid
 				
 				, CASE 
-						WHEN C.DisableVirtualSports = 0 THEN dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
+						WHEN CI.DisableVirtualSports = 0 THEN dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 						ELSE dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1) 
 				 END AS bitmapIsDisabled
 				
 				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden
 		FROM #tblCust C
+			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T (NOLOCK) WHERE t.custid = c.custid)
 		
 	END	
@@ -196,41 +190,43 @@ BEGIN
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, a.maxpermatch					 
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
-			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
+			INNER JOIN CustInfo C WITH (NOLOCK) ON cs.custid = c.custid
+			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
 			CROSS APPLY( VALUES
-					('maxpermatch180',ci.maxpermatch180),
-					('maxpermatch181',ci.maxpermatch181),
-					('maxpermatch182',ci.maxpermatch182),
-					('maxpermatch183',ci.maxpermatch183),
-					('maxpermatch184',ci.maxpermatch184),
-					('maxpermatch185',ci.maxpermatch185),
-					('maxpermatch186',ci.maxpermatch186)
+					('maxpermatch180',c.maxpermatch180),
+					('maxpermatch181',c.maxpermatch181),
+					('maxpermatch182',c.maxpermatch182),
+					('maxpermatch183',c.maxpermatch183),
+					('maxpermatch184',c.maxpermatch184),
+					('maxpermatch185',c.maxpermatch185),
+					('maxpermatch186',c.maxpermatch186)
              ) AS A(columnname, maxpermatch)
            
            INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = s.SportType AND dest.BetType = s.BetType
     
-		WHERE ci.roleid IN (2,3,4)
+		WHERE c.roleid IN (2,3,4)
 		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, a.maxpermatch					 
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN CustInfo C WITH (NOLOCK) ON cs.custid = c.custid
 			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
 			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.bettype = dest.BetType AND cs.sporttype = dest.SportType
 			CROSS APPLY( VALUES
-					('maxpermatch180',ci.maxpermatch180),
-					('maxpermatch181',ci.maxpermatch181),
-					('maxpermatch182',ci.maxpermatch182),
-					('maxpermatch183',ci.maxpermatch183),
-					('maxpermatch184',ci.maxpermatch184),
-					('maxpermatch185',ci.maxpermatch185),
-					('maxpermatch186',ci.maxpermatch186)
+					('maxpermatch180',c.maxpermatch180),
+					('maxpermatch181',c.maxpermatch181),
+					('maxpermatch182',c.maxpermatch182),
+					('maxpermatch183',c.maxpermatch183),
+					('maxpermatch184',c.maxpermatch184),
+					('maxpermatch185',c.maxpermatch185),
+					('maxpermatch186',c.maxpermatch186)
              ) AS A(columnname, maxpermatch)
            
            INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = s.SportType AND dest.BetType = s.BetType
     
-		WHERE ci.roleid = 1			
+		WHERE c.roleid = 1			
 		
 	END
 
