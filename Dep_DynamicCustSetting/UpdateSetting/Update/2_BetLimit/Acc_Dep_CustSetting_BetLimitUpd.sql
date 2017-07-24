@@ -423,7 +423,7 @@ BEGIN
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 						, @CustID			= @CustID
-						, @ActionID			= 384
+						, @ActionID			= 2046
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
@@ -431,7 +431,7 @@ BEGIN
 	BEGIN CATCH
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 						, @CustID			= @CustID
-						, @ActionID			= 384
+						, @ActionID			= 2046
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
