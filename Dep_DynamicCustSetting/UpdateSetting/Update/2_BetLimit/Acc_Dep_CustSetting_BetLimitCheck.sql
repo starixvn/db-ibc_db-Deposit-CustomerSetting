@@ -17,7 +17,7 @@ AS
 	Original:
 
 	Revision:
-		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274] 
 		
 	Param's Explanation:
 	• @BetLimit:
@@ -527,10 +527,10 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitCheck] TO [bodbadminNet]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbDownlineNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitCheck] TO [bodbDownlineNet]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbExtAccNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitCheck] TO [bodbExtAccNet]
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustSetting_BetLimitCheck] TO [bodbLicenseeNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitCheck] TO [bodbLicenseeNet]

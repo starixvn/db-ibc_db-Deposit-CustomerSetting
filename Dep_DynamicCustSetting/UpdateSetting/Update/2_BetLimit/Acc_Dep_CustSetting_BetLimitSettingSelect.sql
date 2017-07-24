@@ -56,24 +56,7 @@ BEGIN
 			WHERE bl.custid = @CustID
 		END
 		
-		ELSE IF @RoleID IN (2,3)
-		BEGIN
-			SELECT ft.SportType  
-				, ft.BetType  
-				, bl.MinBet  
-				, bl.MaxBet  
-				, bl.MaxPerMatch  
-				, sbl.minbet MinBetMin  
-				, sbl.maxbet AS MaxBetMax  
-				, sbl.maxpermatch AS MaxPerMatchMax
-			FROM #SportBettypeFilter ft 
-				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @UplineID  
-			WHERE bl.custid = @CustID
-			
-			
-		END
-		ELSE IF @RoleID = 1
+		ELSE IF @RoleID = 3
 		BEGIN
 			SELECT ft.SportType  
 				, ft.BetType  
@@ -84,9 +67,53 @@ BEGIN
 				, sbl.maxbet AS MaxBetMax  
 				, sbl.maxpermatch AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
-				INNER JOIN dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @UplineID  
+				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid = @srecommend
 			WHERE bl.custid = @CustID
+			
+		END
+		ELSE IF @RoleID = 2
+		BEGIN
+			SELECT ft.SportType  
+				, ft.BetType  
+				, bl.MinBet  
+				, bl.MaxBet  
+				, bl.MaxPerMatch  
+				, MIN(sbl.minbet) AS MinBetMin  
+				, MAX(sbl.maxbet) AS MaxBetMax  
+				, MIN(sbl.maxpermatch) AS MaxPerMatchMax
+			FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid IN (@srecommend,@mrecommend)  
+			WHERE bl.custid = @CustID
+			GROUP BY ft.SportType  
+					, ft.BetType  
+					, bl.MinBet  
+					, bl.MaxBet  
+					, bl.MaxPerMatch
+			
+			
+		END
+		
+		ELSE IF @RoleID = 1
+		BEGIN
+			SELECT ft.SportType  
+				, ft.BetType  
+				, bl.MinBet  
+				, bl.MaxBet  
+				, bl.MaxPerMatch  
+				, MIN(sbl.minbet) AS MinBetMin  
+				, MAX(sbl.maxbet) AS MaxBetMax  
+				, MIN(sbl.maxpermatch) AS MaxPerMatchMax
+			FROM #SportBettypeFilter ft 
+				INNER JOIN dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+				INNER JOIN dbo.Dep_CustBetSetting_Agent sbl WITH (NOLOCK)  ON ft.SportType = sbl.sporttype  AND ft.BetType = sbl.bettype AND sbl.custid IN (@srecommend,@mrecommend,@recommend)  
+			WHERE bl.custid = @CustID
+			GROUP BY ft.SportType  
+					, ft.BetType  
+					, bl.MinBet  
+					, bl.MaxBet  
+					, bl.MaxPerMatch
 		END
 	END
 	
