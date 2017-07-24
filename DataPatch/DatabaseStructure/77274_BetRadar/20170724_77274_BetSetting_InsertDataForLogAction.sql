@@ -19,7 +19,7 @@ VALUES (2046,3,'Acc_Dep_CustSetting_BetLimitUpd'
 
 GO
 INSERT INTO LogAction (ActionID,SPName,ActionNameEN,ActionNameCH,ActionNameCS,ActionNameJP,ActionNameTH,ActionNameKO,IsInternal,ActionNameVI)
-VALUES (1163,'Acc_Dep_CustSetting_DisableStatUpd'
+VALUES (2214,'Acc_Dep_CustSetting_DisableStatUpd'
 		,'Update status for DCS Product for Deposit'
 		,'Update status for DCS Product for Deposit'
 		,'Update status for DCS Product for Deposit'
@@ -29,3 +29,5 @@ VALUES (1163,'Acc_Dep_CustSetting_DisableStatUpd'
 		,0
 		,'Update status for DCS Product for Deposit'
 		)
+
+
