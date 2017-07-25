@@ -3,31 +3,34 @@
 	Task: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	DB: DBLOG / bodb_CustomerLog
 */
+
 USE bodb_CustomerLog
+GO
+DELETE FROM LogAction WHERE SPName IN ('Acc_Dep_CustSetting_BetLimitUpd','Acc_Dep_CustSetting_DisableStatUpd') AND ActionID IN (2046,2214)
 GO
 INSERT INTO LogAction (ActionID,ActionTypeID,SPName,ActionNameEN,ActionNameCH,ActionNameCS,ActionNameJP,ActionNameTH,ActionNameKO,IsInternal,ActionNameVI)
 VALUES (2046,3,'Acc_Dep_CustSetting_BetLimitUpd'
-		,'Update Bet Settings for Deposit Customers for DCS Products'
-		,'Update Bet Settings for Deposit Customers for DCS Products'
-		,'Update Bet Settings for Deposit Customers for DCS Products'
-		,'Update Bet Settings for Deposit Customers for DCS Products'
-		,'Update Bet Settings for Deposit Customers for DCS Products'
-		,'Update Bet Settings for Deposit Customers for DCS Products'
+		,'Update Other Products Bet Setting for customers'
+		,'Update Other Products Bet Setting for customers'
+		,'Update Other Products Bet Setting for customers'
+		,'Update Other Products Bet Setting for customers'
+		,'Update Other Products Bet Setting for customers'
+		,'Update Other Products Bet Setting for customers'
 		,0
-		,'Update Bet Settings for Deposit Customers for DCS Products'
+		,'Update Other Products Bet Setting for customers'
 		)
 
 GO
 INSERT INTO LogAction (ActionID,SPName,ActionNameEN,ActionNameCH,ActionNameCS,ActionNameJP,ActionNameTH,ActionNameKO,IsInternal,ActionNameVI)
-VALUES (2214,'Acc_Dep_CustSetting_DisableStatUpd'
-		,'Update status for DCS Product for Deposit'
-		,'Update status for DCS Product for Deposit'
-		,'Update status for DCS Product for Deposit'
-		,'Update status for DCS Product for Deposit'
-		,'Update status for DCS Product for Deposit'
-		,'Update status for DCS Product for Deposit'
+VALUES (1163,'Acc_Dep_CustSetting_DisableStatUpd'
+		,'Enabled/Disabled Other Products status'
+		,'Enabled/Disabled Other Products status'
+		,'Enabled/Disabled Other Products status'
+		,'Enabled/Disabled Other Products status'
+		,'Enabled/Disabled Other Products status'
+		,'Enabled/Disabled Other Products status'
 		,0
-		,'Update status for DCS Product for Deposit'
+		,'Enabled/Disabled Other Products status'
 		)
 
 
