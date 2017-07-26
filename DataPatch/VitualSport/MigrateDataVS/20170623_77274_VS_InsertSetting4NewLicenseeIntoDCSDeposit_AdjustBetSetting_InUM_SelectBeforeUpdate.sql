@@ -23,7 +23,7 @@ CREATE TABLE #tblCust_member (custid INT,SportType SMALLINT, Bettype SMALLINT,  
 -------------------------------------DATA PREPARATION --------------------------------------------	
 INSERT INTO #tblCust_SMA (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, A.maxpermatch
-FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
+FROM Dep_CustBetSetting_Agent CBS WITH (NOLOCK) 
 	INNER JOIN custInfo C WITH (NOLOCK) ON C.custid = CBS.CustID
 	INNER JOIN Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 	CROSS APPLY( VALUES
@@ -41,7 +41,7 @@ WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> 
 
 INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, A.maxpermatch
-FROM Dep_CustBetSetting_Member CBS WITH (ROWLOCK,UPDLOCK) 
+FROM Dep_CustBetSetting_Member CBS WITH (NOLOCK) 
 	INNER JOIN custInfo C WITH (NOLOCK) ON C.custid = CBS.CustID 
 	INNER JOIN Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 	CROSS APPLY( VALUES

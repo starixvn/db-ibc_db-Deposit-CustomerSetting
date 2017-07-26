@@ -14,7 +14,7 @@ CREATE TABLE #tblCust_member (custid INT,SportType SMALLINT, Bettype SMALLINT,  
 -------------------------------------DATA PREPARATION --------------------------------------------	
 INSERT INTO #tblCust_SMA (custid,SportType,Bettype, minbet, maxbet, maxpermatch180 )			
 SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, CI.maxpermatch180
-FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
+FROM Dep_CustBetSetting_Agent CBS WITH (NOLOCK) 
 	INNER JOIN custInfo CI WITH (NOLOCK) ON CBS.CustID = ci.custid 
 	INNER JOIN Dep_CustSetting3rd cs WITH(NOLOCK) ON CBS.CustID = CS.custid AND CS.sporttype = @SportType_VSSoccer
 WHERE cbs.SportType IN (190,191,199)
@@ -22,7 +22,7 @@ WHERE cbs.SportType IN (190,191,199)
 
 INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch180 )			
 SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, CI.maxpermatch180
-FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
+FROM Dep_CustBetSetting_Agent CBS WITH (NOLOCK) 
 	INNER JOIN custInfo CI WITH (NOLOCK) ON CBS.CustID = ci.custid 
 	INNER JOIN Dep_CustSetting3rd cs WITH(NOLOCK) ON CBS.CustID = CS.custid AND CS.sporttype = @SportType_VSSoccer
 WHERE cbs.SportType IN (190,191,199)
