@@ -22,7 +22,7 @@ CREATE TABLE #tblCust (custid INT, roleid INT)
 INSERT INTO #tblCust (custid,roleid )			
 SELECT custid,roleid
 FROM custInfo WITH(NOLOCK)
-WHERE custid IN (2) --GET LIST FROM LOG CHANGED
+WHERE custid IN (xxx) --GET LIST FROM LOG CHANGED
 
 -- SMA Adjust
 UPDATE cbs

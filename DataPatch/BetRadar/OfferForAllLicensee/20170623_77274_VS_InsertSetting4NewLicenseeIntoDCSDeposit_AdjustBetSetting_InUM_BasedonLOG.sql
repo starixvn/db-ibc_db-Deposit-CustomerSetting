@@ -12,7 +12,7 @@ CREATE TABLE #tblCust (custid INT PRIMARY KEY, roleid INT, maxpermatch180 MONEY	
 INSERT INTO #tblCust (custid,roleid, maxpermatch180)			
 SELECT custid,roleid, maxpermatch180
 FROM custInfo WITH(NOLOCK)
-WHERE custid IN (2) -- GET LIST based on LOG CHANGED
+WHERE custid IN (xxx) -- GET LIST based on LOG CHANGED
 
 -- SMA Adjust
 UPDATE cbs
