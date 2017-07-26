@@ -1,7 +1,7 @@
 /*
-	Created: 20170324@Helen
-	Task: insert the Setting of Voidbridge of new licensees into the DCS database.
-	Redmine: https://redmine.nexcel.vn/issues/73801
+	Created: 20170725@Helen
+	Task: insert the Setting of Keno Lottery of new licensees into the DCS database.
+	Redmine: https://redmine.nexcel.vn/issues/77927
 */ 
 -- BEGIN STEP 1: Deploy this SP at DBCUST.CustDB, Run only in the FIRST running
 ------------------------------------------------------
@@ -16,8 +16,8 @@ AS
 BEGIN	
 	SET NOCOUNT ON
 	
-	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'SITDBCUST') RETURN	-- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'SITDBCUST') RETURN -- run at DBCUST only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'DB233') RETURN	-- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'DB233') RETURN -- run at DBCUST only
 	
 	
 	IF (dbo.f_CheckRepTable('Dep_CustSettingMode') = 0
@@ -204,13 +204,13 @@ WHERE PSD.SportType IN (220)
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
 DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
-SELECT  @max_custid= xxx ---input maxcustid
+SELECT  @max_custid= 26625179 ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo','Athena000')
+	AND site in ('spondemo')
 	AND custid <= @max_custid
 	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND currency = 20
@@ -258,9 +258,9 @@ GO
 -------------------------------------------------
 DECLARE @ProductID INT = 28
 
-CREATE TABLE #Supers_Offered (custid int)
+--CREATE TABLE #Supers_Offered (custid int)
 
-INSERT INTO #Supers_Offered (custid)
+--INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
 FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
@@ -271,13 +271,13 @@ WHERE PSD.SportType IN (220)
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
 DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
-SELECT  @max_custid= xxx ---input maxcustid
+SELECT  @max_custid= 26625179 ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('spondemo','Athena000')
+	AND site in ('spondemo')
 	AND custid <= @max_custid
 	--AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND currency = 20
@@ -319,4 +319,3 @@ GO
 
 -- END STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-

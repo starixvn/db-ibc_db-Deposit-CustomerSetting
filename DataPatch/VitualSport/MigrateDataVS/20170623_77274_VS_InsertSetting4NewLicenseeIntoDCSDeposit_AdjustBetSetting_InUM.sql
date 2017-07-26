@@ -13,17 +13,11 @@ FROM Dep_ProductSetting ps WITH (NOLOCK)
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE ps.ProductID= @ProductID AND PS.SettingType = @SettingType
 	
-CREATE TABLE #supers (custid INT,site VARCHAR(200),isfinished BIT DEFAULT(0))
-INSERT INTO #supers(custid,site)
-SELECT custid,Site
+CREATE TABLE #supers (custid INT,isfinished BIT DEFAULT(0))
+INSERT INTO #supers(custid)
+SELECT custid
 FROM  Dep_CustSuper WITH(NOLOCK) 
-WHERE  site in (
-					-- Licensee fee 0.85
-					'12Bet','asiabet88','mansion88','alog','spondemo','TLC','SunGame','MayFair','Zzun88','Bodog','Vwin','Macaubet','VCasia','Aoncash','Bwinning','ITCBet','i668bet','Avia','W88','9bet','67BET','3star88','SLC88','Bet2day','OLE777','Winner99','88Macao','Boma365','Hbobet','Mgm88','Saloncs','Salon365','Ae88','Hengcai88','Senibet','Allbetclub','Happy1668','AG','M8bola','THBET','9Club','XTD3','28BET','HONBET','Q8bola','BE7','iBET','MarvelDH','DAYWIN','GooBet','ISC888','KaiHao','Liga','RYB95','SHABAING','NBCbet','666VIP','Inbet','HonorW','DEWA','IBO','YHY1980','Empire555','Unobet','GamingSoft','Newhonbet','21Cash','DUOLE','Hecbet','DBP','Asianbet','Baobet','HL8','Abcasino','TGO','Lexibet','King10','365online','CQ11','Uwin18','Bolanation','KhmerG','Gampag','IONclub','Sun988','Mayayule','HuangMa','Webet138','webet88','Emmyo','BigGaming','Boying','GDC','MrCat','TCL','Aragon88','PKbet','VCBA','Taipanbet','Indowin','FLC','BetStar','Dawoo','Ty777','Kasking88','ABB688','Star99','BuyWin','Uwoniwin','Sunrise','Citibet','BE7TH','Starnet','12betco','sbcbet','Brown888','CGame','IGPTech','TGame','LZYQ','May88','Swin','LongBao','UN168','PanguGame','K8VN','ECLBET','Lucky88','GPIGAME','818Bet','SSSSEA'
-					-- Licensee fee 0.875
-					, 'HAIFA'
-					)
-		AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+WHERE  custid in (1) -- get srecomeend based on list change setting from userlog_runsp
 
 CREATE TABLE #SportTypeCheck (SportType SMALLINT, BetType SMALLINT, MaxPerMatchName VARCHAR(200), PRIMARY KEY (SportType,Bettype) )	
 INSERT INTO #SportTypeCheck 

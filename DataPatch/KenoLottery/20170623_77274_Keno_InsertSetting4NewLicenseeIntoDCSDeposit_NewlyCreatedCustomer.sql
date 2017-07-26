@@ -5,11 +5,11 @@
 	DB: DBCUST/CUSTDB
 */  
 ------------------------------------------------------
-DECLARE @ProductID INT = 27 -- VS
+DECLARE @ProductID INT = 28 -- VS
 
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
-DECLARE @max_custid INT, @srecommend INT,  @currency int ,@SportType INT = 180,@BetType INT = 1201, @bitmapOrder INT
+DECLARE @max_custid INT, @srecommend INT,  @currency int ,@SportType INT = 220, @bitmapOrder INT
 SELECT   @max_custid= xxx ---input maxcustid
 
 SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
