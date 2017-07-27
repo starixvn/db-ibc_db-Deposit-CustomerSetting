@@ -50,7 +50,7 @@ BEGIN
 	
 	-- For PT param
 	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 87.5
+	, @SuperPT SMALLMONEY = 87.5
 	-- For StakelevelGroup params
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
