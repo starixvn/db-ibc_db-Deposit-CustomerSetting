@@ -268,6 +268,7 @@ BEGIN
 	DROP TABLE #ProductSettingDetail_tmp
 	DROP TABLE #tblCust
 	DROP TABLE #SportTypeCheck
+	DROP TABLE #CustSetting3rd
 
 END	
 

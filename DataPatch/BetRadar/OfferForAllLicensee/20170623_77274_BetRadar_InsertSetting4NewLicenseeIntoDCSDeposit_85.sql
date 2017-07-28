@@ -50,7 +50,7 @@ BEGIN
 	
 	-- For PT param
 	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 85
+	, @SuperPT SMALLMONEY = 85
 	-- For StakelevelGroup params
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
@@ -164,28 +164,48 @@ BEGIN
 	END	
 	
 	-- Betting Limit
+	CREATE TABLE  #CustSetting3rd (custID INT, SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, PRIMARY KEY (CustID,sporttype))
+	
 	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 2) AND @IsBetLimit = 1
 	BEGIN
 		
+		INSERT INTO #CustSetting3rd (custID,SportType,BetType,minbet,maxbet)
+		SELECT ci.custid, cs.sporttype,cs.BetType,  cs.minbet, cs.maxbet
+		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
+			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+		WHERE cs.bettype = 1201 AND sporttype = 180
+		
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid AND cs.sporttype = 180
+		FROM #CustSetting3rd cs 
+		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
            CROSS JOIN #ProductSettingDetail_tmp psd
 		WHERE ci.roleid IN (2,3,4) AND psd.SettingType = 2
 		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid AND cs.sporttype = 180
-           CROSS JOIN #ProductSettingDetail_tmp psd
-		WHERE ci.roleid = 1 AND psd.SettingType = 2
+		SELECT ci.custid, 190, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
+		FROM #CustSetting3rd cs 
+		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+		WHERE ci.roleid = 1 
+		
+		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, 191, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
+		FROM #CustSetting3rd cs 
+		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+		WHERE ci.roleid = 1 
+		
+		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, 199, 2799, cs.minbet, cs.maxbet, ci.maxpermatch180					 
+		FROM #CustSetting3rd cs 
+		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+		WHERE ci.roleid = 1 
 		
 	END
 
 	DROP TABLE #ProductSettingDetail_tmp
 	DROP TABLE #tblCust
+	DROP TABLE #CustSetting3rd
 
 END	
 
