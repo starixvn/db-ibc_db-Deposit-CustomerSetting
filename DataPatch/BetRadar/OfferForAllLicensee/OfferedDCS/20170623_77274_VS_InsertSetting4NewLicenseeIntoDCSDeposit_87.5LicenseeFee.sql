@@ -6,10 +6,12 @@
 */ 
 -- BEGIN STEP 1: Deploy this SP at DBCUST.CustDB, Run only in the FIRST running
 ------------------------------------------------------
+
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
  	 @srecommend INT
-	, @max_custid INT 
-	, @target VARCHAR(20) 
+	, @currency INT
+	, @max_custid INT
+	, @target VARCHAR(20)
 	
 AS
 BEGIN	
@@ -124,24 +126,25 @@ BEGIN
 			FROM #tblCust ci
 				CROSS JOIN #ProductSettingDetail_tmp psd 
 			WHERE psd.SettingType = 1 
-				AND ci.roleid = 2
+				AND ci.roleid = 2					
+			
 		END
 	END	
 
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
 	CREATE TABLE  #CustSetting3rd (custID INT, SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, PRIMARY KEY (CustID,sporttype))
-
+	
 	CREATE TABLE #SportTypeCheck (SportType SMALLINT, MaxPerMatchName VARCHAR(200), PRIMARY KEY (SportType) )	
-		INSERT INTO #SportTypeCheck 
-		VALUES
-			(180,'maxpermatch180'),
-			(181,'maxpermatch181'),
-			(182,'maxpermatch182'),
-			(183,'maxpermatch183'),
-			(184,'maxpermatch184'),
-			(185,'maxpermatch185'),
-			(186,'maxpermatch186')
-
+	INSERT INTO #SportTypeCheck 
+	VALUES
+		(180,'maxpermatch180'),
+		(181,'maxpermatch181'),
+		(182,'maxpermatch182'),
+		(183,'maxpermatch183'),
+		(184,'maxpermatch184'),
+		(185,'maxpermatch185'),
+		(186,'maxpermatch186')
+			
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
 
@@ -162,35 +165,27 @@ BEGIN
 		WHERE  CI.ID >= @StartRow AND CI.ID <= @StopRow
 		*/
 		
-		
-		-- 0. PT Group for Members
-		INSERT INTO Dep_CustSettingMode (CustID,IsGroupedPT)
-		SELECT c.custid,1
-		FROM #tblCust C
-		WHERE C.roleid = 1 AND C.ID >= @StartRow AND C.ID <= @StopRow						
-
 		-- 1. Product Status
-		-- Insert new	
-		INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
-		SELECT	c.custid
-				
-				, CASE 
-						WHEN CI.DisableVirtualSports = 0 THEN 0xF7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-						ELSE 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-				 END AS bitmapIsDisabled
-				
-				, 0xF7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF  AS bitmapIsHidden
-		FROM #tblCust C
+		UPDATE T 
+				SET bitmapIsDisabled = CASE 
+											WHEN CI.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+											ELSE (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
+										END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
+				, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+			
+		FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
+			INNER JOIN #tblCust C ON C.custid = T.custid
 			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
-		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
+		WHERE  C.ID >= @StartRow AND C.ID <= @StopRow
 		
 		-- 2. Betting Limit
-		
+					
 		INSERT INTO #CustSetting3rd (custID,SportType,BetType,minbet,maxbet)
 		SELECT c.custid, cs.sporttype,cs.BetType,  cs.minbet, cs.maxbet
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
 			INNER JOIN #tblCust c WITH(NOLOCK) ON cs.CustID = c.custid 
 		WHERE cs.bettype IN (1201,1220,1231) AND C.ID >= @StartRow AND C.ID <= @StopRow	
+						
 		
 		-- SMA Level	
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
@@ -280,7 +275,7 @@ BEGIN
 	DROP TABLE #SportTypeCheck
 	DROP TABLE #CustSetting3rd
 
-END
+END	
 GO
 -- END STEP 1: DEPLOY THIS SP @ DBCUST.CustDB -------
 
