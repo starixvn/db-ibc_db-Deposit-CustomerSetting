@@ -289,7 +289,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType IN (180,181,182,183,184,185,186)
  
-CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
+CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0), IsOfferedDCS BIT DEFAULT (1))
 
 DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT 
 SELECT  @max_custid= xxx ---input maxcustid
