@@ -56,8 +56,6 @@ BEGIN
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
-	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
-	
 	DECLARE @bitmapEnabled BINARY(32), @bitmapDisabled BINARY(32)
 	
 	-- Calculating bitmap value 
