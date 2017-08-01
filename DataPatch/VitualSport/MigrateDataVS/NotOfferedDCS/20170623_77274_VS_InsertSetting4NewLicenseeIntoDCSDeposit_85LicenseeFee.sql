@@ -56,6 +56,12 @@ BEGIN
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
+	DECLARE @bitmapEnabled BINARY(32), @bitmapDisabled BINARY(32)
+	
+	-- Calculating bitmap value 
+	SET @bitmapEnabled =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
+	SET @bitmapDisabled = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
+	
 	CREATE TABLE #tblCust (custid INT PRIMARY KEY,roleID INT, ID INT IDENTITY (1,1))
 
 	INSERT INTO #tblCust (custid,roleID)			
@@ -178,11 +184,11 @@ BEGIN
 		SELECT	c.custid
 				
 				, CASE 
-						WHEN CI.DisableVirtualSports = 0 THEN 0xF7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-						ELSE 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+						WHEN CI.DisableVirtualSports = 0 THEN @bitmapEnabled
+						ELSE @bitmapDisabled
 				 END AS bitmapIsDisabled
 				
-				, 0xF7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF  AS bitmapIsHidden
+				, @bitmapDisabled  AS bitmapIsHidden -- Always Hide = 0 for VS
 		FROM #tblCust C
 			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
