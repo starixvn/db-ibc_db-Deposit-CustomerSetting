@@ -206,6 +206,11 @@ BEGIN
 		FROM #tblCust ci WITH(NOLOCK) 
         WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
         
+        INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, 199, 2799, @Minbet,@Maxbet,@MaxPerMatch
+		FROM #tblCust ci WITH(NOLOCK) 
+        WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
+        
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, 190, 2701,  @Minbet,@Maxbet,@MaxPerMatch					 
@@ -217,6 +222,11 @@ BEGIN
 		FROM #tblCust ci WITH(NOLOCK) 
         WHERE ci.roleid = 1 AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
+		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, 199, 2799, @Minbet,@Maxbet,@MaxPerMatch
+		FROM #tblCust ci WITH(NOLOCK) 
+        WHERE ci.roleid = 1 AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
+        
 		-- Starting to process data --
 		IF @StopRow = @MaxRow BREAK
 		
