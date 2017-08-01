@@ -33,6 +33,8 @@ DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 1000, @StopRow INT
 -- SMA Adjust
 SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_SMA)
 
+IF @MaxRow IS NULL RETURN
+
 IF @MaxRow <= 1000
 BEGIN
 	UPDATE cbs
