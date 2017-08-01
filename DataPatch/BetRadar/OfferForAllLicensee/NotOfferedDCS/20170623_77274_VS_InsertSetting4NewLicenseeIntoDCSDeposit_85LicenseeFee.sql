@@ -178,7 +178,7 @@ BEGIN
 						ELSE @bitmapDisabled
 				 END AS bitmapIsDisabled
 				
-				, @bitmapEnabled  AS bitmapIsHidden -- Always Hide = 0 for VS
+				, @bitmapEnabled  AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
 		FROM #tblCust C
 			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
@@ -241,7 +241,7 @@ GO
 ------------------------------------------------------	
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
-DECLARE @ProductID INT = 5
+DECLARE @ProductID INT = 27
 
 CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
@@ -250,7 +250,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType IN (180,181,182,183,184,185,186)
+WHERE PSD.SportType IN (190,191,199)
  
 CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 
@@ -305,7 +305,7 @@ GO
 ---
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 5
+DECLARE @ProductID INT = 27
 
 CREATE TABLE #Supers_Offered (custid INT)
 
@@ -315,7 +315,7 @@ FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType IN (180,181,182,183,184,185,186)
+WHERE PSD.SportType IN (190,191,199)
  
 CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 
