@@ -62,55 +62,55 @@ DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 1000, @StopRow INT
 -- SMA Adjust
 SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_SMA)
 
-IF @MaxRow IS NULL RETURN
-
-IF @MaxRow <= 1000
+IF @MaxRow > 0
 BEGIN
-	UPDATE cbs
-		SET minbet = CI.minbet
-		, maxbet = CI.maxbet
-		, maxpermatch = CI.maxpermatch
-	FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
-		INNER JOIN #tblCust_SMA CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
-END
-ELSE -- RUN Batch by Batch, maximum of 1000 rows for each batch to make sure it's not affect to replication
-BEGIN
-	IF @Threshold >= @MaxRow
-		SET @Threshold = @MaxRow
-
-	SET @StopRow = @Threshold
-
-	IF EXISTS( SELECT 1 FROM #tblCust_SMA)
+	IF @MaxRow <= 1000
 	BEGIN
-		WHILE (1=1)
-		BEGIN
-			
-			/* FOR debug
-			PRINT @StartRow
-			PRINT @StopRow
-			*/
-			
-			UPDATE cbs
-				SET minbet = CI.minbet
-					, maxbet = CI.maxbet
-					, maxpermatch = CI.maxpermatch
-			FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
-				INNER JOIN #tblCust_SMA CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
-			WHERE  CI.ID >= @StartRow AND CI.ID <= @StopRow
-			
-			IF @StopRow = @MaxRow BREAK
-			
-			SET @StartRow = @StopRow + 1
-			
-			SET @StopRow =  @StopRow + 1 + @Threshold
-			
-			IF @StopRow >= @MaxRow
-				SET @StopRow = @MaxRow
-			
-		END
-	END	
-END
+		UPDATE cbs
+			SET minbet = CI.minbet
+			, maxbet = CI.maxbet
+			, maxpermatch = CI.maxpermatch
+		FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
+			INNER JOIN #tblCust_SMA CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
+	END
+	ELSE -- RUN Batch by Batch, maximum of 1000 rows for each batch to make sure it's not affect to replication
+	BEGIN
+		IF @Threshold >= @MaxRow
+			SET @Threshold = @MaxRow
 
+		SET @StopRow = @Threshold
+
+		IF EXISTS( SELECT 1 FROM #tblCust_SMA)
+		BEGIN
+			WHILE (1=1)
+			BEGIN
+				
+				/* FOR debug
+				PRINT @StartRow
+				PRINT @StopRow
+				*/
+				
+				UPDATE cbs
+					SET minbet = CI.minbet
+						, maxbet = CI.maxbet
+						, maxpermatch = CI.maxpermatch
+				FROM Dep_CustBetSetting_Agent CBS WITH (ROWLOCK,UPDLOCK) 
+					INNER JOIN #tblCust_SMA CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
+				WHERE  CI.ID >= @StartRow AND CI.ID <= @StopRow
+				
+				IF @StopRow = @MaxRow BREAK
+				
+				SET @StartRow = @StopRow + 1
+				
+				SET @StopRow =  @StopRow + 1 + @Threshold
+				
+				IF @StopRow >= @MaxRow
+					SET @StopRow = @MaxRow
+				
+			END
+		END	
+	END
+END
 -- Member Adjust
 SET @StartRow  = 1
 
@@ -118,52 +118,55 @@ SET @Threshold  = 1000
 
 SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member)
 
-IF @MaxRow <= 1000
+IF @MaxRow > 0
 BEGIN
-	UPDATE cbs
-		SET minbet = CI.minbet
-			, maxbet = CI.maxbet
-			, maxpermatch = CI.maxpermatch
-	FROM Dep_CustBetSetting_Member CBS WITH (ROWLOCK,UPDLOCK) 
-		INNER JOIN #tblCust_member CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
-END
-ELSE -- RUN Batch by Batch, maximum of 1000 rows for each batch to make sure it's not affect to replication
-BEGIN
-	IF @Threshold >= @MaxRow
-		SET @Threshold = @MaxRow
 
-	SET @StopRow = @Threshold
-
-	IF EXISTS( SELECT 1 FROM #tblCust_member)
+	IF @MaxRow <= 1000
 	BEGIN
-		WHILE (1=1)
-		BEGIN
-			/* FOR debug
-			PRINT @StartRow
-			PRINT @StopRow
-			*/
-			
-			UPDATE cbs
-				SET minbet = CI.minbet
+		UPDATE cbs
+			SET minbet = CI.minbet
 				, maxbet = CI.maxbet
 				, maxpermatch = CI.maxpermatch
-			FROM Dep_CustBetSetting_Member CBS WITH (ROWLOCK,UPDLOCK) 
-				INNER JOIN #tblCust_member CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
-			WHERE  CI.ID >= @StartRow AND CI.ID <= @StopRow
-			
-			IF @StopRow = @MaxRow BREAK
-			
-			SET @StartRow = @StopRow + 1
-			
-			SET @StopRow =  @StopRow + 1 + @Threshold
-			
-			IF @StopRow >= @MaxRow
-				SET @StopRow = @MaxRow
-			
-		END
-	END	
-END
-	
+		FROM Dep_CustBetSetting_Member CBS WITH (ROWLOCK,UPDLOCK) 
+			INNER JOIN #tblCust_member CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
+	END
+	ELSE -- RUN Batch by Batch, maximum of 1000 rows for each batch to make sure it's not affect to replication
+	BEGIN
+		IF @Threshold >= @MaxRow
+			SET @Threshold = @MaxRow
+
+		SET @StopRow = @Threshold
+
+		IF EXISTS( SELECT 1 FROM #tblCust_member)
+		BEGIN
+			WHILE (1=1)
+			BEGIN
+				/* FOR debug
+				PRINT @StartRow
+				PRINT @StopRow
+				*/
+				
+				UPDATE cbs
+					SET minbet = CI.minbet
+					, maxbet = CI.maxbet
+					, maxpermatch = CI.maxpermatch
+				FROM Dep_CustBetSetting_Member CBS WITH (ROWLOCK,UPDLOCK) 
+					INNER JOIN #tblCust_member CI WITH (NOLOCK) ON CI.custid = CBS.CustID AND CBS.SportType = CI.SportType AND CBS.BetType = CI.Bettype
+				WHERE  CI.ID >= @StartRow AND CI.ID <= @StopRow
+				
+				IF @StopRow = @MaxRow BREAK
+				
+				SET @StartRow = @StopRow + 1
+				
+				SET @StopRow =  @StopRow + 1 + @Threshold
+				
+				IF @StopRow >= @MaxRow
+					SET @StopRow = @MaxRow
+				
+			END
+		END	
+	END
+END	
 DROP TABLE #tblCust_SMA
 DROP TABLE #tblCust_member
 DROP TABLE #SportTypeCheck
