@@ -256,7 +256,7 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('368Cash','K8sports')
+	AND site in ('368Cash')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
@@ -286,7 +286,7 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
+	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
 	WAITFOR DELAY '00:00:00.280'			
 END	
@@ -321,7 +321,7 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper WITH (NOLOCK) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('368Cash','K8sports')
+	AND site in ('368Cash')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
@@ -351,7 +351,7 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
+	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend,  @max_custid=@max_custid,@target = 'DBCUST'
 		
 	WAITFOR DELAY '00:00:00.280'			
 END	
