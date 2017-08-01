@@ -137,6 +137,8 @@ BEGIN
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
 
+	IF @MaxRow IS NULL RETURN
+	
 	IF @Threshold >= @MaxRow
 		SET @Threshold = @MaxRow
 
