@@ -9,6 +9,7 @@
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
  	 @srecommend INT
 	, @max_custid INT 
+	, @currency INT
 	, @target VARCHAR(20) 
 	
 AS
@@ -53,9 +54,24 @@ BEGIN
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
 	, @IsBetLimit BIT = 1
-	
+	, @Minbet MONEY
+	, @Maxbet MONEY
+	, @MaxPerMatch MONEY
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
+	
+	IF @currency = 66
+	BEGIN	
+		SET @Minbet = 10
+		SET @Maxbet = 3000
+		SET @MaxPerMatch = 10000
+	END
+	ELSE IF @currency = 51
+	BEGIN
+		SET @Minbet = 50000
+		SET @Maxbet = 10000000
+		SET @MaxPerMatch = 50000000
+	END	
 	
 	CREATE TABLE #tblCust (custid INT, roleid INT
 							, maxpermatch180 MONEY
@@ -131,7 +147,7 @@ BEGIN
 				AND ci.roleid = 2
 		END
 	END	
-
+	
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
 	CREATE TABLE  #CustSetting3rd (custID INT, SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, PRIMARY KEY (CustID,sporttype))
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
@@ -179,37 +195,27 @@ BEGIN
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
 		
 		-- 2. Betting Limit
-		INSERT INTO #CustSetting3rd (custID,SportType,BetType,minbet,maxbet)
-		SELECT ci.custid, cs.sporttype,cs.BetType,  cs.minbet, cs.maxbet
-		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
-			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE cs.bettype = 1201 AND sporttype = 180 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
+				
+		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+		SELECT ci.custid, 190, 2701,  @Minbet,@Maxbet,@MaxPerMatch					 
+		FROM #tblCust ci WITH(NOLOCK) 
+        WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
-           CROSS JOIN #ProductSettingDetail_tmp psd
-		WHERE ci.roleid IN (2,3,4) AND psd.SettingType = 2 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
-		
+		SELECT ci.custid, 191, 2701, @Minbet,@Maxbet,@MaxPerMatch
+		FROM #tblCust ci WITH(NOLOCK) 
+        WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
+        
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 190, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE ci.roleid = 1 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
+		SELECT ci.custid, 190, 2701,  @Minbet,@Maxbet,@MaxPerMatch					 
+		FROM #tblCust ci WITH(NOLOCK) 
+        WHERE ci.roleid = 1 AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 191, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE ci.roleid = 1 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
-		
-		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 199, 2799, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE ci.roleid = 1 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
+		SELECT ci.custid, 191, 2701, @Minbet,@Maxbet,@MaxPerMatch
+		FROM #tblCust ci WITH(NOLOCK) 
+        WHERE ci.roleid = 1 AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
 		-- Starting to process data --
 		IF @StopRow = @MaxRow BREAK
@@ -220,8 +226,6 @@ BEGIN
 		
 		IF @StopRow >= @MaxRow
 			SET @StopRow = @MaxRow
-		
-		TRUNCATE TABLE #CustSetting3rd
 		
 	END
 
@@ -256,9 +260,9 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('KeenOcean')
+	AND site = 'KeenOcean'
 	AND custid <= @max_custid
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency IN (66,51)
 
 
 -- For deployer info
@@ -321,10 +325,9 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper WITH (NOLOCK) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('KeenOcean')
+	AND site = 'KeenOcean'
 	AND custid <= @max_custid
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
-
+	AND currency IN (66,51)
 
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0
