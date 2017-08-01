@@ -164,7 +164,6 @@ BEGIN
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, dest.sporttype, dest.bettype, 1,100,1000
 		FROM #tblCust ci WITH(NOLOCK) 
-			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
 			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
 		WHERE ci.roleid IN (4,3,2) AND dest.SettingType = 2
 		
@@ -172,7 +171,6 @@ BEGIN
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, dest.sporttype, dest.bettype, 1,100,1000
 		FROM #tblCust ci WITH(NOLOCK) 
-			INNER JOIN custInfo c WITH(NOLOCK) ON ci.CustID = c.custid
 			CROSS JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) 
 		WHERE ci.roleid = 1	AND dest.SettingType = 2		
 		
