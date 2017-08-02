@@ -56,11 +56,11 @@ BEGIN
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
-	DECLARE @bitmapEnabled BINARY(32), @bitmapDisabled BINARY(32)
+	DECLARE @bitmap_0 BINARY(32), @bitmap_1 BINARY(32)
 	
 	-- Calculating bitmap value 
-	SET @bitmapEnabled =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
-	SET @bitmapDisabled = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
+	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
+	SET @bitmap_1 = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
 	
 	CREATE TABLE #tblCust (custid INT PRIMARY KEY,roleID INT, ID INT IDENTITY (1,1))
 
@@ -152,7 +152,11 @@ BEGIN
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
 	
 	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
-	IF @MaxRow IS NULL RETURN
+	IF @MaxRow IS NULL 
+	BEGIN
+		PRINT 'There is no SMA, members under this srecommend in the table custinfo. RETURN'
+		RETURN
+	END
 		
 	IF @Threshold >= @MaxRow
 		SET @Threshold = @MaxRow
@@ -184,11 +188,11 @@ BEGIN
 		SELECT	c.custid
 				
 				, CASE 
-						WHEN CI.DisableVirtualSports = 0 THEN @bitmapEnabled
-						ELSE @bitmapDisabled
+						WHEN CI.DisableVirtualSports = 0 THEN @bitmap_0
+						ELSE @bitmap_1
 				 END AS bitmapIsDisabled
 				
-				, @bitmapEnabled  AS bitmapIsHidden -- Always Hide = 0 for VS
+				, @bitmap_0  AS bitmapIsHidden -- Always Hide = 0 for VS
 		FROM #tblCust C
 			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
@@ -282,6 +286,8 @@ BEGIN
 		
 		TRUNCATE TABLE #CustSetting3rd
 		
+		WAITFOR DELAY '00:00:00.200'
+		
 	END
 
 	DROP TABLE #ProductSettingDetail_tmp
@@ -348,7 +354,7 @@ BEGIN
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
-	WAITFOR DELAY '00:00:00.280'			
+	--WAITFOR DELAY '00:00:00.280'			
 END	
 DROP TABLE #supers
 DROP TABLE #Supers_Offered		
@@ -413,7 +419,7 @@ BEGIN
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend,  @max_custid=@max_custid,@target = 'DBCUST'
 		
-	WAITFOR DELAY '00:00:00.280'			
+	--WAITFOR DELAY '00:00:00.280'			
 END	
 
 DROP TABLE #supers	
