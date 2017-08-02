@@ -145,10 +145,10 @@ BEGIN
 	-- Product Status for SMA
 	UPDATE T 
 			SET bitmapIsDisabled = CASE 
-										WHEN CI.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
-										ELSE (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
+										WHEN CI.DisableVirtualSports = 0 THEN (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+										ELSE (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
 									END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
-			, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+			, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
 		
 	FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 		INNER JOIN #tblCust_sma C WITH (NOLOCK) ON C.custid = T.custid
@@ -157,7 +157,7 @@ BEGIN
 	-- Betting Limit for SMA
 	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-	FROM dbo.CustSetting3rd cs WITH (NOLOCK)
+	FROM dbo.Dep_CustSetting3rd cs WITH (NOLOCK)
 	   INNER JOIN #tblCust_sma ci WITH(NOLOCK) ON cs.CustID = ci.custid
        CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 	WHERE psd.SettingType = 2 
