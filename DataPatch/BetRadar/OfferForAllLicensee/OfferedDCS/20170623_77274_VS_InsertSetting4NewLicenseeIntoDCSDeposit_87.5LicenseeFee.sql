@@ -58,12 +58,12 @@ BEGIN
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
-	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY, ID INT IDENTITY (1,1))
+	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY,maxpermatch180 MONEY, ID INT IDENTITY (1,1))
 	
 	CREATE TABLE #tblCust_sma (custid INT PRIMARY KEY,maxpermatch180 MONEY, roleID INT)
 
-	INSERT INTO #tblCust_member (custid)			
-	SELECT custid
+	INSERT INTO #tblCust_member (custid,maxpermatch180)			
+	SELECT custid,maxpermatch180
 	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
@@ -157,15 +157,15 @@ BEGIN
 	-- Betting Limit for SMA
 	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-	FROM dbo.CustSetting3rd cs WITH (NOLOCK)
-	   INNER JOIN #tblCust_sma ci WITH(NOLOCK) ON cs.CustID = ci.custid
+	FROM dbo.Dep_CustSetting3rd cs WITH (NOLOCK)
+	   INNER JOIN #tblCust_sma ci WITH(NOLOCK) ON cs.CustID = ci.custid AND cs.sporttype = 180
        CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 	WHERE psd.SettingType = 2 
 
 	---------------------------------- END OF PROCESSING FOR SMA ONLY---------------------------------------------------------------
 			
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
-	CREATE TABLE  #CustSetting3rd (custID INT, SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, PRIMARY KEY (CustID,sporttype))
+	CREATE TABLE  #CustSetting3rd (custID INT, minbet MONEY, maxbet MONEY,maxpermatch180 MONEY, PRIMARY KEY (CustID))
 	
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member)
@@ -208,27 +208,24 @@ BEGIN
 		WHERE  C.ID >= @StartRow AND C.ID <= @StopRow
 		
 		-- 2. Betting Limit
-		INSERT INTO #CustSetting3rd (custID,SportType,BetType,minbet,maxbet)
-		SELECT ci.custid, cs.sporttype,cs.BetType,  cs.minbet, cs.maxbet
+		INSERT INTO #CustSetting3rd (custID,minbet,maxbet,maxpermatch180)
+		SELECT ci.custid, cs.minbet, cs.maxbet, ci.maxpermatch180
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
 			INNER JOIN #tblCust_member ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		WHERE cs.bettype = 1201 AND sporttype = 180 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
 				
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 190, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
+		SELECT cs.custid, 190, 2701, cs.minbet, cs.maxbet, cs.maxpermatch180					 
 		FROM #CustSetting3rd cs WITH (NOLOCK)
-		   INNER JOIN custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 191, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
+		SELECT cs.custid, 191, 2701, cs.minbet, cs.maxbet, cs.maxpermatch180					 
 		FROM #CustSetting3rd cs WITH (NOLOCK)
-		   INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 199, 2799, cs.minbet, cs.maxbet, ci.maxpermatch180					 
+		SELECT cs.custid, 199, 2799, cs.minbet, cs.maxbet, cs.maxpermatch180					 
 		FROM #CustSetting3rd cs WITH (NOLOCK)
-		   INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		
 		-- Starting to process data --
 		IF @StopRow = @MaxRow BREAK
