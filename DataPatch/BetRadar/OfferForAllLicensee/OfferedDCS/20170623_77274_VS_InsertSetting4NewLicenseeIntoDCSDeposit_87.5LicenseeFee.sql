@@ -141,7 +141,11 @@ BEGIN
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
 	
 	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
-	IF @MaxRow IS NULL RETURN
+	IF @MaxRow IS NULL 
+	BEGIN
+		PRINT 'There is no SMA, members under this srecommend in the table custinfo. RETURN'
+		RETURN
+	END
 	
 	IF @Threshold >= @MaxRow
 		SET @Threshold = @MaxRow
@@ -220,6 +224,7 @@ BEGIN
 		
 		TRUNCATE TABLE #CustSetting3rd
 		
+		WAITFOR DELAY '00:00:00.200'
 	END
 
 	DROP TABLE #ProductSettingDetail_tmp
@@ -285,7 +290,7 @@ BEGIN
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
-	WAITFOR DELAY '00:00:00.280'			
+	--WAITFOR DELAY '00:00:00.280'			
 END	
 DROP TABLE #supers
 DROP TABLE #Supers_Offered		
@@ -350,7 +355,7 @@ BEGIN
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
 		
-	WAITFOR DELAY '00:00:00.280'			
+	--WAITFOR DELAY '00:00:00.280'			
 END	
 
 DROP TABLE #supers	

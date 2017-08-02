@@ -59,11 +59,11 @@ BEGIN
 	, @MaxPerMatch MONEY
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
-	DECLARE @bitmapEnabled BINARY(32), @bitmapDisabled BINARY(32)
+	DECLARE @bitmap_0 BINARY(32), @bitmap_1 BINARY(32)
 	
 	-- Calculating bitmap value 
-	SET @bitmapEnabled =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
-	SET @bitmapDisabled = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
+	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
+	SET @bitmap_1 = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
 	
 	IF @currency = 66
 	BEGIN	
@@ -77,14 +77,18 @@ BEGIN
 		SET @Maxbet = 10000000
 		SET @MaxPerMatch = 50000000
 	END	
+	ELSE IF @currency = 20
+	BEGIN
+		SET @Minbet = 1
+		SET @Maxbet = 100
+		SET @MaxPerMatch = 1000
+	END
 	
-	CREATE TABLE #tblCust (custid INT, roleid INT
-							, maxpermatch180 MONEY
-							, ID INT IDENTITY (1,1)
+	CREATE TABLE #tblCust (custid INT, roleid INT, ID INT IDENTITY (1,1)
 						)
 
-	INSERT INTO #tblCust (custid,roleid, maxpermatch180)			
-	SELECT custid,roleid, maxpermatch180
+	INSERT INTO #tblCust (custid,roleid)			
+	SELECT custid,roleid
 	FROM custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
@@ -159,7 +163,11 @@ BEGIN
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
 
 	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
-	IF @MaxRow IS NULL RETURN
+	IF @MaxRow IS NULL 
+	BEGIN
+		PRINT 'There is no SMA, members under this srecommend in the table custinfo. RETURN'
+		RETURN
+	END
 	
 	IF @Threshold >= @MaxRow
 		SET @Threshold = @MaxRow
@@ -191,11 +199,11 @@ BEGIN
 		SELECT	c.custid
 				
 				, CASE 
-						WHEN CI.DisableVirtualSports = 0 THEN @bitmapEnabled
-						ELSE @bitmapDisabled
+						WHEN CI.DisableVirtualSports = 0 THEN @bitmap_0
+						ELSE @bitmap_1
 				 END AS bitmapIsDisabled
 				
-				, @bitmapDisabled  AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
+				, @bitmap_0  AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
 		FROM #tblCust C
 			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
@@ -203,19 +211,16 @@ BEGIN
 		-- 2. Betting Limit
 				
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 190, 2701,  @Minbet,@Maxbet,@MaxPerMatch					 
+		SELECT ci.custid, t.SportType, t.BetType,  @Minbet,@Maxbet,@MaxPerMatch					 
 		FROM #tblCust ci WITH(NOLOCK) 
+			CROSS APPLY (SELECT 190 SportType, 2701 AS BetType
+						 UNION ALL 
+						 SELECT 191, 2701
+						 UNION ALL
+						 SELECT 199, 2799
+						) AS T
         WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
-		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 191, 2701, @Minbet,@Maxbet,@MaxPerMatch
-		FROM #tblCust ci WITH(NOLOCK) 
-        WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
-        
-        INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 199, 2799, @Minbet,@Maxbet,@MaxPerMatch
-		FROM #tblCust ci WITH(NOLOCK) 
-        WHERE ci.roleid IN (2,3,4) AND  CI.ID >= @StartRow AND CI.ID <= @StopRow
         
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
@@ -242,6 +247,8 @@ BEGIN
 		
 		IF @StopRow >= @MaxRow
 			SET @StopRow = @MaxRow
+		
+		WAITFOR DELAY '00:00:00.200'
 		
 	END
 
@@ -278,7 +285,7 @@ FROM  Dep_CustSuper with(nolock)
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND site = 'KeenOcean'
 	AND custid <= @max_custid
-	AND currency IN (66,51)
+	AND currency IN (66,51,20)
 
 
 -- For deployer info
@@ -308,7 +315,7 @@ BEGIN
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
-	WAITFOR DELAY '00:00:00.280'			
+	--WAITFOR DELAY '00:00:00.280'			
 END	
 DROP TABLE #supers
 DROP TABLE #Supers_Offered		
@@ -343,7 +350,7 @@ FROM  Dep_CustSuper WITH (NOLOCK)
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND site = 'KeenOcean'
 	AND custid <= @max_custid
-	AND currency IN (66,51)
+	AND currency IN (66,51,20)
 
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0
@@ -372,7 +379,7 @@ BEGIN
 	
 	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
 		
-	WAITFOR DELAY '00:00:00.280'			
+	--WAITFOR DELAY '00:00:00.280'			
 END	
 
 DROP TABLE #supers	
