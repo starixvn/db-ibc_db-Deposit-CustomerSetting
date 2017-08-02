@@ -115,8 +115,8 @@ BEGIN
 			,CASE WHEN ci.roleid = 4 THEN @SuperPT ELSE 0 END AS SuperPT
 			,CASE WHEN ci.roleid IN (3,4) THEN @SuperPT ELSE 0 END AS MasterPT
 			,CASE WHEN ci.roleid IN (2,4) THEN @SuperPT ELSE 0 END AS AgentPT
-		FROM #tblCust ci
-			CROSS JOIN #ProductSettingDetail_tmp psd 
+		FROM #tblCust ci WITH (NOLOCK)
+			CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 		WHERE psd.SettingType = 1 
 			AND ci.roleid IN (2,3,4)
 			
@@ -127,8 +127,8 @@ BEGIN
 			--Insert new PT Group
 			INSERT INTO Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
 			SELECT ci.custid,psd.SportType,psd.BetType,0,0,0,@SuperPT
-			FROM #tblCust ci
-				CROSS JOIN #ProductSettingDetail_tmp psd 
+			FROM #tblCust ci WITH (NOLOCK)
+				CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 			WHERE psd.SettingType = 1 
 				AND ci.roleid = 2
 		END
@@ -149,7 +149,7 @@ BEGIN
 			(186,'maxpermatch186')
 
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
-	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
+	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust WITH (NOLOCK))
 	
 	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
@@ -179,7 +179,7 @@ BEGIN
 		-- 0. PT Group for Members
 		INSERT INTO Dep_CustSettingMode (CustID,IsGroupedPT)
 		SELECT c.custid,1
-		FROM #tblCust C
+		FROM #tblCust C WITH (NOLOCK)
 		WHERE C.roleid = 1 AND C.ID >= @StartRow AND C.ID <= @StopRow						
 
 		-- 1. Product Status
@@ -221,7 +221,7 @@ BEGIN
 					('maxpermatch185',CI.maxpermatch185),
 					('maxpermatch186',CI.maxpermatch186)
              ) AS A(columnname, maxpermatch)
-            INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND dest.SportType = S.SportType 
+            INNER JOIN #SportTypeCheck S WITH (NOLOCK) ON S.MaxPerMatchName = A.columnname AND dest.SportType = S.SportType 
 		WHERE tbc.roleid IN (2,3,4)
 		
 		--Member Level
@@ -320,12 +320,11 @@ SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
-FROM  Dep_CustSuper with(nolock) 
+FROM  Dep_CustSuper WITH(NOLOCK) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND site in ('asiabet88', 'masio88', 'alog', 'TLC', 'SuGame', 'MayFair', 'Bodog', 'Vwi', 'VCasia', 'Bwiig', 'yq355', 'i668bet', 'Avia', 'W88', '67BET', '3star88', 'SLC88', 'Bet2day', 'OLE777', 'Wier99', 'XTD1', 'XTD2', '88Macao', 'Boma365', 'Hbobet', 'Wawabet', 'Mgm88', 'Salocs', 'Salo365', 'Ae88', 'Hegcai88', 'Seibet', 'BlueOcea', 'Happy1668', 'AG', 'THBET', 'Lambo777', '9Club', 'XTD3', '28BET', 'HOBET', 'iBET', 'MarvelDH', 'DAYWI', 'KaiHao', 'RYB95', 'SHABAIG', 'Deebet', '666VIP', 'Ibet', 'HoorW', 'DEWA', 'IBO', 'YHY1980', 'Empire555', 'GamigSoft', 'Citibet', 'ewhobet', '21Cash', 'DUOLE', 'Hecbet', 'DBP', 'Asiabet', 'Baobet', 'HL8', 'Abcasio', 'TGO', 'Lexibet', 'Kig10', 'Staret', '365olie', 'CQ11', 'Uwi18', '12betco', 'KhmerG', 'Gampag', 'IOclub', 'Su988', 'Mayayule', 'HuagMa', 'webet88', 'BigGamig', 'Boyig', 'GDC', 'MrCat', 'CGame', 'PKbet', 'VCBA', 'Leo', 'FLC', 'IGPTech', 'BetStar', 'TGame', 'Dawoo', 'Ty777', 'Kaskig88', 'LZYQ', 'Star99', 'BuyWi', 'Surise', 'Swi', 'LogBao', 'PaguGame', 'K8V', 'ECLBET', 'Lucky88', 'GPIGAME', '818Bet', 'SSSSEA', 'Heave', 'GOAB88', 'Bobo88' )
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
-
 
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0

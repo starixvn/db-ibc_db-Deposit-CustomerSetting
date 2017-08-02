@@ -122,8 +122,8 @@ BEGIN
 			--Insert new PT Group
 			INSERT INTO Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
 			SELECT ci.custid,psd.SportType,psd.BetType,0,0,0,@SuperPT
-			FROM #tblCust ci
-				CROSS JOIN #ProductSettingDetail_tmp psd 
+			FROM #tblCust ci WITH (NOLOCK)
+				CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 			WHERE psd.SettingType = 1 
 				AND ci.roleid = 2					
 			
@@ -145,7 +145,7 @@ BEGIN
 		(186,'maxpermatch186')
 			
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
-	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
+	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust WITH (NOLOCK))
 	
 	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
@@ -196,7 +196,7 @@ BEGIN
 		-- SMA Level	
 		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT CS.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, A.maxpermatch
-		FROM #CustSetting3rd cs 
+		FROM #CustSetting3rd cs WITH (NOLOCK)
 			INNER JOIN #tblCust tbc WITH(NOLOCK) ON cs.CustID = tbc.custid
 			INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.sporttype = dest.SportType
 			INNER JOIN custInfo CI WITH (NOLOCK) ON cs.custID = CI.custid
@@ -243,7 +243,7 @@ BEGIN
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT CS.custid, cs.sporttype, cs.bettype, cs.minbet, cs.maxbet, maxpermatch184
-		FROM #CustSetting3rd cs 
+		FROM #CustSetting3rd cs WITH (NOLOCK)
 			INNER JOIN #tblCust tbc WITH(NOLOCK) ON cs.CustID = tbc.custid
 			INNER JOIN custInfo CI WITH (NOLOCK) ON cs.custID = CI.custid
 		WHERE tbc.roleID = 1 AND cs.SportType = 184
