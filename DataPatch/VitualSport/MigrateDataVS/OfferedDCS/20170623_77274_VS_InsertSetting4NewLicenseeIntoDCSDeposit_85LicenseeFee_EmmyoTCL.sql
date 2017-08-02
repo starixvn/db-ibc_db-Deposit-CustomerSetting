@@ -145,7 +145,7 @@ BEGIN
 		(186,'maxpermatch186')
 			
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
-	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
+	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust WITH (NOLOCK))
 	
 	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
