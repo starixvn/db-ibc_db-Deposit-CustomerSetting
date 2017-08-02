@@ -53,6 +53,9 @@ BEGIN
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
 	, @IsBetLimit BIT = 1
+	, @Minbet MONEY = 0
+	, @Maxbet MONEY = 0
+	, @MaxPerMatch MONEY = 0
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
@@ -62,20 +65,30 @@ BEGIN
 	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 	SET @bitmap_1 = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
 	
-	CREATE TABLE #tblCust (custid INT, roleid INT
-							, maxpermatch180 MONEY
-							, ID INT IDENTITY (1,1)
-						)
+	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY, ID INT IDENTITY (1,1))
+	
+	CREATE TABLE #tblCust_sma (custid INT PRIMARY KEY,roleID INT)
 
-	INSERT INTO #tblCust (custid,roleid, maxpermatch180)			
-	SELECT custid,roleid, maxpermatch180
+	INSERT INTO #tblCust_member (custid)			
+	SELECT custid
 	FROM custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
 							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
 		AND custid <= @max_custid
+		AND roleid = 1
+	
+	INSERT INTO #tblCust_sma (custid,roleID)			
+	SELECT custid,roleID
+	FROM custInfo WITH(NOLOCK)
+	WHERE srecommend =@srecommend
+		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
+							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
+		AND custid <= @max_custid
+		AND roleid IN (2,3,4)
 		
-	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust (ID)							   
+		
+	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust_member (ID)							   
 	
 	-- Licensee profile list
 	IF NOT EXISTS (SELECT 1 
@@ -95,7 +108,8 @@ BEGIN
 		INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 	WHERE lds.CustID =@srecommend AND ps.ProductID= @ProductID
 
-	-- PT processing
+	---------------------------------- START PROCESSING FOR SMA ONLY---------------------------------------------------------------
+	-- PT processing for SMA
 
 	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 1) AND @IsPTSetting = 1
 	BEGIN
@@ -118,34 +132,46 @@ BEGIN
 			,CASE WHEN ci.roleid = 4 THEN @SuperPT ELSE 0 END AS SuperPT
 			,CASE WHEN ci.roleid IN (3,4) THEN @SuperPT ELSE 0 END AS MasterPT
 			,CASE WHEN ci.roleid IN (2,4) THEN @SuperPT ELSE 0 END AS AgentPT
-		FROM #tblCust ci
+		FROM #tblCust_sma ci
 			CROSS JOIN #ProductSettingDetail_tmp psd 
 		WHERE psd.SettingType = 1 
 			AND ci.roleid IN (2,3,4)
 			
 		-- For Member
-		IF EXISTS (SELECT 1 FROM #tblCust WHERE roleid = 1)
+		IF EXISTS (SELECT 1 FROM #tblCust_sma WHERE roleid = 2)
 		BEGIN
 			
 			--Insert new PT Group
 			INSERT INTO Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
 			SELECT ci.custid,psd.SportType,psd.BetType,0,0,0,@SuperPT
-			FROM #tblCust ci
+			FROM #tblCust_sma ci
 				CROSS JOIN #ProductSettingDetail_tmp psd 
 			WHERE psd.SettingType = 1 
 				AND ci.roleid = 2
 		END
 	END	
-
+	-- Product Status for SMA
+	INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
+	SELECT	c.custid
+			, @bitmap_0 AS bitmapIsDisabled
+			, @bitmap_0 AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
+	FROM #tblCust_sma C
+		
+	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
+	SELECT ci.custid, psd.sporttype, psd.bettype, @Minbet,@Maxbet,@MaxPerMatch					 
+	FROM #tblCust_sma ci WITH (NOLOCK)
+       CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
+	WHERE psd.SettingType = 2 
+	---------------------------------- END OF PROCESSING FOR SMA ONLY---------------------------------------------------------------
+		
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
-	CREATE TABLE  #CustSetting3rd (custID INT, SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY, PRIMARY KEY (CustID,sporttype))
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
-	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust)
+	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member)
 
-	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
+	-- Return there is no members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
 	BEGIN
-		PRINT 'There is no SMA, members under this srecommend in the table custinfo. RETURN'
+		PRINT 'there is no members under this srecommend in the table custinfo. RETURN'
 		RETURN
 	END
 	
@@ -170,8 +196,8 @@ BEGIN
 		-- 0. PT Group for Members
 		INSERT INTO Dep_CustSettingMode (CustID,IsGroupedPT)
 		SELECT c.custid,1
-		FROM #tblCust C
-		WHERE C.roleid = 1 AND C.ID >= @StartRow AND C.ID <= @StopRow						
+		FROM #tblCust_member C WITH (NOLOCK)
+		WHERE C.ID >= @StartRow AND C.ID <= @StopRow						
 
 		-- 1. Product Status
 		-- Insert new	
@@ -179,44 +205,25 @@ BEGIN
 		SELECT	c.custid
 				, @bitmap_0 AS bitmapIsDisabled
 				, @bitmap_0 AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
-		FROM #tblCust C
-			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
+		FROM #tblCust_member C WITH (NOLOCK)
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
 		
 		-- 2. Betting Limit
-		INSERT INTO #CustSetting3rd (custID,SportType,BetType,minbet,maxbet)
-		SELECT ci.custid, cs.sporttype,cs.BetType,  cs.minbet, cs.maxbet
-		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
-			INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE cs.bettype = 1201 AND sporttype = 180 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
-		
-		INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid
-           CROSS JOIN #ProductSettingDetail_tmp psd
-		WHERE ci.roleid IN (2,3,4) AND psd.SettingType = 2 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
-		
 		--Member Level
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 190, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE ci.roleid = 1 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
+		SELECT CI.custid, 190, 2701, @Minbet,@Maxbet,@MaxPerMatch					 
+		FROM #tblCust_member CI WITH (NOLOCK)
+		WHERE CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 191, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE ci.roleid = 1 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
-		
+		SELECT ci.custid, 191, 2701, @Minbet,@Maxbet,@MaxPerMatch						 
+		FROM #tblCust_member CI WITH (NOLOCK)
+		WHERE CI.ID >= @StartRow AND CI.ID <= @StopRow
+		   
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-		SELECT ci.custid, 199, 2799, cs.minbet, cs.maxbet, ci.maxpermatch180					 
-		FROM #CustSetting3rd cs 
-		   INNER JOIN #tblCust ci WITH(NOLOCK) ON cs.CustID = ci.custid 
-		WHERE ci.roleid = 1 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
-		
-		WAITFOR DELAY '00:00:00.200'
+		SELECT ci.custid, 199, 2799, @Minbet,@Maxbet,@MaxPerMatch					 
+		FROM #tblCust_member CI WITH (NOLOCK) 
+		WHERE CI.ID >= @StartRow AND CI.ID <= @StopRow
 		
 		-- Starting to process data --
 		IF @StopRow = @MaxRow BREAK
@@ -231,11 +238,13 @@ BEGIN
 		
 		TRUNCATE TABLE #CustSetting3rd
 		
+		WAITFOR DELAY '00:00:00.200'
 	END
-
+	---------------------------------- END OF BATCH BY BATCH PROCESSING ---------------------------------------------------------------
 	DROP TABLE #ProductSettingDetail_tmp
-	DROP TABLE #tblCust
-	DROP TABLE #CustSetting3rd
+	DROP TABLE #tblCust_member
+	DROP TABLE #tblCust_sma
+	
 
 END
 GO
@@ -257,7 +266,7 @@ WHERE PSD.SportType IN (190,191,199)
  
 CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT 
+DECLARE @max_custid INT, @srecommend INT, @site VARCHAR (50), @currency INT 
 SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
