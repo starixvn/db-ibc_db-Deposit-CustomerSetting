@@ -49,7 +49,7 @@ BEGIN
 	
 	-- For PT param
 	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 93
+	, @SuperPT SMALLINT = 85
 	-- For StakelevelGroup params
 	--, @IsStakeLevelGroup BIT = 1
 	-- For Betting Limit
