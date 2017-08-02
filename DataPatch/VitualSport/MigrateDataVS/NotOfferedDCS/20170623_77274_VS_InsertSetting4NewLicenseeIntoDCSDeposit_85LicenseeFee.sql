@@ -188,7 +188,7 @@ BEGIN
 						ELSE @bitmapDisabled
 				 END AS bitmapIsDisabled
 				
-				, @bitmapDisabled  AS bitmapIsHidden -- Always Hide = 0 for VS
+				, @bitmapEnabled  AS bitmapIsHidden -- Always Hide = 0 for VS
 		FROM #tblCust C
 			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
