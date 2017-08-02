@@ -328,7 +328,7 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('12Bet', 'spondemo', 'Zzun88', 'Macaubet', 'Aoncash', 'ITCBet', '9bet', 'Allbetclub', 'M8bola', 'Q8bola', 'BE7', 'GooBet', 'ISC888', 'Liga', 'NBCbet', 'Unobet', 'BE7TH', 'Bolanation', 'sbcbet', 'Webet138', 'Brown888', 'Aragon88', 'Taipanbet', 'Indowin', 'ABB688', 'May88', 'Uwoniwin', 'UN168')
+	AND site in ('12Bet', 'Zzun88', 'Macaubet', 'Aoncash', 'ITCBet', '9bet', 'Allbetclub', 'M8bola', 'Q8bola', 'BE7', 'GooBet', 'ISC888', 'Liga', 'NBCbet', 'Unobet', 'BE7TH', 'Bolanation', 'sbcbet', 'Webet138', 'Brown888', 'Aragon88', 'Taipanbet', 'Indowin', 'ABB688', 'May88', 'Uwoniwin', 'UN168')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
@@ -393,7 +393,7 @@ INSERT INTO #supers(custid,currency)
 SELECT custid,currency
 FROM  Dep_CustSuper WITH (NOLOCK) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND site in ('12Bet', 'spondemo', 'Zzun88', 'Macaubet', 'Aoncash', 'ITCBet', '9bet', 'Allbetclub', 'M8bola', 'Q8bola', 'BE7', 'GooBet', 'ISC888', 'Liga', 'NBCbet', 'Unobet', 'BE7TH', 'Bolanation', 'sbcbet', 'Webet138', 'Brown888', 'Aragon88', 'Taipanbet', 'Indowin', 'ABB688', 'May88', 'Uwoniwin', 'UN168')
+	AND site in ('12Bet', 'Zzun88', 'Macaubet', 'Aoncash', 'ITCBet', '9bet', 'Allbetclub', 'M8bola', 'Q8bola', 'BE7', 'GooBet', 'ISC888', 'Liga', 'NBCbet', 'Unobet', 'BE7TH', 'Bolanation', 'sbcbet', 'Webet138', 'Brown888', 'Aragon88', 'Taipanbet', 'Indowin', 'ABB688', 'May88', 'Uwoniwin', 'UN168')
 	AND custid <= @max_custid
 	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
