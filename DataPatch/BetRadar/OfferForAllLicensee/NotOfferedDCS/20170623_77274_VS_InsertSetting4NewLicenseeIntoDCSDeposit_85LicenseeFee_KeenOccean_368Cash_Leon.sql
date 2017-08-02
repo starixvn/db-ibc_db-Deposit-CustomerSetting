@@ -331,7 +331,8 @@ BEGIN
 	--WAITFOR DELAY '00:00:00.280'			
 END	
 DROP TABLE #supers
-DROP TABLE #Supers_Offered		
+DROP TABLE #Supers_Offered	
+DROP TABLE #Betsetting	
 GO		
 
 -- END STEP 2: Run this SP at replicated DB -----
@@ -418,6 +419,7 @@ END
 
 DROP TABLE #supers	
 DROP TABLE #Supers_Offered	
+DROP TABLE #Betsetting	
 GO		
 
 
