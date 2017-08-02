@@ -165,7 +165,7 @@ BEGIN
 	---------------------------------- END OF PROCESSING FOR SMA ONLY---------------------------------------------------------------
 			
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
-	CREATE TABLE  #CustSetting3rd (custID INT, SportType SMALLINT, BetType SMALLINT, minbet MONEY, maxbet MONEY,maxpermatch180 MONEY, PRIMARY KEY (CustID,sporttype))
+	CREATE TABLE  #CustSetting3rd (custID INT, minbet MONEY, maxbet MONEY,maxpermatch180 MONEY, PRIMARY KEY (CustID))
 	
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member)
@@ -208,8 +208,8 @@ BEGIN
 		WHERE  C.ID >= @StartRow AND C.ID <= @StopRow
 		
 		-- 2. Betting Limit
-		INSERT INTO #CustSetting3rd (custID,SportType,BetType,minbet,maxbet,maxpermatch180)
-		SELECT ci.custid, cs.sporttype,cs.BetType,  cs.minbet, cs.maxbet, ci.maxpermatch180
+		INSERT INTO #CustSetting3rd (custID,minbet,maxbet,maxpermatch180)
+		SELECT ci.custid, cs.minbet, cs.maxbet, ci.maxpermatch180
 		FROM dbo.Dep_CustSetting3rd cs WITH(NOLOCK)
 			INNER JOIN #tblCust_member ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		WHERE cs.bettype = 1201 AND sporttype = 180 AND CI.ID >= @StartRow AND CI.ID <= @StopRow
