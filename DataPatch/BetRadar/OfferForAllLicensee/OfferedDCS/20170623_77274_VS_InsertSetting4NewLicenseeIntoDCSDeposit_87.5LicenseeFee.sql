@@ -56,7 +56,7 @@ BEGIN
 	-- For Betting Limit
 	, @IsBetLimit BIT = 1
 	
-	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
+	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
 	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY, ID INT IDENTITY (1,1))
 	
@@ -64,7 +64,7 @@ BEGIN
 
 	INSERT INTO #tblCust_member (custid)			
 	SELECT custid
-	FROM custInfo WITH(NOLOCK)
+	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
 							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
@@ -73,7 +73,7 @@ BEGIN
 	
 	INSERT INTO #tblCust_sma (custid,roleID, maxpermatch180)			
 	SELECT custid,roleID, maxpermatch180
-	FROM custInfo WITH(NOLOCK)
+	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
 		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
 							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
@@ -84,8 +84,8 @@ BEGIN
 	
 	-- Licensee profile list
 	IF NOT EXISTS (SELECT 1 
-				   FROM Dep_LicenseeProductSetting lps WITH (NOLOCK)
-						INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lps.ProductSettingID = ps.ProductSettingID
+				   FROM dbo.Dep_LicenseeProductSetting lps WITH (NOLOCK)
+						INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lps.ProductSettingID = ps.ProductSettingID
 				   WHERE CustID = @srecommend AND ps.ProductID= @ProductID)
 	BEGIN
 		INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID)
@@ -95,9 +95,9 @@ BEGIN
 
 	SELECT ps.SettingType,psd.SportType,psd.BetType
 	INTO #ProductSettingDetail_tmp
-	FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
-		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID
-		INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
+	FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
+		INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID
+		INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 	WHERE lds.CustID =@srecommend AND ps.ProductID= @ProductID
 
 	---------------------------------- START PROCESSING FOR SMA ONLY---------------------------------------------------------------
@@ -152,7 +152,7 @@ BEGIN
 		
 	FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 		INNER JOIN #tblCust_sma C WITH (NOLOCK) ON C.custid = T.custid
-		INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
+		INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 	
 	-- Betting Limit for SMA
 	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
@@ -170,10 +170,10 @@ BEGIN
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member)
 	
-	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
+	-- Return in case there is members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
 	BEGIN
-		PRINT 'There is no SMA, members under this srecommend in the table custinfo. RETURN'
+		PRINT 'There is no members under this srecommend in the table custinfo. RETURN'
 		RETURN
 	END
 	
@@ -223,12 +223,12 @@ BEGIN
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, 191, 2701, cs.minbet, cs.maxbet, ci.maxpermatch180					 
 		FROM #CustSetting3rd cs WITH (NOLOCK)
-		   INNER JOIN custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+		   INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		
 		INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 		SELECT ci.custid, 199, 2799, cs.minbet, cs.maxbet, ci.maxpermatch180					 
 		FROM #CustSetting3rd cs WITH (NOLOCK)
-		   INNER JOIN custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
+		   INNER JOIN dbo.custInfo ci WITH(NOLOCK) ON cs.CustID = ci.custid 
 		
 		-- Starting to process data --
 		IF @StopRow = @MaxRow BREAK

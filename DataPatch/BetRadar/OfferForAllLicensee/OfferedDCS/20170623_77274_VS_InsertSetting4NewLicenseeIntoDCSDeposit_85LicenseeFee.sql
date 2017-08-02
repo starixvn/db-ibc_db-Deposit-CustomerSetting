@@ -170,10 +170,10 @@ BEGIN
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member)
 	
-	-- Return in case of bad data, there is no SMA,members under this srecommend in the table custinfo
+	-- Return in case there is no members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
 	BEGIN
-		PRINT 'There is no SMA, members under this srecommend in the table custinfo. RETURN'
+		PRINT 'There is No members under this srecommend in the table custinfo. RETURN'
 		RETURN
 	END
 	
@@ -197,10 +197,10 @@ BEGIN
 		-- 1. Product Status
 		UPDATE T 
 				SET bitmapIsDisabled = CASE 
-											WHEN CI.DisableVirtualSports = 0 THEN (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
-											ELSE (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
+											WHEN CI.DisableVirtualSports = 0 THEN (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+											ELSE (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
 										END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
-				, bitmapIsHidden = (SELECT * FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+				, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
 			
 		FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
 			INNER JOIN #tblCust_member C WITH (NOLOCK) ON C.custid = T.custid
