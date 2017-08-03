@@ -144,11 +144,9 @@ BEGIN
 
 	-- Product Status for SMA
 	UPDATE T 
-			SET bitmapIsDisabled = CASE 
-										WHEN CI.DisableVirtualSports = 0 THEN (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
-										ELSE (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
-									END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
-			, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+			SET bitmapIsDisabled = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
+									
+			, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
 		
 	FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 		INNER JOIN #tblCust_sma C WITH (NOLOCK) ON C.custid = T.custid
@@ -196,15 +194,12 @@ BEGIN
 		
 		-- 1. Product Status
 		UPDATE T 
-				SET bitmapIsDisabled = CASE 
-											WHEN CI.DisableVirtualSports = 0 THEN (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
-											ELSE (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
-										END --dbo.f_GenerateProductStatus (t.bitmapIsDisabled, 1,0)		
-				, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))--dbo.f_GenerateProductStatus(t.bitmapIsHidden , 1,0)
+				SET bitmapIsDisabled = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+									
+				, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
 			
 		FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
 			INNER JOIN #tblCust_member C WITH (NOLOCK) ON C.custid = T.custid
-			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
 		WHERE  C.ID >= @StartRow AND C.ID <= @StopRow
 		
 		-- 2. Betting Limit
