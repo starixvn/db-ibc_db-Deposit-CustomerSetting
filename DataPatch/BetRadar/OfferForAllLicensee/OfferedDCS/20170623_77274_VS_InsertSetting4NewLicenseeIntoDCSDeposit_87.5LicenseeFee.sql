@@ -150,7 +150,7 @@ BEGIN
 		
 	FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 		INNER JOIN #tblCust_sma C WITH (NOLOCK) ON C.custid = T.custid
-		INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
+		
 	
 	-- Betting Limit for SMA
 	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
