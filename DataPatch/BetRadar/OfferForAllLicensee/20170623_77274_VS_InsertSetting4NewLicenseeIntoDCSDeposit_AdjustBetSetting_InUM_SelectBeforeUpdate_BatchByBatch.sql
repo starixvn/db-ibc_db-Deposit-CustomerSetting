@@ -1,9 +1,4 @@
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
-( 	 
-	@srecommend INT
-	, @max_custid INT 
-	, @target VARCHAR(20) 
-)
 /*
 	
 	-- line < 200K: scan all
@@ -17,7 +12,6 @@ BEGIN
 
 	SET NOCOUNT ON
 
-
 	DECLARE @SportType_VSSoccer INT = 180, @Threshold_superLine INT = 200000, @srecommend INT 
 
 	CREATE TABLE #tblCust_SMA (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch180 MONEY, ID INT IDENTITY(1,1))
@@ -26,8 +20,6 @@ BEGIN
 
 	CREATE TABLE #supers (custid INT,totaldownline INT)
 
-	CREATE TABLE #supers_bigline (custid INT, isfinished BIT DEFAULT(0) )
-
 	INSERT INTO #supers(custid,totaldownline)
 	SELECT cs.custid, COUNT(1)
 	FROM  Dep_CustSuper CS WITH (NOLOCK) 
@@ -35,11 +27,6 @@ BEGIN
 	WHERE cs.site in ('12Bet','asiabet88','mansion88','alog','spondemo','TLC','DELA','SunGame','MayFair','Zzun88','HAIFA','Bodog','Vwin','Macaubet','Aoncash','ITCBet','Avia','W88','9bet','3star88','OLE777','88Macao','Boma365','Salon365','Ae88','Hengcai88','368Cash','Senibet','Allbetclub','Happy1668','AG','M8bola','KeenOcean','9Club','XTD3','HONBET','Q8bola','BE7','iBET','GooBet','Liga','NBCbet','HonorW','DEWA','IBO','Unobet','GamingSoft','Newhonbet','Hecbet','DBP','HL8','Abcasino','TGO','365online','CQ11','Bolanation','KhmerG','Gampag','IONclub','Sun988','Mayayule','HuangMa','Webet138','webet88','Emmyo','BigGaming','Boying','MrCat','TCL','Aragon88','PKbet','VCBA','Taipanbet','Indowin','FLC','BetStar','Dawoo','Ty777','ABB688','BuyWin','Uwoniwin','Sunrise','sbcbet','LZYQ','May88','ECLBET','PanguGame')
 		AND cs.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	GROUP BY CS.custid	
-	
-	INSERT INTO #supers_bigline (custid)
-	SELECT custid
-	FROM #supers WITH (NOLOCK)
-	WHERE totaldownline > @Threshold_superLine
 	
 	--------------------------- SCAN ALL FOR SMA -------------------------------------------------------------------------------
 	INSERT INTO #tblCust_SMA (custid,SportType,Bettype, minbet, maxbet, maxpermatch180 )			
@@ -64,7 +51,12 @@ BEGIN
 	-------------------------END OF PROCESSING: line < 200K: scan all ----------------------------------------------------------
 
 	------------------------ line > 200K: Batch: by line, by sport ------------------------------------------------------------  
-
+	CREATE TABLE #supers_bigline (custid INT, isfinished BIT DEFAULT(0) )
+	INSERT INTO #supers_bigline (custid)
+	SELECT custid
+	FROM #supers WITH (NOLOCK)
+	WHERE totaldownline > @Threshold_superLine
+	
 	-- For deployer info
 	DECLARE @super_cnt INT, @index INT = 0
 
@@ -116,8 +108,6 @@ BEGIN
 			AND (CBS.MinBet <> CS.minbet OR CBS.MaxBet <> CS.maxbet OR CBS.MaxPerMatch <> CI.maxpermatch180)
 			AND srecommend = @srecommend
 			
-		WAITFOR DELAY '00:00:00.280'			
-		
 	END	
 
 	-------------------------------------DATA PREPARATION --------------------------------------------	
@@ -144,3 +134,5 @@ BEGIN
 	DROP TABLE #tblCust_member						
 
 END
+GO
+EXEC Acc_Dep_DynamicCustSetting_09

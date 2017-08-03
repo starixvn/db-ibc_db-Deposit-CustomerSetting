@@ -26,8 +26,6 @@ BEGIN
 
 	CREATE TABLE #supers (custid INT,totaldownline INT)
 
-	CREATE TABLE #supers_bigline (custid INT, isfinished BIT DEFAULT(0) )
-
 	INSERT INTO #supers(custid,totaldownline)
 	SELECT cs.custid, COUNT(1)
 	FROM  dbo.Dep_CustSuper CS WITH (NOLOCK) 
@@ -41,12 +39,7 @@ BEGIN
 
 		AND cs.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	GROUP BY CS.custid	
-	
-	INSERT INTO #supers_bigline (custid)
-	SELECT custid
-	FROM #supers WITH (NOLOCK)
-	WHERE totaldownline > @Threshold_superLine
-	
+		
 	CREATE TABLE #SportTypeCheck (SportType SMALLINT, BetType SMALLINT, MaxPerMatchName VARCHAR(200), PRIMARY KEY (SportType,Bettype) )	
 	INSERT INTO #SportTypeCheck 
 	VALUES
@@ -76,6 +69,7 @@ BEGIN
 	   INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND CS.SportType = S.SportType AND CS.BetType = S.BetType
 	WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> a.maxpermatch)
 		AND CBS.SportType IN (180,181,182,183,184,185,186)
+		AND C.srecommend IN (SELECT custid FROM #supers WITH (NOLOCK))
 		
 	------------------------ FOR member ---------------------------------------------------------------------------------------	
 	------------------------- STARTING: line < 200K: scan all ------------------------------------------------------------------
@@ -102,7 +96,12 @@ BEGIN
 	-------------------------END OF PROCESSING: line < 200K: scan all ----------------------------------------------------------
 
 	------------------------ line > 200K: Batch: by line, by sport ------------------------------------------------------------  
-
+	CREATE TABLE #supers_bigline (custid INT, isfinished BIT DEFAULT(0) )
+	INSERT INTO #supers_bigline (custid)
+	SELECT custid
+	FROM #supers WITH (NOLOCK)
+	WHERE totaldownline > @Threshold_superLine
+	
 	-- For deployer info
 	DECLARE @super_cnt INT, @index INT = 0
 
@@ -134,6 +133,7 @@ BEGIN
 			INNER JOIN Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch180)
 			AND CBS.SportType = 180
+			AND C.srecommend = @srecommend
 
 		INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 		SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, c.maxpermatch181
@@ -142,7 +142,8 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch181)
 			AND CBS.SportType = 181
-		
+			AND C.srecommend = @srecommend
+			
 		INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 		SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, c.maxpermatch182
 		FROM dbo.Dep_CustBetSetting_Member CBS WITH (NOLOCK) 
@@ -150,6 +151,7 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch182)
 			AND CBS.SportType = 182
+			AND C.srecommend = @srecommend
 		
 		INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 		SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, c.maxpermatch183
@@ -158,6 +160,7 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch183)
 			AND CBS.SportType = 183
+			AND C.srecommend = @srecommend
 				
 		INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 		SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, c.maxpermatch184
@@ -166,6 +169,7 @@ BEGIN
 			INNER JOIN Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch184)
 			AND CBS.SportType = 184
+			AND C.srecommend = @srecommend
 		
 		INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 		SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, c.maxpermatch185
@@ -174,6 +178,7 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch185)
 			AND CBS.SportType = 185
+			AND C.srecommend = @srecommend
 		
 		INSERT INTO #tblCust_member (custid,SportType,Bettype, minbet, maxbet, maxpermatch )			
 		SELECT CBS.CustID,CBS.SportType,CBS.BetType, CS.minbet, CS.maxbet, c.maxpermatch186
@@ -182,6 +187,7 @@ BEGIN
 			INNER JOIN dbo.Dep_CustSetting3rd CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CBS.SportType = CS.sporttype AND CBS.BetType = CS.bettype
 		WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> c.maxpermatch186)
 			AND CBS.SportType = 186
+			AND C.srecommend = @srecommend
 		
 	END	
 	-------------------------------------DATA PREPARATION --------------------------------------------	
@@ -206,3 +212,7 @@ BEGIN
 	DROP TABLE #tblCust_member						
 
 END
+	
+GO
+
+EXEC Acc_Dep_DynamicCustSetting_09
