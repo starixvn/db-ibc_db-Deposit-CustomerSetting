@@ -14,10 +14,6 @@ BEGIN
 	
 	DECLARE @SportType_VirtualSoccer INT = 180, @Bettype_Soccer INT = 1201
 
-	CREATE TABLE #SportTypeList (SportType SMALLINT, Bettype SMALLINT, IsFinished BIT)	
-	INSERT INTO #SportTypeList 
-	VALUES (190, 2701, 0)
-
 	CREATE TABLE #tblCust_SMA (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)				
 	CREATE TABLE #tblCust_member (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)
 	CREATE TABLE #tblCustNew (custid INT PRIMARY KEY,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)	
