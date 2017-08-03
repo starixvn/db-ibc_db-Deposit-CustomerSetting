@@ -144,7 +144,7 @@ BEGIN
 
 	-- Product Status for SMA
 	UPDATE T 
-			SET bitmapIsDisabled = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,1)) 
+			SET bitmapIsDisabled = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
 									
 			, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
 		
