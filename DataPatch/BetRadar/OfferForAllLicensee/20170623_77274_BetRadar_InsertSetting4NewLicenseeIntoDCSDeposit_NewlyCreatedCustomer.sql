@@ -5,7 +5,7 @@
 	DB: DBCUST/CUSTDB
 */  
 ------------------------------------------------------
-DECLARE @ProductID INT = 27 -- VS
+DECLARE @ProductID INT = 27 -- Betradar
 
 CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 
