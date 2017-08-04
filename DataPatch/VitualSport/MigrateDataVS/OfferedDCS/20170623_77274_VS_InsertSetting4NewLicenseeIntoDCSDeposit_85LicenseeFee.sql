@@ -168,7 +168,7 @@ BEGIN
 	-- SMA Level	
 	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT CS.custid, dest.sporttype, dest.bettype, cs.minbet, cs.maxbet, A.maxpermatch
-	FROM dbo.CustSetting3rd cs WITH (NOLOCK)
+	FROM dbo.Dep_CustSetting3rd cs WITH (NOLOCK)
 		INNER JOIN #tblCust_sma tbc WITH(NOLOCK) ON cs.CustID = tbc.custid
 		INNER JOIN #ProductSettingDetail_tmp dest WITH(NOLOCK) ON dest.SettingType = 2 AND cs.sporttype = dest.SportType
 		INNER JOIN dbo.custInfo CI WITH (NOLOCK) ON cs.custID = CI.custid
