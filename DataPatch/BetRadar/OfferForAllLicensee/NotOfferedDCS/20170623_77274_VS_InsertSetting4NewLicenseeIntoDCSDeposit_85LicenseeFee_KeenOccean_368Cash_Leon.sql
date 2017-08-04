@@ -237,7 +237,6 @@ BEGIN
 		IF @StopRow >= @MaxRow
 			SET @StopRow = @MaxRow
 		
-		TRUNCATE TABLE #CustSetting3rd
 		
 		WAITFOR DELAY '00:00:00.200'
 	END
