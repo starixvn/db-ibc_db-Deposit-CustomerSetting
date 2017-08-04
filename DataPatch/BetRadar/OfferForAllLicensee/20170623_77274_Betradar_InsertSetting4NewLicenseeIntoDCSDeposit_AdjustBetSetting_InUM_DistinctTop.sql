@@ -10,6 +10,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
+	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
+	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 RETURN
+
+
 	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
 	
 	DECLARE @SportType_VirtualSoccer INT = 180, @Bettype_Soccer INT = 1201

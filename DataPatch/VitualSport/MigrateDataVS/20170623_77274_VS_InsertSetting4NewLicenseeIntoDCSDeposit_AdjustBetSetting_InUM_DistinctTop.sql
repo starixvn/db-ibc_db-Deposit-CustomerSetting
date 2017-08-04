@@ -10,6 +10,10 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
+	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
+	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 RETURN
+	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 RETURN
+	
 	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
 
 	CREATE TABLE #SportTypeCheck (SportType SMALLINT, BetType SMALLINT, MaxPerMatchName VARCHAR(200), PRIMARY KEY (SportType,Bettype) )	
