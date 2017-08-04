@@ -198,7 +198,6 @@ BEGIN
 		, ISNULL(ubl.MaxPerMatch, 0)
 	FROM @NewBetLimitTbl tmp
 		LEFT JOIN @UplineLimitTbl ubl ON tmp.SportType	= ubl.SportType	AND tmp.BetType = ubl.BetType
-		LEFT JOIN dbo.Dep_ProductBetSetting pb WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
 			
 	WHERE	tmp.MinBet		< 0
 		OR tmp.MaxBet		< 0
@@ -211,9 +210,9 @@ BEGIN
 				)
 				AND
 				(
-					tmp.MinBet		< ISNULL(pb.MinBet,0)
-					OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-					OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
+					tmp.MinBet		< ISNULL(ubl.MinBet,0)
+					OR tmp.MaxBet		< ISNULL(ubl.MinBet,0)
+					OR tmp.MaxPerMatch	< ISNULL(ubl.MinBet,0)
 				)
 			)
 		OR (
@@ -263,23 +262,10 @@ BEGIN
 	--Check all setting >=0
 	IF EXISTS(	SELECT TOP 1 1 
 				FROM @ErrorSportTypeTbl tmp
-					LEFT JOIN dbo.Dep_ProductBetSetting pb WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
 				WHERE	tmp.MinBet		< 0
 					OR tmp.MaxBet		< 0
 					OR tmp.MaxPerMatch	< 0
-					OR (
-							(
-								tmp.MinBet	<> 0
-								OR tmp.MaxBet	<> 0
-								OR tmp.MaxPerMatch	<> 0
-							)
-							AND
-							(
-								tmp.MinBet		< ISNULL(pb.MinBet,0)
-								OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-								OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
-							)
-						))
+					)
 	BEGIN
 		SET @xml = (
 				SELECT 10003 AS '@MsgID'
@@ -288,24 +274,11 @@ BEGIN
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
 						FROM @ErrorSportTypeTbl tmp
-							LEFT JOIN dbo.Dep_ProductBetSetting pb WITH (NOLOCK) ON pb.Sporttype = tmp.SportType AND pb.Bettype = tmp.BetType AND pb.Currency = @Currency
 								
 						WHERE	tmp.MinBet		< 0
 							OR tmp.MaxBet		< 0
 							OR tmp.MaxPerMatch	< 0
-							OR (
-									(
-										tmp.MinBet	<> 0
-										OR tmp.MaxBet	<> 0
-										OR tmp.MaxPerMatch	<> 0
-									)
-									AND
-									(
-										tmp.MinBet		< ISNULL(pb.MinBet,0)
-										OR tmp.MaxBet		< ISNULL(pb.MinBet,0)
-										OR tmp.MaxPerMatch	< ISNULL(pb.MinBet,0)
-									)
-								)
+							
 						FOR XML PATH('Row')
 							, TYPE
 						)

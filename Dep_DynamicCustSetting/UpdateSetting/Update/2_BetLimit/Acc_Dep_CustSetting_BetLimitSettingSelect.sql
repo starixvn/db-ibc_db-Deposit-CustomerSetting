@@ -80,8 +80,8 @@ BEGIN
 				, bl.MinBet  
 				, bl.MaxBet  
 				, bl.MaxPerMatch  
-				, MIN(sbl.minbet) AS MinBetMin  
-				, MAX(sbl.maxbet) AS MaxBetMax  
+				, MAX(sbl.minbet) AS MinBetMin  
+				, MIN(sbl.maxbet) AS MaxBetMax  
 				, MIN(sbl.maxpermatch) AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
 				INNER JOIN dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
@@ -103,8 +103,8 @@ BEGIN
 				, bl.MinBet  
 				, bl.MaxBet  
 				, bl.MaxPerMatch  
-				, MIN(sbl.minbet) AS MinBetMin  
-				, MAX(sbl.maxbet) AS MaxBetMax  
+				, MAX(sbl.minbet) AS MinBetMin  
+				, MIN(sbl.maxbet) AS MaxBetMax  
 				, MIN(sbl.maxpermatch) AS MaxPerMatchMax
 			FROM #SportBettypeFilter ft 
 				INNER JOIN dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
