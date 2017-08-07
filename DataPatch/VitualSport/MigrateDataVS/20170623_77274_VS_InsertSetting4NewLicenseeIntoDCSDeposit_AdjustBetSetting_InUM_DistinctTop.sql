@@ -35,7 +35,14 @@ BEGIN
 	CREATE TABLE #tblCust_member (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)
 	CREATE TABLE #tblCustNew (custid INT PRIMARY KEY,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)	
 	CREATE TABLE #tblCustOld (custid INT PRIMARY KEY,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)
-
+	
+	CREATE TABLE #Super_adjust (custid INT PRIMARY KEY)
+	
+	INSERT INTO #Super_adjust (custid)
+	SELECT CS.custid
+	FROM dbo.Dep_CustSuper CS WITH (NOLOCK)
+	WHERE CS.site IN ('12Bet', 'asiabet88', 'mansion88', 'alog','TLC', 'SunGame', 'MayFair', 'Zzun88', 'HAIFA', 'Bodog', 'Vwin', 'Macaubet', 'VCasia', 'Aoncash', 'Bwinning', 'ITCBet', 'yq355', 'i668bet', 'Avia', 'W88', '9bet', '67BET', '3star88', 'SLC88', 'Bet2day', 'OLE777', 'Winner99', 'XTD1', 'XTD2', '88Macao', 'Boma365', 'Hbobet', 'Wawabet', 'Mgm88', 'Saloncs', 'Salon365', 'Ae88', 'Hengcai88', 'Senibet', 'Allbetclub', 'BlueOcean', 'Happy1668', 'AG', 'M8bola', 'THBET', 'Lambo777', '9Club', 'XTD3', '28BET', 'HONBET', 'Q8bola', 'BE7', 'iBET', 'MarvelDH', 'DAYWIN', 'GooBet', 'ISC888', 'KaiHao', 'Liga', 'RYB95', 'SHABAING', 'Deebet', 'NBCbet', '666VIP', 'Inbet', 'HonorW', 'DEWA', 'IBO', 'YHY1980', 'Empire555', 'Unobet', 'GamingSoft', 'Citibet', 'Newhonbet', '21Cash', 'DUOLE', 'Hecbet', 'DBP', 'Asianbet', 'Baobet', 'HL8', 'Abcasino', 'TGO', 'BE7TH', 'Lexibet', 'King10', 'Starnet', '365online', 'CQ11', 'Uwin18', '12betco', 'Bolanation', 'sbcbet', 'KhmerG', 'Gampag', 'IONclub', 'Sun988', 'Mayayule', 'HuangMa', 'Webet138', 'webet88', 'Emmyo', 'BigGaming', 'Boying', 'GDC', 'Brown888', 'MrCat', 'TCL', 'Aragon88', 'CGame', 'PKbet', 'VCBA', 'Taipanbet', 'Leon', 'Indowin', 'FLC', 'IGPTech', 'BetStar', 'TGame', 'Dawoo', 'Ty777', 'Kasking88', 'LZYQ', 'ABB688', 'May88', 'Star99', 'BuyWin', 'Uwoniwin', 'Sunrise', 'Swin', 'LongBao', 'UN168', 'PanguGame', 'K8VN', 'ECLBET', 'Lucky88', 'GPIGAME', '818Bet', 'SSSSEA', 'Heaven', 'GOAB88', 'Bobo88')
+			
 	--SMA Level
 	-------------------------------------DATA PREPARATION --------------------------------------------	
 	INSERT INTO #tblCust_SMA (custid,SportType,Bettype, minbet, maxbet, maxpermatch)			
@@ -55,6 +62,7 @@ BEGIN
 	   INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND CS.SportType = S.SportType AND CS.BetType = S.BetType
 	WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> a.maxpermatch)
 		AND CBS.SportType IN (180,181,182,183,184,185,186)
+		AND EXISTS (SELECT 1 FROM #Super_adjust WITH (NOLOCK) WHERE CustID = C.srecommend)
 
 	--Adjust for SMA Level
 	UPDATE cbs
@@ -82,8 +90,10 @@ BEGIN
 		BEGIN
 			INSERT INTO #tblCustNew (custid,SportType,Bettype, minbet, maxbet, maxpermatch)			
 			SELECT DISTINCT TOP (@Threshold) cs.CustID,cs.SportType,cs.BetType, CS.minbet, CS.maxbet, cs.maxpermatch
-			FROM dbo.Dep_CustBetSetting_Member cs WITH (NOLOCK) 			
+			FROM dbo.Dep_CustBetSetting_Member cs WITH (NOLOCK)
+				INNER JOIN dbo.custInfo C WITH (NOLOCK) ON cs.CustID = C.custid			 			
 			WHERE cs.SportType = @SportType AND cs.BetType = @Bettype
+				AND EXISTS (SELECT 1 FROM #Super_adjust WITH (NOLOCK) WHERE CustID = C.srecommend)
 				AND cs.CustID > @MinCustID
 			ORDER BY cs.custid
 
@@ -107,6 +117,7 @@ BEGIN
 				 ) AS A(columnname, maxpermatch)
 			   INNER JOIN #SportTypeCheck S ON S.MaxPerMatchName = A.columnname AND CS.SportType = S.SportType AND CS.BetType = S.BetType
 			WHERE cs.SportType = @SportType AND cs.BetType = @Bettype
+				AND EXISTS (SELECT 1 FROM #Super_adjust WITH (NOLOCK) WHERE CustID = C.srecommend)
 				AND cs.CustID > @MinCustID AND cs.custid <= @MaxCustID
 			ORDER BY cs.custid
 
