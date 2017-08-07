@@ -107,7 +107,7 @@ BEGIN
 	---------------------------------- START PROCESSING FOR SMA ONLY---------------------------------------------------------------
 	-- PT processing
 
-	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 1) AND @IsPTSetting = 1
+	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WITH (NOLOCK) WHERE SettingType = 1) AND @IsPTSetting = 1
 	BEGIN
 		PRINT 'PT'
 		-- For SMA
@@ -133,7 +133,7 @@ BEGIN
 		WHERE psd.SettingType = 1 
 			
 		-- Insert PT Group
-		IF EXISTS (SELECT 1 FROM #tblCust_sma WHERE roleid = 2)
+		IF EXISTS (SELECT 1 FROM #tblCust_sma WITH (NOLOCK) WHERE roleid = 2)
 		BEGIN
 			
 			--Insert new PT Group
