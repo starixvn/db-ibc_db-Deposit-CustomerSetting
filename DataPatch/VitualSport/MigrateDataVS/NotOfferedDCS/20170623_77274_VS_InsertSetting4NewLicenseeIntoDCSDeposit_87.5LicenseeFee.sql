@@ -134,7 +134,7 @@ BEGIN
 		WHERE psd.SettingType = 1 
 			
 		-- Insert PT Group
-		IF EXISTS (SELECT 1 FROM #tblCust_sma WHERE roleid = 2)
+		IF EXISTS (SELECT 1 FROM #tblCust_sma WITH (NOLOCK) WHERE roleid = 2)
 		BEGIN
 			
 			--Insert new PT Group
