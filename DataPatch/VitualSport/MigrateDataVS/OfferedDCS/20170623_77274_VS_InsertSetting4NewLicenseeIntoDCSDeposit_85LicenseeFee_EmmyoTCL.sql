@@ -191,7 +191,7 @@ BEGIN
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member WITH (NOLOCK))
 	
-	-- Return in case There is members under this srecommend in the table custinfo
+	-- Return in case there is NO members under this srecommend in the table custinfo
 	IF @MaxRow IS NULL 
 	BEGIN
 		PRINT 'There is NO members under this srecommend in the table custinfo. RETURN'
