@@ -8,6 +8,11 @@
 */ 
 
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09]
+(
+	@GameTypeIDRef INT = 1
+	, @SportType SMALLINT = 220
+	, @Bettype SMALLINT = 1021
+)
 AS
 BEGIN
 	SET NOCOUNT ON
@@ -19,8 +24,6 @@ BEGIN
 
 	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
 	
-	DECLARE @GameTypeIDRef INT = 1, @SportType SMALLINT = 220, @Bettype SMALLINT = 1021
-
 	CREATE TABLE #tblCust_SMA (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)				
 	CREATE TABLE #tblCust_member (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)
 	CREATE TABLE #tblCustNew (custid INT PRIMARY KEY,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)	
@@ -39,7 +42,7 @@ BEGIN
 		INNER JOIN dbo.custInfo C WITH (NOLOCK) ON C.custid = CBS.CustID
 		INNER JOIN dbo.CustGameType CS WITH(NOLOCK) ON CBS.CustID = CS.custid AND CS.GameTypeID = @GameTypeIDRef
 	WHERE (cbs.MinBet <> cs.minbet OR cbs.MaxBet <> cs.maxbet OR cbs.MaxPerMatch <> cs.MaxPerGameType)
-		AND CBS.SportType = @SportType
+		AND CBS.SportType = @SportType AND BetType = @Bettype
 		AND EXISTS (SELECT 1 FROM #Super_adjust WITH (NOLOCK) WHERE CustID = C.srecommend)
 
 	--Adjust for SMA Level
@@ -94,8 +97,8 @@ BEGIN
 			, maxbet = CI.maxbet
 			, maxpermatch = CI.maxpermatch
 		FROM dbo.Dep_CustBetSetting_Member cs WITH (ROWLOCK,UPDLOCK) 
-			INNER JOIN #tblCust_member ci WITH (NOLOCK) ON ci.custid = cs.CustID 
-		WHERE cs.SportType = @SportType
+			INNER JOIN #tblCust_member ci WITH (NOLOCK) ON ci.custid = cs.CustID AND cs.SportType = ci.SportType AND cs.BetType = ci.Bettype
+		WHERE cs.SportType = @SportType 
 
 		SELECT @MinCustID = @MaxCustID			
 

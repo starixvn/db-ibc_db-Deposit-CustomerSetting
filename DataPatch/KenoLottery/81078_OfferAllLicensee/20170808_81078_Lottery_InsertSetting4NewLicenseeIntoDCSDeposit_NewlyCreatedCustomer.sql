@@ -12,8 +12,8 @@ DECLARE @ProductID INT = 28 -- Lottery
 CREATE TABLE #supers (custid INT, currency INT, isfinished BIT DEFAULT(0))
 CREATE TABLE #tblCust_member (custid INT,agentid INT, roleid INT,currency INT,srecommend INT) 
 
-DECLARE @max_custid INT, @srecommend INT,  @currency INT ,@SportType INT = 220, @bitmapOrder INT, @GameTypeIDRef SMALLINT = 1
-DECLARE @bitmap_0 BINARY(32), @bitmap_1 BINARY(32)
+DECLARE @max_custid INT, @srecommend INT,  @currency INT ,@SportType INT = 220, @bitmapOrder INT, @GameTypeIDRef INT = 1
+DECLARE @bitmap_0 BINARY(32)
 
 SELECT   @max_custid= xxx ---input maxcustid
 	
@@ -21,7 +21,6 @@ SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NO
 
 -- Calculating bitmap value 
 SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
-SET @bitmap_1 = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
 
 INSERT INTO #tblCust_member (custid)			
 SELECT ci.custid

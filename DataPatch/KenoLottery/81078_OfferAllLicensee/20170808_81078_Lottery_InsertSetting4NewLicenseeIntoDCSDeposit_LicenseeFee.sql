@@ -20,7 +20,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
 	, @SportType SMALLINT = 220
 	, @Bettype SMALLINT = 1021
 	, @SportTypeRef SMALLINT = 202
-	, @GameTypeIDRef SMALLINT = 1
+	, @GameTypeIDRef INT = 1
 	, @ProductID INT = 28 -- Lottery
 )	
 AS
@@ -52,20 +52,14 @@ BEGIN
 	DECLARE @ProductProfileList VARCHAR(200) = '15,16,17'
 		-- For ProductStatus param
 		, @bitmapOrder INT
-		, @IsDisable BIT = 0
-		, @IsHidden BIT = 0
-		
+		, @bitmap_0 BINARY(32)
 		-- For PT param
 		, @SuperPT SMALLMONEY = 90
-	
-	DECLARE @bitmap_0 BINARY(32), @bitmap_1 BINARY(32)
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
 	-- Calculating bitmap value 
 	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
-	SET @bitmap_1 = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
-
 
 	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY, ID INT IDENTITY (1,1))
 	
