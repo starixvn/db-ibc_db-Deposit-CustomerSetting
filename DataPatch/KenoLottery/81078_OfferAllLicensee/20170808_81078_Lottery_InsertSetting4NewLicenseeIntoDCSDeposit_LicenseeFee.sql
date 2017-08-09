@@ -149,9 +149,9 @@ BEGIN
 		IF @isOfferedDCS = 1
 		BEGIN
 			UPDATE T 
-					SET bitmapIsDisabled = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+					SET bitmapIsDisabled = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
 											
-					, bitmapIsHidden = (SELECT NewBitmap FROM f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
+					, bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
 				
 			FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 				INNER JOIN #tblCust_sma C WITH (NOLOCK) ON C.custid = T.custid
