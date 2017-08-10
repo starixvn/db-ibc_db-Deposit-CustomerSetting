@@ -260,17 +260,15 @@ INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
 VALUES
 ('KeenOcean',10,3000,10000,66),
 ('KeenOcean',50,10000,50000,51),
-('KeenOcean',1,100,1000,20),
-('368Cash',1,3000,10000,13),
-('368Cash',1,500,1500,3),
-('368Cash',1,1500,5000,2),
-('368Cash',1,500000,1500000,45),
-('368Cash',1,15000,50000,4),
-('368Cash',1,5000,15000,15),
-('368Cash',1,10000,50000,51),
-('368Cash',1,100,1000,20)
-
-
+('KeenOcean',1,100,1000,20)
+--('368Cash',1,3000,10000,13),
+--('368Cash',1,500,1500,3),
+--('368Cash',1,1500,5000,2),
+--('368Cash',1,500000,1500000,45),
+--('368Cash',1,15000,50000,4),
+--('368Cash',1,5000,15000,15),
+--('368Cash',1,10000,50000,51),
+--('368Cash',1,100,1000,20)
 
 CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
@@ -291,7 +289,7 @@ SELECT CS.custid, BS.minbet , BS.maxbet , BS.maxpermatch
 FROM  Dep_CustSuper CS WITH(NOLOCK) 
 	INNER JOIN #Betsetting BS WITH (NOLOCK) ON CS.site = BS.Site AND CS.currency = BS.exchangeID
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND CS.site in ('KeenOcean','368Cash')
+	AND CS.site in ('KeenOcean')
 	AND CS.custid <= @max_custid
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
@@ -345,17 +343,15 @@ INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
 VALUES
 ('KeenOcean',10,3000,10000,66),
 ('KeenOcean',50,10000,50000,51),
-('KeenOcean',1,100,1000,20),
-('368Cash',1,3000,10000,13),
-('368Cash',1,500,1500,3),
-('368Cash',1,1500,5000,2),
-('368Cash',1,500000,1500000,45),
-('368Cash',1,15000,50000,4),
-('368Cash',1,5000,15000,15),
-('368Cash',1,10000,50000,51),
-('368Cash',1,100,1000,20)
-
-
+('KeenOcean',1,100,1000,20)
+--('368Cash',1,3000,10000,13),
+--('368Cash',1,500,1500,3),
+--('368Cash',1,1500,5000,2),
+--('368Cash',1,500000,1500000,45),
+--('368Cash',1,15000,50000,4),
+--('368Cash',1,5000,15000,15),
+--('368Cash',1,10000,50000,51),
+--('368Cash',1,100,1000,20)
 
 CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
@@ -376,7 +372,7 @@ SELECT CS.custid, BS.minbet , BS.maxbet , BS.maxpermatch
 FROM  Dep_CustSuper CS WITH(NOLOCK) 
 	INNER JOIN #Betsetting BS WITH (NOLOCK) ON CS.site = BS.Site AND CS.currency = BS.exchangeID
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
-	AND CS.site in ('KeenOcean','368Cash')
+	AND CS.site in ('KeenOcean')
 	AND CS.custid <= @max_custid
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
