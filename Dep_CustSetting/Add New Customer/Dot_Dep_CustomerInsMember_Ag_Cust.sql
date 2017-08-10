@@ -1,3 +1,4 @@
+/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust]     
 	@FirstName nvarchar(50),    
 	@LastName nvarchar(50),    
@@ -149,6 +150,7 @@ Revisions:
  - 20160412@Helen: insert the Setting of Voidbridge of new member into the DCS database after 1st deposit. [Redmine: #55057]
  - 20170227@Winnie: support Cash out. [Redmine: #72107]
  - 20170512@Winnie:  Change the default odds group for Leon [Redmine: #76427]
+ - 20170807@Winnie:  Change the default odds group to A for Leon [Redmine: #81191]
 Param's Explanation:    
 ? @CustID: return new 12bet Player Cust ID    
 ? @Username: return new 12bet Player User name    
@@ -952,8 +954,7 @@ BEGIN
 	    
 	SELECT @ugroup = 
 	CASE	WHEN @site = 'Asiabet88' AND  @currency IN (3,6) THEN 'b' 	
-			WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'
-			WHEN @site = 'Leon' THEN 'b'
+			WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'		
 			ELSE 'a'    
 	END    
 	     
@@ -2885,16 +2886,4 @@ BEGIN
 	END CATCH
 
 END
-GO 
- GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [vnteam]
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [Dot_Member]
-GO 
- GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [bodbAdminNet]
-GO 
- GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [bodbDownlineNet]
-GO 
- GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [bodbExtAccNet]
 GO 
