@@ -62,6 +62,8 @@ BEGIN
 	
 	CREATE TABLE #tblCust_sma (custid INT PRIMARY KEY,maxpermatch180 MONEY, roleID INT)
 
+	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust_member (ID)								   
+	
 	INSERT INTO #tblCust_member (custid,maxpermatch180)			
 	SELECT custid,maxpermatch180
 	FROM dbo.custInfo WITH(NOLOCK)
@@ -80,8 +82,7 @@ BEGIN
 		AND custid <= @max_custid
 		AND roleid IN (2,3,4)
 		
-	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust_member (ID)								   
-	
+		
 	-- Licensee profile list
 	IF NOT EXISTS (SELECT 1 
 				   FROM dbo.Dep_LicenseeProductSetting lps WITH (NOLOCK)
