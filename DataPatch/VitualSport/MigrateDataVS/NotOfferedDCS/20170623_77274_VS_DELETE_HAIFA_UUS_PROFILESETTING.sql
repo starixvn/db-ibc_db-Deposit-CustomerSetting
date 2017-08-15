@@ -5,5 +5,7 @@
 	DB: DBTP/BODB02, DB06/BODB02
 
 */
+USE bodb02
+GO
 DELETE Dep_LicenseeProductSetting 
 WHERE custid = 4345449 AND ProductSettingID IN (9,10,11)
