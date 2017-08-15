@@ -345,7 +345,7 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND site in ('HAIFA')
 	AND custid <= @max_custid
 	AND currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
-
+	AND custid NOT IN (10557007) -- EXCLUDE 'HAIFASuperJPY'
 
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0
@@ -410,7 +410,7 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND site in ('HAIFA')
 	AND custid <= @max_custid
 	AND currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
-
+	AND custid NOT IN (10557007) -- EXCLUDE 'HAIFASuperJPY'
 
 -- For deployer info
 DECLARE @super_cnt INT, @index INT = 0
