@@ -21,7 +21,7 @@ SELECT cii.custid
 FROM Custinfo cii (nolock)
 WHERE srecommend = @srecommend
 	AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
-							   WHERE srecommend=13682916 and username like '%Acc%' and roleid=3)
+							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
 	AND custid <= @max_custid
 	AND roleid = 1
 
