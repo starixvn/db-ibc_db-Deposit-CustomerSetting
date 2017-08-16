@@ -26,7 +26,7 @@ WHERE srecommend = @srecommend
 	AND roleid = 1
 
 INSERT INTO #missing_setting (CustID)	
-SELECT DISTINCT t.custid
+SELECT t.custid
 FROM #memberList t
 	INNER JOIN dbo.Dep_CustBetSetting_member cba WITH (NOLOCK) ON cba.CustID = t.CustID
 WHERE cba.SportType in (180,181,182,183,184,185,186)
