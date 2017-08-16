@@ -132,7 +132,7 @@ BEGIN
 			CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 		WHERE psd.SettingType = 1 
 			
-		-- For Member
+		-- PT Group Member: Insert Setting for Agent 
 		IF EXISTS (SELECT 1 FROM #tblCust_sma WITH (NOLOCK) WHERE roleid = 2)
 		BEGIN
 			--Insert new PT Group
@@ -181,15 +181,14 @@ BEGIN
 	---------------------------------- END OF PROCESSING FOR SMA ONLY---------------------------------------------------------------
 			
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
-	CREATE TABLE  #CustSetting (custID INT, minbet MONEY, maxbet MONEY,maxpermatch MONEY, PRIMARY KEY (CustID))
 	
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
 	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member WITH (NOLOCK))
 	
-	-- Return in case there is no members under this srecommend in the table custinfo
+	-- Return in case There is no members to process. RETURN
 	IF @MaxRow IS NULL 
 	BEGIN
-		PRINT 'There is No members under this srecommend in the table custinfo. RETURN'
+		PRINT 'There is no members to process. RETURN'
 		RETURN
 	END
 	
@@ -260,7 +259,7 @@ BEGIN
 	DROP TABLE #ProductSettingDetail_tmp
 	DROP TABLE #tblCust_sma
 	DROP TABLE #tblCust_member
-	DROP TABLE #CustSetting
+	
 
 END	
 GO
