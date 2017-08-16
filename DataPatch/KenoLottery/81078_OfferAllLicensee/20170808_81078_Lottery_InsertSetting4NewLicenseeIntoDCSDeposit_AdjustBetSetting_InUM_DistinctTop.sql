@@ -8,11 +8,6 @@
 */ 
 
 ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09]
-(
-	@GameTypeIDRef INT = 1
-	, @SportType SMALLINT = 220
-	, @Bettype SMALLINT = 1021
-)
 AS
 BEGIN
 	SET NOCOUNT ON
@@ -23,6 +18,11 @@ BEGIN
 
 
 	DECLARE @msgDone NVARCHAR(200) = 'Done for sporttype %d, bettype %d.'
+	
+	DECLARE @GameTypeIDRef INT = 1
+		, @SportType SMALLINT = 220
+		, @Bettype SMALLINT = 1021
+	
 	
 	CREATE TABLE #tblCust_SMA (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)				
 	CREATE TABLE #tblCust_member (custid INT,SportType SMALLINT, Bettype SMALLINT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY)

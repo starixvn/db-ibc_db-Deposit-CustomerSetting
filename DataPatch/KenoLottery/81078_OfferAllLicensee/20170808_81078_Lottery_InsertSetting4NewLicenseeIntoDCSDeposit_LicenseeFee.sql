@@ -17,11 +17,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
 	, @max_custid INT
 	, @target VARCHAR(20)
 	
-	, @SportType SMALLINT = 220
-	, @Bettype SMALLINT = 1021
-	, @SportTypeRef SMALLINT = 202
-	, @GameTypeIDRef INT = 1
-	, @ProductID INT = 28 -- Lottery
 )	
 AS
 BEGIN	
@@ -55,6 +50,12 @@ BEGIN
 		, @bitmap_0 BINARY(32)
 		-- For PT param
 		, @SuperPT SMALLMONEY = 90
+		-- For Sport Info
+		, @SportType SMALLINT = 220
+		, @Bettype SMALLINT = 1021
+		, @SportTypeRef SMALLINT = 202
+		, @GameTypeIDRef INT = 1
+		, @ProductID INT = 28 -- Lottery
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
@@ -65,6 +66,8 @@ BEGIN
 	
 	CREATE TABLE #tblCust_sma (custid INT PRIMARY KEY, roleID INT)
 
+	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust_member (ID)								   
+	
 	INSERT INTO #tblCust_member (custid)			
 	SELECT custid
 	FROM dbo.custInfo WITH(NOLOCK)
@@ -82,8 +85,6 @@ BEGIN
 							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
 		AND custid <= @max_custid
 		AND roleid IN (2,3,4)
-		
-	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust_member (ID)								   
 	
 	-- Licensee profile list
 	IF NOT EXISTS (SELECT 1 
