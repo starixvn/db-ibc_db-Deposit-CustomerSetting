@@ -1,9 +1,4 @@
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_DisableStatCheck] 
 	  @IsDisabled	VARCHAR(MAX)
 	, @RoleID			INT
@@ -145,3 +140,5 @@ GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatCheck] TO [bodbDownlineNet]
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatCheck] TO [bodbExtAccNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatCheck] TO [bodbLicenseeNet]
