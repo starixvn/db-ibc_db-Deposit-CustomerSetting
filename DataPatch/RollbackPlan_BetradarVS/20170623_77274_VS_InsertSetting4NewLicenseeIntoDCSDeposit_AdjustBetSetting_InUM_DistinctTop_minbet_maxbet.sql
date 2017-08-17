@@ -5,7 +5,7 @@
 	DB: DBCUST/CUSTDB
 */ 
 
-ALTER PROCEDURE [dbo].[Acc_DynamicCustSetting3rd_09]
+ALTER PROCEDURE [dbo].[Acc_ExecRep_Cust_09]
 AS
 BEGIN
 	SET NOCOUNT ON
