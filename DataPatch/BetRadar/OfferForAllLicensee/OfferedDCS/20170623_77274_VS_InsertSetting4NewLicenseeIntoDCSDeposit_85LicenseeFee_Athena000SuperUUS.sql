@@ -55,12 +55,6 @@ BEGIN
 	-- For Betting Limit
 	, @IsBetLimit BIT = 1
 	
-	DECLARE @bitmap_0 BINARY(32), @bitmap_1 BINARY(32)
-	
-	-- Calculating bitmap value 
-	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
-	SET @bitmap_1 = dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,1)
-	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
 	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY,maxpermatch180 MONEY, ID INT IDENTITY (1,1))
@@ -155,16 +149,8 @@ BEGIN
 		
 	FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 		INNER JOIN #tblCust_sma C WITH (NOLOCK) ON C.custid = T.custid
-	
-	INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
-	SELECT	c.custid
-			
-			,@bitmap_0 AS	bitmapIsDisabled
-			, @bitmap_0  AS bitmapIsHidden
-	FROM #tblCust_sma C WITH(NOLOCK)
-		INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
-	WHERE NOT EXISTS (SELECT 1 FROM [Dep_CustProductStatus] c1 (NOLOCK) WHERE C1.custid = c.custid )
 		
+	
 	-- Betting Limit for SMA
 	INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
 	SELECT ci.custid, psd.sporttype, psd.bettype, cs.minbet, cs.maxbet, ci.maxpermatch180					 
@@ -215,23 +201,6 @@ BEGIN
 			INNER JOIN #tblCust_member C WITH (NOLOCK) ON C.custid = T.custid
 		WHERE  C.ID >= @StartRow AND C.ID <= @StopRow
 		
-		INSERT INTO Dep_CustSettingMode (CustID,IsGroupedPT)
-		SELECT c.custid,1
-		FROM #tblCust_member C WITH (NOLOCK)
-		WHERE C.ID >= @StartRow AND C.ID <= @StopRow						
-			AND NOT EXISTS (SELECT 1 FROM Dep_CustSettingMode C1 (NOLOCK) WHERE C1.CustID = C.custid)
-			
-		-- 1. Product Status
-		-- Insert new	
-		INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
-		SELECT	c.custid
-				,@bitmap_0 AS	bitmapIsDisabled
-				, @bitmap_0  AS bitmapIsHidden
-		FROM #tblCust_member C WITH(NOLOCK)
-			INNER JOIN custInfo CI WITH (NOLOCK) ON C.custid = CI.custid
-		WHERE C.ID >= @StartRow AND C.ID <= @StopRow
-			AND NOT EXISTS (SELECT 1 FROM Dep_CustSettingMode C1 (NOLOCK) WHERE C1.CustID = C.custid)
-			
 		-- 2. Betting Limit
 		INSERT INTO #CustSetting3rd (custID,minbet,maxbet,maxpermatch180)
 		SELECT ci.custid, cs.minbet, cs.maxbet, ci.maxpermatch180
