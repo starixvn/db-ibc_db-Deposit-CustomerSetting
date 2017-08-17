@@ -12,7 +12,6 @@
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
 ( 	 
  	 @srecommend INT
-	, @currency INT
 	, @isOfferedDCS BIT
 	, @max_custid INT
 	, @target VARCHAR(20)
@@ -44,29 +43,38 @@ BEGIN
 	   )
 		RETURN
 	
-	DECLARE @ProductProfileList VARCHAR(200) = '15,16,17'
+	DECLARE @ProductProfileList VARCHAR(200) 
 		-- For ProductStatus param
 		, @bitmapOrder INT
 		, @bitmap_0 BINARY(32)
 		-- For PT param
-		, @SuperPT SMALLMONEY = 90
+		, @SuperPT SMALLMONEY 
 		-- For Sport Info
-		, @SportType SMALLINT = 220
-		, @Bettype SMALLINT = 1021
-		, @SportTypeRef SMALLINT = 202
-		, @GameTypeIDRef INT = 1
-		, @ProductID INT = 28 -- Lottery
+		, @SportType SMALLINT 
+		, @Bettype SMALLINT
+		, @SportTypeRef SMALLINT 
+		, @GameTypeIDRef INT 
+		, @ProductID INT 
 	
-	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
+	DECLARE @StartRow INT, @MaxRow INT,@Threshold INT, @StopRow INT
 	
-	-- Calculating bitmap value 
-	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
-
 	CREATE TABLE #tblCust_member (custid INT PRIMARY KEY, ID INT IDENTITY (1,1))
 	
 	CREATE TABLE #tblCust_sma (custid INT PRIMARY KEY, roleID INT)
 
 	CREATE NONCLUSTERED INDEX inx_tmp ON #tblCust_member (ID)								   
+	
+	SET @ProductProfileList  = '15,16,17'
+	SET @SuperPT = 90
+	SET @SportType = 220
+	SET @Bettype = 1021
+	SET @SportTypeRef = 202
+	SET @GameTypeIDRef = 1
+	SET @ProductID = 28
+	
+	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
+	-- Calculating bitmap value 
+	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 	
 	INSERT INTO #tblCust_member (custid)			
 	SELECT custid
@@ -181,9 +189,10 @@ BEGIN
 	---------------------------------- END OF PROCESSING FOR SMA ONLY---------------------------------------------------------------
 			
 	---------------------------------- START BATCH BY BATCH PROCESSING ---------------------------------------------------------------
+	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member WITH (NOLOCK))		
 	
-	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 50000, @StopRow INT
-	SET @MaxRow = (SELECT MAX(ID) FROM #tblCust_member WITH (NOLOCK))
+	SET @StartRow = 1
+	SET @Threshold = 50000
 	
 	-- Return in case There is no members to process. RETURN
 	IF @MaxRow IS NULL 
@@ -241,7 +250,7 @@ BEGIN
 			INNER JOIN dbo.CustGameType cs WITH(NOLOCK) ON cs.CustID = ci.custid AND cs.GameTypeID = @GameTypeIDRef
 			CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 		WHERE psd.SettingType = 2 AND CI.ID >= @StartRow AND CI.ID <= @StopRow  
-		   
+		OPTION (MAXDOP 1)   
 		-- Starting to process data --
 		IF @StopRow = @MaxRow BREAK
 		
@@ -269,8 +278,14 @@ GO
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
 DECLARE @ProductID INT = 28, @SportType SMALLINT = 220
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT, @isOfferedDCS BIT 
+
+DECLARE @super_cnt INT, @index INT = 0
 
 CREATE TABLE #Supers_Offered (custid INT)
+CREATE TABLE #supers (custid INT, currency INT,isOfferedDCS BIT, isfinished BIT DEFAULT(0))
+
+SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -279,11 +294,6 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType
- 
-CREATE TABLE #supers (custid INT, currency INT,isOfferedDCS BIT, isfinished BIT DEFAULT(0))
-
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT, @isOfferedDCS BIT 
-SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency,isOfferedDCS)
 SELECT CS.custid,CS.currency, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
@@ -295,8 +305,6 @@ WHERE CS.custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-
 SET @super_cnt = (SELECT COUNT(*) FROM #supers )
 
 DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
@@ -310,7 +318,6 @@ BEGIN
 	UPDATE TOP (1) #supers
 	SET isfinished = 1
 		,@srecommend = custid
-		,@currency=currency	
 		,@isOfferedDCS= isOfferedDCS
 	WHERE isfinished = 0
 	
@@ -320,7 +327,7 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency,@isOfferedDCS= isOfferedDCS, @max_custid=@max_custid,@target = 'REPLICATED' 	
+	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @isOfferedDCS= isOfferedDCS, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
 	--WAITFOR DELAY '00:00:00.280'			
 END	
@@ -337,8 +344,14 @@ GO
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
 DECLARE @ProductID INT = 28, @SportType SMALLINT = 220
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT, @isOfferedDCS BIT 
+
+DECLARE @super_cnt INT, @index INT = 0
 
 CREATE TABLE #Supers_Offered (custid INT)
+CREATE TABLE #supers (custid INT, currency INT,isOfferedDCS BIT, isfinished BIT DEFAULT(0))
+
+SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -347,11 +360,6 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType
- 
-CREATE TABLE #supers (custid INT, currency INT,isOfferedDCS BIT, isfinished BIT DEFAULT(0))
-
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT, @isOfferedDCS BIT 
-SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency,isOfferedDCS)
 SELECT CS.custid,CS.currency, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
@@ -362,11 +370,8 @@ WHERE CS.custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.custid <= @max_custid
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
-
 -- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
+SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
 
 DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
 
@@ -379,7 +384,6 @@ BEGIN
 	UPDATE TOP (1) #supers
 	SET isfinished = 1
 		,@srecommend = custid
-		,@currency=currency	
 		,@isOfferedDCS = isOfferedDCS		
 	WHERE isfinished = 0
 	
@@ -389,7 +393,7 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency,@isOfferedDCS = @isOfferedDCS, @max_custid=@max_custid,@target = 'DBCUST'
+	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend,@isOfferedDCS = @isOfferedDCS, @max_custid=@max_custid,@target = 'DBCUST'
 		
 	--WAITFOR DELAY '00:00:00.280'			
 END	
