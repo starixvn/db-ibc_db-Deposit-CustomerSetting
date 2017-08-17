@@ -277,15 +277,17 @@ GO
 ------------------------------------------------------	
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
-DECLARE @ProductID INT = 28, @SportType SMALLINT = 220
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT, @isOfferedDCS BIT 
+DECLARE @ProductID INT, @SportType SMALLINT 
 
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50),  @isOfferedDCS BIT 
 DECLARE @super_cnt INT, @index INT = 0
 
 CREATE TABLE #Supers_Offered (custid INT)
-CREATE TABLE #supers (custid INT, currency INT,isOfferedDCS BIT, isfinished BIT DEFAULT(0))
+CREATE TABLE #supers (custid INT, isOfferedDCS BIT, isfinished BIT DEFAULT(0))
 
-SELECT  @max_custid= xxx ---input maxcustid
+SET @max_custid= xxx ---input maxcustid
+SET @ProductID = 28
+SET @SportType = 220
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -295,8 +297,8 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType
 
-INSERT INTO #supers(custid,currency,isOfferedDCS)
-SELECT CS.custid,CS.currency, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
+INSERT INTO #supers(custid,isOfferedDCS)
+SELECT CS.custid, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
 FROM  dbo.Dep_CustSuper CS WITH (NOLOCK) 
 	LEFT JOIN dbo.Dep_LicenseeProductSetting LPS WITH (NOLOCK) ON CS.custid = LPS.CustID
 WHERE CS.custid NOT IN (SELECT custid FROM #Supers_Offered)
@@ -343,15 +345,17 @@ GO
 ---
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 28, @SportType SMALLINT = 220
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency INT, @isOfferedDCS BIT 
+DECLARE @ProductID INT, @SportType SMALLINT 
 
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50),  @isOfferedDCS BIT 
 DECLARE @super_cnt INT, @index INT = 0
 
 CREATE TABLE #Supers_Offered (custid INT)
-CREATE TABLE #supers (custid INT, currency INT,isOfferedDCS BIT, isfinished BIT DEFAULT(0))
+CREATE TABLE #supers (custid INT, isOfferedDCS BIT, isfinished BIT DEFAULT(0))
 
-SELECT  @max_custid= xxx ---input maxcustid
+SET @max_custid= xxx ---input maxcustid
+SET @ProductID = 28
+SET @SportType = 220
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -361,8 +365,8 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType
 
-INSERT INTO #supers(custid,currency,isOfferedDCS)
-SELECT CS.custid,CS.currency, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
+INSERT INTO #supers(custid,isOfferedDCS)
+SELECT CS.custid, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
 FROM  dbo.Dep_CustSuper CS WITH (NOLOCK) 
 	LEFT JOIN dbo.Dep_LicenseeProductSetting LPS WITH (NOLOCK) ON CS.custid = LPS.CustID
 WHERE CS.custid NOT IN (SELECT custid FROM #Supers_Offered)
