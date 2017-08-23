@@ -27,15 +27,15 @@ WHERE srecommend = @Srecommend AND roleid = 1
 UPDATE CBS
 	SET MinBet = 10, MaxBet = 10000, MaxPerMatch = 50000 	  	
 FROM dbo.Dep_CustBetSetting_Agent cbs WITH (ROWLOCK,UPDLOCK)
-	INNER JOIN #Cust_SMA sma ON cbs.CustID = SMA.CustID
-WHERE SportType IN (180,181,182,183,184,185,186)
+	INNER JOIN #Cust_SMA sma WITH (NOLOCK) ON cbs.CustID = SMA.CustID
+WHERE SportType IN (180,181,182,183,184,185,186,190,191,199)
 
 
 UPDATE CBS
 	SET MinBet = 10, MaxBet = 10000, MaxPerMatch = 50000 	  	
 FROM dbo.Dep_CustBetSetting_Member cbs WITH (ROWLOCK,UPDLOCK)
-	INNER JOIN #Cust_member member ON cbs.CustID = member.CustID
-WHERE SportType IN (180,181,182,183,184,185,186)
+	INNER JOIN #Cust_member member WITH (NOLOCK) ON cbs.CustID = member.CustID
+WHERE SportType IN (180,181,182,183,184,185,186,190,191,199)
 
 GO
 	
