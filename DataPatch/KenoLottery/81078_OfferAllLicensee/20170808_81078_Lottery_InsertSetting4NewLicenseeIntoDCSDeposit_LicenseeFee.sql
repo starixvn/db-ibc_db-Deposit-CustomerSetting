@@ -295,10 +295,10 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType = @SportType
+WHERE PSD.SportType = @SportType AND C.site in ('12Bet', '9bet', 'ABB688', 'Ae88', 'Allbetclub', 'Aoncash', 'Aragon88', 'BE7', 'BetStar', 'Bolanation', 'GooBet', 'iBET', 'Indowin', 'IONclub', 'ITCBet', 'M8bola', 'Macaubet', 'NBCbet', 'Newhonbet', 'Q8bola', 'sbcbet', 'Taipanbet', 'Unobet', 'Uwoniwin', 'Leon' )
 
 INSERT INTO #supers(custid,isOfferedDCS)
-SELECT CS.custid, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
+SELECT DISTINCT CS.custid, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
 FROM  dbo.Dep_CustSuper CS WITH (NOLOCK) 
 	LEFT JOIN dbo.Dep_LicenseeProductSetting LPS WITH (NOLOCK) ON CS.custid = LPS.CustID
 WHERE CS.custid NOT IN (SELECT custid FROM #Supers_Offered)
@@ -363,12 +363,12 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_CustSuper c WITH (NOLOCK) on c.custid = lds.CustID 
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-WHERE PSD.SportType = @SportType
+WHERE PSD.SportType = @SportType AND C.site in ('12Bet', '9bet', 'ABB688', 'Ae88', 'Allbetclub', 'Aoncash', 'Aragon88', 'BE7', 'BetStar', 'Bolanation', 'GooBet', 'iBET', 'Indowin', 'IONclub', 'ITCBet', 'M8bola', 'Macaubet', 'NBCbet', 'Newhonbet', 'Q8bola', 'sbcbet', 'Taipanbet', 'Unobet', 'Uwoniwin', 'Leon' )
 
 INSERT INTO #supers(custid,isOfferedDCS)
-SELECT CS.custid, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
+SELECT DISTINCT CS.custid, CASE WHEN LPS.CustID IS NOT NULL THEN 1 ELSE 0 END AS isOfferedDCS
 FROM  dbo.Dep_CustSuper CS WITH (NOLOCK) 
-	LEFT JOIN dbo.Dep_LicenseeProductSetting LPS WITH (NOLOCK) ON CS.custid = LPS.CustID
+	LEFT JOIN dbo.Dep_LicenseeProductSetting LPS WITH (NOLOCK) ON CS.custid = LPS.CustID 
 WHERE CS.custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND site in ('12Bet', '9bet', 'ABB688', 'Ae88', 'Allbetclub', 'Aoncash', 'Aragon88', 'BE7', 'BetStar', 'Bolanation', 'GooBet', 'iBET', 'Indowin', 'IONclub', 'ITCBet', 'M8bola', 'Macaubet', 'NBCbet', 'Newhonbet', 'Q8bola', 'sbcbet', 'Taipanbet', 'Unobet', 'Uwoniwin', 'Leon' )
 	AND CS.custid <= @max_custid
