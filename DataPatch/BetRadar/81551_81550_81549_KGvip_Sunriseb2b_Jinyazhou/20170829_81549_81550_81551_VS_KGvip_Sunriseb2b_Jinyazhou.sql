@@ -52,9 +52,7 @@ BEGIN
 	
 	-- For PT param
 	, @SuperPT SMALLMONEY = 85
-	
-	
-	
+			
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
 	DECLARE @bitmap_0 BINARY(32)
