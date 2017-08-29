@@ -118,8 +118,8 @@ BEGIN
 	
 END
 GO
-
-
+------------ run on DBCUST/CuswstDB ----------------------
+EXEC Acc_DynamicCustSetting3rd_09
 
 
 
