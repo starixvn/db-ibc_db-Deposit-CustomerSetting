@@ -1,5 +1,5 @@
 /*
-	Created: 20180825@Susan
+	Created: 20180825@Helen
 	Task: insert the Setting of VS of new licensees into the DCS database.
 	Redmine: https://nexdev.net/issues/81549
 			 https://nexdev.net/issues/81550

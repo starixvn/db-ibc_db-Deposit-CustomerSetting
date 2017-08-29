@@ -1,5 +1,5 @@
 /*
-	Created: 20180825@Susan
+	Created: 20180825@Helen
 	Task: insert the Setting of VS of new licensees into the DCS database.
 	Redmine: https://nexdev.net/issues/81549
 			 https://nexdev.net/issues/81550
@@ -170,9 +170,9 @@ BEGIN
 
 	-- 1. Product Status
 	UPDATE T 
-				SET bitmapIsDisabled = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
-											
-				, bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
+		SET bitmapIsDisabled = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+									
+		, bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsHidden, @bitmapOrder,0))
 			
 	FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 		INNER JOIN #tblCust_member C  WITH (NOLOCK) ON C.custid = T.custid
