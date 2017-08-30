@@ -7,7 +7,6 @@
 ------------------------------------------------------
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_09]
  	 @srecommend INT
-	, @currency int
 	, @max_custid INT
 	, @target VARCHAR(20)
 	
@@ -62,8 +61,6 @@ BEGIN
 							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
 		AND custid <= @max_custid
 							   
-	SELECT @currency = (SELECT Currency FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @srecommend)
-
 	-- Licensee profile list
 	IF NOT EXISTS (SELECT 1 
 				   FROM dbo.Dep_LicenseeProductSetting lps WITH (NOLOCK)
@@ -119,9 +116,7 @@ BEGIN
 		WHERE psd.SettingType = 1 
 			AND ci.roleid = 2					
 		
-		
 		-- Insert New
-		
 		INSERT INTO dbo.Dep_CustSettingMode (CustID,IsGroupedPT)
 		SELECT c.custid,1
 		FROM #tblCust C WITH (NOLOCK)
@@ -162,15 +157,24 @@ GO
 ------------------------------------------------------	
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
-DECLARE @ProductID INT = 24, @SportType INT = 219
+DECLARE @ProductID INT, @SportType INT 
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
 
 DECLARE @super_cnt INT, @index INT 
-DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
-DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
-
-SET @index = 0
+DECLARE @msg nvarchar(200) 
+DECLARE @msg_total nvarchar(200)
 
 CREATE TABLE #Supers_Offered (custid int)
+CREATE TABLE #supers (custid int, isfinished bit default(0))
+
+SET @ProductID = 24
+SET @SportType = 219
+SET @index = 0
+
+SET @msg = 'Currently at order %d, SuperID: %d.'
+SET @msg_total = 'Total of supers: %d.'
+
+SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -179,14 +183,9 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType AND C.site in ('Heaven','Lucky88')
- 
-CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
-SELECT  @max_custid= xxx ---input maxcustid
-
-INSERT INTO #supers(custid,currency)
-SELECT custid,currency
+INSERT INTO #supers(custid)
+SELECT custid
 FROM  dbo.Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered WITH (NOLOCK))
 	AND site in ('Heaven','Lucky88')
@@ -199,12 +198,10 @@ RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
 WHILE (1 = 1)
 BEGIN
-	
-	
+		
 	UPDATE TOP (1) #supers
 	SET isfinished = 1
 		,@srecommend = custid
-		,@currency=currency			
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
@@ -213,27 +210,38 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'REPLICATED' 	
+	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @max_custid=@max_custid,@target = 'REPLICATED' 	
 				
 	WAITFOR DELAY '00:00:00.280'			
 END	
 
-DROP TABLE #supers		
+DROP TABLE #supers	
+DROP TABLE #Supers_Offered
+	
 GO		
 
 -- END STEP 2: Run this SP at replicated DB-----
 -----------------------------------------------------------------------------------
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 24, @SportType INT = 219
+DECLARE @ProductID INT, @SportType INT 
+DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
 
 DECLARE @super_cnt INT, @index INT 
-DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
-DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
-
-SET @index = 0
+DECLARE @msg nvarchar(200) 
+DECLARE @msg_total nvarchar(200)
 
 CREATE TABLE #Supers_Offered (custid int)
+CREATE TABLE #supers (custid int, isfinished bit default(0))
+
+SET @ProductID = 24
+SET @SportType = 219
+SET @index = 0
+
+SET @msg = 'Currently at order %d, SuperID: %d.'
+SET @msg_total = 'Total of supers: %d.'
+
+SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -242,14 +250,9 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType AND C.site in ('Heaven','Lucky88')
- 
-CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
 
-DECLARE @max_custid INT, @srecommend INT, @site varchar (50), @currency int 
-SELECT  @max_custid= xxx ---input maxcustid
-
-INSERT INTO #supers(custid,currency)
-SELECT custid,currency
+INSERT INTO #supers(custid)
+SELECT custid
 FROM  dbo.Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered WITH (NOLOCK))
 	AND site in ('Heaven','Lucky88')
@@ -266,7 +269,6 @@ BEGIN
 	UPDATE TOP (1) #supers
 	SET isfinished = 1
 		,@srecommend = custid
-		,@currency=currency			
 	WHERE isfinished = 0
 	
 	IF @@ROWCOUNT = 0 BREAK
@@ -275,12 +277,13 @@ BEGIN
 	
 	RAISERROR (@msg, 0, 1,@index, @srecommend) WITH NOWAIT
 	
-	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @currency=@currency, @max_custid=@max_custid,@target = 'DBCUST'
+	EXEC dbo.[Acc_Dep_DynamicCustSetting_09] @srecommend = @srecommend, @max_custid=@max_custid,@target = 'DBCUST'
 		
 	WAITFOR DELAY '00:00:00.280'			
 END	
 
 DROP TABLE #supers		
+DROP TABLE #Supers_Offered
 GO		
 
 -- END STEP 3: Run this SP at DBCust -----
