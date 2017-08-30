@@ -215,6 +215,7 @@ DECLARE @msg_total NVARCHAR(200)
 
 CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
 CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
+CREATE TABLE #Supers_Offered (custid INT)
 
 SELECT  @max_custid= xxx ---input maxcustid
 
@@ -238,7 +239,6 @@ VALUES
 	('Jinyazhou',10,3000,10000,13),  -- RMB
 	('Jinyazhou',10,1000,10000,20)  -- UUS
 
-CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
 FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
@@ -300,6 +300,7 @@ DECLARE @msg_total NVARCHAR(200)
 
 CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
 CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
+CREATE TABLE #Supers_Offered (custid INT)
 
 SELECT  @max_custid= xxx ---input maxcustid
 
@@ -323,7 +324,6 @@ VALUES
 	('Jinyazhou',10,3000,10000,13),  -- RMB
 	('Jinyazhou',10,1000,10000,20)  -- UUS
 
-CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
 FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
