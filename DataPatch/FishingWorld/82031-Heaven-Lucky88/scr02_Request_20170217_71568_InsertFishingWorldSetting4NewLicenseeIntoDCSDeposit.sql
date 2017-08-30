@@ -34,56 +34,57 @@ BEGIN
 	   )
 		RETURN
 	
-	DECLARE @ProductProfileList VARCHAR(200) = '7,8'
-	, @ProductID INT = 24 -- Fishing World
-	-- For ProductStatus param
-	, @IsProductStatus BIT = 1
-	, @IsDisable BIT = 0
-	, @IsHidden BIT = 0
+	DECLARE @ProductProfileList VARCHAR(200)
+		, @ProductID INT 
+		-- For PT param
+		, @SuperPT SMALLMONEY 
 	
-	-- For PT param
-	, @IsPTSetting BIT = 1
-	, @SuperPT SMALLINT = 92
-	-- For StakelevelGroup params
-	--, @IsStakeLevel BIT = 1
-	
-	DECLARE @SportType SMALLINT = 219, @BetType SMALLINT = 1011,  @bitmapOrder INT 
+	DECLARE @bitmap_0 BINARY(32)
+	DECLARE @SportType SMALLINT, @BetType SMALLINT ,  @bitmapOrder INT 
 
-	SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = @SportType AND Bettype = @BetType)
-	
 	CREATE TABLE #tblCust (custid int,agentid int, roleid int) 
+	
+	SET @ProductProfileList = '7,8'
+	SET @SportType = 219
+	SET @BetType = 1011
+	SET @SuperPT = 90
+	SET @ProductID = 24 -- Fishing World
+	
+	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = @SportType AND Bettype = @BetType)
+	-- Calculating bitmap value 
+	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 
 	INSERT INTO #tblCust			
 	SELECT custid,recommend,roleid
-	FROM custInfo WITH(NOLOCK)
+	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
-		AND mrecommend NOT IN (SELECT custid FROM custinfo WITH(NOLOCK)
+		AND mrecommend NOT IN (SELECT custid FROM dbo.custinfo WITH(NOLOCK)
 							   WHERE srecommend=@srecommend and username like '%Acc%' and roleid=3)
 		AND custid <= @max_custid
 							   
-	SELECT @currency = (SELECT Currency FROM custInfo WITH (NOLOCK) WHERE custid = @srecommend)
+	SELECT @currency = (SELECT Currency FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @srecommend)
 
 	-- Licensee profile list
 	IF NOT EXISTS (SELECT 1 
-				   FROM Dep_LicenseeProductSetting lps WITH (NOLOCK)
-						INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lps.ProductSettingID = ps.ProductSettingID
+				   FROM dbo.Dep_LicenseeProductSetting lps WITH (NOLOCK)
+						INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lps.ProductSettingID = ps.ProductSettingID
 				   WHERE CustID = @srecommend AND ps.ProductID= @ProductID)
 	BEGIN
-		INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID)
+		INSERT INTO dbo.Dep_LicenseeProductSetting (CustID,ProductSettingID)
 		SELECT @srecommend, t.val
 		FROM dbo.strSplit(@ProductProfileList,',') t
 	END	
 
 	SELECT ps.SettingType,psd.SportType,psd.BetType
 	INTO #ProductSettingDetail_tmp
-	FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
-		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID
-		INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
+	FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
+		INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID
+		INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 	WHERE lds.CustID = @srecommend  AND ps.ProductID= @ProductID
 
 	-- PT processing
 	
-	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 1) AND @IsPTSetting = 1
+	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WITH (NOLOCK) WHERE SettingType = 1) 
 	BEGIN
 		RAISERROR ('PT Processing', 0, 1) WITH NOWAIT
 		-- For SMA
@@ -104,52 +105,49 @@ BEGIN
 			,CASE WHEN ci.roleid = 4 THEN @SuperPT ELSE 0 END AS SuperPT
 			,CASE WHEN ci.roleid IN (3,4) THEN @SuperPT ELSE 0 END AS MasterPT
 			,CASE WHEN ci.roleid IN (2,4) THEN @SuperPT ELSE 0 END AS AgentPT
-		FROM #tblCust ci
-			CROSS JOIN #ProductSettingDetail_tmp psd 
+		FROM #tblCust ci WITH (NOLOCK)
+			CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK)
 		WHERE psd.SettingType = 1 
 			AND ci.roleid IN (2,3,4)
 			
 		-- For Member
-		IF EXISTS (SELECT 1 FROM #tblCust WHERE roleid = 1)
-		BEGIN
-			
-			--Insert new PT Group
-			INSERT INTO Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
-			SELECT ci.agentid,psd.SportType,psd.BetType,0,0,0,@SuperPT
-			FROM #tblCust ci
-					CROSS JOIN #ProductSettingDetail_tmp psd 
-			WHERE psd.SettingType = 1 
-				AND ci.roleid = 2					
-			
-			-- Insert New
-			
-			INSERT INTO Dep_CustSettingMode (CustID,IsGroupedPT)
-			SELECT c.custid,1
-			FROM #tblCust C
-			WHERE C.roleid = 1 AND NOT EXISTS (SELECT 1 FROM Dep_CustSettingMode C1 (NOLOCK) WHERE c1.CustID = c.Custid)
-			
-		END
+		--Insert new PT Group
+		INSERT INTO dbo.Dep_CustPTGroupSetting_Member (AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)				
+		SELECT ci.agentid,psd.SportType,psd.BetType,0,0,0,@SuperPT
+		FROM #tblCust ci WITH (NOLOCK)
+				CROSS JOIN #ProductSettingDetail_tmp psd WITH (NOLOCK) 
+		WHERE psd.SettingType = 1 
+			AND ci.roleid = 2					
+		
+		
+		-- Insert New
+		
+		INSERT INTO dbo.Dep_CustSettingMode (CustID,IsGroupedPT)
+		SELECT c.custid,1
+		FROM #tblCust C WITH (NOLOCK)
+		WHERE C.roleid = 1 AND NOT EXISTS (SELECT 1 FROM dbo.Dep_CustSettingMode C1 (NOLOCK) WHERE c1.CustID = c.Custid)
+		
 	END	
 
 	-- Status Process
-	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WHERE SettingType = 4) AND @IsProductStatus = 1	
+	IF EXISTS (SELECT 1 FROM #ProductSettingDetail_tmp WITH (NOLOCK) WHERE SettingType = 4) 
 	BEGIN
 	
 		RAISERROR ('Status Processing', 0, 1) WITH NOWAIT
 		-- Update if exists
 		UPDATE T 
-				SET bitmapIsDisabled = dbo.f_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)		
-					, bitmapIsHidden = dbo.f_GenerateProductStatus(t.bitmapIsHidden , @bitmapOrder,0)
-		FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
+				SET bitmapIsDisabled = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0))	
+					, bitmapIsHidden = (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0))
+		FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 			INNER JOIN #tblCust C ON C.custid = T.custid
 		
 		-- Insert new	
 		INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
 		SELECT	c.custid
-				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0) AS bitmapIsDisabled
-				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden
+				, @bitmap_0 AS bitmapIsDisabled
+				, @bitmap_0  AS bitmapIsHidden
 		FROM #tblCust C
-		WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T (NOLOCK) WHERE t.custid = c.custid)
+		WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T WITH (NOLOCK) WHERE t.custid = c.custid)
 		
 	END	
 
@@ -165,14 +163,21 @@ GO
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
 DECLARE @ProductID INT = 24, @SportType INT = 219
+
+DECLARE @super_cnt INT, @index INT 
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+SET @index = 0
+
 CREATE TABLE #Supers_Offered (custid int)
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
-FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
-	INNER JOIN Dep_CustSuper c WITH (NOLOCK) ON c.custid = lds.CustID 
-	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
-	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
+FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
+	INNER JOIN dbo.Dep_CustSuper c WITH (NOLOCK) ON c.custid = lds.CustID 
+	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
+	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType AND C.site in ('Heaven','Lucky88')
  
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
@@ -182,20 +187,13 @@ SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
-FROM  Dep_CustSuper with(nolock) 
-WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
+FROM  dbo.Dep_CustSuper with(nolock) 
+WHERE custid NOT IN (SELECT custid FROM #Supers_Offered WITH (NOLOCK))
 	AND site in ('Heaven','Lucky88')
-	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
+	AND currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
 	AND custid <= @max_custid
 
-
-DECLARE @super_cnt INT, @index INT = 0
-
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-
-DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
-
-DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
 
 RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
@@ -229,14 +227,20 @@ GO
 -------------------------------------------------
 DECLARE @ProductID INT = 24, @SportType INT = 219
 
+DECLARE @super_cnt INT, @index INT 
+DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
+DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+
+SET @index = 0
+
 CREATE TABLE #Supers_Offered (custid int)
 
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
-FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
-	INNER JOIN Dep_CustSuper c WITH (NOLOCK) ON c.custid = lds.CustID 
-	INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
-	INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
+FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
+	INNER JOIN dbo.Dep_CustSuper c WITH (NOLOCK) ON c.custid = lds.CustID 
+	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
+	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType = @SportType AND C.site in ('Heaven','Lucky88')
  
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
@@ -246,19 +250,13 @@ SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid,currency)
 SELECT custid,currency
-FROM  Dep_CustSuper with(nolock) 
-WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
+FROM  dbo.Dep_CustSuper with(nolock) 
+WHERE custid NOT IN (SELECT custid FROM #Supers_Offered WITH (NOLOCK))
 	AND site in ('Heaven','Lucky88')
 	AND currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
 	AND custid <= @max_custid
 
-DECLARE @super_cnt INT, @index INT = 0
-
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-
-DECLARE @msg nvarchar(200) = 'Currently at order %d, SuperID: %d.'
-
-DECLARE @msg_total nvarchar(200) = 'Total of supers: %d.'
+SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
 
 RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 

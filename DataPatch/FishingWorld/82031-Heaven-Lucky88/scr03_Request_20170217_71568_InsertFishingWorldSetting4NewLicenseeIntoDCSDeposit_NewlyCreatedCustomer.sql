@@ -4,19 +4,23 @@
 	Redmine: https://nexdev.net/issues/71568
 */ 
 ------------------------------------------------------
-DECLARE @ProductID INT = 24 -- Fishing World
+DECLARE @ProductID INT 
+DECLARE @max_custid INT, @srecommend INT,  @currency int ,@SportType INT,@BetType INT, @bitmapOrder INT 
+DECLARE @bitmap_0 BINARY(32)
 
 CREATE TABLE #supers (custid int, currency int, isfinished bit default(0))
-
-DECLARE @max_custid INT, @srecommend INT,  @currency int ,@SportType INT = 219,@BetType INT = 1011
-
-DECLARE @bitmapOrder INT 
-
-SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = @SportType AND Bettype = @BetType)
+CREATE TABLE #tblCust_member (custid int,agentid int, roleid int,currency INT,srecommend INT) 
 
 SET @max_custid= xxx ---input maxcustid
 
-CREATE TABLE #tblCust_member (custid int,agentid int, roleid int,currency INT,srecommend INT) 
+SET @ProductID = 24 -- Fishing World
+SET @SportType = 219
+SET @BetType = 1011
+
+SET @bitmapOrder = (SELECT bitmapOrder FROM Dep_ProductStatusProfile WITH (NOLOCK) WHERE Sporttype = @SportType AND Bettype = @BetType)
+
+-- Calculating bitmap value 
+SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 
 INSERT INTO #tblCust_member (custid,agentid,roleid,currency,srecommend)			
 SELECT ci.custid,ci.recommend,roleid,ci.currency, ci.srecommend
@@ -25,7 +29,7 @@ FROM custInfo CI WITH(NOLOCK)
 WHERE ci.mrecommend NOT IN (SELECT custid FROM custinfo cs1 WITH(NOLOCK)
 						   WHERE cs1.srecommend=ci.srecommend and cs1.username like '%Acc%' and cs1.roleid=3 )
 	AND ci.custid > @max_custid
-	AND cs.site in ('Webet138')
+	AND cs.site in ('Heaven','Lucky88')
 	AND ci.roleid = 1
 	AND CS.currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
 						   
@@ -40,16 +44,16 @@ WHERE C.roleid = 1 AND NOT EXISTS (SELECT 1 FROM Dep_CustSettingMode C1 (NOLOCK)
 PRINT 'Status'
 -- Update if exists
 UPDATE T 
-		SET bitmapIsDisabled = dbo.f_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)		
-			, bitmapIsHidden = dbo.f_GenerateProductStatus(t.bitmapIsHidden , @bitmapOrder,0)
-FROM [dbo].[Dep_CustProductStatus] T (ROWLOCK)
+		SET bitmapIsDisabled =  (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+			, bitmapIsHidden =  (SELECT NewBitmap FROM dbo.f_CustSetting_GenerateProductStatus (t.bitmapIsDisabled, @bitmapOrder,0)) 
+FROM [dbo].[Dep_CustProductStatus] T WITH (ROWLOCK,UPDLOCK)
 	INNER JOIN #tblCust_member C ON C.custid = T.custid
 
 -- Insert new	
 INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
 SELECT	c.custid
-		, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0) AS bitmapIsDisabled
-		, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden
+		, @bitmap_0 AS bitmapIsDisabled
+		, @bitmap_0 AS bitmapIsHidden
 FROM #tblCust_member C
 WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] T WITH (NOLOCK) WHERE t.custid = c.custid)
 

@@ -42,15 +42,20 @@ BEGIN
 	   )
 		RETURN
 	
-	DECLARE @ProductProfileList VARCHAR(200) = '9,10,11'
-	, @ProductID INT = 5 -- VS
-	, @SportType SMALLINT = 180
+	DECLARE @ProductProfileList VARCHAR(200) 
+	, @ProductID INT 
+	, @SportType SMALLINT 
 	-- For ProductStatus param
 	, @bitmapOrder INT
 	, @IsDisable BIT = 0
 	, @IsHidden BIT = 0
 	-- For PT param
-	, @SuperPT SMALLMONEY = 85
+	, @SuperPT SMALLMONEY
+	
+	SET @ProductProfileList  = '9,10,11'
+	SET @ProductID = 5 -- VS
+	SET @SportType  = 180
+	SET @SuperPT  = 85
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
@@ -205,7 +210,14 @@ GO
 ------------------------------------------------------	
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
-DECLARE @ProductID INT = 5
+DECLARE @ProductID INT 
+DECLARE @super_cnt INT, @index INT 
+
+DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
+SELECT  @max_custid= xxx ---input maxcustid
+
+SET @index = 0
+SET @ProductID = 5
 
 CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
 INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
@@ -222,7 +234,6 @@ VALUES
 ('Jinyazhou',10,3000,10000,13),  -- RMB
 ('Jinyazhou',10,1000,10000,20)  -- UUS
 
-
 CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
 SELECT lds.CustID
@@ -234,8 +245,6 @@ WHERE PSD.SportType IN (180,181,182,183,184,185,186) AND C.site in ('KGvip','Sun
  
 CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
 
-DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
-SELECT  @max_custid= xxx ---input maxcustid
 
 INSERT INTO #supers(custid, minbet , maxbet , maxpermatch)
 SELECT CS.custid, BS.minbet , BS.maxbet , BS.maxpermatch
@@ -247,7 +256,6 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
 
 SET @super_cnt = (SELECT COUNT(*) FROM #supers )
 
@@ -288,7 +296,14 @@ GO
 ---
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 5
+DECLARE @ProductID INT 
+DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
+DECLARE @super_cnt INT, @index INT 
+
+SELECT  @max_custid= xxx ---input maxcustid
+SET @index = 0
+SET @ProductID = 5
+
 CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
 
 INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
@@ -316,9 +331,6 @@ WHERE PSD.SportType IN (180,181,182,183,184,185,186) AND C.site in ('KGvip','Sun
  
 CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
 
-DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
-SELECT  @max_custid= xxx ---input maxcustid
-
 INSERT INTO #supers(custid, minbet , maxbet , maxpermatch)
 SELECT CS.custid, BS.minbet , BS.maxbet , BS.maxpermatch
 FROM  dbo.Dep_CustSuper CS WITH(NOLOCK) 
@@ -329,8 +341,6 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-
 SET @super_cnt = (SELECT COUNT(*) FROM #supers )
 
 DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'

@@ -42,17 +42,20 @@ BEGIN
 	   )
 		RETURN
 	
-	DECLARE @ProductProfileList VARCHAR(200) = '12,13,14'
-	, @ProductID INT = 27 -- VS
-	, @SportType SMALLINT = 190
+	DECLARE @ProductProfileList VARCHAR(200) 
+	, @ProductID INT
+	, @SportType SMALLINT 
 	-- For ProductStatus param
 	, @bitmapOrder INT
-	, @IsDisable BIT = 0
-	, @IsHidden BIT = 0
 	
 	-- For PT param
 	, @SuperPT SMALLMONEY = 85
 			
+	SET @ProductProfileList = '12,13,14'
+	SET @ProductID = 27 -- VS
+	SET @SportType = 190
+	SET @SuperPT = 85
+	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
 	
 	DECLARE @bitmap_0 BINARY(32)
@@ -207,6 +210,15 @@ GO
 -- BEGIN STEP 2: Run this SP at replicated DB -----
 --------------------------------------------------------------------------------------
 DECLARE @ProductID INT = 27
+DECLARE @super_cnt INT, @index INT 
+DECLARE @msg NVARCHAR(200) 
+DECLARE @msg_total NVARCHAR(200) 
+
+SET @ProductID = 27
+SET @index = 0
+SET @msg = 'Currently at order %d, SuperID: %d.'
+SET @msg_total = 'Total of supers: %d.'
+
 
 CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
 INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
@@ -248,13 +260,7 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-
 SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-
-DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
-
-DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
 
 RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
@@ -289,7 +295,16 @@ GO
 ---
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
-DECLARE @ProductID INT = 27
+DECLARE @ProductID INT 
+DECLARE @super_cnt INT, @index INT
+DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
+DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
+
+SET @ProductID = 27
+SET @index = 0
+SET @msg = 'Currently at order %d, SuperID: %d.'
+SET @msg_total = 'Total of supers: %d.'
+
 CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
 
 INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
@@ -330,13 +345,7 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-DECLARE @super_cnt INT, @index INT = 0
-
 SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-
-DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
-
-DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
 
 RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
