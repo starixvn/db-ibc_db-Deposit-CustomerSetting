@@ -22,8 +22,7 @@ BEGIN
 	
 	IF (@target = 'REPLICATED' AND @@SERVERNAME = 'DBCUST') RETURN	-- run at all replicated servers
 	IF (@target = 'DBCUST' AND @@SERVERNAME <> 'DBCUST') RETURN -- run at DBCUST only
-	
-	
+		
 	IF (dbo.f_CheckRepTable('Dep_CustSettingMode') = 0
 		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Member') = 0
 		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0
@@ -43,14 +42,14 @@ BEGIN
 		RETURN
 	
 	DECLARE @ProductProfileList VARCHAR(200) 
-	, @ProductID INT 
-	, @SportType SMALLINT 
-	-- For ProductStatus param
-	, @bitmapOrder INT
-	, @IsDisable BIT = 0
-	, @IsHidden BIT = 0
-	-- For PT param
-	, @SuperPT SMALLMONEY
+		, @ProductID INT 
+		, @SportType SMALLINT 
+		-- For ProductStatus param
+		, @bitmapOrder INT
+		-- For PT param
+		, @SuperPT SMALLMONEY
+	
+	DECLARE @bitmap_0 BINARY(32)
 	
 	SET @ProductProfileList  = '9,10,11'
 	SET @ProductID = 5 -- VS
@@ -58,9 +57,7 @@ BEGIN
 	SET @SuperPT  = 85
 	
 	SET @bitmapOrder = (SELECT bitmapOrder FROM dbo.Dep_ProductStatusProfile WITH(NOLOCK) WHERE Sporttype =  @SportType )
-	
-	DECLARE @bitmap_0 BINARY(32)
-	
+			
 	-- Calculating bitmap value 
 	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 		
@@ -92,7 +89,7 @@ BEGIN
 						INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lps.ProductSettingID = ps.ProductSettingID
 				   WHERE CustID = @srecommend AND ps.ProductID= @ProductID)
 	BEGIN
-		INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID)
+		INSERT INTO dbo.Dep_LicenseeProductSetting (CustID,ProductSettingID)
 		SELECT @srecommend, t.val
 		FROM dbo.strSplit(@ProductProfileList,',') t
 	END	
@@ -171,7 +168,7 @@ BEGIN
 	INSERT INTO Dep_CustSettingMode (CustID,IsGroupedPT)
 	SELECT c.custid,1
 	FROM #tblCust_member C WITH (NOLOCK)
-	WHERE NOT EXISTS (SELECT 1 FROM Dep_CustSettingMode C1 WITH (NOLOCK) WHERE C1.CustID = C.custid)
+	WHERE NOT EXISTS (SELECT 1 FROM dbo.Dep_CustSettingMode C1 WITH (NOLOCK) WHERE C1.CustID = C.custid)
 
 	-- 1. Product Status
 	UPDATE T 
@@ -184,8 +181,8 @@ BEGIN
 		
 	INSERT INTO [dbo].[Dep_CustProductStatus](CustID,bitmapIsDisabled,bitmapIsHidden)
 	SELECT	c.custid
-			, @bitmap_0 AS bitmapIsDisabled
-			, @bitmap_0 AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
+		, @bitmap_0 AS bitmapIsDisabled
+		, @bitmap_0 AS bitmapIsHidden -- Always Hide = 0 for Betradar VS
 	FROM #tblCust_member C WITH (NOLOCK)
 	WHERE NOT EXISTS (SELECT 1 FROM [dbo].[Dep_CustProductStatus] C1 WITH (NOLOCK) WHERE C1.CustID = C.custid)
 	
@@ -212,27 +209,34 @@ GO
 --------------------------------------------------------------------------------------
 DECLARE @ProductID INT 
 DECLARE @super_cnt INT, @index INT 
-
 DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
+DECLARE @msg NVARCHAR(200) 
+DECLARE @msg_total NVARCHAR(200) 
+
+CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
+CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
+
 SELECT  @max_custid= xxx ---input maxcustid
 
 SET @index = 0
 SET @ProductID = 5
 
-CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
+SET @msg = 'Currently at order %d, SuperID: %d.'
+SET @msg_total = 'Total of supers: %d.'
+
 INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
 VALUES
-('KGvip',20,100000,1000000,13), -- RMB
-('KGvip',1,100,1000,20),       -- UUS
+	('KGvip',20,100000,1000000,13), -- RMB
+	('KGvip',1,100,1000,20),       -- UUS
 
-('Sunriseb2b',1,3000,10000,13), -- RMB
-('Sunriseb2b',1,500,1500,3),   -- US$
-('Sunriseb2b',1,500,1500,6), -- EUR
-('Sunriseb2b',1,1500,5000,2),  -- RM
-('Sunriseb2b',1,500,1500,20) , -- UUS
+	('Sunriseb2b',1,3000,10000,13), -- RMB
+	('Sunriseb2b',1,500,1500,3),   -- US$
+	('Sunriseb2b',1,500,1500,6), -- EUR
+	('Sunriseb2b',1,1500,5000,2),  -- RM
+	('Sunriseb2b',1,500,1500,20) , -- UUS
 
-('Jinyazhou',10,3000,10000,13),  -- RMB
-('Jinyazhou',10,1000,10000,20)  -- UUS
+	('Jinyazhou',10,3000,10000,13),  -- RMB
+	('Jinyazhou',10,1000,10000,20)  -- UUS
 
 CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
@@ -242,9 +246,6 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType IN (180,181,182,183,184,185,186) AND C.site in ('KGvip','Sunriseb2b','Jinyazhou')
- 
-CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
-
 
 INSERT INTO #supers(custid, minbet , maxbet , maxpermatch)
 SELECT CS.custid, BS.minbet , BS.maxbet , BS.maxpermatch
@@ -256,12 +257,7 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-
-DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
-
-DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
+SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
 
 RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
@@ -297,28 +293,35 @@ GO
 -- BEGIN STEP 3: Run this SP at DBCust -----
 -------------------------------------------------
 DECLARE @ProductID INT 
-DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
 DECLARE @super_cnt INT, @index INT 
+DECLARE @max_custid INT, @srecommend INT, @minbet MONEY, @maxbet MONEY, @maxpermatch MONEY
+DECLARE @msg NVARCHAR(200) 
+DECLARE @msg_total NVARCHAR(200) 
+
+CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
+CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
 
 SELECT  @max_custid= xxx ---input maxcustid
+
 SET @index = 0
 SET @ProductID = 5
 
-CREATE TABLE #Betsetting (Site VARCHAR(50), minbet MONEY, maxbet MONEY, maxpermatch MONEY, exchangeID INT)
+SET @msg = 'Currently at order %d, SuperID: %d.'
+SET @msg_total = 'Total of supers: %d.'
 
 INSERT INTO #Betsetting (Site, minbet , maxbet , maxpermatch, exchangeID )
 VALUES
-('KGvip',20,100000,1000000,13), -- RMB
-('KGvip',1,100,1000,20),       -- UUS
+	('KGvip',20,100000,1000000,13), -- RMB
+	('KGvip',1,100,1000,20),       -- UUS
 
-('Sunriseb2b',1,3000,10000,13), -- RMB
-('Sunriseb2b',1,500,1500,3),   -- US$
-('Sunriseb2b',1,500,1500,6), -- EUR
-('Sunriseb2b',1,1500,5000,2),  -- RM
-('Sunriseb2b',1,500,1500,20) , -- UUS
+	('Sunriseb2b',1,3000,10000,13), -- RMB
+	('Sunriseb2b',1,500,1500,3),   -- US$
+	('Sunriseb2b',1,500,1500,6), -- EUR
+	('Sunriseb2b',1,1500,5000,2),  -- RM
+	('Sunriseb2b',1,500,1500,20) , -- UUS
 
-('Jinyazhou',10,3000,10000,13),  -- RMB
-('Jinyazhou',10,1000,10000,20)  -- UUS
+	('Jinyazhou',10,3000,10000,13),  -- RMB
+	('Jinyazhou',10,1000,10000,20)  -- UUS
 
 CREATE TABLE #Supers_Offered (custid INT)
 INSERT INTO #Supers_Offered (custid)
@@ -328,8 +331,6 @@ FROM dbo.Dep_LicenseeProductSetting lds WITH (NOLOCK)
 	INNER JOIN dbo.Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID AND ps.ProductID= @ProductID
 	INNER JOIN dbo.Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
 WHERE PSD.SportType IN (180,181,182,183,184,185,186) AND C.site in ('KGvip','Sunriseb2b','Jinyazhou')
- 
-CREATE TABLE #supers (custid INT,  minbet MONEY, maxbet MONEY, maxpermatch MONEY, isfinished BIT DEFAULT(0))
 
 INSERT INTO #supers(custid, minbet , maxbet , maxpermatch)
 SELECT CS.custid, BS.minbet , BS.maxbet , BS.maxpermatch
@@ -341,11 +342,7 @@ WHERE custid NOT IN (SELECT custid FROM #Supers_Offered)
 	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 
 -- For deployer info
-SET @super_cnt = (SELECT COUNT(*) FROM #supers )
-
-DECLARE @msg NVARCHAR(200) = 'Currently at order %d, SuperID: %d.'
-
-DECLARE @msg_total NVARCHAR(200) = 'Total of supers: %d.'
+SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
 
 RAISERROR (@msg_total, 0, 1, @super_cnt) WITH NOWAIT
 
