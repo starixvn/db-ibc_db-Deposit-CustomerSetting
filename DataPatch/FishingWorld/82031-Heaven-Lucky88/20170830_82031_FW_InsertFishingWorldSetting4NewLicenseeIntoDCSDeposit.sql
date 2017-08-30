@@ -53,7 +53,7 @@ BEGIN
 	-- Calculating bitmap value 
 	SET @bitmap_0 =  dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)
 
-	INSERT INTO #tblCust			
+	INSERT INTO #tblCust (custid,agentid,roleid)			
 	SELECT custid,recommend,roleid
 	FROM dbo.custInfo WITH(NOLOCK)
 	WHERE srecommend =@srecommend
