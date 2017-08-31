@@ -189,7 +189,7 @@ SELECT custid
 FROM  dbo.Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered WITH (NOLOCK))
 	AND site in ('Heaven','Lucky88')
-	AND currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
+	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND custid <= @max_custid
 
 SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
@@ -256,7 +256,7 @@ SELECT custid
 FROM  dbo.Dep_CustSuper with(nolock) 
 WHERE custid NOT IN (SELECT custid FROM #Supers_Offered WITH (NOLOCK))
 	AND site in ('Heaven','Lucky88')
-	AND currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
+	AND currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 	AND custid <= @max_custid
 
 SET @super_cnt = (SELECT COUNT(*) FROM #supers WITH (NOLOCK))
