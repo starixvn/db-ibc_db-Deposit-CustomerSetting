@@ -31,7 +31,7 @@ WHERE ci.mrecommend NOT IN (SELECT custid FROM dbo.custinfo cs1 WITH(NOLOCK)
 	AND ci.custid > @max_custid
 	AND cs.site in ('Heaven','Lucky88')
 	AND ci.roleid = 1
-	AND CS.currency NOT IN (27,20) -- Currency H - it is just test currency, used once in a while 
+	AND CS.currency NOT IN (27) -- Currency H - it is just test currency, used once in a while 
 						   
 -- PT processing
 PRINT 'PT'
