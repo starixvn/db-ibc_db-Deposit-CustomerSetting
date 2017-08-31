@@ -1,7 +1,7 @@
 /*
-	Created: 20170830@Helen
-	Task: https://nexdev.net/issues/82347
-	DB: DB06/bodb02
+	Created: 20170831@Helen
+	Task: DCS Deposit for Fishing World - [Redmine:82031]
+	Redmine: https://nexdev.net/issues/82031
 */  
 USE bodb02
 GO

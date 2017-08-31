@@ -1,7 +1,7 @@
 /*
-	Created: 20170217@Helen
-	Task: DCS Deposit for Fishing World - [Redmine:71568]
-	Redmine: https://nexdev.net/issues/71568
+	Created: 20170831@Helen
+	Task: DCS Deposit for Fishing World - [Redmine:82031]
+	Redmine: https://nexdev.net/issues/82031
 */ 
 -- BEGIN STEP 1: Deploy this SP at DBCUST.CustDB, Run only in the FIRST running
 ------------------------------------------------------
