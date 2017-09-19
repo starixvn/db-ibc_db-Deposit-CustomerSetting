@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 (
 	@custid		int OUTPUT,
@@ -225,6 +225,7 @@ Revisions:
     - 20150610@Kathy: Migrate custDB to new server DBCust (temp GameType table, call Task_Cust_CheckBalance_Exception_Ins by linked server) [Redmine:#36216]
     - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
     - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+    - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
     
 Param's Explanation:
 • @ErrCode:
@@ -1867,10 +1868,3 @@ BEGIN
 	DROP TABLE #MinMaxUpline
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Ag] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Ag] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Ag] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerInsMember_Ag] TO [vnteam] AS [dbo]

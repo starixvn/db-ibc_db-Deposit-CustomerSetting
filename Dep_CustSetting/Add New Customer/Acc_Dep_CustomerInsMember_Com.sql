@@ -399,6 +399,7 @@ Revisions:
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
     - 20160830@Winnie: #63151  Add ColossusBet Agent commRate
     - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+    - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
     
 Param's Explanation:
 • @ErrCode:

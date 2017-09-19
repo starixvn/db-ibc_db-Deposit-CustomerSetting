@@ -365,6 +365,7 @@ Revisions:
 	- 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -376,7 +377,7 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON
 	----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))
+	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
 	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
 	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
 

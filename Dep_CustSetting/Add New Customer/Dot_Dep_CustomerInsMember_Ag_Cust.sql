@@ -152,6 +152,7 @@ AS
 	 - 20170512@Winnie:  Change the default odds group for Leon [Redmine: #76427]
 	 - 20170807@Winnie:  Change the default odds group to A for Leon [Redmine: #81191]
 	 - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+	 - 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -172,7 +173,7 @@ BEGIN
 	set @startRun = getdate()    
 	    
 	----- Elodie @ 01 JUN 2015 -------------------    
-	 DECLARE @tmp_Sports TABLE (SportType TINYINT, SportName NVARCHAR(50))    
+	 DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))    
 	 DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)    
 	    
 	 BEGIN TRY    
