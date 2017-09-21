@@ -15,6 +15,6 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
-	SELECT username  FROM customer WITH(NOLOCK) WHERE site = @Site AND roleid=4
+	SELECT username,custid  FROM customer WITH(NOLOCK) WHERE site = @Site AND roleid=4
 END
 GO
