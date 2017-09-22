@@ -1,4 +1,4 @@
-/*<info serverAlias="DBEXT-bodb02" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Acc_Dep_SelDCSProduct]	
 AS 
 /*	Created by: [Winnie] 
