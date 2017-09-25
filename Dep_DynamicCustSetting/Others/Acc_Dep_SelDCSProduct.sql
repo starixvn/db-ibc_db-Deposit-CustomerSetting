@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_Dep_SelDCSProduct]	
+ALTER PROCEDURE [dbo].[Acc_Dep_SelDCSProduct]	
 AS 
 /*	Created by: [Winnie] 
 	Date: 20170922
@@ -15,9 +15,9 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-	SELECT DISTINCT s.ProductID,p.ProductName			
+	SELECT  s.ProductID,p.ProductName,s.SettingType			
 	FROM [Dep_ProductSetting] s WITH(NOLOCK) 
 		INNER JOIN DBEXT.bodb02.dbo.Products p WITH(NOLOCK) ON s.ProductID=p.ProductID
-		WHERE s.SettingType=2	
+		
 END
 GO
