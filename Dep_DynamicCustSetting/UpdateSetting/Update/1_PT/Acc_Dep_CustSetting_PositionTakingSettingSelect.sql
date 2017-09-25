@@ -18,7 +18,7 @@ BEGIN
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT  ps.ProductID ProductID, SportType,Bettype,IsLive
-	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,2) AS ps
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1) AS ps
 	
 	IF EXISTS (SELECT 1 FROM #SportBettypeFilter)
 	BEGIN
