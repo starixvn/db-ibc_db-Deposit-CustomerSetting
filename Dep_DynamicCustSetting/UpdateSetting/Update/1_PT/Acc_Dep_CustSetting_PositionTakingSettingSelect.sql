@@ -23,7 +23,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM #SportBettypeFilter)
 	BEGIN
 	
-	SELECT SuperPT 
+	SELECT DISTINCT SuperPT 
 	FROM 	#SportBettypeFilter ft 
 			INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 			WHERE CustID=@CustID  
