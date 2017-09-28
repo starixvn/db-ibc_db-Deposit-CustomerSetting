@@ -83,17 +83,7 @@ BEGIN
 	IF @ErrCode <> 0 AND @ApplyExistedMem=1
 		RETURN 
 	
-	-- Select ProductID and SettingLevel
-	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
-	FROM (	SELECT TOP 1 ps.ProductID, ps.SettingLevel
-			FROM Dep_ProductSettingDetail AS psd WITH(NOLOCK)
-				INNER JOIN	@NewBetLimitTbl AS tmp ON	psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType
-				INNER JOIN Dep_ProductSetting AS ps WITH (NOLOCK) ON ps.ProductSettingID = psd.ProductSettingID
-			WHERE	ps.ProductID IS NOT NULL
-				AND	ps.SettingLevel IS NOT NULL
-				AND ps.SettingType = 2	-- Bet Limit
-		 ) iq
-
+	
 	--Parse XML	
 	DECLARE @iDoc INT
 
@@ -123,6 +113,18 @@ BEGIN
 		INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
 		WHERE bl.custid = @CustID
 
+	-- Select ProductID and SettingLevel
+	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
+	FROM (	SELECT TOP 1 ps.ProductID, ps.SettingLevel
+			FROM Dep_ProductSettingDetail AS psd WITH(NOLOCK)
+				INNER JOIN	@NewBetLimitTbl AS tmp ON	psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType
+				INNER JOIN Dep_ProductSetting AS ps WITH (NOLOCK) ON ps.ProductSettingID = psd.ProductSettingID
+			WHERE	ps.ProductID IS NOT NULL
+				AND	ps.SettingLevel IS NOT NULL
+				AND ps.SettingType = 2	-- Bet Limit
+		 ) iq
+
+
 	IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@CustID)
 	BEGIN
@@ -130,7 +132,8 @@ BEGIN
 				@ActionID=1,
 				@CustID=@CustID,
 				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem	
+				@ApplyExistedMem=@ApplyExistedMem,
+				@SettingType=2	
 	END
 	ELSE
 	BEGIN
@@ -138,14 +141,15 @@ BEGIN
 				@ActionID=0,
 				@CustID=@CustID,
 				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem	
+				@ApplyExistedMem=@ApplyExistedMem,
+				@SettingType=2	
 
 		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 		SELECT @CustID,ProductSettingID
 			FROM Dep_ProductSetting WITH(NOLOCK)
 			WHERE ProductID=@ProductID AND SettingType=2
 	END
-
+	SELECT @ErrMsg='Update Bet Setting successfully'
 	--START LOGGING
 
 	-- Select ProductName
