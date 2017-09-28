@@ -1,20 +1,22 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitFullLineUpd] 
-	  @CustID				INT
-	, @BetLimit				VARCHAR(MAX)
-	, @ApplyExistedMem		BIT=0	
-	, @UserID				INT
-	, @IP					VARCHAR(50)		= ''
-	, @ErrCode				INT				= 0		OUTPUT	
-	, @ErrMsg				NVARCHAR(200)	= ''	OUTPUT
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitUpd] 
+	  @CustID		INT
+	, @BetLimit VARCHAR(MAX)
+	, @SubAccID		INT				= 0
+	, @UserID		INT
+	, @IP			VARCHAR(50)		= ''
+	, @ErrCode			INT				= 0		OUTPUT
+	, @MsgType			INT				= 0		OUTPUT
+	, @ErrMsg			NVARCHAR(200)	= ''	OUTPUT
 AS
 /*
-	Created: 20170927@Winnie
+	Created: 20170615@Helen
 	Task: Check Customer's Bet Limits
 	DB: DBCUST/CustDB
 	Original:
 
-	Revision:	
+	Revision:
+		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 		
 	Param's Explanation:
 	• @BetLimit:
@@ -43,6 +45,11 @@ BEGIN
 		, @logSpData_Old	NVARCHAR(MAX)
 		, @xml				XML
 		
+	DECLARE @AgentID			INT
+		, @MasterID			INT
+		, @SuperID			INT
+		, @RoleID			INT
+		
 	DECLARE @OldBetLimitTbl TABLE (
 		SportType			SMALLINT
 		, BetType			SMALLINT
@@ -62,8 +69,6 @@ BEGIN
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
 
-	
-
 	--Check if XML is null or empty
 	IF @BetLimit IS NULL
 		OR @BetLimit = ''
@@ -71,18 +76,57 @@ BEGIN
 
 	SET @startRun = GETDATE()
 
-	SELECT	@ErrCode	= 0		
+	SELECT	@ErrCode	= 0
+		,	@MsgType	= 0
 		,	@ErrMsg			= ''
 
-	EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
-		@custid = @CustID
-		,@Language = 'E'
-		,@ErrMsg = @ErrMsg OUTPUT
-		,@ErrCode=@ErrCode OUTPUT
+	--Check disable user
+	EXEC dbo.Acc_CustomerSelCheckEnable 
+										@custid		= @custid
+									,	@ErrCode	= @ErrCode OUTPUT
+									,	@ErrMsg		= @ErrMsg OUTPUT
 
-	IF @ErrCode <> 0 AND @ApplyExistedMem=1
-		RETURN 
+	IF @ErrCode > 0
+	BEGIN
+		SET @MsgType = 101
+		RETURN
+	END
+
+	--Get line information
+	SELECT @AgentID = recommend
+		, @MasterID = mrecommend
+		, @SuperID	= srecommend
+		, @RoleID	= RoleID
+	FROM dbo.custInfo WITH (NOLOCK)
+	WHERE custid = @CustID
+
+	--Check belonging
+	EXEC dbo.Age_CustomerSelCheckBelonging 
+		@SessionCustID	= @Userid 
+		,@Custid		= @custid		
+		,@roleid		= @roleid OUTPUT
+	IF (@roleid = 0)
+	BEGIN
+		SET @MsgType = 101
+		SET @ErrCode = 101
+		SET @ErrMsg = 'Users are not in the same line!'
+		RETURN
+	END
 	
+	--Check Allowed downlines	
+	EXEC dbo.Acc_CustomerSelCheckAllowedDownlines 
+												@custid		= @custid
+											,	@roleid		= @roleid
+											,	@isExecRep	= 1
+											,	@Language	= 'E'
+											,	@ErrCode	= @ErrCode	OUTPUT
+											,	@ErrMsg		= @ErrMsg	OUTPUT
+
+	IF @ErrCode > 0
+	BEGIN
+		SET @MsgType = 101
+		RETURN
+	END
 	
 	--Parse XML	
 	DECLARE @iDoc INT
@@ -102,16 +146,76 @@ BEGIN
 
 	EXEC sp_xml_removedocument @iDoc
 
+	--Validate new bet settings
+	EXEC [dbo].[Acc_Dep_CustSetting_BetLimitCheck] @CustID	= @CustID
+						, @RoleID		= @RoleID
+						, @AgentID		= @AgentID
+						, @MasterID		= @MasterID
+						, @SuperID		= @SuperID
+						, @BetLimit		= @BetLimit
+						, @ErrCode		= @ErrCode	OUTPUT
+						, @MsgType		= @MsgType  OUTPUT
+						, @ErrMsg		= @ErrMsg	OUTPUT
+
+	IF @ErrCode <> 0
+		RETURN
+
+	IF @RoleID = 1
+	BEGIN
 		--get old settings
-	INSERT INTO @OldBetLimitTbl
-	SELECT bl.SportType
-		, bl.BetType
-		, bl.MinBet
-		, bl.MaxBet
-		, bl.MaxPerMatch
-	FROM dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK)
-		INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
+		INSERT INTO @OldBetLimitTbl
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+			, bl.MaxPerMatch
+		FROM dbo.Dep_CustBetSetting_Member bl WITH (NOLOCK)
+			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
 		WHERE bl.custid = @CustID
+
+		--update new settings
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
+				)
+	END
+	ELSE IF @RoleID IN (2, 3, 4)
+	BEGIN
+		--get old settings
+		INSERT INTO @OldBetLimitTbl
+		SELECT bl.SportType
+			, bl.BetType
+			, bl.MinBet
+			, bl.MaxBet
+			, bl.MaxPerMatch
+		FROM dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK)
+			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
+		WHERE bl.custid = @CustID
+
+		--update new settings
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+		WHERE main.custid = @CustID
+			AND (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
+				)
+	END
+
+	--START LOGGING
 
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
@@ -124,38 +228,10 @@ BEGIN
 				AND ps.SettingType = 2	-- Bet Limit
 		 ) iq
 
-
-	IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
-								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@CustID)
-	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_01]
-				@ActionID=1,
-				@CustID=@CustID,
-				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem,
-				@SettingType=2	
-	END
-	ELSE
-	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_01]
-				@ActionID=0,
-				@CustID=@CustID,
-				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem,
-				@SettingType=2	
-
-		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-		SELECT @CustID,ProductSettingID
-			FROM Dep_ProductSetting WITH(NOLOCK)
-			WHERE ProductID=@ProductID AND SettingType=2
-	END
-	SELECT @ErrMsg='Update Bet Setting successfully'
-	--START LOGGING
-
 	-- Select ProductName
 	SELECT @ProductName = p.ProductName
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
-		WHERE p.ProductID = @ProductID
+	WHERE p.ProductID = @ProductID
 
 	-- Log old data
 	IF @SettingLevel = 1			-- Product setting level
@@ -164,7 +240,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',				
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID							AS '@ProductID',
@@ -175,7 +252,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -185,7 +262,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',				
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType							AS '@SportType',
@@ -196,7 +274,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -206,7 +284,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',			
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	BetType								AS '@BetType',
@@ -217,7 +296,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -227,7 +306,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',				
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType							AS '@SportType',
@@ -239,7 +319,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -252,7 +332,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',				
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID							AS '@ProductID',
@@ -263,7 +344,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -273,7 +354,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',			
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType							AS '@SportType',
@@ -284,7 +366,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -294,7 +376,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',				
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	BetType								AS '@BetType',
@@ -305,7 +388,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -315,7 +398,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@CustID							AS '@CustID',
-				@UserID							AS '@UserID',			
+				@UserID							AS '@UserID',
+				dbo.f_GetSubUsername(@SubAccID) AS '@SubAccName',
 				@IP								AS '@IP',
 				(
 					SELECT	SportType							AS '@SportType',
@@ -327,7 +411,7 @@ BEGIN
 					FOR XML PATH('BetLimit'),
 					TYPE
 				)
-		FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+		FOR XML PATH('Acc_Dep_CustSetting_BetLimitUpd'),
 		TYPE
 	)
 	END
@@ -339,7 +423,7 @@ BEGIN
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 						, @CustID			= @CustID
-						, @ActionID			= 2047
+						, @ActionID			= 2046
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
@@ -347,7 +431,7 @@ BEGIN
 	BEGIN CATCH
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 						, @CustID			= @CustID
-						, @ActionID			= 2047
+						, @ActionID			= 2046
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
@@ -355,3 +439,10 @@ BEGIN
 END
 
 GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbadminNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbDownlineNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbExtAccNet]
+GO
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbLicenseeNet]
