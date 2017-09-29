@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] 
 	  @CustID		INT
-	, @BetLimit VARCHAR(MAX)
+	, @PT			TINYINT,
 	, @SubAccID		INT				= 0
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
