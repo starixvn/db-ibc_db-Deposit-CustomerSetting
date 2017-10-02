@@ -128,22 +128,21 @@ BEGIN
 	IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@CustID)
 	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_01]
+		EXEC [Acc_Dep_DynamicCustSetting_02]
 				@ActionID=1,
 				@CustID=@CustID,
 				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem,
-				@SettingType=2	
+				@ApplyExistedMem=@ApplyExistedMem
+				
 	END
 	ELSE
 	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_01]
+		EXEC [Acc_Dep_DynamicCustSetting_02]
 				@ActionID=0,
 				@CustID=@CustID,
 				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem,
-				@SettingType=2	
-
+				@ApplyExistedMem=@ApplyExistedMem
+	
 		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 		SELECT @CustID,ProductSettingID
 			FROM Dep_ProductSetting WITH(NOLOCK)
