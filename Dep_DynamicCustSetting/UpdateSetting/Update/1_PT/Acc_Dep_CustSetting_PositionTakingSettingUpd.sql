@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] 
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] 
 	  @CustID		INT
 	, @PT			SMALLMONEY
 	, @ProductID	INT
@@ -75,6 +75,7 @@ BEGIN
 				@CustID=@CustID,
 				@PT=@PT,					
 				@ProductID=@ProductID
+				
 	END
 	ELSE
 	BEGIN
@@ -83,12 +84,13 @@ BEGIN
 				@CustID=@CustID,
 				@PT=@PT,				
 				@ProductID=@ProductID
-
+			
 		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 		VALUES( @CustID,@ProductSettingID)
 	END
+	
 	SELECT @ErrMsg='Update Position Taking successfully'
-	END
+	
 	--START LOGGING
 	-- Log old data
 	IF @SettingLevel = 1			-- Product setting level
@@ -269,6 +271,7 @@ BEGIN
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
 	END CATCH
+END
 
 
 GO
