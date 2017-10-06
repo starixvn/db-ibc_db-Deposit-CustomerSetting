@@ -59,8 +59,10 @@ BEGIN
 	CREATE TABLE #SportBettypeFilter (SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
 	
 	INSERT INTO #SportBettypeFilter (SportType,Bettype,IsLive)
-	SELECT DISTINCT  SportType,Bettype,IsLive FROM dbo.ProductSettingDetail WITH(NOLOCK)
-	WHERE ProductID = @ProductID AND SettingType=1
+	SELECT DISTINCT  SportType,Bettype,IsLive 	
+	FROM Dep_ProductSetting ps WITH(NOLOCK) 
+		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
+	WHERE ProductID = @ProductID AND SettingType=1	
 
 	SELECT @OldPT= SuperPT 
 			FROM 	#SportBettypeFilter ft 

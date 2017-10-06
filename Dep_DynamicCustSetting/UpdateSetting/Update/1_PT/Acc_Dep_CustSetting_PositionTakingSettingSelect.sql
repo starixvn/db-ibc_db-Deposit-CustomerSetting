@@ -17,8 +17,10 @@ BEGIN
 	CREATE TABLE #SportBettypeFilter (productID INT,SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
-	SELECT DISTINCT ProductID, SportType,Bettype,IsLive FROM dbo.ProductSettingDetail WITH(NOLOCK)
-	WHERE ProductID = @ProductID AND SettingType=1
+	SELECT DISTINCT ProductID, SportType,Bettype,IsLive 
+	FROM Dep_ProductSetting ps WITH(NOLOCK) 
+		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
+	WHERE ProductID = @ProductID AND SettingType=1	
 	
 	IF EXISTS (SELECT TOP 1 1 
 			FROM 	#SportBettypeFilter ft 
@@ -34,6 +36,8 @@ BEGIN
 	ELSE
 			SELECT 0 AS SuperPT 
 END
+
+
 
 GO
 
