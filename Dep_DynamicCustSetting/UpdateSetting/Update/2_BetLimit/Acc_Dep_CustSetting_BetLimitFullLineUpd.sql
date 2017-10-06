@@ -1,4 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
+USE [CustDB]
+GO
+
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitFullLineUpd] 
 	  @CustID				INT
 	, @BetLimit				VARCHAR(MAX)
@@ -13,7 +16,6 @@ AS
 	Task: Check Customer's Bet Limits
 	DB: DBCUST/CustDB
 	Original:
-
 	Revision:	
 		- 20170928@Winnie: Insert Settings Into DCS Structure - [Redmine: 82346]
 	Param's Explanation:
