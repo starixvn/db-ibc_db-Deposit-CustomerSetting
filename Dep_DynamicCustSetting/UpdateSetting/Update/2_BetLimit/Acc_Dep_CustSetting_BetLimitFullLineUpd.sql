@@ -15,7 +15,7 @@ AS
 	Original:
 
 	Revision:	
-		
+		- 20170928@Winnie: Insert Settings Into DCS Structure - [Redmine: 82346]
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
