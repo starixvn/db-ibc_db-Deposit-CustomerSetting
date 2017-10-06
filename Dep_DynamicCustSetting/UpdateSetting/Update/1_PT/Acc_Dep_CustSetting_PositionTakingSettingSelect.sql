@@ -17,8 +17,8 @@ BEGIN
 	CREATE TABLE #SportBettypeFilter (productID INT,SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
-	SELECT  ps.ProductID ProductID, SportType,Bettype,IsLive
-	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1) AS ps
+	SELECT DISTINCT ProductID, SportType,Bettype,IsLive FROM dbo.ProductSettingDetail WITH(NOLOCK)
+	WHERE ProductID = @ProductID AND SettingType=1
 	
 	IF EXISTS (SELECT TOP 1 1 
 			FROM 	#SportBettypeFilter ft 
