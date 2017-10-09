@@ -8,7 +8,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 /****** Object:  Stored Procedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 11/24/2015 9:44:45 AM ******/
 
-CREATE PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSelect] 
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSelect] 
 	@ProductID INT
 	, @CustID INT	
 AS
@@ -28,39 +28,46 @@ BEGIN
 			 ,@HasDownline			BIT = 1 
 			 ,@bitmapOrder			TINYINT=0
 	
-	CREATE TABLE #CustList (CustID INT PRIMARY KEY)				
-
-	SELECT @bitmapOrder=bitmapOrder
-	FROM Dep_ProductSetting ps WITH(NOLOCK) 
-		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-		INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
-	WHERE ProductID = @ProductID AND SettingType=4
-	
-	SELECT	@IsDisabled=(SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))		
-	FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
-	WHERE stt.CustID = @CustID	
-		
+	CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
 	INSERT INTO #CustList (CustID)
-			SELECT s.CustID
-			FROM dbo.Customer s WITH (NOLOCK)
-				INNER JOIN dbo.Customer m WITH (NOLOCK) ON s.mrecommend = m.custid
-			WHERE s.srecommend = @CustID
-				AND s.custid <> @CustID
-				AND m.Username NOT LIKE '%' + m.site + 'ACC%'
-				AND s.roleid=1
+	SELECT s.CustID
+	FROM dbo.Customer s WITH (NOLOCK)
+		INNER JOIN dbo.Customer m WITH (NOLOCK) ON s.mrecommend = m.custid
+	WHERE s.srecommend = @CustID		
+		AND m.Username NOT LIKE '%' + m.site + 'ACC%'
+		AND s.roleid=1
+				
 	IF @@ROWCOUNT=0
-		SELECT @HasDownline=0
-		
-	IF EXISTS (
-		SELECT TOP 1 1													
-		FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
-			INNER JOIN #CustList b	ON stt.CustID = b.CustID
-		WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1)
+		SELECT @HasDownline=0				
+	
+	IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
+								WHERE ProductID=@ProductID AND SettingType =4 AND CustID=@CustID)	
 	BEGIN
-		SELECT @IsDisabledDownline = 1
-	END
-	ELSE
-		SELECT @IsDisabledDownline = 0		
+		SELECT @bitmapOrder=bitmapOrder
+		FROM Dep_ProductSetting ps WITH(NOLOCK) 
+			INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
+			INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
+		WHERE ProductID = @ProductID AND SettingType=4
+		
+		SELECT	@IsDisabled=ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder)),1)	
+		FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
+		WHERE stt.CustID = @CustID	
+
+		IF	@HasDownline<>0
+		BEGIN
+			IF EXISTS (
+				SELECT TOP 1 1													
+				FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
+					INNER JOIN #CustList b	ON stt.CustID = b.CustID
+				WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 
+			BEGIN
+				SELECT @IsDisabledDownline = 1
+			END
+			ELSE
+				SELECT @IsDisabledDownline = 0		
+		END
+	END	
 		
 	SELECT @ProductID AS ProductID,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline
 END
