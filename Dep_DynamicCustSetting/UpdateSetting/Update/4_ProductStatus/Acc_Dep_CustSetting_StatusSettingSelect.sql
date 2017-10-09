@@ -33,8 +33,7 @@ BEGIN
 	SELECT s.CustID
 	FROM dbo.Customer s WITH (NOLOCK)
 		INNER JOIN dbo.Customer m WITH (NOLOCK) ON s.mrecommend = m.custid
-	WHERE s.srecommend = @CustID
-		AND s.custid <> @CustID
+	WHERE s.srecommend = @CustID		
 		AND m.Username NOT LIKE '%' + m.site + 'ACC%'
 		AND s.roleid=1
 				
