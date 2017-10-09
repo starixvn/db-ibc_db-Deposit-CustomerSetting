@@ -13,6 +13,7 @@ AS
 	Task: Check Customer's PT
 	Original:
 	Revision:		
+		- 20171009@Winnie: Update PT of DCS product [RedmineID:#82346]
 	Param's Explanation:
 
 	*/
