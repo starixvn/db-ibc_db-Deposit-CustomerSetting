@@ -27,6 +27,8 @@ BEGIN
 			 ,@IsDisabledDownline	BIT = 1
 			 ,@HasDownline			BIT = 1 
 			 ,@bitmapOrder			TINYINT=0
+			 ,@SportType			INT=0
+			 ,@Bettype			    INT=0
 	
 	CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
 	INSERT INTO #CustList (CustID)
@@ -44,7 +46,7 @@ BEGIN
 								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
 								WHERE ProductID=@ProductID AND SettingType =4 AND CustID=@CustID)	
 	BEGIN
-		SELECT @bitmapOrder=bitmapOrder
+		SELECT @bitmapOrder=bitmapOrder,@SportType=d.SportType,@Bettype=d.BetType
 		FROM Dep_ProductSetting ps WITH(NOLOCK) 
 			INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
 			INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
@@ -69,6 +71,6 @@ BEGIN
 		END
 	END	
 		
-	SELECT @ProductID AS ProductID,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline
+	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline
 END
 GO
