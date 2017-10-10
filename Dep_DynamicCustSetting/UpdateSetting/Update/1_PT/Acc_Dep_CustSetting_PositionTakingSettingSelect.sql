@@ -14,7 +14,7 @@ AS
 	
 	*/
 BEGIN
-	CREATE TABLE #SportBettypeFilter (productID INT,SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
+	CREATE TABLE #SportBettypeFilter (productID INT,SportType INT,Bettype INT,IsLive BIT)
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT TOP 1 ProductID, SportType,Bettype,IsLive 

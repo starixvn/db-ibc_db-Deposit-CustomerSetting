@@ -57,7 +57,7 @@ BEGIN
 	WHERE p.ProductID = @ProductID
 
 		
-	CREATE TABLE #SportBettypeFilter (SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
+	CREATE TABLE #SportBettypeFilter (SportType INT,Bettype INT,IsLive BIT)
 	
 	INSERT INTO #SportBettypeFilter (SportType,Bettype,IsLive)
 	SELECT DISTINCT  SportType,Bettype,IsLive 	

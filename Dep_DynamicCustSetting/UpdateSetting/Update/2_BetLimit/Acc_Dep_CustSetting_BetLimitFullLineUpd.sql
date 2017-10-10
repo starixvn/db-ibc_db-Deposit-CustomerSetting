@@ -46,15 +46,15 @@ BEGIN
 		, @xml				XML
 		
 	DECLARE @OldBetLimitTbl TABLE (
-		SportType			SMALLINT
-		, BetType			SMALLINT
+		SportType			INT
+		, BetType			INT
 		, MinBet			MONEY
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
 		)
 	DECLARE @NewBetLimitTbl TABLE (
-		SportType			SMALLINT
-		, BetType			SMALLINT
+		SportType			INT
+		, BetType			INT
 		, MinBet			MONEY
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
@@ -95,8 +95,8 @@ BEGIN
 	INSERT @NewBetLimitTbl
 	SELECT *
 	FROM OPENXML(@iDoc, '/ROOT/BetLimit', 1) WITH (
-			SportType		SMALLINT
-			, BetType		SMALLINT
+			SportType		INT
+			, BetType		INT
 			, MinBet		MONEY
 			, MaxBet		MONEY
 			, MaxPerMatch	MONEY
