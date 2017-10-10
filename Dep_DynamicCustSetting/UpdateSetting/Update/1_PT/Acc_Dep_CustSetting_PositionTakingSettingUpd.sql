@@ -106,8 +106,7 @@ BEGIN
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID							AS '@ProductID',
-							@OldPT								AS '@PositionTaking'						
-					FROM #SportBettypeFilter
+							@OldPT								AS '@PositionTaking'	
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -186,8 +185,7 @@ BEGIN
 				@IP								AS '@IP',
 				(
 					SELECT	@ProductID							AS '@ProductID',
-							@PT									AS '@PositionTaking'
-					FROM #SportBettypeFilter
+							@PT									AS '@PositionTaking'				
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -261,7 +259,7 @@ BEGIN
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 						, @CustID			= @CustID
-						, @ActionID			= 2048
+						, @ActionID			= 469
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
@@ -269,7 +267,7 @@ BEGIN
 	BEGIN CATCH
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
 						, @CustID			= @CustID
-						, @ActionID			= 2048
+						, @ActionID			= 469
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
 						, @duration			= @duration
