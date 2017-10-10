@@ -40,18 +40,18 @@ BEGIN
 		AND s.roleid=1
 				
 	IF @@ROWCOUNT=0
-		SELECT @HasDownline=0				
+		SELECT @HasDownline=0		
+		
+	SELECT @bitmapOrder=bitmapOrder,@SportType=d.SportType,@Bettype=d.BetType
+	FROM Dep_ProductSetting ps WITH(NOLOCK) 
+		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
+		INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
+	WHERE ProductID = @ProductID AND SettingType=4			
 	
 	IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
-								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
+									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
 								WHERE ProductID=@ProductID AND SettingType =4 AND CustID=@CustID)	
-	BEGIN
-		SELECT @bitmapOrder=bitmapOrder,@SportType=d.SportType,@Bettype=d.BetType
-		FROM Dep_ProductSetting ps WITH(NOLOCK) 
-			INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-			INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
-		WHERE ProductID = @ProductID AND SettingType=4
-		
+	BEGIN	
 		SELECT	@IsDisabled=ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder)),1)	
 		FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 		WHERE stt.CustID = @CustID	
