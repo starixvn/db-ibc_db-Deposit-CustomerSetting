@@ -71,6 +71,6 @@ BEGIN
 		END
 	END	
 		
-	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline
+	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@bitmapOrder,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline
 END
 GO
