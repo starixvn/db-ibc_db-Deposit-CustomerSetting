@@ -38,10 +38,9 @@ BEGIN
 	CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
 	INSERT INTO #CustList (CustID)
 	SELECT s.CustID
-	FROM dbo.Customer s WITH (NOLOCK)
-		INNER JOIN dbo.Customer m WITH (NOLOCK) ON s.mrecommend = m.custid
+	FROM dbo.Customer s WITH (NOLOCK)		
 	WHERE s.srecommend = @CustID		
-		AND c.mrecommend NOT IN (SELECT CustID FROM @tblmrecommend)
+		AND s.mrecommend NOT IN (SELECT CustID FROM @tblmrecommend)
 		AND s.roleid=1
 				
 	IF @@ROWCOUNT=0
