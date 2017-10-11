@@ -29,6 +29,11 @@ BEGIN
 			 ,@bitmapOrder			TINYINT=0
 			 ,@SportType			INT=0
 			 ,@Bettype			    INT=0
+	DECLARE @tblmrecommend TABLE (CustID INT)
+
+	INSERT INTO @tblmrecommend(CustiID)
+	SELECT custid FROM custinfo WHERE roleid=3
+	and username LIKE '%Acc%' and srecommend=@CustID	
 	
 	CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
 	INSERT INTO #CustList (CustID)
@@ -36,7 +41,7 @@ BEGIN
 	FROM dbo.Customer s WITH (NOLOCK)
 		INNER JOIN dbo.Customer m WITH (NOLOCK) ON s.mrecommend = m.custid
 	WHERE s.srecommend = @CustID		
-		AND m.Username NOT LIKE '%' + m.site + 'ACC%'
+		AND c.mrecommend NOT IN (SELECT CustID FROM @tblmrecommend)
 		AND s.roleid=1
 				
 	IF @@ROWCOUNT=0
