@@ -167,6 +167,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	@ProductID							AS '@ProductID',
 							CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
@@ -188,6 +189,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	SportType							AS '@SportType',
 							CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
@@ -209,6 +211,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',			
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	BetType								AS '@BetType',
 							CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
@@ -230,6 +233,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	SportType							AS '@SportType',
 							BetType								AS '@BetType',
@@ -255,6 +259,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	@ProductID							AS '@ProductID',
 							CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
@@ -276,6 +281,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',			
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	SportType							AS '@SportType',
 							CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
@@ -297,6 +303,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	BetType								AS '@BetType',
 							CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
@@ -318,6 +325,7 @@ BEGIN
 				@CustID							AS '@CustID',
 				@UserID							AS '@UserID',			
 				@IP								AS '@IP',
+				@ApplyExistedMem				AS '@ApplyExistedMem',
 				(
 					SELECT	SportType							AS '@SportType',
 							BetType								AS '@BetType',
