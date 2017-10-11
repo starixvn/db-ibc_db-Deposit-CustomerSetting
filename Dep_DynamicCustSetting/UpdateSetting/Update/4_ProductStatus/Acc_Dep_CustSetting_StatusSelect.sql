@@ -31,7 +31,7 @@ BEGIN
 			 ,@Bettype			    INT=0
 	DECLARE @tblmrecommend TABLE (CustID INT)
 
-	INSERT INTO @tblmrecommend(CustiID)
+	INSERT INTO @tblmrecommend(CustID)
 	SELECT custid FROM custinfo WHERE roleid=3
 	and username LIKE '%Acc%' and srecommend=@CustID	
 	
