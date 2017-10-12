@@ -2238,7 +2238,7 @@ BEGIN
 	where custID = @custID    
 	--Bonus
 	UPDATE custInfo WITH (ROWLOCK, UPDLOCK) 
-	SET WalletFlag=0
+	SET BonusWalletFlag=0
 	WHERE custID = @custID  
 	    
 	select @site = site from customer (NOLOCK)    
