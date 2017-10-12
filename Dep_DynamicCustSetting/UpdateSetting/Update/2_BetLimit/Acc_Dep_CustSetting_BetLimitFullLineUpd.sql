@@ -76,13 +76,15 @@ BEGIN
 	SELECT	@ErrCode	= 0		
 		,	@ErrMsg			= ''
 
-	EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
-		@custid = @CustID
-		,@Language = 'E'
-		,@ErrMsg = @ErrMsg OUTPUT
-		,@ErrCode=@ErrCode OUTPUT
-
-	IF @ErrCode <> 0 AND @ApplyExistedMem=1
+	IF  @ApplyExistedMem=1
+	BEGIN
+		EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
+			@custid = @CustID
+			,@Language = 'E'
+			,@ErrMsg = @ErrMsg OUTPUT
+			,@ErrCode=@ErrCode OUTPUT
+	END
+	IF @ErrCode <> 0 
 		RETURN 
 	
 	
