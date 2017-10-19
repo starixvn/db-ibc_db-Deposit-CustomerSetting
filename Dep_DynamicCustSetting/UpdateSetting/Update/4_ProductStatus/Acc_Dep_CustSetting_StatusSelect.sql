@@ -29,22 +29,21 @@ BEGIN
 			 ,@bitmapOrder			TINYINT=0
 			 ,@SportType			INT=0
 			 ,@Bettype			    INT=0
-	DECLARE @tblmrecommend TABLE (CustID INT)
+	--DECLARE @tblmrecommend TABLE (CustID INT)
 
-	INSERT INTO @tblmrecommend(CustID)
-	SELECT custid FROM custinfo WHERE roleid=3
-	and username LIKE '%Acc%' and srecommend=@CustID	
+	--INSERT INTO @tblmrecommend(CustID)
+	--SELECT custid FROM custinfo WHERE roleid=3
+	--and username LIKE '%Acc%' and srecommend=@CustID	
 	
-	CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
-	INSERT INTO #CustList (CustID)
-	SELECT s.CustID
-	FROM dbo.Customer s WITH (NOLOCK)		
-	WHERE s.srecommend = @CustID		
-		AND s.mrecommend NOT IN (SELECT CustID FROM @tblmrecommend)
-		AND s.roleid=1
-				
-	IF @@ROWCOUNT=0
-		SELECT @HasDownline=0		
+	--CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
+	--INSERT INTO #CustList (CustID)
+	--SELECT s.CustID
+	--FROM dbo.Customer s WITH (NOLOCK)		
+	--WHERE s.srecommend = @CustID		
+	--	AND s.mrecommend NOT IN (SELECT CustID FROM @tblmrecommend)
+	--	AND s.roleid=1
+	IF EXISTS(SELECT TOP 1 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
+		SELECT @HasDownline=1		
 		
 	SELECT @bitmapOrder=bitmapOrder,@SportType=d.SportType,@Bettype=d.BetType
 	FROM Dep_ProductSetting ps WITH(NOLOCK) 
@@ -65,8 +64,8 @@ BEGIN
 			IF EXISTS (
 				SELECT TOP 1 1													
 				FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
-					INNER JOIN #CustList b	ON stt.CustID = b.CustID
-				WHERE (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 
+					INNER JOIN Customer b WITH(NOLOCK)	ON stt.CustID = b.CustID
+				WHERE b.srecommend=@CustID AND b.roleid=1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 
 			BEGIN
 				SELECT @IsDisabledDownline = 1
 			END
