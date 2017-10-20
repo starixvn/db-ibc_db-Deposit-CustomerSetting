@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_PositionTakingSettingSelect] 
+ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingSelect 
 	  @CustID		INT
 	, @ProductID	TINYINT
 AS

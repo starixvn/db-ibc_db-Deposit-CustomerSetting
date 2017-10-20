@@ -1,8 +1,8 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-USE [CustDB]
+USE CustDB
 GO
 
-ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitFullLineUpd] 
+ALTER PROCEDURE dbo.Acc_Dep_CustSetting_BetLimitFullLineUpd 
 	  @CustID				INT
 	, @BetLimit				VARCHAR(MAX)
 	, @ApplyExistedMem		BIT=0	
@@ -17,7 +17,7 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 	Revision:	
-		- 20170928@Winnie: Insert Settings Into DCS Structure - [Redmine: 82346]
+		- 20170928@Winnie: Insert Settings Into DCS Structure - Redmine: 82346
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -132,7 +132,7 @@ BEGIN
 	IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@CustID)
 	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_02]
+		EXEC Acc_Dep_DynamicCustSetting_02
 				@ActionID=1,
 				@CustID=@CustID,
 				@BetLimit=@BetLimit,
@@ -141,7 +141,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_02]
+		EXEC Acc_Dep_DynamicCustSetting_02
 				@ActionID=0,
 				@CustID=@CustID,
 				@BetLimit=@BetLimit,

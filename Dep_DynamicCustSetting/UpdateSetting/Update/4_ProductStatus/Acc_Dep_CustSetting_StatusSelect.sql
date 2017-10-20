@@ -1,14 +1,14 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-USE [CustDB]
+USE CustDB
 GO
-/****** Object:  StoredProcedure [dbo].[Acc_3rdProductSelSuperStatus]    Script Date: 10/09/2017 09:05:41 ******/
+/****** Object:  StoredProcedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 10/09/2017 09:05:41 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 /****** Object:  Stored Procedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 11/24/2015 9:44:45 AM ******/
 
-ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSelect] 
+ALTER PROCEDURE dbo.Acc_Dep_CustSetting_StatusSelect 
 	@ProductID INT
 	, @CustID INT	
 AS
@@ -18,7 +18,7 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 	Revisions:
-		- 20171009@Winnie: select status of DCS product [RedmineID:#82346]
+		- 20171009@Winnie: select status of DCS product RedmineID:#82346
 	Param's Explanation:
 */
 BEGIN
@@ -29,19 +29,7 @@ BEGIN
 			 ,@bitmapOrder			TINYINT=0
 			 ,@SportType			INT=0
 			 ,@Bettype			    INT=0
-	--DECLARE @tblmrecommend TABLE (CustID INT)
 
-	--INSERT INTO @tblmrecommend(CustID)
-	--SELECT custid FROM custinfo WHERE roleid=3
-	--and username LIKE '%Acc%' and srecommend=@CustID	
-	
-	--CREATE TABLE #CustList (CustID INT PRIMARY KEY)	
-	--INSERT INTO #CustList (CustID)
-	--SELECT s.CustID
-	--FROM dbo.Customer s WITH (NOLOCK)		
-	--WHERE s.srecommend = @CustID		
-	--	AND s.mrecommend NOT IN (SELECT CustID FROM @tblmrecommend)
-	--	AND s.roleid=1
 	IF EXISTS(SELECT TOP 1 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
 		SELECT @HasDownline=1		
 		

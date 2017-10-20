@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] 
+ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
 	  @CustID		INT
 	, @PT			SMALLMONEY
 	, @ProductID	INT
@@ -13,7 +13,7 @@ AS
 	Task: Check Customer's PT
 	Original:
 	Revision:		
-		- 20171009@Winnie: Update PT of DCS product [RedmineID:#82346]
+		- 20171009@Winnie: Update PT of DCS product RedmineID:#82346
 	Param's Explanation:
 
 	*/
@@ -73,7 +73,7 @@ BEGIN
 	
 	IF EXISTS (SELECT TOP 1 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@CustID)
 	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_01]
+		EXEC Acc_Dep_DynamicCustSetting_01
 				@ActionID=1,
 				@CustID=@CustID,
 				@PT=@PT,					
@@ -82,7 +82,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		EXEC [Acc_Dep_DynamicCustSetting_01]
+		EXEC Acc_Dep_DynamicCustSetting_01
 				@ActionID=0,
 				@CustID=@CustID,
 				@PT=@PT,				
@@ -276,10 +276,10 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] TO [bodbadminNet]
+GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbadminNet
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] TO [bodbDownlineNet]
+GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbDownlineNet
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] TO [bodbExtAccNet]
+GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbExtAccNet
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_PositionTakingSettingUpd] TO [bodbLicenseeNet]
+GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbLicenseeNet
