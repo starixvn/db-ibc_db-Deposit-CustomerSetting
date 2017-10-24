@@ -29,6 +29,8 @@ Revisions:
 	- 20150609@Elodie: Separate CustDB to DBCUST server (Call GameType by link server)  
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 	- 20170817@Elodie: Move Inspired VS to DCS structure [Redmine: #77274]
+	- 20171024@Elodie: Remove Inspired VS [Redmine: #82566]
+
 
 Param's Explanation:  
 */  
@@ -477,8 +479,8 @@ SELECT
 	ISNULL(MAX(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype=153 THEN cs3rd.minbet ELSE 0 END), 0) AS MinBetv153_51,      
 	ISNULL(MAX(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype=153 THEN cs3rd.maxbet ELSE 0 END), 0) AS MaxBetv153_51,    
   
-	ISNULL(MAX(CASE WHEN cs3rd.sporttype = 161 THEN csDCS.minbet ELSE 0 END),0) AS MinBetv161,  
-	ISNULL(MAX(CASE WHEN cs3rd.sporttype = 161 THEN csDCS.maxbet ELSE 0 END),0) AS MaxBetv161,  
+	ISNULL(MAX(CASE WHEN cs3rd.sporttype = 161 THEN cs3rd.minbet ELSE 0 END),0) AS MinBetv161,  
+	ISNULL(MAX(CASE WHEN cs3rd.sporttype = 161 THEN cs3rd.maxbet ELSE 0 END),0) AS MaxBetv161,
 
  --ISNULL(MAX(CASE WHEN gt.IBCBetTypeID = 1501 THEN cg.MinBet ELSE 0 END),0) AS MinBetv202_1501,  
  --ISNULL(MAX(CASE WHEN gt.IBCBetTypeID = 1501 THEN cg.Maxbet ELSE 0 END),0) AS MaxBetv202_1501,  
@@ -589,7 +591,6 @@ FROM
 	 CustInfo ci WITH (NOLOCK)    
 	 INNER JOIN Dep_CustSetting cs WITH (NOLOCK) ON ci.custid = cs.custid      
 	 INNER JOIN Dep_CustSetting3rd cs3rd WITH (NOLOCK) ON ci.custid = cs3rd.custid      
-	 INNER JOIN dbo.Dep_CustBetSetting_Member csDCS WITH (NOLOCK) ON ci.custid = csDCS.custid      
 	 --LEFT JOIN CustGameType cg WITH (NOLOCK) ON ci.custid = cg.custid    
 	 --LEFT JOIN @tmp_GameType gt ON cg.GameTypeID = gt.GameTypeID  
 WHERE ci.custid=@CustID     
