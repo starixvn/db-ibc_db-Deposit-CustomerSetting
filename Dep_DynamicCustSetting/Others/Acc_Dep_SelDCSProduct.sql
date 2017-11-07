@@ -18,7 +18,6 @@ BEGIN
 	SELECT  s.ProductID,p.ProductName,s.SettingType			
 	FROM [Dep_ProductSetting] s WITH(NOLOCK) 
 		INNER JOIN DBEXT.bodb02.dbo.Products p WITH(NOLOCK) ON s.ProductID=p.ProductID
-	WHERE s.ProductID IN(SELECT s.ProductID FROM [Dep_ProductSetting] s WITH(NOLOCK) WHERE s.Settingtype=2)
-		
+	WHERE p.ProductID<>31 AND SettingType NOT IN(5,9)
 END
 GO
