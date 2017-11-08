@@ -58,3 +58,4 @@ SELECT t.Sporttype,t.Bettype,t.StakeLevelID,t.IsChecked
 FROM #tempStakeLevel t
 	
 END
+GO
