@@ -28,7 +28,7 @@ AS
 */
 BEGIN
 SET NOCOUNT ON
-DECLARE @tmStakeLevel TABLE(
+DECLARE @tmpStakeLevel TABLE(
 							StakeLevelID	INT							
 							,GameTypeID		INT							
 							,MinLabel		NVARCHAR(50)
@@ -45,6 +45,7 @@ DECLARE @MaxStakeLevelID INT
 		,@MaxStake		DECIMAL(19,8)
 		,@Currency		INT
 		,@SiteID		INT
+		,@DocHandler	INT;	
 
 SELECT @MaxStakeLevelID=MAX(StakeLevelID) FROM Dep_StakeLevel WITH(NOLOCK)
 SELECT @Currency=d.currency,@SiteID=s.siteid
@@ -59,14 +60,14 @@ BEGIN
 				@DocHandler			OUTPUT
 			,	@StakeLevel;
 
-	INSERT INTO	@tmStakeLevel (
+	INSERT INTO	@tmpStakeLevel (
 						StakeLevelID	
 						,GameTypeID								
 						,MinLabel		
 						,MaxLabel		
 						,MinStake		
 						,MaxStake)
-	SELECT	Data.StakeLevel		
+	SELECT	Data.StakeLevelID		
 		,	Data.GameTypeID
 		,	Data.MinLabel
 		,	Data.MaxLabel
@@ -87,13 +88,18 @@ BEGIN
 END
 
 UPDATE d
-SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake,t.Isfinished=1
+SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake
 FROM Dep_StakeLevel d 
-	INNER JOIN @tmStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
+	INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
+
+UPDATE t
+SET t.Isfinished=1
+FROM Dep_StakeLevel d 
+	INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
 WHILE (1 = 1)
 BEGIN
-	UPDATE TOP (1) @tmStakeLevel
+	UPDATE TOP (1) @tmpStakeLevel
 	SET isfinished = 1
 		,@GameTypeID	= GameTypeID				
 		,@MinLabel		= MinLabel
