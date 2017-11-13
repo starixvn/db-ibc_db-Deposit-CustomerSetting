@@ -114,7 +114,7 @@ FROM Dep_StakeLevel WITH(NOLOCK)
 WHERE ExchangeID=@Currency AND SiteID=@SiteID
 
 UPDATE d
-SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake
+SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake,d.MaxStake=t.MaxStake
 FROM Dep_StakeLevel d 
 	INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
