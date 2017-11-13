@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
-ALTER PROCEDURE dbo.Acc_Dep_CustSetting_StakeLevelGroupSelect 
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelGroupSelect] 
 	@ProductID		INT
 	,@CustID		INT		
 	,@ErrCode		INT				= 0		OUTPUT	
@@ -19,11 +19,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 
-DECLARE @Currency INT,@SiteID INT, @StakeLevelList VARCHAR(200)
+DECLARE @Currency INT, @StakeLevelList VARCHAR(200)
 CREATE TABLE #tempAgentStakeLevel (Sporttype INT, bettype INT,StakeLevelID INT,PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID))
 CREATE TABLE #tempStakeLevel (Sporttype INT, Bettype INT,StakeLevelID INT,StakeLevelGroupID INT,IsChecked BIT,PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID))
 
-SELECT @Currency=d.currency,@SiteID=s.siteid
+SELECT @Currency=d.currency
 FROM Dep_CustSuper d WITH(NOLOCK)
 	INNER JOIN Site s WITH(NOLOCK)	 ON d.site=s.site
 WHERE d.custid=@CustID
@@ -39,11 +39,11 @@ SELECT s.SportType,s.BetType,l.StakeLevelID,l.GameGroupID,0
 FROM Dep_StakeLevel l WITH(NOLOCK) 
 	INNER JOIN	Dep_ProductSettingDetail s WITH(NOLOCK) ON l.GameTypeID=s.BetType
 	INNER JOIN	Dep_ProductSetting  d WITH(NOLOCK) ON s.ProductSettingID=d.ProductSettingID
-WHERE l.ExchangeID=@Currency AND l.SiteID=@SiteID AND d.ProductID=@ProductID AND d.SettingType=9 AND l.GameGroupID<>5
+WHERE l.ExchangeID=@Currency AND d.ProductID=@ProductID AND d.SettingType=8
 
 	
 IF(@@ROWCOUNT=0)
-BEGIN
+BEGIN	
 	SELECT @ErrCode=100
 	SELECT @ErrMsg='Don''t have global bet limit'
 	RETURN
@@ -58,4 +58,5 @@ SELECT t.Sporttype,t.Bettype,t.StakeLevelID,t.IsChecked
 FROM #tempStakeLevel t
 	
 END
+
 GO

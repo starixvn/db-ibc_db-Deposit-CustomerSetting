@@ -31,11 +31,11 @@ FROM Dep_CustSuper d WITH(NOLOCK)
 	INNER JOIN Site s WITH(NOLOCK)	 ON d.site=s.site
 WHERE d.custid=@CustID
 
-SELECT DISTINCT l.StakeLevelID, l.GameTypeID,l.MinLabel,l.MaxLabel,l.MinStake,l.MaxStake
-FROM Dep_StakeLevel l WITH(NOLOCK) 
-	INNER JOIN	Dep_ProductSettingDetail s WITH(NOLOCK) ON l.GameTypeID=s.BetType
+SELECT DISTINCT ISNULL(l.StakeLevelID,0) AS StakeLevelID, s.BetType AS GameTypeID,ISNULL(l.MinLabel,0) AS MinLabel,ISNULL(l.MaxLabel,0) AS MaxLabel,ISNULL(l.MinStake,0) AS MinStake,ISNULL(l.MaxStake,0) AS MaxStake
+FROM Dep_ProductSettingDetail s WITH(NOLOCK) 
 	INNER JOIN	Dep_ProductSetting  d WITH(NOLOCK) ON s.ProductSettingID=d.ProductSettingID
-WHERE l.ExchangeID=@Currency AND l.SiteID=@SiteID AND d.ProductID=@ProductID AND d.SettingType=7
-END	
-
+	LEFT JOIN Dep_StakeLevel l ON l.GameTypeID=s.BetType AND l.ExchangeID=@Currency AND l.SiteID=@SiteID
+WHERE  d.ProductID=@ProductID AND d.SettingType=7
+ORDER BY s.BetType ASC
+END
 GO

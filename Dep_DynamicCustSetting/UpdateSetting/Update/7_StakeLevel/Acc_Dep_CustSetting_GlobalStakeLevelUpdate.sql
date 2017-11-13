@@ -1,17 +1,13 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
-/****** Object:  StoredProcedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 10/09/2017 09:05:41 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 11/24/2015 9:44:45 AM ******/
-
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_GlobalStakeLevelUpdate] 
 	@StakeLevel VARCHAR(MAX)	= ''	
 	,@CustID		INT
-	
+	,@UserID					INT  
+	,@IP						VARCHAR(15)		= ''	
+	,@ErrCode				INT				= 0			OUTPUT 
+	,@ErrMsg					NVARCHAR(4000)	= ''		OUTPUT  
 AS
 /*
 	Created: 20171107@Winne
@@ -37,6 +33,14 @@ DECLARE @tmpStakeLevel TABLE(
 							,MaxStake		DECIMAL(19,8)
 							,Isfinished		BIT default(0)
 						);
+DECLARE @tmpStakeLevel_Old TABLE(
+							StakeLevelID	INT							
+							,GameTypeID		INT							
+							,MinLabel		NVARCHAR(50)
+							,MaxLabel		NVARCHAR(50)
+							,MinStake		DECIMAL(19,8)
+							,MaxStake		DECIMAL(19,8)							
+						);
 DECLARE @MaxStakeLevelID INT
 		,@GameTypeID	INT						
 		,@MinLabel		NVARCHAR(50)
@@ -45,7 +49,13 @@ DECLARE @MaxStakeLevelID INT
 		,@MaxStake		DECIMAL(19,8)
 		,@Currency		INT
 		,@SiteID		INT
-		,@DocHandler	INT;	
+		,@DocHandler	INT
+		,@LogSPData		NVARCHAR(MAX) = ''
+		,@LogSPData_OLD	NVARCHAR(MAX) = ''
+		,@endRun		DATETIME
+		,@duration		INT
+		,@startRun		DATETIME
+SET	@startRun = GETDATE();  
 
 SELECT @MaxStakeLevelID=MAX(StakeLevelID) FROM Dep_StakeLevel WITH(NOLOCK)
 SELECT @Currency=d.currency,@SiteID=s.siteid
@@ -87,6 +97,22 @@ BEGIN
 				@DocHandler;
 END
 
+INSERT INTO	@tmpStakeLevel_Old (
+						StakeLevelID	
+						,GameTypeID								
+						,MinLabel		
+						,MaxLabel		
+						,MinStake		
+						,MaxStake)
+SELECT					StakeLevelID	
+						,GameTypeID								
+						,MinLabel		
+						,MaxLabel		
+						,MinStake		
+						,MaxStake
+FROM Dep_StakeLevel WITH(NOLOCK)
+WHERE ExchangeID=@Currency AND SiteID=@SiteID
+
 UPDATE d
 SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake
 FROM Dep_StakeLevel d 
@@ -116,6 +142,65 @@ BEGIN
 	 VALUES(@MaxStakeLevelID,@GameTypeID,0,@MinLabel,@MaxLabel,@MinStake,@MaxStake,@Currency,@SiteID)
 END
 
+		SELECT @LogSPData=(	SELECT
+								@UserID		AS '@UserID'
+							,	@CustID		AS '@CustID'
+							,	@ErrCode	AS '@ErrCode'
+							,	@ErrMsg		AS '@ErrMsg'
+							,	@IP			AS '@IP'
+							,	1			AS '@EnableVirtualrate'
+							,	(	SELECT	t.StakeLevelID			AS '@StakeLevelID'
+										,	t.GameTypeID			AS '@GameTypeID'
+										,	t.MinLabel				AS '@MinLabel'
+										,	t.MaxLabel				AS '@MaxLabel'
+										,	t.MinStake				AS '@MinStake'
+										,	t.MaxStake				AS '@MaxStake'
+									FROM	@tmpStakeLevel AS t 
+									FOR XML PATH ('s')
+								,	TYPE
+								)
+						FOR XML PATH ('Acc_Dep_CustSetting_GlobalStakeLevelUpdate')
+					)
+
+		SELECT @LogSPData_OLD=(	SELECT	
+							@UserID		AS '@UserID'
+						,	@CustID		AS '@CustID'
+						,	@ErrCode	AS '@ErrCode'
+						,	@ErrMsg		AS '@ErrMsg'
+						,	@IP			AS '@IP'
+						,	1			AS '@EnableVirtualrate'
+						,	(	SELECT	t.StakeLevelID			AS '@StakeLevelID'
+									,	t.GameTypeID			AS '@GameTypeID'
+									,	t.MinLabel				AS '@MinLabel'
+									,	t.MaxLabel				AS '@MaxLabel'
+									,	t.MinStake				AS '@MinStake'
+									,	t.MaxStake				AS '@MaxStake'
+								FROM	@tmpStakeLevel_Old AS t 
+								FOR XML PATH ('s')
+							,	TYPE
+							)
+					FOR XML PATH ('Acc_Dep_CustSetting_GlobalStakeLevelUpdate')
+				)
+	SET	@endRun = GETDATE();
+	SET	@duration = DATEDIFF(MILLISECOND, @startRun, @endRun);	
+		BEGIN TRY
+			EXECUTE	DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+						@UserID = @UserID
+					,	@CustID = @CustID
+					,	@ActionID = 396
+					,	@TrackingValue = @LogSPData
+					,	@TrackingValue2= @LogSPData_OLD
+					,	@Duration = @duration;			
+		END TRY
+		BEGIN CATCH
+			EXECUTE	bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
+						@UserID = @UserID
+					,	@CustID = @CustID
+					,	@ActionID = 396
+					,	@TrackingValue = @LogSPData
+					,	@TrackingValue2= @LogSPData_OLD
+					,	@Duration = @duration;
+		END CATCH;
 END	
 
 GO
