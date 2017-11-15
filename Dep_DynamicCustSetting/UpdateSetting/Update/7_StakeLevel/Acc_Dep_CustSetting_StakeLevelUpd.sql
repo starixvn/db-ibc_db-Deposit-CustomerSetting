@@ -94,7 +94,8 @@ BEGIN
 	EXECUTE sp_xml_removedocument @iDoc;
 
 	INSERT INTO	#StakeLevelList_Old (SportType, BetType, StakeLevelList_old)
-	SELECT	cslm.BetType
+	SELECT	cslm.SportType
+		,	cslm.BetType
 		,	cslm.StakeLevelList			
 	FROM	dbo.Dep_CustStakeLevel_Agent AS cslm WITH (NOLOCK)
 		INNER JOIN	#tmpStake AS ts
