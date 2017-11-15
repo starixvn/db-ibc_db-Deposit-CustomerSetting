@@ -25,7 +25,6 @@ CREATE TABLE #tempStakeLevel (Sporttype INT, Bettype INT,StakeLevelID INT,StakeL
 
 SELECT @Currency=d.currency
 FROM Dep_CustSuper d WITH(NOLOCK)
-	INNER JOIN Site s WITH(NOLOCK)	 ON d.site=s.site
 WHERE d.custid=@CustID
 
 INSERT INTO #tempAgentStakeLevel(Sporttype,bettype,StakeLevelID)
@@ -58,5 +57,4 @@ SELECT t.Sporttype,t.Bettype,t.StakeLevelID,t.IsChecked
 FROM #tempStakeLevel t
 	
 END
-
 GO
