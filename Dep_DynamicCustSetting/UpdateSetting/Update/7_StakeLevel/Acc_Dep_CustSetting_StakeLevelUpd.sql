@@ -41,7 +41,9 @@ BEGIN
 	DECLARE @logSpData					NVARCHAR(MAX)
 		,	@logSpData_Old				NVARCHAR(MAX)
 		,	@xml						XML
-		,	@ProductName				VARCHAR(50)			
+		,	@ProductName				VARCHAR(50)		
+		,	@SettingLevel				TINYINT
+		,	@ProductSettingID			INT	
 
 	CREATE TABLE	#tmpStake (					
 						SportType		SMALLINT
@@ -66,6 +68,7 @@ BEGIN
 		,	@ErrMsg			= '';
 
 	SET	@startRun = GETDATE();
+	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType IN(7,8)
 
 	--Get line information
 
@@ -106,20 +109,82 @@ BEGIN
 	EXEC	Acc_Dep_DynamicCustSetting_05
 			@CustID		= @CustID
 		,	@StakeLevel	= @StakeLevel
-
+		
+	IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@CustID AND ProductSettingID=@ProductSettingID )
+		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
+		VALUES( @CustID,@ProductSettingID)
+			
 	------------------ START LOGGING ------------------
 	-- Select ProductName
 	SELECT	@ProductName = p.ProductName
 	FROM	DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE	p.ProductID = @ProductID;
 
-	-- Log old value
-
+	-- Log old value	
+	IF @SettingLevel = 1			-- Product setting level
+	BEGIN
+		SET @xml = (
+		SELECT	@ProductID							AS '@ProductID'
+			,	@ProductName						AS '@ProductName'
+			,	@CustID								AS '@CustID'
+			,	@UserID								AS '@UserID'		
+			,	@IP									AS '@IP'
+			,	(
+					SELECT	@ProductID				AS '@ProductID'					
+						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+					FROM	#StakeLevelList_Old AS slle							
+					FOR XML PATH('StakeLevel')
+				,	TYPE
+				)
+		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
+	,	TYPE
+	);
+	END;
+	ELSE IF @SettingLevel = 2		-- SportType setting level
+	BEGIN
+		SET @xml = (
+		SELECT	@ProductID							AS '@ProductID'
+			,	@ProductName						AS '@ProductName'
+			,	@CustID								AS '@CustID'
+			,	@UserID								AS '@UserID'
+			,	@IP									AS '@IP'
+			,	(
+					SELECT	slle.SportType			AS '@SportType'						
+						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+					FROM	#StakeLevelList_Old AS slle							
+					FOR XML PATH('StakeLevel')
+				,	TYPE
+				)
+		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
+	,	TYPE
+	);
+	END;
+	ELSE IF @SettingLevel = 3		-- BetType setting level
+	BEGIN
+		SET @xml = (
+		SELECT	@ProductID							AS '@ProductID'
+			,	@ProductName						AS '@ProductName'
+			,	@CustID								AS '@CustID'
+			,	@UserID								AS '@UserID'			
+			,	@IP									AS '@IP'
+			,	(
+					SELECT	slle.BetType			AS '@BetType'
+						,	slle.StakeLevelList_old	AS '@StakeLevelList'
+					FROM	#StakeLevelList_Old AS slle							
+					FOR XML PATH('StakeLevel')
+				,	TYPE
+				)
+		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
+	,	TYPE
+	);
+	END;
+	ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+	BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID'
 			,	@ProductName					AS '@ProductName'
 			,	@CustID							AS '@CustID'
-			,	@UserID							AS '@UserID'			
+			,	@UserID							AS '@UserID'		
 			,	@IP								AS '@IP'
 			,	(
 					SELECT	slle.SportType			AS '@SportType'
@@ -132,20 +197,20 @@ BEGIN
 		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
 	,	TYPE
 	);
-	
+	END;
 	SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"');
 
 	-- Log new updated value
-
+	IF @SettingLevel = 1			-- Product setting level
+	BEGIN
 		SET @xml = (
-		SELECT	@ProductID						AS '@ProductID'
-			,	@ProductName					AS '@ProductName'
-			,	@CustID							AS '@CustID'
-			,	@UserID							AS '@UserID'			
-			,	@IP								AS '@IP'
+		SELECT	@ProductID							AS '@ProductID'
+			,	@ProductName						AS '@ProductName'
+			,	@CustID								AS '@CustID'
+			,	@UserID								AS '@UserID'			
+			,	@IP									AS '@IP'
 			,	(
-					SELECT	ts.SportType			AS '@SportType'
-						,	ts.BetType				AS '@BetType'
+					SELECT	@ProductID				AS '@ProductID'
 						,	ts.StakeLevelList		AS '@StakeLevelList'
 					FROM	#tmpStake AS ts
 					FOR XML PATH('StakeLevel')
@@ -154,6 +219,66 @@ BEGIN
 		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
 	,	TYPE
 	);
+	END;
+	ELSE IF @SettingLevel = 2		-- SportType setting level
+	BEGIN
+		SET @xml = (
+		SELECT	@ProductID							AS '@ProductID'
+			,	@ProductName						AS '@ProductName'
+			,	@CustID								AS '@CustID'
+			,	@UserID								AS '@UserID'			
+			,	@IP									AS '@IP'
+			,	(
+					SELECT	ts.SportType			AS '@SportType'					
+						,	ts.StakeLevelList		AS '@StakeLevelList'
+					FROM	#tmpStake AS ts
+					FOR XML PATH('StakeLevel')		
+				,	TYPE
+				)
+		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
+	,	TYPE
+	);
+	END;
+	ELSE IF @SettingLevel = 3		-- BetType setting level
+	BEGIN
+		SET @xml = (
+		SELECT	@ProductID							AS '@ProductID'
+			,	@ProductName						AS '@ProductName'
+			,	@CustID								AS '@CustID'
+			,	@UserID								AS '@UserID'			
+			,	@IP									AS '@IP'
+			,	(
+					SELECT	ts.BetType				AS '@BetType'
+						,	ts.StakeLevelList		AS '@StakeLevelList'
+					FROM	#tmpStake AS ts
+					FOR XML PATH('StakeLevel')		
+				,	TYPE
+				)
+		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
+	,	TYPE
+	);
+	END;
+	ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+	BEGIN
+		SET @xml = (
+		SELECT	@ProductID						AS '@ProductID'
+			,	@ProductName					AS '@ProductName'
+			,	@CustID							AS '@CustID'
+			,	@UserID							AS '@UserID'		
+			,	@IP								AS '@IP'
+			,	(
+					SELECT	ts.SportType			AS '@SportType'
+						,	ts.BetType				AS '@BetType'
+						,	ts.StakeLevelList		AS '@StakeLevelList'
+					FROM	#tmpStake AS ts
+					FOR XML PATH('StakeLevel')		
+				,	TYPE
+				)
+		FOR XML PATH('Acc_Dep_CustSetting_StakeLevelUpd')
+	,	TYPE
+	);
+	END;
+	-------------------------------------------------------------------------------------------------------------------
 
 	SET	@logSpData	= REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"');
 
