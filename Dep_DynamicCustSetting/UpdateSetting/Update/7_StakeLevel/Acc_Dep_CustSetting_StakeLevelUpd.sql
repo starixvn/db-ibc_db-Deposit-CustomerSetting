@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-CREATE PROCEDURE dbo.Acc_Dep_CustSetting_StakeLevelUpd 
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelUpd] 
 		@CustID			INT
 	,	@ProductID		TINYINT
 	,	@StakeLevel		VARCHAR(MAX)	
@@ -69,7 +69,7 @@ BEGIN
 
 	--Get line information
 
-	EXEC DBEXT.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
+	EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
 	 @custid = @CustID
 	,@Language = 'E'
 	,@ErrMsg = @ErrMsg OUTPUT
