@@ -28,7 +28,7 @@ BEGIN
 
 DECLARE @Currency INT,@SiteID INT, @StakeLevelList VARCHAR(200)
 CREATE TABLE #tempAgentStakeLevel (Sporttype INT, bettype INT,StakeLevelID INT,PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID))
-CREATE TABLE #tempStakeLevel (Sporttype INT, Bettype INT,StakeLevelID INT,StakeLevelName NVARCHAR(100),IsChecked BIT,	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID))
+CREATE TABLE #tempStakeLevel (Sporttype INT, Bettype INT,StakeLevelID INT,StakeLevelName NVARCHAR(100),IsChecked BIT,MinStake DECIMAL(19,8),MaxStake DECIMAL(19,8),	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID))
 
 SELECT @Currency=d.currency,@SiteID=s.siteid
 FROM Dep_CustSuper d WITH(NOLOCK)
@@ -41,8 +41,8 @@ FROM Dep_CustStakeLevel_Agent a WITH(NOLOCK)
 	CROSS APPLY	dbo.strSplit(ISNULL(a.StakeLevelList, ''), ',') AS ss
 WHERE a.CustID=@CustID
 
-INSERT INTO  #tempStakeLevel (Sporttype , Bettype,StakeLevelID ,StakeLevelName ,IsChecked )
-SELECT s.SportType,s.BetType,l.StakeLevelID, l.MinLabel+' - '+l.MaxLabel,0
+INSERT INTO  #tempStakeLevel (Sporttype , Bettype,StakeLevelID ,StakeLevelName ,IsChecked ,MinStake,MaxStake)
+SELECT s.SportType,s.BetType,l.StakeLevelID, l.MinLabel+' - '+l.MaxLabel,0,l.MinStake,l.MaxStake
 FROM Dep_StakeLevel l WITH(NOLOCK) 
 	INNER JOIN	Dep_ProductSettingDetail s WITH(NOLOCK) ON l.GameTypeID=s.BetType
 	INNER JOIN	Dep_ProductSetting  d WITH(NOLOCK) ON s.ProductSettingID=d.ProductSettingID
@@ -62,6 +62,7 @@ FROM #tempStakeLevel ts
 	
 SELECT t.Sporttype,t.Bettype,t.StakeLevelID, t.StakeLevelName AS StakeLevelName,t.IsChecked
 FROM #tempStakeLevel t	
-			
+ORDER BY Bettype, MaxStake, MinStake	
+	
 END
 GO
