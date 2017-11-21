@@ -140,7 +140,7 @@ BEGIN
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
 	INSERT INTO Dep_StakeLevel([StakeLevelID],[GameTypeID],[GameGroupID],[MinLabel],[MaxLabel],[MinStake],[MaxStake],[ExchangeID],[SiteID])
-	SELECT	StakeLevelID
+	SELECT	StakeLevelID+@MaxStakeLevelID
 		,GameTypeID		
 		,0						
 		,MinLabel		
