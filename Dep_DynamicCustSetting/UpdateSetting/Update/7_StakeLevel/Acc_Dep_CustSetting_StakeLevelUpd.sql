@@ -43,7 +43,9 @@ BEGIN
 		,	@xml						XML
 		,	@ProductName				VARCHAR(50)		
 		,	@SettingLevel				TINYINT
-		,	@ProductSettingID			INT	
+		,	@ProductSettingID			INT			
+		,	@ListCustIDExecRep			VARCHAR(MAX)
+		,	@ActionID					TINYINT=1
 
 	CREATE TABLE	#tmpStake (					
 						SportType		SMALLINT
@@ -58,6 +60,13 @@ BEGIN
 					,	StakeLevelList_old	VARCHAR(200)	
 					,	PRIMARY KEY CLUSTERED (SportType, BetType)				
 					);
+
+	CREATE TABLE #CustStakeLevelDownlines (
+					ID INT IDENTITY (1,1)
+				,	CustID					INT 			
+				,	RoleID					TINYINT		
+				,	PRIMARY KEY CLUSTERED (ID)
+				);
 
 	--Check if XML is null or empty
 	IF	@StakeLevel IS NULL OR @StakeLevel = ''
@@ -106,13 +115,59 @@ BEGIN
 			AND ts.BetType = cslm.BetType
 	WHERE	cslm.CustID = @CustID;
 
-	EXEC	Acc_Dep_DynamicCustSetting_05
-			@CustID		= @CustID
-		,	@StakeLevel	= @StakeLevel
-		
 	IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@CustID AND ProductSettingID=@ProductSettingID )
+	BEGIN
+
 		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 		VALUES( @CustID,@ProductSettingID)
+
+		SELECT @ActionID=1
+	END
+
+	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID)
+	SELECT CustID,RoleID
+	FROM CustInfo WITH(NOLOCK) WHERE srecommend=@CustID
+
+	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 10000, @StopRow INT;
+			
+	SET @MaxRow = (SELECT MAX(ID) FROM #CustStakeLevelDownlines);
+			
+	IF	@Threshold >= @MaxRow
+		SET	@Threshold = @MaxRow;
+			
+	SET @StopRow = @Threshold;
+			
+	IF EXISTS(SELECT TOP(1) 1 FROM #CustStakeLevelDownlines)
+	BEGIN
+		WHILE (0 = 0)
+		BEGIN		
+			SET	@ListCustIDExecRep =	(
+											SELECT	custid				AS CustID
+												,	RoleID				AS RoleID											
+											FROM	#CustStakeLevelDownlines
+											WHERE	ID >= @StartRow 
+												AND	ID <= @StopRow
+											FOR XML RAW ('ListCustID'), ROOT ('ROOT') 
+										);
+					
+			-- Correct downlines via ExecRep
+			EXECUTE	Acc_Dep_DynamicCustSetting_05
+						@ListCustID	= @ListCustIDExecRep				
+					,	@StakeLevel	= @StakeLevel
+					
+			IF	@StopRow = @MaxRow 
+				BREAK;
+					
+			SET	@StartRow = @StopRow + 1;
+					
+			SET	@StopRow = 1 + @StopRow + @Threshold;
+					
+			IF	@StopRow >= @MaxRow
+				SET	@StopRow = @MaxRow;
+		END;
+	END;
+		
+
 			
 	------------------ START LOGGING ------------------
 	-- Select ProductName
@@ -305,5 +360,6 @@ BEGIN
 				,	@duration		= @duration;
 	END CATCH;
 END;
+
 
 GO
