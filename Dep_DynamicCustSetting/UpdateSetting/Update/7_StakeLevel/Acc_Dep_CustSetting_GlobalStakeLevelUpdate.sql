@@ -24,6 +24,7 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
+	-- Declare parameters and validate
 	DECLARE @tmpStakeLevel TABLE(
 								StakeLevelID	INT							
 								,GameTypeID		INT							
@@ -67,42 +68,44 @@ BEGIN
 	SELECT @MaxStakeLevelID=MAX(StakeLevelID) FROM Dep_StakeLevel WITH(NOLOCK)
 	SELECT @Currency=d.currency,@SiteID=s.siteid
 	FROM Dep_CustSuper d WITH(NOLOCK)
-		INNER JOIN Site s WITH(NOLOCK)	 ON d.site=s.site
+		INNER JOIN Site s WITH(NOLOCK)	ON d.site=s.site
 	WHERE d.custid=@CustID
-
-	IF	@StakeLevel <> ''
+	IF @StakeLevel IS NULL OR @StakeLevel = ''
 	BEGIN
-		-- For read xml					
-		EXECUTE	sp_xml_preparedocument
-					@DocHandler			OUTPUT
-				,	@StakeLevel;
-
-		INSERT INTO	@tmpStakeLevel (
-							StakeLevelID	
-							,GameTypeID								
-							,MinLabel		
-							,MaxLabel		
-							,MinStake		
-							,MaxStake)
-		SELECT	Data.StakeLevelID		
-			,	Data.GameTypeID
-			,	Data.MinLabel
-			,	Data.MaxLabel
-			,	Data.MinStake
-			,	Data.MaxStake
-		FROM OPENXML (@DocHandler, '/ROOT/StakeLevel', 1) 
-		WITH (
-			StakeLevelID	INT
-			,GameTypeID		INT					
-			,MinLabel		NVARCHAR(50)
-			,MaxLabel		NVARCHAR(50)
-			,MinStake		DECIMAL(19,8)
-			,MaxStake		DECIMAL(19,8)
-		) AS Data;
-
-		EXECUTE	sp_xml_removedocument
-					@DocHandler;
+		SELECT @ErrCode=100
+		SELECT @ErrMsg='Invalid global stake level'
+		RETURN
 	END
+
+	-- For read xml					
+	EXECUTE	sp_xml_preparedocument
+				@DocHandler			OUTPUT
+			,	@StakeLevel;
+
+	INSERT INTO	@tmpStakeLevel (
+						StakeLevelID	
+						,GameTypeID								
+						,MinLabel		
+						,MaxLabel		
+						,MinStake		
+						,MaxStake)
+	SELECT	Data.StakeLevelID		
+		,	Data.GameTypeID
+		,	Data.MinLabel
+		,	Data.MaxLabel
+		,	Data.MinStake
+		,	Data.MaxStake
+	FROM OPENXML (@DocHandler, '/ROOT/StakeLevel', 1) 
+	WITH (
+		StakeLevelID	INT
+		,GameTypeID		INT					
+		,MinLabel		NVARCHAR(50)
+		,MaxLabel		NVARCHAR(50)
+		,MinStake		DECIMAL(19,8)
+		,MaxStake		DECIMAL(19,8)
+	) AS Data;
+
+	EXECUTE	sp_xml_removedocument	@DocHandler;
 
 	INSERT INTO	@tmpStakeLevelInsert (
 						GameTypeID								
@@ -116,29 +119,28 @@ BEGIN
 			,MinStake		
 			,MaxStake
 	FROM @tmpStakeLevel
-	WHERE StakeLevelID=0
+	WHERE StakeLevelID=0	
 
-	INSERT INTO	@tmpStakeLevel_Old (
-							StakeLevelID	
-							,GameTypeID								
-							,MinLabel		
-							,MaxLabel		
-							,MinStake		
-							,MaxStake)
-	SELECT					StakeLevelID	
-							,GameTypeID								
-							,MinLabel		
-							,MaxLabel		
-							,MinStake		
-							,MaxStake
-	FROM Dep_StakeLevel WITH(NOLOCK)
-	WHERE ExchangeID=@Currency AND SiteID=@SiteID
-
+	-- Update global stakelevel
 	UPDATE d
 	SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake,d.MaxStake=t.MaxStake
+		OUTPUT 	 DELETED.StakeLevelID	
+				,DELETED.GameTypeID								
+				,DELETED.MinLabel		
+				,DELETED.MaxLabel		
+				,DELETED.MinStake		
+				,DELETED.MaxStake
+		INTO @tmpStakeLevel_Old(
+				StakeLevelID	
+				,GameTypeID								
+				,MinLabel		
+				,MaxLabel		
+				,MinStake		
+				,MaxStake)  
 	FROM Dep_StakeLevel d 
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
+	-- Insert global stakelevel
 	INSERT INTO Dep_StakeLevel([StakeLevelID],[GameTypeID],[GameGroupID],[MinLabel],[MaxLabel],[MinStake],[MaxStake],[ExchangeID],[SiteID])
 	SELECT	StakeLevelID+@MaxStakeLevelID
 		,GameTypeID		
@@ -150,7 +152,8 @@ BEGIN
 		,@Currency
 		,@SiteID
 	FROM @tmpStakeLevelInsert
-	
+
+	-- Write log
 	SELECT @LogSPData=(	SELECT
 							@UserID		AS '@UserID'
 						,	@CustID		AS '@CustID'

@@ -32,6 +32,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
+	-- Declare parameters and validate
 	DECLARE @iDoc INT;
 	
 	DECLARE @startRun					DATETIME
@@ -74,7 +75,11 @@ BEGIN
 
 	--Check if XML is null or empty
 	IF	@StakeLevel IS NULL OR @StakeLevel = ''
-		RETURN;
+	BEGIN
+		SELECT @ErrCode=100
+		SELECT @ErrMsg='Invalid global stake level'
+		RETURN
+	END	
 
 	SELECT	@ErrCode	= 0
 		,	@MsgType	= 0
@@ -83,8 +88,7 @@ BEGIN
 	SET	@startRun = GETDATE();
 	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType IN(7,8)
 
-	--Get line information
-
+	--Check downline
 	EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
 	 @custid = @CustID
 	,@Language = 'E'
@@ -109,7 +113,7 @@ BEGIN
 
 	EXECUTE sp_xml_removedocument @iDoc;
 
-	
+	-- Update MemberStakeLevel
 	UPDATE tv 
 	SET tv.MemberStakeLevel = 
 		(
@@ -139,7 +143,7 @@ BEGIN
 
 		SELECT @ActionID=0
 	END
-
+	-- Get downline and stakelevel
 	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
 	SELECT CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel
 	FROM CustInfo WITH(NOLOCK)
