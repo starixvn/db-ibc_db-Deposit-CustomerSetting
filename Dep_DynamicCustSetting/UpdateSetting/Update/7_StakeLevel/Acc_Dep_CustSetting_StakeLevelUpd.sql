@@ -48,9 +48,10 @@ BEGIN
 		,	@ActionID					TINYINT=1
 
 	CREATE TABLE	#tmpStake (					
-						SportType		SMALLINT
-					,	BetType			INT
-					,	StakeLevelList	VARCHAR(200)
+						SportType			SMALLINT
+					,	BetType				INT
+					,	StakeLevelList		VARCHAR(200)
+					,	MemberStakeLevel	VARCHAR(200)
 					,	PRIMARY KEY CLUSTERED (SportType, BetType)
 					);
 
@@ -105,6 +106,23 @@ BEGIN
 
 	EXECUTE sp_xml_removedocument @iDoc;
 
+	
+	UPDATE tv 
+	SET tv.MemberStakeLevel=(SELECT TOP 1 ss.val	
+													FROM dbo.strSplit(tv.StakeLevelList, ',') AS ss
+													INNER JOIN	dbo.Dep_StakeLevel AS sl WITH(NOLOCK)	ON CAST(ss.val AS INT) = sl.StakeLevelID		
+													ORDER BY	sl.MaxStake, sl.MinStake,sl.GameGroupID)
+	FROM #tmpStake tv  
+
+	SET	@StakeLevel =	(
+											SELECT	SportType				AS SportType
+												,	BetType					AS BetType	
+												,	StakeLevelList			AS StakeLevelList		
+												,	MemberStakeLevel		AS MemberStakeLevel												
+											FROM	#tmpStake										
+											FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 
+										);
+
 	INSERT INTO	#StakeLevelList_Old (SportType, BetType, StakeLevelList_old)
 	SELECT	cslm.SportType
 		,	cslm.BetType
@@ -154,7 +172,7 @@ BEGIN
 			EXECUTE	Acc_Dep_DynamicCustSetting_05
 						@ListCustID	= @ListCustIDExecRep				
 					,	@StakeLevel	= @StakeLevel
-					
+					,	@ActionID	= @ActionID
 			IF	@StopRow = @MaxRow 
 				BREAK;
 					
