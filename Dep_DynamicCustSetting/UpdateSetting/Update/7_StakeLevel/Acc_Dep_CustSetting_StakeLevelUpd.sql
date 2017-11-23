@@ -111,10 +111,13 @@ BEGIN
 
 	
 	UPDATE tv 
-	SET tv.MemberStakeLevel=(SELECT TOP 1 ss.val	
-													FROM dbo.strSplit(tv.StakeLevelList, ',') AS ss
-													INNER JOIN	dbo.Dep_StakeLevel AS sl WITH(NOLOCK)	ON CAST(ss.val AS INT) = sl.StakeLevelID		
-													ORDER BY	sl.MaxStake, sl.MinStake,sl.GameGroupID)
+	SET tv.MemberStakeLevel = 
+		(
+			SELECT TOP 1 ss.val	
+			FROM dbo.strSplit(tv.StakeLevelList, ',') AS ss
+				INNER JOIN	dbo.Dep_StakeLevel AS sl WITH(NOLOCK)	ON CAST(ss.val AS INT) = sl.StakeLevelID		
+			ORDER BY	sl.MaxStake, sl.MinStake,sl.GameGroupID
+		)
 	FROM #tmpStake tv  
 
 	
