@@ -43,13 +43,12 @@ BEGIN
 		,	@xml						XML
 		,	@ProductName				VARCHAR(50)		
 		,	@SettingLevel				TINYINT
-		,	@ProductSettingID			INT			
-		,	@ListCustIDExecRep			VARCHAR(MAX)
+		,	@ProductSettingID			INT		
 		,	@ActionID					TINYINT=1
 
 	CREATE TABLE	#tmpStake (					
 						SportType			SMALLINT
-					,	BetType				INT
+					,	BetType				SMALLINT
 					,	StakeLevelList		VARCHAR(200)
 					,	MemberStakeLevel	VARCHAR(200)
 					,	PRIMARY KEY CLUSTERED (SportType, BetType)
@@ -57,15 +56,19 @@ BEGIN
 
 	CREATE TABLE	#StakeLevelList_Old (
 						SportType			SMALLINT
-					,	BetType				INT				
+					,	BetType				SMALLINT				
 					,	StakeLevelList_old	VARCHAR(200)	
 					,	PRIMARY KEY CLUSTERED (SportType, BetType)				
 					);
 
 	CREATE TABLE #CustStakeLevelDownlines (
-					ID INT IDENTITY (1,1)
+					ID						INT IDENTITY (1,1)
 				,	CustID					INT 			
 				,	RoleID					TINYINT		
+				,	SportType				SMALLINT
+				,	BetType					SMALLINT
+				,	StakeLevelList			VARCHAR(200)
+				,	MemberStakeLevel		VARCHAR(200)
 				,	PRIMARY KEY CLUSTERED (ID)
 				);
 
@@ -100,7 +103,7 @@ BEGIN
 	FROM OPENXML (@iDoc, '/ROOT/StakeLevel', 1) 
 	WITH (
 		SportType		SMALLINT
-	,	BetType			INT
+	,	BetType			SMALLINT
 	,	StakeLevelList	VARCHAR(200)	
 	) AS ox;
 
@@ -114,15 +117,7 @@ BEGIN
 													ORDER BY	sl.MaxStake, sl.MinStake,sl.GameGroupID)
 	FROM #tmpStake tv  
 
-	SET	@StakeLevel =	(
-											SELECT	SportType				AS SportType
-												,	BetType					AS BetType	
-												,	StakeLevelList			AS StakeLevelList		
-												,	MemberStakeLevel		AS MemberStakeLevel												
-											FROM	#tmpStake										
-											FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 
-										);
-
+	
 	INSERT INTO	#StakeLevelList_Old (SportType, BetType, StakeLevelList_old)
 	SELECT	cslm.SportType
 		,	cslm.BetType
@@ -142,9 +137,11 @@ BEGIN
 		SELECT @ActionID=0
 	END
 
-	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID)
-	SELECT CustID,RoleID
-	FROM CustInfo WITH(NOLOCK) WHERE srecommend=@CustID
+	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
+	SELECT CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel
+	FROM CustInfo WITH(NOLOCK)
+		CROSS APPLY #tmpStake
+	 WHERE srecommend=@CustID
 
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 10000, @StopRow INT;
 			
@@ -159,19 +156,22 @@ BEGIN
 	BEGIN
 		WHILE (0 = 0)
 		BEGIN		
-			SET	@ListCustIDExecRep =	(
+			SET	@StakeLevel =	(
 											SELECT	custid				AS CustID
-												,	RoleID				AS RoleID											
+												,	RoleID				AS RoleID
+												,	SportType			AS SportType	
+												,	BetType				AS BetType		
+												,	StakeLevelList		AS StakeLevelList	
+												,	MemberStakeLevel	AS MemberStakeLevel
 											FROM	#CustStakeLevelDownlines
 											WHERE	ID >= @StartRow 
 												AND	ID <= @StopRow
-											FOR XML RAW ('ListCustID'), ROOT ('ROOT') 
+											FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 
 										);
 					
 			-- Correct downlines via ExecRep
 			EXECUTE	Acc_Dep_DynamicCustSetting_05
-						@ListCustID	= @ListCustIDExecRep				
-					,	@StakeLevel	= @StakeLevel
+						@StakeLevel	= @StakeLevel
 					,	@ActionID	= @ActionID
 			IF	@StopRow = @MaxRow 
 				BREAK;
