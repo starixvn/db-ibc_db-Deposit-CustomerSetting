@@ -139,7 +139,7 @@ BEGIN
 		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 		VALUES( @CustID,@ProductSettingID)
 
-		SELECT @ActionID=1
+		SELECT @ActionID=0
 	END
 
 	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID)
