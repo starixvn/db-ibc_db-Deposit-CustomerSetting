@@ -72,6 +72,7 @@ BEGIN
 				,	MemberStakeLevel		VARCHAR(200)
 				,	PRIMARY KEY CLUSTERED (ID)
 				);
+	CREATE TABLE #tblmrecommend  (CustID INT PRIMARY KEY)
 
 	--Check if XML is null or empty
 	IF	@StakeLevel IS NULL OR @StakeLevel = ''
@@ -144,11 +145,15 @@ BEGIN
 		SELECT @ActionID=0
 	END
 	-- Get downline and stakelevel
+	INSERT INTO #tblmrecommend(CustID)
+			SELECT custid FROM custinfo WITH (NOLOCK) WHERE roleid=3
+			and username LIKE '%Acc%' and srecommend=@CustID	
+
 	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
 	SELECT CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel
 	FROM CustInfo WITH(NOLOCK)
 		CROSS APPLY #tmpStake
-	 WHERE srecommend=@CustID
+	 WHERE srecommend=@CustID AND mrecommend NOT IN(SELECT custid FROM #tblmrecommend)
 
 	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 10000, @StopRow INT;
 			
