@@ -7,8 +7,8 @@ AS
 	DB: DBCUST.CUSTDB
 
 	Revisions:		
-	20170922@Winnie: Licensee - select dcs product [RedmineID: #82346]
-
+	- 20170922@Winnie: Licensee - select dcs product [RedmineID: #82346]
+	- 20171113@Winnie: Update Customer's Stake Level Settings - [Redmine: #85113]	
 	Param's Explanation:
 */
 
