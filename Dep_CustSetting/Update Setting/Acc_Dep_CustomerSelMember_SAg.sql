@@ -16,7 +16,7 @@ Revisions:
 	- 20150603@Kathy: Move SP to DBCust.custDB [Redmine:#36216]
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
-
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -42,9 +42,6 @@ BEGIN
 			@MinBetv44_Min					MONEY,	
 			@MinBetv99						MONEY,  
 			@MinBetv99_Min					MONEY,  
-
-			@MinBetv154						MONEY,  
-			@MinBetv154_Min					MONEY,
 			
 			@MaxBetv1						MONEY,
 			@MaxBetv1_Max					MONEY,  
@@ -64,35 +61,7 @@ BEGIN
 			@MaxBetv44_Max					MONEY,
 			@MaxBetv99						MONEY,
 			@MaxBetv99_Max					MONEY,
-			
-			@MaxBetv154						MONEY,
-			@MaxBetv154_Max					MONEY,
-
-			@v151MinBet_31					MONEY,
-			@v151MinBet_31_Min				MONEY,
-			@v151MinBet_41					MONEY,
-			@v151MinBet_41_Min				MONEY,
-			@v151MinBet_51					MONEY,
-			@v151MinBet_51_Min				MONEY,
-			@v152MinBet_41					MONEY,
-			@v152MinBet_41_Min				MONEY,
-			@v152MinBet_51					MONEY,
-			@v152MinBet_51_Min				MONEY,
-			@v153MinBet_51					MONEY,
-			@v153MinBet_51_Min				MONEY,
-
-			@v151MaxBet_31					MONEY,
-			@v151MaxBet_31_Max				MONEY,
-			@v151MaxBet_41					MONEY,
-			@v151MaxBet_41_Max				MONEY,
-			@v151MaxBet_51					MONEY,
-			@v151MaxBet_51_Max				MONEY,
-			@v152MaxBet_41					MONEY,
-			@v152MaxBet_41_Max				MONEY,
-			@v152MaxBet_51					MONEY,
-			@v152MaxBet_51_Max				MONEY,
-			@v153MaxBet_51					MONEY,
-			@v153MaxBet_51_Max				MONEY,
+	
 
 			@MinBetv99MP					MONEY,
 			@MinBetv99MP_Min				MONEY,
@@ -124,59 +93,15 @@ BEGIN
 			@MaxPerMatchv99					MONEY,
 			@MaxPerMatchv99_Max				MONEY,
 
-			@MaxPerMatchv154				MONEY,
-			@MaxPerMatchv154_Max			MONEY,
-
 			@MaxPerMatchv161				MONEY,	
 			@MaxPerMatchv161_Max			MONEY,	
 			@MaxPerBallv161					MONEY,
 			@MaxPerBallv161_Max				MONEY,
-			@v151MaxPerMatch_31_Max			MONEY,
-			@v151MaxPerMatch_41_Max			MONEY,
-			@v151MaxPerMatch_51_Max			MONEY,
-			@v152MaxPerMatch_41_Max			MONEY,
-			@v152MaxPerMatch_51_Max			MONEY,
-			@v153MaxPerMatch_51_Max			MONEY,
-
-			@v151MaxPerMatch_31				MONEY,
-			@v151MaxPerMatch_41				MONEY,
-			@v151MaxPerMatch_51				MONEY,
-			@v152MaxPerMatch_41				MONEY,
-			@v152MaxPerMatch_51				MONEY,
-			@v153MaxPerMatch_51				MONEY,
-
-			@v151Discount_31				DECIMAL(9,8),
-			@v151Discount_31_Max			DECIMAL(9,8),
-			@v151Discount_41				DECIMAL(9,8),
-			@v151Discount_41_Max			DECIMAL(9,8),
-			@v151Discount_51				DECIMAL(9,8),
-			@v151Discount_51_Max			DECIMAL(9,8),
-			@v152Discount_41				DECIMAL(9,8),
-			@v152Discount_41_Max			DECIMAL(9,8),
-			@v152Discount_51				DECIMAL(9,8),
-			@v152Discount_51_Max			DECIMAL(9,8),
-			@v153Discount_51				DECIMAL(9,8),
-			@v153Discount_51_Max			DECIMAL(9,8),
 
 			@v1mPositionTaking_1				MONEY,
 			@v1mPositionTaking_1_Max			MONEY,
 			@v161mPositionTaking_81				MONEY,
 			@v161mPositionTaking_81_Max			MONEY,
-
-			@v151mPositionTaking_31			MONEY,
-			@v151mPositionTaking_41			MONEY,
-			@v151mPositionTaking_51			MONEY,
-			@v152mPositionTaking_41			MONEY,
-			@v152mPositionTaking_51			MONEY,
-			@v153mPositionTaking_51			MONEY,
-
-			@v151mPositionTaking_31_Max MONEY,
-			@v151mPositionTaking_41_Max MONEY,
-			@v151mPositionTaking_51_Max MONEY,
-			@v152mPositionTaking_41_Max MONEY,
-			@v152mPositionTaking_51_Max MONEY,
-			@v153mPositionTaking_51_Max MONEY,
-			
 			--Keno
 			@KenoList VARCHAR(4000)='', -- repalace all old params
 			@vPT SMALLMONEY,
@@ -214,50 +139,13 @@ BEGIN
 			@MinBetv99 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 99 THEN cs.minbet ELSE 0 END),
 			@MaxBetv99 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 99 THEN cs.maxbet ELSE 0 END),
 
-			@MinBetv154 = max(CASE WHEN cs.bettype = 20 AND cs.sporttype = 154 THEN cs.minbet ELSE 0 END),
-			@MaxBetv154 = max(CASE WHEN cs.bettype = 20 AND cs.sporttype = 154 THEN cs.maxbet ELSE 0 END),
-
 			@MinBetv99MP = max(CASE WHEN cs.bettype = 9 AND cs.sporttype = 99 THEN cs.minbet ELSE 0 END),
 			@MaxBetv99MP = max(CASE WHEN cs.bettype = 9 AND cs.sporttype = 99 THEN cs.maxbet ELSE 0 END),
 
 			@MinBetv161 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.minbet ELSE 0 END),
 			@MaxBetv161 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.maxbet ELSE 0 END),
-			@v161mPositionTaking_81 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.mpositiontaking ELSE 0 END),
-			
-			
-			@v151MinBet_31 = max(CASE WHEN cs3rd.bettype = 31 AND cs3rd.sporttype = 151 THEN cs3rd.minbet ELSE 0 END),
-			@v151MaxBet_31 = max(CASE WHEN cs3rd.bettype = 31 AND cs3rd.sporttype = 151 THEN cs3rd.maxbet ELSE 0 END),
-			@v151mPositionTaking_31 = max(CASE WHEN cs3rd.bettype = 31 AND cs3rd.sporttype = 151 THEN cs3rd.mpositiontaking ELSE 0 END),
-
-			@v151MinBet_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 151 THEN cs3rd.minbet ELSE 0 END),
-			@v151MaxBet_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 151 THEN cs3rd.maxbet ELSE 0 END),
-			@v151mPositionTaking_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 151 THEN cs3rd.mpositiontaking ELSE 0 END),
-
-			@v151MinBet_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 151 THEN cs3rd.minbet ELSE 0 END),
-			@v151MaxBet_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 151 THEN cs3rd.maxbet ELSE 0 END),
-			@v151mPositionTaking_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 151 THEN cs3rd.mpositiontaking ELSE 0 END),
-
-			@v152MinBet_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 152 THEN cs3rd.minbet ELSE 0 END),
-			@v152MaxBet_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 152 THEN cs3rd.maxbet ELSE 0 END),
-			@v152mPositionTaking_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 152 THEN cs3rd.mpositiontaking ELSE 0 END),
-
-			@v152MinBet_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 152 THEN cs3rd.minbet ELSE 0 END),
-			@v152MaxBet_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 152 THEN cs3rd.maxbet ELSE 0 END),
-			@v152mPositionTaking_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 152 THEN cs3rd.mpositiontaking ELSE 0 END),
-
-			@v153MinBet_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 153 THEN cs3rd.minbet ELSE 0 END),
-			@v153MaxBet_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 153 THEN cs3rd.maxbet ELSE 0 END),
-			@v153mPositionTaking_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 153 THEN cs3rd.mpositiontaking ELSE 0 END),
-			
-			--HR Comm
-			@v151Discount_31 = max(CASE WHEN cs3rd.bettype = 31 AND cs3rd.sporttype = 151 THEN cs3rd.adiscount ELSE 0 END),
-			@v151Discount_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 151 THEN cs3rd.adiscount ELSE 0 END),
-			@v151Discount_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 151 THEN cs3rd.adiscount ELSE 0 END),
-
-			@v152Discount_41 = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 152 THEN cs3rd.adiscount ELSE 0 END),
-			@v152Discount_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 152 THEN cs3rd.adiscount ELSE 0 END),
-
-			@v153Discount_51 = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 153 THEN cs3rd.adiscount ELSE 0 END)
+			@v161mPositionTaking_81 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.mpositiontaking ELSE 0 END)
+		
 
 	FROM Dep_CustSetting AS cs WITH (NOLOCK) 
 		LEFT JOIN Dep_CustSetting3rd AS cs3rd WITH (NOLOCK) ON cs.custid = cs3rd.custid
@@ -265,26 +153,7 @@ BEGIN
 
 			
 	SELECT  @v1mPositionTaking_1_Max = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.spositiontaking ELSE 0 END),
-			@v161mPositionTaking_81_Max = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.spositiontaking ELSE 0 END),
-			
-			@v151mPositionTaking_31_Max = max(CASE WHEN cs3rd.bettype = 31 AND cs3rd.sporttype = 151 THEN cs3rd.spositiontaking ELSE 0 END),
-			@v151mPositionTaking_41_Max = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 151 THEN cs3rd.spositiontaking ELSE 0 END),
-			@v151mPositionTaking_51_Max = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 151 THEN cs3rd.spositiontaking ELSE 0 END),
-			
-			@v152mPositionTaking_41_Max = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 152 THEN cs3rd.spositiontaking ELSE 0 END),
-			@v152mPositionTaking_51_Max = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 152 THEN cs3rd.spositiontaking ELSE 0 END),
-			
-			@v153mPositionTaking_51_Max = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 153 THEN cs3rd.spositiontaking ELSE 0 END),
-
-			--HR Comm
-			@v151Discount_31_Max = max(CASE WHEN cs3rd.bettype = 31 AND cs3rd.sporttype = 151 THEN cs3rd.sdiscount ELSE 0 END),
-			@v151Discount_41_Max = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 151 THEN cs3rd.sdiscount ELSE 0 END),
-			@v151Discount_51_Max = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 151 THEN cs3rd.sdiscount ELSE 0 END),
-
-			@v152Discount_41_Max = max(CASE WHEN cs3rd.bettype = 41 AND cs3rd.sporttype = 152 THEN cs3rd.sdiscount ELSE 0 END),
-			@v152Discount_51_Max = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 152 THEN cs3rd.sdiscount ELSE 0 END),
-
-			@v153Discount_51_Max = max(CASE WHEN cs3rd.bettype = 51 AND cs3rd.sporttype = 153 THEN cs3rd.sdiscount ELSE 0 END)
+			@v161mPositionTaking_81_Max = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.spositiontaking ELSE 0 END)
 
 	FROM Dep_CustSetting AS cs WITH (NOLOCK)
 		LEFT JOIN Dep_CustSetting3rd AS cs3rd WITH (NOLOCK) ON cs.custid = cs3rd.custid
@@ -365,13 +234,6 @@ BEGIN
 		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.SRecommend) and cs.bettype = 1 and cs.sporttype=99
 	where ci.custid = @CustID
 
-	Select 
-		@MinBetv154_Min = Max(case when MinBet = 0 then NULL else MinBet end), 
-		@MaxBetv154_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from 
-		dep_custsetting as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.SRecommend) and cs.bettype = 20 and cs.sporttype=154
-	where ci.custid = @CustID
 
 	-- mix parlay mixed sports
 	select	@MinBetv99MP_Min = Max(case when MinBet = 0 then NULL else MinBet end),
@@ -389,48 +251,6 @@ BEGIN
 		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 81 and cs.sporttype = 161
 	where ci.custid = @CustID
 
-	--HR
-	select	@v151MinBet_31_Min = Max(case when MinBet = 0 then NULL else MinBet end),
-			@v151MaxBet_31_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from
-		dep_custsetting3rd as cs WITH(NOLOCK)
-		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 31 and cs.sporttype = 151
-	where ci.custid = @CustID
-
-	select	@v151MinBet_41_Min = Max(case when MinBet = 0 then NULL else MinBet end),
-			@v151MaxBet_41_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from
-		dep_custsetting3rd as cs WITH(NOLOCK)
-		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 41 and cs.sporttype = 151
-	where ci.custid = @CustID
-
-	select	@v151MinBet_51_Min = Max(case when MinBet = 0 then NULL else MinBet end),
-			@v151MaxBet_51_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from
-		dep_custsetting3rd as cs WITH(NOLOCK)
-		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 51 and cs.sporttype = 151
-	where ci.custid = @CustID
-
-	select	@v152MinBet_41_Min = Max(case when MinBet = 0 then NULL else MinBet end),
-			@v152MaxBet_41_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from
-		dep_custsetting3rd as cs WITH(NOLOCK)
-		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 41 and cs.sporttype = 152
-	where ci.custid = @CustID
-
-	select	@v152MinBet_51_Min = Max(case when MinBet = 0 then NULL else MinBet end),
-			@v152MaxBet_51_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from
-		dep_custsetting3rd as cs WITH(NOLOCK)
-		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 51 and cs.sporttype = 152
-	where ci.custid = @CustID
-
-	select	@v153MinBet_51_Min = Max(case when MinBet = 0 then NULL else MinBet end),
-			@v153MaxBet_51_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from
-		dep_custsetting3rd as cs WITH(NOLOCK)
-		INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 51 and cs.sporttype = 153
-	where ci.custid = @CustID
 
 	Select @MaxperMatchv1_Max = Min(case when cs.MaxPerMatch = 0 then NULL else cs.MaxPerMatch end),
 		
@@ -448,22 +268,13 @@ BEGIN
 		
 		@MaxPerMatchv44_Max = Min(case when cs.MaxPerMatch44 = 0 then NULL else cs.MaxPerMatch44 end),
 
-		@MaxPerMatchv99_Max = Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),
-
-		@MaxPerMatchv154_Max = Min(case when cs.MaxPerMatch154 = 0 then NULL else cs.MaxPerMatch154 end),
+		@MaxPerMatchv99_Max = Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),		
 			
 		@MaxPerMatchv99MP_Max = Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),
 
 		@MaxPerMatchv161_Max = Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),
 
-		@MaxPerBallv161_Max = Min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 end),
-		
-		@v151MaxPerMatch_31_Max = min(case when cs.maxpermatch151 = 0 then NULL else cs.maxpermatch151 end),
-		@v151MaxPerMatch_41_Max=min(case when cs.maxpermatch151_OT = 0 then NULL else cs.maxpermatch151_OT end),
-		@v151MaxPerMatch_51_Max=min(case when cs.maxpermatch151_AU = 0 then NULL else cs.maxpermatch151_AU end),
-		@v152MaxPerMatch_41_Max=min(case when cs.maxpermatch152_UK = 0 then NULL else cs.maxpermatch152_UK end),
-		@v152MaxPerMatch_51_Max=min(case when cs.maxpermatch152_AU = 0 then NULL else cs.maxpermatch152_AU end),
-		@v153MaxPerMatch_51_Max=min(case when cs.maxpermatch153_AU = 0 then NULL else cs.maxpermatch153_AU end)
+		@MaxPerBallv161_Max = Min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 end)
 		
 	from 
 		custinfo as cs WITH (NOLOCK) 
@@ -480,16 +291,10 @@ BEGIN
 		@MaxPerMatchv11				= ci.MaxPerMatch11,
 		@MaxPerMatchv44				= ci.MaxPerMatch44,
 		@MaxPerMatchv99				= ci.MaxPerMatch99,
-		@MaxPerMatchv154			= ci.MaxPerMatch154,
+		
 		@MaxPerMatchv99MP			= ci.MaxPerMatch99MP,
 		@MaxPerMatchv161			= ci.MaxPerMatch161,
-		@MaxPerBallv161				= ci.MaxPerBall161,
-		@v151MaxPerMatch_31			= ci.MaxPerMatch151,
-		@v151MaxPerMatch_41			= ci.MaxPerMatch151_OT,
-		@v151MaxPerMatch_51			= ci.MaxPerMatch151_AU,
-		@v152MaxPerMatch_41			= ci.MaxPerMatch152_UK,
-		@v152MaxPerMatch_51			= ci.MaxPerMatch152_AU,
-		@v153MaxPerMatch_51			= ci.MaxPerMatch153_AU
+		@MaxPerBallv161				= ci.MaxPerBall161
 	FROM custinfo (NOLOCK) ci WHERE ci.custid = @CustID
 
 	--Keno
@@ -578,7 +383,7 @@ BEGIN
 		@MinBetv11    AS MinBetv11,	
 		@MinBetv44    AS MinBetv44,
 		@MinBetv99    AS MinBetv99,
-		@MinBetv154   AS MinBetv154,
+	
 		@MinBetv99MP  AS minbetv99MP,
 		@MinBetv161   AS minbetv161,
 		
@@ -591,38 +396,11 @@ BEGIN
 		isnull(@MinBetv11_Min,0)    AS MinBetv11_Min,	
 		isnull(@MinBetv44_Min,0)    AS MinBetv44_Min,
 		isnull(@MinBetv99_Min,0)    AS MinBetv99_Min,
-		isnull(@MinBetv154_Min,0)   AS MinBetv154_Min,
+	
 		isnull(@MinBetv99MP_Min,0)  AS minbetv99MP_Min,
 		isnull(@MinBetv161_Min,0)   AS minbetv161_Min,
 		
-		@v151MinBet_31 AS v151MinBet_31,
-		@v151MinBet_41 AS v151MinBet_41,
-		@v151MinBet_51 AS v151MinBet_51,
-		@v152MinBet_41 AS v152MinBet_41,
-		@v152MinBet_51 AS v152MinBet_51,
-		@v153MinBet_51 AS v153MinBet_51,
-
-		isnull(@v151MinBet_31_Min,0) AS v151MinBet_31_Min,
-		isnull(@v151MinBet_41_Min,0) AS v151MinBet_41_Min,
-		isnull(@v151MinBet_51_Min,0) AS v151MinBet_51_Min,
-		isnull(@v152MinBet_41_Min,0) AS v152MinBet_41_Min,
-		isnull(@v152MinBet_51_Min,0) AS v152MinBet_51_Min,
-		isnull(@v153MinBet_51_Min,0) AS v153MinBet_51_Min,
-
-		@v151MaxBet_31 AS v151MaxBet_31,
-		@v151MaxBet_41 AS v151MaxBet_41,
-		@v151MaxBet_51 AS v151MaxBet_51,
-		@v152MaxBet_41 AS v152MaxBet_41,
-		@v152MaxBet_51 AS v152MaxBet_51,
-		@v153MaxBet_51 AS v153MaxBet_51,
-
-		isnull(@v151MaxBet_31_Max,0) AS v151MaxBet_31_Max,
-		isnull(@v151MaxBet_41_Max,0) AS v151MaxBet_41_Max,
-		isnull(@v151MaxBet_51_Max,0) AS v151MaxBet_51_Max,
-		isnull(@v152MaxBet_41_Max,0) AS v152MaxBet_41_Max,
-		isnull(@v152MaxBet_51_Max,0) AS v152MaxBet_51_Max,
-		isnull(@v153MaxBet_51_Max,0) AS v153MaxBet_51_Max,
-
+	
 		@MaxBetv1 AS MaxBetv1,
 		@MaxBetv2 AS MaxBetv2,
 		@MaxBetv3 AS MaxBetv3,
@@ -632,7 +410,7 @@ BEGIN
 		@MaxBetv11 AS MaxBetv11,	
 		@MaxBetv44 AS MaxBetv44,
 		@MaxBetv99 AS MaxBetv99,
-		@MaxBetv154 AS MaxBetv154,
+	
 		@MaxBetv99MP AS maxbetv99MP,
 		@MaxBetv161 AS maxbetv161,
 		
@@ -646,7 +424,7 @@ BEGIN
 		isnull(@MaxBetv11_Max,0) AS MaxBetv11_Max,	
 		isnull(@MaxBetv44_Max,0) AS MaxBetv44_Max,
 		isnull(@MaxBetv99_Max,0) AS MaxBetv99_Max,
-		isnull(@MaxBetv154_Max,0) AS MaxBetv154_Max,
+		
 		isnull(@MaxBetv99MP_Max,0) AS Maxbetv99MP_Max,
 		isnull(@MaxBetv161_Max,0) AS Maxbetv161_Max,
 		
@@ -661,26 +439,7 @@ BEGIN
 		
 		0 AS v161mPositionTaking_81_Min,
 		
-		@v151mPositionTaking_31		AS v151mPositionTaking_31,
-		@v151mPositionTaking_41		AS v151mPositionTaking_41,
-		@v151mPositionTaking_51		AS v151mPositionTaking_51,
-		@v152mPositionTaking_41		AS v152mPositionTaking_41,
-		@v152mPositionTaking_51		AS v152mPositionTaking_51,
-		@v153mPositionTaking_51		AS v153mPositionTaking_51,
-
-		isnull(@v151mPositionTaking_31_Max,0)	AS v151mPositionTaking_31_Max,
-		isnull(@v151mPositionTaking_41_Max,0)	AS v151mPositionTaking_41_Max,
-		isnull(@v151mPositionTaking_51_Max,0)	AS v151mPositionTaking_51_Max,
-		isnull(@v152mPositionTaking_41_Max,0)	AS v152mPositionTaking_41_Max,
-		isnull(@v152mPositionTaking_51_Max,0)	AS v152mPositionTaking_51_Max,
-		isnull(@v153mPositionTaking_51_Max,0)	AS v153mPositionTaking_51_Max,
-
-		0 AS v151mPositionTaking_31_Min,
-		0 AS v151mPositionTaking_41_Min,
-		0 AS v151mPositionTaking_51_Min,
-		0 AS v152mPositionTaking_41_Min,
-		0 AS v152mPositionTaking_51_Min,
-		0 AS v153mPositionTaking_51_Min,
+	
 		
 		isnull(@MaxPerMatchv1_Max,0)    AS MaxPerMatchv1_Max,
 		isnull(@MaxPerMatchv2_Max,0)    AS MaxPerMatchv2_Max,
@@ -691,19 +450,10 @@ BEGIN
 		isnull(@MaxPerMatchv11_Max,0)   AS MaxPerMatchv11_Max,	
 		isnull(@MaxPerMatchv44_Max,0)   AS MaxPerMatchv44_Max,
 		isnull(@MaxPerMatchv99_Max,0)   AS MaxPerMatchv99_Max,
-		isnull(@MaxPerMatchv154_Max,0)   AS MaxPerMatchv154_Max,
+		
 		isnull(@MaxPerMatchv99MP_Max,0) AS MaxPerMatchv99MP_Max,
 		isnull(@MaxPerMatchv161_Max,0)  AS MaxPerMatchv161_Max,
 		isnull(@MaxPerBallv161_Max,0)	  AS MaxPerBallv161_Max,
-		
-		
-		isnull(@v151MaxPerMatch_31_Max,0)		AS v151MaxPerMatch_31_Max,
-		isnull(@v151MaxPerMatch_41_Max,0)		AS v151MaxPerMatch_41_Max,
-		isnull(@v151MaxPerMatch_51_Max,0)		AS v151MaxPerMatch_51_Max,
-		isnull(@v152MaxPerMatch_41_Max,0)		AS v152MaxPerMatch_41_Max,
-		isnull(@v152MaxPerMatch_51_Max,0)		AS v152MaxPerMatch_51_Max,
-		isnull(@v153MaxPerMatch_51_Max,0)		AS v153MaxPerMatch_51_Max,
-
 		@MaxPerMatchv1		AS MaxPerMatchv1,
 		@MaxPerMatchv2		AS MaxPerMatchv2,
 		@MaxPerMatchv3		AS MaxPerMatchv3,
@@ -713,47 +463,10 @@ BEGIN
 		@MaxPerMatchv11		AS MaxPerMatchv11,
 		@MaxPerMatchv44		AS MaxPerMatchv44,
 		@MaxPerMatchv99		AS MaxPerMatchv99,
-		@MaxPerMatchv154	AS MaxPerMatchv154,
+	
 		@MaxPerMatchv99MP	AS MaxPerMatchv99MP,
 		@MaxPerBallv161		AS MaxPerBallv161,
 		@MaxPerMatchv161	AS MaxPerMatchv161,
-		
-			
-		@v151MaxPerMatch_31	AS v151MaxPerMatch_31,
-		@v151MaxPerMatch_41	AS v151MaxPerMatch_41,
-		@v151MaxPerMatch_51	AS v151MaxPerMatch_51,
-		@v152MaxPerMatch_41	AS v152MaxPerMatch_41,
-		@v152MaxPerMatch_51	AS v152MaxPerMatch_51,
-		@v153MaxPerMatch_51	AS v153MaxPerMatch_51,
-		--discount
-		@v151Discount_31 AS v151Discount_31,
-		@v151Discount_41 AS v151Discount_41,
-		@v151Discount_51 AS v151Discount_51,
-		@v152Discount_41 AS v152Discount_41,
-		@v152Discount_51 AS v152Discount_51,
-		@v153Discount_51 AS v153Discount_51,
-
-		@v151Discount_31_Max AS v151Discount_31_Max,
-		@v151Discount_41_Max AS v151Discount_41_Max,
-		@v151Discount_51_Max AS v151Discount_51_Max,
-		@v152Discount_41_Max AS v152Discount_41_Max,
-		@v152Discount_51_Max AS v152Discount_51_Max,
-		@v153Discount_51_Max AS v153Discount_51_Max,
-
-		0 AS v151Discount_31_Min,
-		0 AS v151Discount_41_Min,
-		0 AS v151Discount_51_Min,
-		0 AS v152Discount_41_Min,
-		0 AS v152Discount_51_Min,
-		0 AS v153Discount_51_Min,
-
-		ci.DisableHorseRacing			AS Disable151_31,
-		ci.DisableOpenTote				AS Disable151_41,
-		ci.Disable151_AU				AS Disable151_51,
-		ci.Disable152_UK				AS Disable152_41,
-		ci.Disable152_AU				AS Disable152_51,
-		ci.Disable153_AU				AS Disable153_51,
-		
 		@KenoList AS KenoList,	
 		ci.username
 	FROM CustInfo AS ci with (NOLOCK) 
