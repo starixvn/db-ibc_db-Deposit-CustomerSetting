@@ -45,16 +45,9 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@MaxPerMatchv99MP MONEY,	
 	@MaxPerMatchv161 MONEY,	
 	@MaxPerBallv161 MONEY = 0,
-	
-	
-	
-	@DisableNumber BIT = 0,
-	@DisableBingo BIT = 0,
+
 	@DisableCasino BIT = 0,
-	@DisableP2P BIT = 0,
-	@DisableFUNP2P BIT = 0,
-	@ISAUTORESETP2P BIT = 0,
-	
+
 	
 	@DisableCasinoBonus BIT = 0,
 	
@@ -230,13 +223,13 @@ END
 INSERT INTO [dbo].[custinfo](
 	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch44], [maxpermatch201],[maxpermatch99]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
-	,Disable151_AU,DisableFinancial, DisableOutright, DisableCasino, DisableNumber,DisableBingo
-	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3,DisableP2P,DisableFunP2P,ISAUTORESETP2P, DisableCasinoBonus,HideKeno)
+	,Disable151_AU,DisableFinancial, DisableOutright, DisableCasino
+	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3, DisableCasinoBonus,HideKeno)
 VALUES(
 	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11,@MaxPerMatchv44, @MaxPerMatchv201, @MaxPerMatchv99
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier, 
-	1,@DisableFinancial,@DisableOutright, @DisableCasino, @DisableNumber,@DisableBingo
-	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3,@DisableP2P,@DisableFUNP2P,@ISAUTORESETP2P, @DisableCasinoBonus,@HideKeno)
+	1,@DisableFinancial,@DisableOutright, @DisableCasino
+	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3, @DisableCasinoBonus,@HideKeno)
 
 IF @@ERROR <> 0
 BEGIN 

@@ -7,9 +7,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@userpwd	varchar(40) = '123qwe',
 	@recommend	int, -- Agent ID
 
-	--number game status
-	@DisableNumber bit = 0,	
-	
 	@MinBetv1 money,
 	@MaxBetv1 money,
 	@MaxPerMatchv1 money,
@@ -369,8 +366,7 @@ BEGIN
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
 		
-		@DisableCasinoBonus = 1,
-		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end
+		@DisableCasinoBonus = 1		
 	from CustInfo as ci with (NOLOCK) 
 	where CustID = @recommend
 
@@ -696,9 +692,7 @@ BEGIN
 		@virtualmultiplier = 0,
 		@DisableFinancial = 0,
 		@DisableCasino = 0,
-		@IsInternal = 0,
-		@DisableNumber = @DisableNumber,
-		@DisableBingo = 0,
+		@IsInternal = 0,	
 		@MaxPerMatch = @MaxPerMatchv1,
 		@MaxPerMatchv2 = @MaxPerMatchv2,
 		@MaxPerMatchv3 = @MaxPerMatchv3,
@@ -720,8 +714,7 @@ BEGIN
 
 		@credit = 0,
 		@maxcredit = 0,
-		@DisableP2P = 1,
-		@DisableFUNP2P = 1,
+	
 		@IP = @IP,
 		@TransferOption_dec = 0,
 		@Language = @Language,
@@ -734,9 +727,7 @@ BEGIN
 
 	SELECT @Rollback= ' DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
 					 ' DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-					 ' DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-			 		 ' DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-					 ' DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
+					 ' DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+			 		
 					 ' DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))	+
 					 ' DELETE CustGameType WITH(ROWLOCK) WHERE custid = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))	+
 					 ' EXEC Acc_CustomerInsUserInfo_Rollback @CustID = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))
@@ -860,96 +851,6 @@ BEGIN
 		return
 	END
 
-	--Insert Into P2P Setting
-	INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-		(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-	SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1001
-	UNION ALL 
-	SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1002
-
-
-	if @@error <> 0
-	BEGIN
-		--Error occurs
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Create member fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-							end	
-				, @ErrCode=216
-		
-		-- ROLLBACK MANUALLY
-		Delete dep_custsetting with (ROWLOCK) where custid  =@custid
-		Delete dep_CustSetting3rd with (ROWLOCK) where custid  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		return
-	END
-
-
-	INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-			   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-	SELECT @custid custId
-		,P2PGroupComm.groupID
-		,GC_S.sdiscount
-		,GC_M.adiscount
-		,P2PGroupComm.discount
-		,0 playerdiscount
-	FROM dbo.P2PGroupComm WITH(NOLOCK) 
-	INNER JOIN (
-		SELECT groupID
-			,sdiscount
-		FROM dbo.P2PGroupComm WITH(NOLOCK) 
-		WHERE custid = @srecommend
-		) GC_S ON GC_S.GROUPID = P2PGroupComm.GROUPID
-	INNER JOIN (
-		SELECT groupID
-			,adiscount
-		FROM dbo.P2PGroupComm WITH(NOLOCK) 
-		WHERE custid = @mrecommend
-		) GC_M ON GC_M.GROUPID = P2PGroupComm.GROUPID
-	WHERE custid = @recommend;
-
-	if @@error <> 0
-	BEGIN
-		--Error occurs
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Create member fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-							end	
-				, @ErrCode=216
-		
-		-- ROLLBACK MANUALLY
-		Delete dep_custsetting with (ROWLOCK) where custid  =@custid
-		Delete dep_CustSetting3rd with (ROWLOCK) where custid  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		return
-	END
-
-	
-	if @@error <> 0
-	BEGIN
-
-		--Error occur
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Create customer failed. Please try again.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							end,
-			@ErrCode = 210
-			
-		-- ROLLBACK MANUALLY
-		Delete dep_custsetting with (ROWLOCK) where custid  =@custid
-		Delete dep_CustSetting3rd with (ROWLOCK) where custid  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
-			
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
 	--Keno
 
 	/**********************************
@@ -969,9 +870,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID		
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -992,9 +891,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1017,9 +914,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1066,9 +961,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1091,9 +984,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1116,9 +1007,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID		
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1143,9 +1032,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 		
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1189,9 +1076,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1308,8 +1193,8 @@ BEGIN
 	Select @LogSPData = '<Acc_Dep_CustomerInsMember_Ag custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'closed="'+ coalesce(cast(@UplineClosed as varchar(1)),space(1)) + '" ' +
 	
-	'DisableOutright="'+ coalesce(cast(@DisableOutright as varchar(1)),space(1)) + '" ' +
-	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" />'
+	'DisableOutright="'+ coalesce(cast(@DisableOutright as varchar(1)),space(1)) +  '" />'
+
 	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 		@UserID = @Creator,
 		@CustID = @CustID,

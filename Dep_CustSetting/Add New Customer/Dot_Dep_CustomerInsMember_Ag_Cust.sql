@@ -229,17 +229,11 @@ BEGIN
 	 --v161    
 	 @v161playerdiscount decimal(9,8),-- number game com for player    
 	    
-	 --- P2P     
-	 @v253playerdiscount_1 decimal(9,8), --- comm for game    
-	 @v253playerdiscount_2 decimal(9,8), --- comm for private game    
+	
 	
 	 --Keno    
 	 @v202playerdiscount_1501 decimal(9,8),    
-	     
-	
-	 --- P2P     
-	 @v253discount_1 decimal(9,8), --- comm for game    
-	 @v253discount_2 decimal(9,8), --- comm for private game    
+
 
 	 --Keno    
 	 @v202discount_1501 DECIMAL(9,8),    
@@ -548,28 +542,15 @@ BEGIN
 	 @v161discount decimal(9,8),    
 	 @v161adiscount decimal(9,8),    
 	 @v161sdiscount decimal(9,8),    
-	     
-	 -- p2p    
-	 @v253adiscount_1 decimal(9,8), --- comm for game    
-	 @v253adiscount_2 decimal(9,8), --- comm for game    
-	    
-	 @v253sdiscount_1 decimal(9,8), --- comm for private game    
-	 @v253sdiscount_2 decimal(9,8), --- comm for private game    
-
+	
 	 --Keno    
 	 @v202adiscount_1501 decimal(9,8),    
 	 @v202sdiscount_1501 decimal(9,8),    
-	    
-
-	     
-	 --@DisableBingo bit,--not use     
-	 @DisableNumber bit,-- for number game    
+	
 	 
 	 @DoubleCommLosing BIT,-- double comm losing status    
 	 @DisableCasinoBonus BIT,    
-	 @DisableP2P BIT,-- P2P status    
-	 @DisableFUNP2P BIT,    
-	     
+
 	
 	 @HideKeno BIT,    
 	    
@@ -631,12 +612,7 @@ BEGIN
 	 @virtualmultiplier = virtualmultiplier,    
 	
 	 @DisableFinancial = DisableFinancial,    
-	 @DisableP2P   = isnull(DisableP2P,0),    
-	 @DisableFUNP2P  = ISNULL(DisableFUNP2P,0),    
-	
-	 --@DisableBingo  = DisableBingo,    
-	 @DisableNumber  = ISNULL(DisableNumber,0),    
-	
+
 	 @DoubleCommLosing = DoubleCommLosing,    
 	 @DisableCasinoBonus = 1, --20130805@Elodie hardcode    
 	 @HideKeno = HideKeno    
@@ -716,14 +692,7 @@ BEGIN
 	FROM Dep_CustSetting3rd WITH(NOLOCK)    
 	WHERE custid = @recommend AND islive=0    
 	 AND bettype =81 AND sporttype =161
-	     
-	    
-	SELECT  @v253discount_1 = MAX(CASE WHEN groupid = 1 THEN discount ELSE 0 END)    
-	  ,@v253discount_2 = MAX(CASE WHEN groupid = 2 THEN discount ELSE 0 END)    
-	FROM P2PGroupComm WITH(NOLOCK)    
-	WHERE custid = @recommend AND groupid IN (1,2)    
-	    
-	    
+	
 	---  Keno    
 	SELECT @v202discount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN discount ELSE 0 END)    
 	FROM custsettinggame WITH(NOLOCK)    
@@ -820,10 +789,6 @@ BEGIN
 	 @playerdiscount1x2 = 0,  
 	
 	 @v161playerdiscount= 0, -- for number game    
-
-	 --v253     
-	 @v253playerdiscount_1 = 0,    
-	 @v253playerdiscount_2 = 0,    
 
 	 --Keno    
 	 @v202playerdiscount_1501 = 0    
@@ -1079,15 +1044,7 @@ BEGIN
 	FROM Dep_CustSetting3rd WITH(NOLOCK)    
 	WHERE custid = @mrecommend AND islive=0    
 	 AND bettype =81 AND sporttype =161   
-	     
-	     
-	    
-	--- P2P    
-	SELECT  @v253adiscount_1 = MAX(CASE WHEN groupid = 1 THEN adiscount ELSE 0 END)    
-	  ,@v253adiscount_2 = MAX(CASE WHEN groupid = 2 THEN adiscount ELSE 0 END)    
-	FROM P2PGroupComm WITH(NOLOCK)    
-	WHERE custid = @mrecommend AND groupid IN (1,2)    
-	    
+
 	--- Keno    
 	select @v202adiscount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN adiscount ELSE 0 END)     
 	from custsettinggame with (nolock)     
@@ -1104,13 +1061,7 @@ BEGIN
 	FROM Dep_CustSetting3rd WITH(NOLOCK)    
 	WHERE custid = @srecommend AND islive=0    
 	 AND bettype =81 AND sporttype =161
-	     
-	----- P2P    
-	SELECT  @v253sdiscount_1 = MAX(CASE WHEN groupid = 1 THEN sdiscount ELSE 0 END)    
-	  ,@v253sdiscount_2 = MAX(CASE WHEN groupid = 2 THEN sdiscount ELSE 0 END)    
-	FROM P2PGroupComm WITH(NOLOCK)    
-	WHERE custid = @srecommend AND groupid IN (1,2)    
-	    
+
 	--- Keno    
 	select  @v202sdiscount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN sdiscount ELSE 0 END)      
 	from custsettinggame with (nolock)     
@@ -1125,10 +1076,7 @@ BEGIN
 	
 	 --v161    
 	 @v161playerdiscount= case when @v161playerdiscount> @v161discount then @v161discount else @v161playerdiscount end,    
-	    
-	 -- P2P    
-	 @v253playerdiscount_1 = case when @v253playerdiscount_1 > @v253discount_1 then @v253discount_1 else @v253playerdiscount_1 end,    
-	 @v253playerdiscount_2 = case when @v253playerdiscount_2 > @v253discount_2 then @v253discount_2 else @v253playerdiscount_2 end,    
+	 
 	 ---  Keno    
 	 @v202playerdiscount_1501 = case when @v202playerdiscount_1501 > @v202discount_1501 then @v202discount_1501 else @v202playerdiscount_1501 end    
 	    
@@ -1400,15 +1348,10 @@ BEGIN
 	 @postal = '',    
 	 @TransferOption = null,    
 	 @suspended = @suspended,    
-	 
-	 @DisableP2P = @DisableP2P,    
-	 @DisableFUNP2P = @DisableFUNP2P,    
+
 	 @matchlimit = @matchlimit,    
 	 @virtualmultiplier = @virtualmultiplier,    
 	 @DisableFinancial = 0,    
-	 --@DisableBingo = @DisableBingo,    
-	 @DisableNumber = @DisableNumber,    
-	 
 
 	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode    
 	 @DisableCasinoBonus = @DisableCasinoBonus,      
@@ -1585,45 +1528,8 @@ BEGIN
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 	 return    
 	END    
-	    
-	--- p2p    
-	INSERT INTO P2PGameSetting(custid, bettype, stakelevel1, stakelevel2, stakelevel3,stakelevel4,stakelevel5)    
-	   SELECT @custid, bettype, stakelevel1,0,0,0,0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype IN (1001,1002)    
-	IF @@ERROR <> 0    
-	BEGIN    
-	 --Error occurs    
-	 SELECT     
-	  @ErrMsg = 'Add member fail. Please try again',    
-	  @ErrCode=216    
-	    
-	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	 DELETE P2PGameSetting WHERE CustID = @CustID    
-	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
-	 return    
-	END    
-	     
-	INSERT INTO P2PGroupComm(custid, GroupId, sdiscount, adiscount, discount, playerdiscount)    
-	SELECT @custid, 1, @v253sdiscount_1, @v253adiscount_1, @v253discount_1, @v253playerdiscount_1    
-	UNION ALL    
-	SELECT @custid, 2, @v253sdiscount_2, @v253adiscount_2, @v253discount_2, @v253playerdiscount_2    
-	IF @@ERROR <> 0    
-	BEGIN    
-	 --Error occurs    
-	 SELECT     
-	  @ErrMsg = 'Add member fail. Please try again',    
-	  @ErrCode=217    
-	    
-	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	 DELETE P2PGameSetting WHERE CustID = @CustID    
-	 DELETE P2PGroupComm WHERE CustID = @CustID    
-	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
-	 return    
-	END    
-	    
+
+
 	-- Keno    
 	INSERT INTO CustSettingGame(custid, bettype, sporttype, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount)    
 	SELECT @custid, 1501, 202, @v202apositiontaking_1501, @v202mpositiontaking_1501, @v202spositiontaking_1501, @v202playerdiscount_1501, @v202discount_1501, @v202adiscount_1501, @v202sdiscount_1501    
@@ -1637,8 +1543,7 @@ BEGIN
 	 -- MANUALLY ROLLBACK    
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	 DELETE P2PGameSetting WHERE CustID = @CustID    
-	 DELETE P2PGroupComm WHERE CustID = @CustID    
+	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 	 return    
@@ -1661,8 +1566,7 @@ BEGIN
 	 -- MANUALLY ROLLBACK    
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	 DELETE P2PGameSetting WHERE CustID = @CustID    
-	 DELETE P2PGroupComm WHERE CustID = @CustID    
+	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
@@ -1685,8 +1589,7 @@ BEGIN
 	 -- MANUALLY ROLLBACK    
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	 DELETE P2PGameSetting WHERE CustID = @CustID    
-	 DELETE P2PGroupComm WHERE CustID = @CustID    
+
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
 	 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
@@ -1707,8 +1610,7 @@ BEGIN
 	 -- MANUALLY ROLLBACK    
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	 DELETE P2PGameSetting WHERE CustID = @CustID    
-	 DELETE P2PGroupComm WHERE CustID = @CustID    
+	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
 	 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
@@ -1736,8 +1638,7 @@ BEGIN
 		 -- MANUALLY ROLLBACK    
 		 DELETE Dep_CustSetting WHERE CustID = @CustID    
 		 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-		 DELETE P2PGameSetting WHERE CustID = @CustID    
-		 DELETE P2PGroupComm WHERE CustID = @CustID    
+	
 		 DELETE CustSettingGame WHERE CustID = @CustID    
 		 DELETE CustGameType WHERE CustID = @CustID    
 		 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
@@ -1766,8 +1667,7 @@ BEGIN
 	-- -- MANUALLY ROLLBACK    
 	-- DELETE Dep_CustSetting WHERE CustID = @CustID    
 	-- DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	-- DELETE P2PGameSetting WHERE CustID = @CustID    
-	-- DELETE P2PGroupComm WHERE CustID = @CustID    
+	
 	-- DELETE CustSettingGame WHERE CustID = @CustID    
 	-- DELETE CustGameType WHERE CustID = @CustID    
 	-- EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid     
@@ -1793,8 +1693,7 @@ BEGIN
 	-- -- MANUALLY ROLLBACK    
 	-- DELETE Dep_CustSetting WHERE CustID = @CustID    
 	-- DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	-- DELETE P2PGameSetting WHERE CustID = @CustID    
-	-- DELETE P2PGroupComm WHERE CustID = @CustID    
+
 	-- DELETE CustSettingGame WHERE CustID = @CustID    
 	-- DELETE CustGameType WHERE CustID = @CustID    
 	-- EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid     
@@ -2042,8 +1941,7 @@ BEGIN
 	    
 	--Write Statuses log     
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
-	'suspended="'+ coalesce(cast(@suspended as varchar(50)),space(1)) + '" ' +    	
-	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" ' +    
+	'suspended="'+ coalesce(cast(@suspended as varchar(50)),space(1)) + '" ' +   
 	'DisableFinancial="'+ coalesce(cast(@DisableFinancial as varchar(1)),space(1)) + '" />'    
 	BEGIN TRY    
 	 EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP     
