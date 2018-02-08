@@ -6,7 +6,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@username	varchar(30),
 	@userpwd	varchar(40) = '123qwe',
 	@recommend	int, -- Agent ID
-
+	
+	--number game status
+	@DisableNumber bit = 0,	
+	
 	@MinBetv1 money,
 	@MaxBetv1 money,
 	@MaxPerMatchv1 money,
@@ -366,7 +369,8 @@ BEGIN
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
 		
-		@DisableCasinoBonus = 1		
+		@DisableCasinoBonus = 1	,
+		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end	
 	from CustInfo as ci with (NOLOCK) 
 	where CustID = @recommend
 
@@ -693,6 +697,7 @@ BEGIN
 		@DisableFinancial = 0,
 		@DisableCasino = 0,
 		@IsInternal = 0,	
+		@DisableNumber = @DisableNumber,
 		@MaxPerMatch = @MaxPerMatchv1,
 		@MaxPerMatchv2 = @MaxPerMatchv2,
 		@MaxPerMatchv3 = @MaxPerMatchv3,
@@ -1192,8 +1197,8 @@ BEGIN
 	--Log Status
 	Select @LogSPData = '<Acc_Dep_CustomerInsMember_Ag custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'closed="'+ coalesce(cast(@UplineClosed as varchar(1)),space(1)) + '" ' +
-	
-	'DisableOutright="'+ coalesce(cast(@DisableOutright as varchar(1)),space(1)) +  '" />'
+	'DisableOutright="'+ coalesce(cast(@DisableOutright as varchar(1)),space(1)) + '" ' +
+	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" />'
 
 	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 		@UserID = @Creator,

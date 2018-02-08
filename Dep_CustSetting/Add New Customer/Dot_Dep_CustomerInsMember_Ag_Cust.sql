@@ -234,7 +234,7 @@ BEGIN
 	 --Keno    
 	 @v202playerdiscount_1501 decimal(9,8),    
 
-
+	 @DisableNumber bit,-- for number game    
 	 --Keno    
 	 @v202discount_1501 DECIMAL(9,8),    
 	    
@@ -612,7 +612,7 @@ BEGIN
 	 @virtualmultiplier = virtualmultiplier,    
 	
 	 @DisableFinancial = DisableFinancial,    
-
+	 @DisableNumber  = ISNULL(DisableNumber,0),    
 	 @DoubleCommLosing = DoubleCommLosing,    
 	 @DisableCasinoBonus = 1, --20130805@Elodie hardcode    
 	 @HideKeno = HideKeno    
@@ -1352,7 +1352,7 @@ BEGIN
 	 @matchlimit = @matchlimit,    
 	 @virtualmultiplier = @virtualmultiplier,    
 	 @DisableFinancial = 0,    
-
+	 @DisableNumber = @DisableNumber,    
 	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode    
 	 @DisableCasinoBonus = @DisableCasinoBonus,      
 	 
@@ -1942,6 +1942,7 @@ BEGIN
 	--Write Statuses log     
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
 	'suspended="'+ coalesce(cast(@suspended as varchar(50)),space(1)) + '" ' +   
+	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" ' +    
 	'DisableFinancial="'+ coalesce(cast(@DisableFinancial as varchar(1)),space(1)) + '" />'    
 	BEGIN TRY    
 	 EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP     
