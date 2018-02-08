@@ -299,4 +299,5 @@ BEGIN
 	END CATCH
 END
 GO
-GRANT VIEW DEFINITION ON dbo.Acc_Dep_CustSetting_StatusUpd_Manual TO vnteam
+
+
