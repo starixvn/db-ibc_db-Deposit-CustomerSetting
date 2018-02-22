@@ -1,4 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member,vnteam" viewers="vnteam" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust]     
 	@FirstName nvarchar(50),    
 	@LastName nvarchar(50),    
@@ -154,6 +157,7 @@ AS
 	 - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	 - 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
 	 - 20170519@Winnie:  support Bonus [Redmine: #72797]
+	 - 20180222@Elodie: Set uGroup = C for all new AE88 RMB members [Redmine: #90965]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -826,10 +830,11 @@ BEGIN
 	--20141103@Jim: fix bug alog member's ugroup are wrong      
 	--20141212@Jamie: Set ugroup = a for Alog (USD,GBP) [redmine:#25577]    
 	--20150928@Victor: Set uGroup = C for all new Asiabet88 KRW members [redmine: 44141]
-	    
+	-- 20180222@Elodie: Set uGroup = C for all new AE88 RMB members [Redmine: #90965]   
 	SELECT @ugroup = 
 	CASE	WHEN @site = 'Asiabet88' AND  @currency IN (3,6) THEN 'b' 	
 			WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'		
+			WHEN @site = 'Ae88' AND @currency = 13 THEN 'c'	
 			ELSE 'a'    
 	END    
 	     
