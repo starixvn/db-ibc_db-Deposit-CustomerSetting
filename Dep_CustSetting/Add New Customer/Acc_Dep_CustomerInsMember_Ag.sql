@@ -694,7 +694,7 @@ BEGIN
 
 		--20150309@Johnson: disable virtual rate as default
 		@virtualmultiplier = 0,
-		@DisableFinancial = 0,
+		
 		@DisableCasino = 0,
 		@IsInternal = 0,	
 		@DisableNumber = @DisableNumber,

@@ -607,7 +607,7 @@ BEGIN
 		@matchlimit = 1,
 		--20150309@Johnson: disable virtual rate as default
 		@virtualmultiplier = 0,	
-		@DisableFinancial = 0,
+		
 		@DisableBingo = 0,
 		@DisableNumber = @DisableNumber,
 		@DisableCasino = 0,

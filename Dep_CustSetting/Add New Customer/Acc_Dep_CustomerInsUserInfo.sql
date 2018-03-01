@@ -24,7 +24,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@DisableOutright BIT = 0,
 	@matchlimit SMALLMONEY,
 	@virtualmultiplier SMALLMONEY,
-	@DisableFinancial BIT = 0,
+	
 	@DisableAutoMPT BIT = 1,
 	@IsInternal BIT = 0,
 	
@@ -220,12 +220,12 @@ END
 INSERT INTO [dbo].[custinfo](
 	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch44], [maxpermatch201],[maxpermatch99]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
-	,DisableFinancial, DisableOutright, DisableCasino,DisableNumber
+	, DisableOutright, DisableCasino,DisableNumber
 	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3, DisableCasinoBonus,HideKeno)
 VALUES(
 	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11,@MaxPerMatchv44, @MaxPerMatchv201, @MaxPerMatchv99
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
-	,@DisableFinancial,@DisableOutright, @DisableCasino, @DisableNumber
+	,@DisableOutright, @DisableCasino, @DisableNumber
 	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3, @DisableCasinoBonus,@HideKeno)
 
 IF @@ERROR <> 0
