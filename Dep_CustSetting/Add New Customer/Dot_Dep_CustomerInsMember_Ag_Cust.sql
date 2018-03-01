@@ -153,7 +153,7 @@ AS
 	 - 20170807@Winnie:  Change the default odds group to A for Leon [Redmine: #81191]
 	 - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	 - 20170807@Winnie: Change Data Type of Sporttype [RedmineID: #73545]
-	 
+	 - 20170519@Winnie:  support Bonus [Redmine: #72797]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -2236,6 +2236,10 @@ BEGIN
 	 username2 = @DepositUserName,    
 	 refcode2 = @DepositUserID    
 	where custID = @custID    
+	--Bonus
+	UPDATE custInfo WITH (ROWLOCK, UPDLOCK) 
+	SET BonusWalletFlag=0
+	WHERE custID = @custID  
 	    
 	select @site = site from customer (NOLOCK)    
 	WHERE CustID = @AgentID    
