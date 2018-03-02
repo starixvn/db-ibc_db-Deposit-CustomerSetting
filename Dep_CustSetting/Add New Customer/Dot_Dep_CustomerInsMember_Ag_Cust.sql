@@ -233,8 +233,7 @@ BEGIN
 	
 	 --Keno    
 	 @v202playerdiscount_1501 decimal(9,8),    
-
-	 @DisableNumber bit,-- for number game    
+	
 	 --Keno    
 	 @v202discount_1501 DECIMAL(9,8),    
 	    
@@ -546,7 +545,7 @@ BEGIN
 	 --Keno    
 	 @v202adiscount_1501 decimal(9,8),    
 	 @v202sdiscount_1501 decimal(9,8),    
-	
+	 @DisableNumber bit,-- for number game    
 	 
 	 @DoubleCommLosing BIT,-- double comm losing status    
 	 @DisableCasinoBonus BIT,    
