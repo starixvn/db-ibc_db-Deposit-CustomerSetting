@@ -608,13 +608,9 @@ BEGIN
 		--20150309@Johnson: disable virtual rate as default
 		@virtualmultiplier = 0,	
 		
-		@DisableBingo = 0,
 		@DisableNumber = @DisableNumber,
 		@DisableCasino = 0,
-		@DisableP2P = 1,
-		@DisableFUNP2P = 1,
-		@ISAUTORESETP2P = 1,
-		
+	
 		@DisableCasinoBonus = @DisableCasinoBonus,
 
 		
@@ -648,9 +644,7 @@ BEGIN
 
 	SELECT @Rollback= ' DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
 					 ' DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-					 ' DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-			 		 ' DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-					 ' DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
+					 ' DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+			 		
 					 ' DELETE CustGameType WITH(ROWLOCK) WHERE custid = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))	+
 					 ' DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))	+
 					 ' EXEC Acc_CustomerInsUserInfo_Rollback @CustID = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))
@@ -776,94 +770,6 @@ BEGIN
 		RETURN
 	END 
 
-	--Insert Into P2P Setting
-	INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-		(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-	SELECT @custid  , 1001 , 1 , 0 , 0 , 0 , 0
-	UNION ALL SELECT @custid  , 1002 , 1 , 0 , 0 , 0 , 0
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		
-		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid	
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END  
-
-	--Insert Into P2P Commision
-	INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-			   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-	SELECT @custid  , 1 , 0 , 0 , 0 , 0 
-	UNION ALL SELECT @custid  , 2 , 0 , 0 , 0 , 0 
-
-	IF @@ERROR <> 0
-	BEGIN
-		--Error Occurs
-		SELECT @ErrMsg = CASE @Language 
-								when 'E' then 'Create customer fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END	
-				, @ErrCode=116
-		
-		-- ROLLBACK MANUALLY
-		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-			
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END 
-
-
-	--check min bet min, 
-	--SELECT Bettype,MinBet 
-	--INTO #Minbet
-	--FROM dbo.ProductBetSetting WHERE Currency=@currency
-	--IF EXISTS (SELECT TOP 1 1 FROM #data d INNER JOIN #Minbet m ON d.bettype=m.bettype WHERE d.Minbet < m.minbet)
-	--BEGIN
-	--	Declare @vMaxPT money
-	--	SELECT @vMaxPT=m.Minbet FROM #data d INNER JOIN #Minbet m ON d.bettype=m.bettype WHERE d.Minbet < m.minbet ORDER BY d.bettype DESC
-	--	SELECT
-	--		@ErrMsg =	case @Language 
-	--							when 'E' then 'Min bet must be greater than '+ COALESCE(CAST(@vMaxPT AS VARCHAR(50)),SPACE(1)) +'.'
-	--							ELSE [dbo].[f_Get_MsgNamebyMsgID](10006,@Language)
-	--					end
-											
-	--	SELECT @ErrCode = 107
-	--	EXEC sp_executesql @Rollback 
-	--	RETURN 
-	--END
-
-	--check PT MaxPT
-	--SELECT Bettype,MaxPositiontaking,Maxsdiscount
-	--INTO #KenoPT
-	--FROM dbo.ProductGlobalSetting WHERE Sporttype=202
-	--IF EXISTS (SELECT TOP 1 1 FROM #data d INNER JOIN #KenoPT k ON d.bettype = k.bettype 
-	--	WHERE d.sPositionTaking>k.MaxPositiontaking)
-	--BEGIN
-	--	SELECT @ErrCode = 3,
-	--			@ErrMsg = CASE @Language 
-	--						WHEN 'E' THEN 'Keno position taking is invalid .'
-	--						ELSE [dbo].[f_Get_MsgNamebyMsgID](20001,@Language)
-	--			          END
-	--	EXEC sp_executesql @Rollback 
-	--	RETURN
-	--END
 	-- Insert 
 	INSERT INTO CustSettingGame([CustID]
 			   ,[Bettype]
@@ -899,8 +805,7 @@ BEGIN
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE CustId = @custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE CustId = @custid
 		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE CustId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE CustId  = @custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE CustId  = @custid
+	
 		DELETE CustGameType WITH(ROWLOCK) WHERE Custid = @custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE Custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE Custid = @custid
@@ -926,8 +831,6 @@ BEGIN
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid	
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
