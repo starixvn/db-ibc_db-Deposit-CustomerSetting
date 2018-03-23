@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@custid int,-- MemberID
 	
@@ -38,9 +38,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@maxbetv99 money,
 	@maxpermatchv99 money,	
 
-	@minbetv154 money,
-	@maxbetv154 money,
-	@maxpermatchv154 money,	
+
 	
 	@minbetv99MP money,
 	@maxbetv99MP money,
@@ -51,31 +49,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@maxpermatchv161 money,	
 	
 	@MaxPerBallv161 money = 0,
-
-	--Racing Bet Setting
-	@v151minbet_31			money = 0,	-- old name: @minbet_31
-	@v151maxbet_31			money = 0,	-- old name: @maxbet_31
-	@v151maxpermatch_31		money = 0,	-- old name: @maxpermatch_31
-
-	@v151minbet_41			money,		-- old name: @minbet_41
-	@v151maxbet_41			money,		-- old name: @maxbet_41
-	@v151maxpermatch_41		money,		-- old name: @maxpermatch_41
-	
-	@v151minbet_51			money = 0,
-	@v151maxbet_51			money = 0,
-	@v151maxpermatch_51		money = 0,
-
-	@v152minbet_41		money = 0,
-	@v152maxbet_41		money = 0,
-	@v152maxpermatch_41 money = 0,
-
-	@v152minbet_51		money = 0,
-	@v152maxbet_51		money = 0,
-	@v152maxpermatch_51 money = 0,
-
-	@v153minbet_51		money = 0,
-	@v153maxbet_51		money = 0,
-	@v153maxpermatch_51 money = 0,
 
 	@v1apositiontaking_1 smallmoney,
 	@v1apositiontaking_2 smallmoney,
@@ -144,27 +117,8 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@v99apositiontaking_3 smallmoney,
 	@v99apositiontaking_20 smallmoney,
 
-	@v154apositiontaking_20 smallmoney,
-	
 	-- mix parlay of mixed sports	
 	@v99apositiontaking_9 smallmoney, 
-
-	--Racing
-	@v151apositiontaking_31 smallmoney = 0,
-	@v151apositiontaking_32 smallmoney = 0,
-	@v151apositiontaking_41 smallmoney = 0,
-	@v151apositiontaking_42 smallmoney = 0,
-	
-	@v151apositiontaking_51 smallmoney = 0,
-	@v151apositiontaking_52 smallmoney = 0,
-
-	@v152apositiontaking_41 smallmoney = 0,
-	@v152apositiontaking_42 smallmoney = 0,
-	@v152apositiontaking_51 smallmoney = 0,
-	@v152apositiontaking_52 smallmoney = 0,
-
-	@v153apositiontaking_51 smallmoney = 0,
-	@v153apositiontaking_52 smallmoney = 0,
 	
 	@v161apositiontaking_81 smallmoney,
 	@v161apositiontaking_83 smallmoney,
@@ -214,25 +168,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@v99mpositiontaking_3 smallmoney,
 	@v99mpositiontaking_20 smallmoney,
 
-	@v154mpositiontaking_20 smallmoney,
 	
-	--Racing
-	@v151mpositiontaking_31 smallmoney = 0,
-	@v151mpositiontaking_32 smallmoney = 0,
-	@v151mpositiontaking_41 smallmoney = 0,
-	@v151mpositiontaking_42 smallmoney = 0,
-
-	@v151mpositiontaking_51 smallmoney = 0,
-	@v151mpositiontaking_52 smallmoney = 0,
-
-	@v152mpositiontaking_41 smallmoney = 0,
-	@v152mpositiontaking_42 smallmoney = 0,
-	@v152mpositiontaking_51 smallmoney = 0,
-	@v152mpositiontaking_52 smallmoney = 0,
-
-	@v153mpositiontaking_51 smallmoney = 0,
-	@v153mpositiontaking_52 smallmoney = 0,
-
 	-- mix parlay of mixed sports
 	@v99mpositiontaking_9 smallmoney,
 
@@ -301,8 +237,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@v99spositiontaking_9 SMALLMONEY,
 	@v99spositiontaking_20 SMALLMONEY,
 
-	@v154spositiontaking_20 SMALLMONEY,
-	
 	--v161
 	@v161spositiontaking_81 SMALLMONEY,
 	@v161spositiontaking_83 SMALLMONEY,
@@ -313,33 +247,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@v161slivepositiontaking_87 SMALLMONEY,	
 	@v161slivepositiontaking_89 SMALLMONEY = 0,
 	@v161slivepositiontaking_90 SMALLMONEY = 0,
-	
-	--Racing
-	@v151spositiontaking_31 smallmoney = 0,
-	@v151spositiontaking_32 smallmoney = 0,
-	@v151spositiontaking_41 smallmoney = 0,
-	@v151spositiontaking_42 smallmoney = 0,
-
-	@v151spositiontaking_51 smallmoney = 0,
-	@v151spositiontaking_52 smallmoney = 0,
-
-	@v152spositiontaking_41 smallmoney = 0,
-	@v152spositiontaking_42 smallmoney = 0,
-	@v152spositiontaking_51 smallmoney = 0,
-	@v152spositiontaking_52 smallmoney = 0,
-
-	@v153spositiontaking_51 smallmoney = 0,
-	@v153spositiontaking_52 smallmoney = 0,
-
-
-	--Horse Racing Commission
-	@v151discount_31 decimal(9,8) = 0,	
-	@v151discount_41 decimal(9,8) = 0,
-
-	@v151discount_51 decimal(9,8) = 0,
-	@v152discount_41 decimal(9,8) = 0,
-	@v152discount_51 decimal(9,8) = 0,
-	@v153discount_51 decimal(9,8) = 0,
 	
 	--Keno Sports----------------
 	@KenoList VARCHAR(4000)='',
@@ -366,6 +273,7 @@ Revisions:
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -455,19 +363,11 @@ BEGIN
 		@MinMinBetv10 money, @MaxMaxBetv10 money, @MaxMaxPerMatchv10 money,
 		@MinMinBetv11 money, @MaxMaxBetv11 money, @MaxMaxPerMatchv11 money,
 		@MinMinBetv44 money, @MaxMaxBetv44 money, @MaxMaxPerMatchv44 money,
-		@MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,
-		@MinMinBetv154 money, @MaxMaxBetv154 money, @MaxMaxPerMatchv154 money,
+		@MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,		
 		@MinMinBetv99MP money, @MaxMaxBetv99MP money, @MaxMaxPerMatchv99MP money,
 		@MinMinBetv161 money, @MaxMaxBetv161 money, @MaxMaxPerMatchv161 money,
-		@MaxMaxPerBallv161 money,
-		
-		@v151MinMinBet_31 money, @v151MaxMaxBet_31 money, @v151MaxMaxPerMatch_31 money,
-		@v151MinMinBet_41 money, @v151MaxMaxBet_41 money, @v151MaxMaxPerMatch_41 money,
-		@v151MinMinBet_51 money, @v151MaxMaxBet_51 money, @v151MaxMaxPerMatch_51 money,
-		@v152MinMinBet_41 money, @v152MaxMaxBet_41 money, @v152MaxMaxPerMatch_41 money,
-		@v152MinMinBet_51 money, @v152MaxMaxBet_51 money, @v152MaxMaxPerMatch_51 money,
-		@v153MinMinBet_51 money, @v153MaxMaxBet_51 money, @v153MaxMaxPerMatch_51 money
-
+		@MaxMaxPerBallv161 money		
+	
 	declare @ErrAcc varchar(4000), @ErrType varchar(4000),
 			@UserName varchar(30), @recommend int
 
@@ -592,18 +492,6 @@ BEGIN
 		return
 	END
 
-	if 
-		@MinBetv154 <0
-		or @MaxBetv154 <0
-		or @MaxPerMatchv154 <0		
-	BEGIN
-		select @ErrCode = 9
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong Min bet/ Max bet/ Max per match (for Other sports).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](154,@Language) + ')'
-					end
-		return
-	END
 
 
 	if 
@@ -730,17 +618,6 @@ BEGIN
 		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
 		and cs.bettype = 1 and cs.sporttype=99
 	where ci.custid = @recommend
-
-	--HRFO
-	Select 
-		@MinMinBetv154 = Max(case when MinBet = 0 then NULL else MinBet end), 
-		@MaxMaxBetv154 = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from 
-		dep_custsetting as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-		and cs.bettype = 20 and cs.sporttype=154
-	where ci.custid = @recommend
-
 	Select 
 		@MinMinBetv99MP = Max(case when MinBet = 0 then NULL else MinBet end), 
 		@MaxMaxBetv99MP = Min(case when MaxBet = 0 then NULL else MaxBet end)
@@ -769,7 +646,7 @@ BEGIN
 		@MaxMaxPerMatchv11 = Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 end), 	
 		@MaxMaxPerMatchv44 = Min(case when cs.MaxPerMatch44 = 0 then NULL else cs.MaxPerMatch44 end), 	
 		@MaxMaxPerMatchv99 = Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),
-		@MaxMaxPerMatchv154 = Min(case when cs.MaxPerMatch154 = 0 then NULL else cs.MaxPerMatch154 end),
+		
 		@MaxMaxPerMatchv99MP = Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),
 		@MaxMaxPerMatchv161 = Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),
 		@MaxMaxPerBallv161 = Min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 end)
@@ -1203,54 +1080,6 @@ BEGIN
 		return
 	END
 
-	--HRFO
-	if (@MinBetv154 <> 0 and @MaxBetv154 <> 0 and @MinBetv154>@MaxBetv154) or (@MaxBetv154 <> 0 and @MaxPerMatchv154 <> 0 and @MaxBetv154>@MaxPerMatchv154)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match (for HR Fixed Odds)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](154,@Language) + ')'
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @MinBetv154) + '-' + convert(varchar(20), @MaxBetv154) + '-' + convert(varchar(20), @MaxPerMatchv154), @ErrCode = 136
-					
-		return
-	END
-		
-	IF (@MinMinBetv154>0 AND @MinBetv154>0 AND @MinBetv154<@MinMinBetv154)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						CASE @Language 
-							WHEN 'E' THEN 'Min bet must be equal to or greater than Agent min bet (for HR Fixed Odds)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10006,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](154,@Language) + ')'
-						END						
-						+' (' + CONVERT(VARCHAR(20), @MinMinBetv154) + ').', @ErrCode = 137
-					
-		return
-	END	
-	IF (@MaxMaxBetv154>0 AND @MaxBetv154>0 AND @MaxBetv154>@MaxMaxBetv154)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						CASE @Language 
-							WHEN 'E' THEN 'Max bet must be equal to or less than Agent max bet (for HR Fixed Odds)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10007,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](154,@Language) + ')'				
-						END						
-						+' (' + CONVERT(VARCHAR(20), @MaxMaxBetv154) + ').', @ErrCode = 138
-					
-		return
-	END
-		
-	IF (@MaxMaxPerMatchv154>0 AND @MaxPerMatchv154>0 AND @MaxPerMatchv154>@MaxMaxPerMatchv154)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						CASE @Language 
-							WHEN 'E' THEN 'Max Per Match must be equal to or less than Agent Max Per Match (for HR Fixed Odds)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10008,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](154,@Language) + ')'
-						END						
-						+' (' + CONVERT(VARCHAR(20), @MaxMaxPerMatchv154) + ').', @ErrCode = 139
-					
-		return
-	END
-
 	if (@MinBetv99MP <> 0 and @MaxBetv99MP <> 0 and @MinBetv99MP>@MaxBetv99MP) or (@MaxBetv99MP <> 0 and @MaxPerMatchv99MP <> 0 and @MaxBetv99MP>@MaxPerMatchv99MP)
 	BEGIN
 		SELECT @ErrMsg =	@UserName + ': '+
@@ -1384,399 +1213,6 @@ BEGIN
 		return
 	end
 
-	-------------------HORSE RACING-----------------------
-
-	Select 
-		@v151MinMinBet_31 = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
-		@v151MaxMaxBet_31 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
-	from 
-		Dep_CustSetting3rd as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend or cs.CustID = ci.Recommend) and cs.bettype = 31 and cs.sporttype=151
-	where ci.custid = @Recommend
-
-	Select 
-		@v151MinMinBet_41 = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
-		@v151MaxMaxBet_41 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
-	from 
-		Dep_CustSetting3rd as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend or cs.CustID = ci.Recommend) and cs.bettype = 41 and cs.sporttype=151
-	where ci.custid = @Recommend
-
-	Select 
-		@v151MinMinBet_51 = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
-		@v151MaxMaxBet_51 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
-	from 
-		Dep_CustSetting3rd as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend or cs.CustID = ci.Recommend) and cs.bettype = 51 and cs.sporttype=151
-	where ci.custid = @Recommend
-
-	Select 
-		@v152MinMinBet_41 = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
-		@v152MaxMaxBet_41 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
-	from 
-		Dep_CustSetting3rd as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend or cs.CustID = ci.Recommend) and cs.bettype = 41 and cs.sporttype=152
-	where ci.custid = @Recommend
-
-	Select 
-		@v152MinMinBet_51 = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
-		@v152MaxMaxBet_51 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
-	from 
-		Dep_CustSetting3rd as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend or cs.CustID = ci.Recommend) and cs.bettype = 51 and cs.sporttype=152
-	where ci.custid = @Recommend
-
-	Select 
-		@v153MinMinBet_51 = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
-		@v153MaxMaxBet_51 = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
-	from 
-		Dep_CustSetting3rd as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend or cs.CustID = ci.Recommend) and cs.bettype = 51 and cs.sporttype=153
-	where ci.custid = @Recommend
-
-	if (@v151MinBet_31<>0 and @v151MaxBet_31 <> 0 and  @v151MinBet_31>@v151MaxBet_31) or (@v151MaxBet_31<> 0 and @v151MaxPerMatch_31 <> 0 and @v151MaxBet_31>@v151MaxPerMatch_31) 
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match!!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language)
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @v151MinBet_31) + '-' + convert(varchar(20), @v151MaxBet_31) + '-' + convert(varchar(20), @v151MaxPerMatch_31), @ErrCode = 109					 
-		
-		return
-	END
-
-	if (@v151MinMinBet_31>0 and @v151MinBet_31>0 and @v151MinBet_31<@v151MinMinBet_31)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MinMinBet_31) + ').', @ErrCode = 110				 
-		
-		return
-	END
-
-	if (@v151MaxMaxBet_31>0 and @v151MaxBet_31>0 and @v151MaxBet_31>@v151MaxMaxBet_31)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max bet must be equal to or less than Master Agent max bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MaxMaxBet_31) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v151MaxMaxPerMatch_31>0 and @v151MaxPerMatch_31>0 and @v151MaxPerMatch_31>@v151MaxMaxPerMatch_31)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MaxMaxPerMatch_31) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v151MinBet_41<>0 and @v151MaxBet_41 <> 0 and  @v151MinBet_41>@v151MaxBet_41) or (@v151MaxBet_41<> 0 and @v151MaxPerMatch_41 <> 0 and @v151MaxBet_41>@v151MaxPerMatch_41) 
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match!!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language)
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @v151MinBet_41) + '-' + convert(varchar(20), @v151MaxBet_41) + '-' + convert(varchar(20), @v151MaxPerMatch_41), @ErrCode = 109					 
-		
-		return
-	END
-
-	if (@v151MinMinBet_41>0 and @v151MinBet_41>0 and @v151MinBet_41<@v151MinMinBet_41)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MinMinBet_41) + ').', @ErrCode = 110				 
-		
-		return
-	END
-
-	if (@v151MaxMaxBet_41>0 and @v151MaxBet_41>0 and @v151MaxBet_41>@v151MaxMaxBet_41)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max bet must be equal to or less than Master Agent max bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MaxMaxBet_41) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v151MaxMaxPerMatch_41>0 and @v151MaxPerMatch_41>0 and @v151MaxPerMatch_41>@v151MaxMaxPerMatch_41)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MaxMaxPerMatch_41) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v151MinBet_51<>0 and @v151MaxBet_51 <> 0 and  @v151MinBet_51>@v151MaxBet_51) or (@v151MaxBet_51<> 0 and @v151MaxPerMatch_51 <> 0 and @v151MaxBet_51>@v151MaxPerMatch_51) 
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match!!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language)
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @v151MinBet_51) + '-' + convert(varchar(20), @v151MaxBet_51) + '-' + convert(varchar(20), @v151MaxPerMatch_51), @ErrCode = 109					 
-		
-		return
-	END
-
-	if (@v151MinMinBet_51>0 and @v151MinBet_51>0 and @v151MinBet_51<@v151MinMinBet_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MinMinBet_51) + ').', @ErrCode = 110				 
-		
-		return
-	END
-
-	if (@v151MaxMaxBet_51>0 and @v151MaxBet_51>0 and @v151MaxBet_51>@v151MaxMaxBet_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max bet must be equal to or less than Master Agent max bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MaxMaxBet_51) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v151MaxMaxPerMatch_51>0 and @v151MaxPerMatch_51>0 and @v151MaxPerMatch_51>@v151MaxMaxPerMatch_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language)
-						end						
-						+' (' + convert(varchar(20), @v151MaxMaxPerMatch_51) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v152MinBet_41<>0 and @v152MaxBet_41 <> 0 and  @v152MinBet_41>@v152MaxBet_41) or (@v152MaxBet_41<> 0 and @v152MaxPerMatch_41 <> 0 and @v152MaxBet_41>@v152MaxPerMatch_41) 
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match!!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language)
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @v152MinBet_41) + '-' + convert(varchar(20), @v152MaxBet_41) + '-' + convert(varchar(20), @v152MaxPerMatch_41), @ErrCode = 109					 
-		
-		return
-	END
-
-	if (@v152MinMinBet_41>0 and @v152MinBet_41>0 and @v152MinBet_41<@v152MinMinBet_41)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language)
-						end						
-						+' (' + convert(varchar(20), @v152MinMinBet_41) + ').', @ErrCode = 110				 
-		
-		return
-	END
-
-	if (@v152MaxMaxBet_41>0 and @v152MaxBet_41>0 and @v152MaxBet_41>@v152MaxMaxBet_41)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max bet must be equal to or less than Master Agent max bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language)
-						end						
-						+' (' + convert(varchar(20), @v152MaxMaxBet_41) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v152MaxMaxPerMatch_41>0 and @v152MaxPerMatch_41>0 and @v152MaxPerMatch_41>@v152MaxMaxPerMatch_41)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language)
-						end						
-						+' (' + convert(varchar(20), @v152MaxMaxPerMatch_41) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v152MinBet_51<>0 and @v152MaxBet_51 <> 0 and  @v152MinBet_51>@v152MaxBet_51) or (@v152MaxBet_51<> 0 and @v152MaxPerMatch_51 <> 0 and @v152MaxBet_51>@v152MaxPerMatch_51) 
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match!!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language)
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @v152MinBet_51) + '-' + convert(varchar(20), @v152MaxBet_51) + '-' + convert(varchar(20), @v152MaxPerMatch_51), @ErrCode = 109					 
-		
-		return
-	END
-
-	if (@v152MinMinBet_51>0 and @v152MinBet_51>0 and @v152MinBet_51<@v152MinMinBet_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language)
-						end						
-						+' (' + convert(varchar(20), @v152MinMinBet_51) + ').', @ErrCode = 110				 
-		
-		return
-	END
-
-	if (@v152MaxMaxBet_51>0 and @v152MaxBet_51>0 and @v152MaxBet_51>@v152MaxMaxBet_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max bet must be equal to or less than Master Agent max bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language)
-						end						
-						+' (' + convert(varchar(20), @v152MaxMaxBet_51) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v152MaxMaxPerMatch_51>0 and @v152MaxPerMatch_51>0 and @v152MaxPerMatch_51>@v152MaxMaxPerMatch_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language)
-						end						
-						+' (' + convert(varchar(20), @v152MaxMaxPerMatch_51) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v153MinBet_51<>0 and @v153MaxBet_51 <> 0 and  @v153MinBet_51>@v153MaxBet_51) or (@v153MaxBet_51<> 0 and @v153MaxPerMatch_51 <> 0 and @v153MaxBet_51>@v153MaxPerMatch_51) 
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match!!!'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language)
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @v153MinBet_51) + '-' + convert(varchar(20), @v153MaxBet_51) + '-' + convert(varchar(20), @v153MaxPerMatch_51), @ErrCode = 109					 
-		
-		return
-	END
-
-	if (@v153MinMinBet_51>0 and @v153MinBet_51>0 and @v153MinBet_51<@v153MinMinBet_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language)
-						end						
-						+' (' + convert(varchar(20), @v153MinMinBet_51) + ').', @ErrCode = 110				 
-		
-		return
-	END
-
-	if (@v153MaxMaxBet_51>0 and @v153MaxBet_51>0 and @v153MaxBet_51>@v153MaxMaxBet_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max bet must be equal to or less than Master Agent max bet'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language)
-						end						
-						+' (' + convert(varchar(20), @v153MaxMaxBet_51) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	if (@v153MaxMaxPerMatch_51>0 and @v153MaxPerMatch_51>0 and @v153MaxPerMatch_51>@v153MaxMaxPerMatch_51)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language)
-						end						
-						+' (' + convert(varchar(20), @v153MaxMaxPerMatch_51) + ').', @ErrCode = 111					 
-		
-		return
-	END
-
-	/************************************
-		Validate Commision
-	*************************************/
-
-	IF (@v151discount_31 < 0 OR @v151discount_31 > 0.04)
-	BEGIN		
-		SELECT @ErrMsg = 	CASE @Language 
-							WHEN 'E' THEN 'Invalid commission rate (SA Tote).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](2,@Language)
-					END, @ErrCode = 101
-		RETURN
-	END
-	IF (@v151discount_41 < 0	OR @v151discount_41 > 0.04)
-	BEGIN		
-		SELECT @ErrMsg = 	CASE @Language 
-							WHEN 'E' THEN 'Invalid commission rate (UK/Irish Tote).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](3,@Language)
-					END, @ErrCode = 101
-		RETURN
-	END
-
-	IF (@v151discount_51 < 0 OR @v151discount_51 > 0.04)
-	BEGIN		
-		SELECT @ErrMsg = 	CASE @Language 
-							WHEN 'E' THEN 'Invalid commission rate (Aust Tote).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](4,@Language)
-					END, @ErrCode = 101
-		RETURN
-	END
-
-	IF (@v152discount_41 < 0 OR @v152discount_41 > 0.04)
-	BEGIN		
-		SELECT @ErrMsg = 	CASE @Language 
-							WHEN 'E' THEN 'Invalid commission rate (UK/Irish Greyhounds).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](5,@Language)
-					END, @ErrCode = 101
-		RETURN
-	END
-	IF (@v152discount_51 < 0 OR @v152discount_51 > 0.04)
-	BEGIN		
-		SELECT @ErrMsg = 	CASE @Language 
-							WHEN 'E' THEN 'Invalid commission rate (Aust Greyhound).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](6,@Language)
-					END, @ErrCode = 101
-		RETURN
-	END
-
-	IF (@v153discount_51 < 0 OR @v153discount_51 > 0.04)
-	BEGIN		
-		SELECT @ErrMsg = 	CASE @Language 
-							WHEN 'E' THEN 'Invalid commission rate (Aust Harness).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](7,@Language)
-					END, @ErrCode = 101
-		RETURN
-	END
 
 
 	/************************************
@@ -2035,26 +1471,7 @@ BEGIN
 		return
 	END
 
-	--check a2<=a4
-	select @ErrType = ''
-	select @ErrType = @ErrType + sportname + '-'+ typenamee + '-Max: '+ cast((scs.apositiontaking) as varchar(10)) + '<br>'
-	from custinfo as c with (NOLOCK) inner join dep_custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
-		(
-			select 20 as bettype, 154 as sporttype, @v154apositiontaking_20 as apositiontaking, 0 as alivepositiontaking, @v154mpositiontaking_20 as mpositiontaking, 0 as mlivepositiontaking
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		inner join @tmp_Sports sports on b.sporttype = sports.sporttype
-		inner join @tmp_Bettype bettype on b.bettype = bettype.typeid
-	where c.custid = @recommend and (b.apositiontaking>scs.apositiontaking)
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 12
-		Select @ErrMsg = @UserName + ': '+
-					case @Language 
-							when 'E' then 'Wrong position taking (max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20005,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
+
 
 	--check a2<=a4 
 	select @ErrType = ''
@@ -2109,150 +1526,6 @@ BEGIN
 		return
 	END
 
-	-- Horse racing
-
-	IF @v151apositiontaking_31 < 0
-		or @v151apositiontaking_31 > 0.5
-		or @v151apositiontaking_32 < 0
-		or @v151apositiontaking_32 > 0.5
-		
-		
-		or @v151apositiontaking_41 < 0
-		or @v151apositiontaking_41 > 0.5			
-		or @v151apositiontaking_42 < 0
-		or @v151apositiontaking_42 > 0.5		
-		
-		
-		or @v151apositiontaking_51 < 0
-		or @v151apositiontaking_51 > 0.5
-		or @v151apositiontaking_52 < 0
-		or @v151apositiontaking_52 > 0.5		
-		
-		
-	BEGIN
-		select @ErrCode = 8
-		Select @ErrMsg = 	@UserName + ': '+
-			case @Language 
-							when 'E' then 'Wrong position taking.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20001,@Language)
-					end
-		return
-	END		
-
-	--check a1<=a4 - Vinh
-	select @ErrType = ''
-	select @ErrType = @ErrType + s.SportName + ' - ' +
-	case when b.bettype = 51 then 'Win.Aust Tote' when b.bettype = 52 then 'Place.Aust Tote' else typenamee end
-	 + '-Max: '+ cast((scs.apositiontaking) as varchar(10)) + '<br>'
-	from custinfo as c with (NOLOCK) inner join Dep_CustSetting3rd as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
-		(
-		 				select 31 as bettype, 151 as sporttype, @v151apositiontaking_31 as apositiontaking
-			union all 	select 32 as bettype, 151 as sporttype, @v151apositiontaking_32 as apositiontaking
-			union all 	select 41 as bettype, 151 as sporttype, @v151apositiontaking_41 as apositiontaking
-			union all 	select 42 as bettype, 151 as sporttype, @v151apositiontaking_42 as apositiontaking
-			union all 	select 51 as bettype, 151 as sporttype, @v151apositiontaking_51 as apositiontaking
-			union all 	select 52 as bettype, 151 as sporttype, @v151apositiontaking_52 as apositiontaking
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		inner join @tmp_Bettype bettype on b.bettype = bettype.typeid
-		inner join @tmp_Sports s on b.sporttype = s.sporttype
-	where c.custid = @recommend and (b.apositiontaking>scs.apositiontaking )
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 10
-		Select @ErrMsg = 	@UserName + ': '+
-			case @Language 
-							when 'E' then 'Wrong position taking (max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20005,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
-
-	IF @v152apositiontaking_41 < 0
-		or @v152apositiontaking_41 > 0.5
-		or @v152apositiontaking_42 < 0
-		or @v152apositiontaking_42 > 0.5		
-		
-
-		or	@v152apositiontaking_51 < 0
-		or @v152apositiontaking_51 > 0.5
-		or @v152apositiontaking_52 < 0
-		or @v152apositiontaking_52 > 0.5		
-		
-	BEGIN
-		select @ErrCode = 8
-		Select @ErrMsg = 	@UserName + ': '+
-			case @Language 
-							when 'E' then 'Wrong position taking.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20001,@Language)
-					end
-		return
-	END	
-
-	--check a1<=a4 - Vinh
-	select @ErrType = ''
-	select @ErrType = @ErrType + s.SportName + ' - ' +
-	case when b.bettype = 51 then 'Win.Aust Tote' when b.bettype = 52 then 'Place.Aust Tote' else typenamee end
-	 + '-Max: '+ cast((scs.apositiontaking) as varchar(10)) + '<br>'
-	from custinfo as c with (NOLOCK) inner join Dep_CustSetting3rd as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
-		(
-						select 41 as bettype, 152 as sporttype, @v152apositiontaking_41 as apositiontaking
-			union all 	select 42 as bettype, 152 as sporttype, @v152apositiontaking_42 as apositiontaking
-			union all 	select 51 as bettype, 152 as sporttype, @v152apositiontaking_51 as apositiontaking
-			union all 	select 52 as bettype, 152 as sporttype, @v152apositiontaking_52 as apositiontaking
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		inner join @tmp_Bettype bettype on b.bettype = bettype.typeid
-		inner join @tmp_Sports s on b.sporttype = s.sporttype
-	where c.custid = @recommend and (b.apositiontaking>scs.apositiontaking )
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 10
-		Select @ErrMsg = 	@UserName + ': '+
-			case @Language 
-							when 'E' then 'Wrong position taking (max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20005,@Language) + '<br>' + @ErrType
-					end
-		return
-	END		
-
-	IF @v153apositiontaking_51 < 0
-		or @v153apositiontaking_51 > 0.5
-
-		or	@v153apositiontaking_52 < 0
-		or @v153apositiontaking_52 > 0.5
-	BEGIN
-		select @ErrCode = 8
-		Select @ErrMsg = 	@UserName + ': '+
-			case @Language 
-							when 'E' then 'Wrong position taking.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20001,@Language)
-					end
-		return
-	END
-
-	--check a1<=a4 - Vinh
-	select @ErrType = ''
-	select @ErrType = @ErrType + s.SportName + ' - ' +
-	case when b.bettype = 51 then 'Win.Aust Tote' when b.bettype = 52 then 'Place.Aust Tote' else typenamee end
-	 + '-Max: '+ cast((scs.apositiontaking) as varchar(10)) + '<br>'
-	from custinfo as c with (NOLOCK) inner join Dep_CustSetting3rd as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
-		(
-						select 51 as bettype, 153 as sporttype, @v153apositiontaking_51 as apositiontaking
-			union all 	select 52 as bettype, 153 as sporttype, @v153apositiontaking_52 as apositiontaking
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		inner join @tmp_Bettype bettype on b.bettype = bettype.typeid
-		inner join @tmp_Sports s on b.sporttype = s.sporttype
-	where c.custid = @recommend and (b.apositiontaking>scs.apositiontaking )
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 10
-		Select @ErrMsg = 	@UserName + ': '+
-			case @Language 
-							when 'E' then 'Wrong position taking (max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20005,@Language) + '<br>' + @ErrType
-					end
-		return
-	END	
-
 	/*----------------------------
 	UPDATE Customer Info
 	---------------------------*/
@@ -2267,16 +1540,10 @@ BEGIN
 		MaxPerMatch11 = @MaxPerMatchv11,
 		MaxPerMatch44 = @MaxPerMatchv44,
 		MaxPerMatch99 = @MaxPerMatchv99,
-		MaxPerMatch154 = @MaxPerMatchv154,
+		
 		MaxPerMatch99MP = @MaxPerMatchv99MP,
 		MaxPerMatch161 = @MaxPerMatchv161,
-		MaxPerBall161 = @MaxPerBallv161,
-		maxpermatch151		= @v151MaxPerMatch_31,
-		maxpermatch151_OT	= @v151MaxPerMatch_41,
-		MaxPerMatch151_AU	= @v151MaxPerMatch_51,
-		MaxPerMatch152_UK	= @v152MaxPerMatch_41,
-		MaxPerMatch152_AU	= @v152MaxPerMatch_51,
-		MaxPerMatch153_AU	= @v153MaxPerMatch_51
+		MaxPerBall161 = @MaxPerBallv161	
 	where custid = @custid 
 	if (@@error <> 0)
 	begin
@@ -2339,25 +1606,9 @@ BEGIN
 		@v99mpositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v99mpositiontaking_20 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 
-		@v154mpositiontaking_20 = CASE WHEN cs.sporttype = 154 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-
+	
 		@v99mpositiontaking_9 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 9 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-		--Racing
-		@v151mpositiontaking_31 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_32 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 32 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_41 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_42 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_51  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_52  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-										   
-		@v152mpositiontaking_41 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v152mpositiontaking_42 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v152mpositiontaking_51 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v152mpositiontaking_52 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-										   
-		@v153mpositiontaking_51  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v153mpositiontaking_52  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-
+		
 		-- mix parlay of mixed sports
 		
 		
@@ -2429,25 +1680,8 @@ BEGIN
 		@v99spositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 		@v99spositiontaking_20 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 
-		@v154spositiontaking_20 = CASE WHEN cs.sporttype = 154 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-
 		@v99spositiontaking_9 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 9 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-		--Racing
-		@v151spositiontaking_31 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_32 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 32 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_41 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_42 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_51  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_52  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-										   
-		@v152spositiontaking_41 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v152spositiontaking_42 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v152spositiontaking_51 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v152spositiontaking_52 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-										   
-		@v153spositiontaking_51  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v153spositiontaking_52  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-
+	
 		-- mix parlay of mixed sports
 		
 		
@@ -2473,8 +1707,8 @@ BEGIN
 
 	UPDATE Dep_CustSetting WITH (ROWLOCK, UPDLOCK)
 	SET	
-		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11 when 44 then @MinBetv44 when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) when 154 then @MinBetv154 else MinBet end,
-		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11 when 44 then @MaxBetv44 when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) when 154 then @MaxBetv154 else MaxBet end,
+		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11 when 44 then @MinBetv44 when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
+		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11 when 44 then @MaxBetv44 when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
 		apositiontaking = CASE
 							WHEN sporttype = 1 and bettype = 1 and islive = 0 THEN @v1apositiontaking_1
 							WHEN sporttype = 1 and bettype = 2 and islive = 0 THEN @v1apositiontaking_2
@@ -2529,9 +1763,7 @@ BEGIN
 							WHEN sporttype = 99 and bettype = 9 THEN @v99apositiontaking_9 
 							WHEN sporttype = 99 and bettype = 20 THEN @v99apositiontaking_20
 
-							WHEN sporttype = 154 and bettype = 20 THEN @v154apositiontaking_20
-
-						  ELSE
+						ELSE
 							apositiontaking
 						  END,--End Agent PT
 
@@ -2589,8 +1821,6 @@ BEGIN
 							WHEN sporttype = 99 and bettype = 9 THEN @v99mpositiontaking_9 
 							WHEN sporttype = 99 and bettype = 20 THEN @v99mpositiontaking_20
 
-							WHEN sporttype = 154 and bettype = 20 THEN @v154mpositiontaking_20
-
 						  ELSE
 							mpositiontaking
 						  END--End Maser PT
@@ -2610,34 +1840,16 @@ BEGIN
 	update dep_custsetting3rd with (ROWLOCK, UPDLOCK)
 	set	
 		MinBet = CASE 
-					WHEN sporttype = 161 THEN @MinBetv161 
-					WHEN sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151MinBet_31 
-					WHEN sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151MinBet_41 
-					WHEN sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151MinBet_51 
-					WHEN sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152MinBet_41 
-					WHEN sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152MinBet_51 
-					WHEN sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153MinBet_51 
+					WHEN sporttype = 161 THEN @MinBetv161 				
 				 ELSE 
 					MinBet
 				 END,
 		MaxBet = CASE 
-					WHEN sporttype = 161 THEN @MaxBetv161 
-					WHEN sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151MaxBet_31 
-					WHEN sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151MaxBet_41 
-					WHEN sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151MaxBet_51 
-					WHEN sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152MaxBet_41 
-					WHEN sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152MaxBet_51 
-					WHEN sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153MaxBet_51 
+					WHEN sporttype = 161 THEN @MaxBetv161 				
 				 ELSE
 					MaxBet
 				 END,
-		apositiontaking = CASE 
-							WHEN  sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151apositiontaking_31 
-							WHEN  sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151apositiontaking_41 
-							WHEN  sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151apositiontaking_51 
-							WHEN  sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152apositiontaking_41 
-							WHEN  sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152apositiontaking_51 
-							WHEN  sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153apositiontaking_51 
+		apositiontaking = CASE 				
 
 							WHEN sporttype = 161 and bettype = 81 and islive = 0 THEN @v161apositiontaking_81 
 							WHEN sporttype = 161 and bettype = 83 and islive = 0 THEN @v161apositiontaking_83 
@@ -2652,13 +1864,7 @@ BEGIN
 							apositiontaking
 						END,
 		mpositiontaking = CASE 
-							WHEN  sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151mpositiontaking_31 
-							WHEN  sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151mpositiontaking_41 
-							WHEN  sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151mpositiontaking_51 
-							WHEN  sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152mpositiontaking_41 
-							WHEN  sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152mpositiontaking_51 
-							WHEN  sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153mpositiontaking_51 
-
+						
 							WHEN sporttype = 161 and bettype = 81 and islive = 0 THEN @v161mpositiontaking_81 
 							WHEN sporttype = 161 and bettype = 83 and islive = 0 THEN @v161mpositiontaking_83 
 							WHEN sporttype = 161 and bettype = 86 and islive = 0 THEN @v161mpositiontaking_86 
@@ -2671,16 +1877,8 @@ BEGIN
 						ELSE
 							mpositiontaking
 						END,
-		playerdiscount = CASE 
-						WHEN  sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151discount_31
-						WHEN  sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151discount_41
-						WHEN  sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151discount_51
-						WHEN  sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152discount_41
-						WHEN  sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152discount_51
-						WHEN  sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153discount_51
-					ELSE
-						playerdiscount
-					END
+		playerdiscount =	playerdiscount
+					
 	WHERE custid=@custid
 
 	if (@@error <> 0)
@@ -2852,35 +2050,14 @@ BEGIN
 	'MinBv99="'+ coalesce(cast(@MinBetv99 as varchar(50)),space(1))+ '" ' +
 	'MaxBv99="'+ coalesce(cast(@MaxBetv99 as varchar(50)),space(1))+ '" ' +
 	'MPMv99="'+ coalesce(cast(@MaxPerMatchv99 as varchar(50)),space(1))+ '" ' +
-	'MinBv154="'+ coalesce(cast(@MinBetv154 as varchar(50)),space(1))+ '" ' +
-	'MaxBv154="'+ coalesce(cast(@MaxBetv154 as varchar(50)),space(1))+ '" ' +
-	'MPMv154="'+ coalesce(cast(@MaxPerMatchv154 as varchar(50)),space(1))+ '" ' +
-
+	
 	'MinBv161="'+ coalesce(cast(@MinBetv161 as varchar(50)),space(1))+ '" ' +
 	'MaxBv161="'+ coalesce(cast(@MaxBetv161 as varchar(50)),space(1))+ '" ' +
 	'MPMv161="'+ coalesce(cast(@MaxPerMatchv161 as varchar(50)),space(1))+ '" ' +
 	'MPBv161="' + coalesce(cast(@MaxPerBallv161 as varchar(50)),space(1)) + '" ' +
 	'MinBv99MP="'+ coalesce(cast(@MinBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@MaxBetv99MP as varchar(50)),space(1))+ '" ' +
-	'MPMv99MP="'+ coalesce(cast(@MaxPerMatchv99MP as varchar(50)),space(1))+ '" ' +
-	'v151MinB_31="'+ coalesce(cast(@v151MinBet_31 as varchar(50)),space(1)) + '" ' +
-	'v151MaxB_31="'+ coalesce(cast(@v151MaxBet_31 as varchar(50)),space(1)) + '" ' +
-	'v151MPM_31="'+ coalesce(cast(@v151MaxPerMatch_31 as varchar(50)),space(1)) + '" ' +
-	'v151MinB_41="'+ coalesce(cast(@v151MinBet_41 as varchar(50)),space(1)) + '" ' +
-	'v151MaxB_41="'+ coalesce(cast(@v151MaxBet_41 as varchar(50)),space(1)) + '" ' +
-	'v151MPM_41="'+ coalesce(cast(@v151MaxPerMatch_41 as varchar(50)),space(1)) + '" ' +
-	'v151MinB_51="'+ coalesce(cast(@v151MinBet_51 as varchar(50)),space(1)) + '" ' +
-	'v151MaxB_51="'+ coalesce(cast(@v151MaxBet_51 as varchar(50)),space(1)) + '" ' +
-	'v151MPM_51="'+ coalesce(cast(@v151MaxPerMatch_51 as varchar(50)),space(1)) + '" ' +
-	'v152MinB_41="'+ coalesce(cast(@v152MinBet_41 as varchar(50)),space(1)) + '" ' +
-	'v152MaxB_41="'+ coalesce(cast(@v152MaxBet_41 as varchar(50)),space(1)) + '" ' +
-	'v152MPM_41="'+ coalesce(cast(@v152MaxPerMatch_41 as varchar(50)),space(1)) + '" ' +
-	'v152MinB_51="'+ coalesce(cast(@v152MinBet_51 as varchar(50)),space(1)) + '" ' +
-	'v152MaxB_51="'+ coalesce(cast(@v152MaxBet_51 as varchar(50)),space(1)) + '" ' +
-	'v152MPM_51="'+ coalesce(cast(@v152MaxPerMatch_51 as varchar(50)),space(1)) + '" ' +
-	'v153MinB_51="'+ coalesce(cast(@v153MinBet_51 as varchar(50)),space(1)) + '" ' +
-	'v153MaxB_51="'+ coalesce(cast(@v153MaxBet_51 as varchar(50)),space(1)) + '" ' +
-	'v153MPM_51="'+ coalesce(cast(@v153MaxPerMatch_51 as varchar(50)),space(1)) + '" ' +
+	'MPMv99MP="'+ coalesce(cast(@MaxPerMatchv99MP as varchar(50)),space(1))+ '" ' +	
 	'/>' +
 	'<Keno '+
 	@str_bet+
@@ -2903,7 +2080,7 @@ BEGIN
 					'MPMv' + cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MPM  as varchar(50)),space(1))+ '" ' +	
 					CASE WHEN Sporttype=161 THEN 'MPBv161="'+ coalesce(cast(MPB as varchar(50)),space(1))+ '" ' ELSE '' END
 			FROM #data_old
-			WHERE (Sporttype <=100 OR Sporttype in (154,161))  AND islive=0
+			WHERE (Sporttype <=100 OR Sporttype in (161))  AND islive=0
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM,MPB
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
@@ -3004,7 +2181,7 @@ BEGIN
 	'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_9="'+ COALESCE(CAST(@v99mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(CAST(@v99mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154mpt_20="'+ COALESCE(CAST(@v154mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
+
 
 	'v161mpt_81="'+ COALESCE(CONVERT(VARCHAR(50),@v161mpositiontaking_81,2),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CONVERT(VARCHAR(50),@v161mpositiontaking_83,2),SPACE(1)) + '" ' +
@@ -3070,8 +2247,6 @@ BEGIN
 	'v99apt_3="'+ COALESCE(CAST(@v99apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(CAST(@v99apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(CAST(@v99apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v154apt_20="'+ COALESCE(CAST(@v154apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v161apt_81="'+ COALESCE(CONVERT(VARCHAR(50),@v161apositiontaking_81,2),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CONVERT(VARCHAR(50),@v161apositiontaking_83,2),SPACE(1)) + '" ' +
@@ -3164,7 +2339,7 @@ BEGIN
 	'v99mpt_3="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_9="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154mpt_20="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 
 	'v161mpt_81="'+ COALESCE(CONVERT(VARCHAR(50),@mpt_NG,2),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CONVERT(VARCHAR(50),@mpt_NG,2),SPACE(1)) + '" ' +
@@ -3228,7 +2403,7 @@ BEGIN
 	'v99apt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154apt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 
 	'v161apt_81="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
@@ -3251,39 +2426,14 @@ BEGIN
 		@TrackingValue2 = @LogSPData2,
 		@duration = @duration
 
-	Select @LogSPData = '<Acc_Dep_CustomerUpdMember_Ag custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
-	'v151discount_31="'+ coalesce(cast(@v151discount_31 as varchar(50)),space(1)) + '" ' +
-	'v151discount_41="'+ coalesce(cast(@v151discount_41 as varchar(50)),space(1)) + '" ' +
-	'v151discount_51="'+ coalesce(cast(@v151discount_51 as varchar(50)),space(1)) + '" ' +
-	'v152discount_41="'+ coalesce(cast(@v152discount_41 as varchar(50)),space(1)) + '" ' +
-	'v152discount_51="'+ coalesce(cast(@v152discount_51 as varchar(50)),space(1)) + '" ' +
-	'v153discount_51="'+ coalesce(cast(@v153discount_51 as varchar(50)),space(1)) + '" ' +
+	Select @LogSPData = '<Acc_Dep_CustomerUpdMember_Ag custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +	
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />'
 
-	DECLARE @v151discount_31_ decimal(9,8) = 0,	
-			@v151discount_41_ decimal(9,8) = 0,
-			@v151discount_51_ decimal(9,8) = 0,
-			@v152discount_41_ decimal(9,8) = 0,
-			@v152discount_51_ decimal(9,8) = 0,
-			@v153discount_51_ decimal(9,8) = 0
-	select @v151discount_31_=AgRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 151 AND bettype =31
-	select @v151discount_41_=AgRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 151 AND bettype =41
-	select @v151discount_51_=AgRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 151 AND bettype =51
-	select @v152discount_41_=AgRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 152 AND bettype =41
-	select @v152discount_51_=AgRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 152 AND bettype =51
-	select @v153discount_51_=AgRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 153 AND bettype =51
-
 	Select @LogSPData2 = '<Acc_Dep_CustomerUpdMember_Com custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
-	'v151discount_31="'+ coalesce(cast(@v151discount_31_ as varchar(50)),space(1)) + '" ' +
-	'v151discount_41="'+ coalesce(cast(@v151discount_41_ as varchar(50)),space(1)) + '" ' +
-	'v151discount_51="'+ coalesce(cast(@v151discount_51_ as varchar(50)),space(1)) + '" ' +
-	'v152discount_41="'+ coalesce(cast(@v152discount_41_ as varchar(50)),space(1)) + '" ' +
-	'v152discount_51="'+ coalesce(cast(@v152discount_51_ as varchar(50)),space(1)) + '" ' +
-	'v153discount_51="'+ coalesce(cast(@v153discount_51_ as varchar(50)),space(1)) + '" ' +
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +

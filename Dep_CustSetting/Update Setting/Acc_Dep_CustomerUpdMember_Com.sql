@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	
 	@CustID INT, -- Super ID
@@ -39,10 +39,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@MaxBetv99 MONEY,
 	@MaxPerMatchv99 MONEY,	
 	
-	@MinBetv154 MONEY,
-	@MaxBetv154 MONEY,
-	@MaxPerMatchv154 MONEY,
-
 	@MinBetv99MP MONEY,
 	@MaxBetv99MP MONEY,
 	@MaxPerMatchv99MP MONEY,	
@@ -53,26 +49,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 
 	@MaxPerBallv161 MONEY = 0,	
 
-	@v151MinBet_31 MONEY,
-	@v151MinBet_41 MONEY,
-	@v151MinBet_51 MONEY,
-	@v152MinBet_41 MONEY,
-	@v152MinBet_51 MONEY,
-	@v153MinBet_51 MONEY,
-
-	@v151MaxBet_31 MONEY,
-	@v151MaxBet_41 MONEY,
-	@v151MaxBet_51 MONEY,
-	@v152MaxBet_41 MONEY,
-	@v152MaxBet_51 MONEY,
-	@v153MaxBet_51 MONEY,
-
-	@v151maxpermatch_31 MONEY,
-	@v151maxpermatch_41 MONEY,
-	@v151maxpermatch_51 MONEY,
-	@v152maxpermatch_41 MONEY,
-	@v152maxpermatch_51 MONEY,
-	@v153maxpermatch_51 MONEY,
 	-- PT
 	@v1spositiontaking_1 SMALLMONEY,
 	@v1spositiontaking_2 SMALLMONEY,
@@ -126,8 +102,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@v99spositiontaking_3 SMALLMONEY,
 	@v99spositiontaking_9 SMALLMONEY,
 	@v99spositiontaking_20 SMALLMONEY,
-	@v154spositiontaking_20 SMALLMONEY,
-	
+
 	--v161
 	@v161spositiontaking_81 SMALLMONEY,
 	@v161spositiontaking_83 SMALLMONEY,
@@ -139,22 +114,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@v161slivepositiontaking_89 SMALLMONEY = 0,
 	@v161slivepositiontaking_90 SMALLMONEY = 0,
 	
-	--Racing
-	@v151spositiontaking_31 smallmoney = 0,
-	@v151spositiontaking_32 smallmoney = 0,
-	@v151spositiontaking_41 smallmoney = 0,
-	@v151spositiontaking_42 smallmoney = 0,
-
-	@v151spositiontaking_51 smallmoney = 0,
-	@v151spositiontaking_52 smallmoney = 0,
-
-	@v152spositiontaking_41 smallmoney = 0,
-	@v152spositiontaking_42 smallmoney = 0,
-	@v152spositiontaking_51 smallmoney = 0,
-	@v152spositiontaking_52 smallmoney = 0,
-
-	@v153spositiontaking_51 smallmoney = 0,
-	@v153spositiontaking_52 smallmoney = 0,
 
 	@v1mpositiontaking_1 SMALLMONEY,
 	@v1mpositiontaking_2 SMALLMONEY,
@@ -208,7 +167,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@v99mpositiontaking_3 SMALLMONEY,
 	@v99mpositiontaking_9 SMALLMONEY,
 	@v99mpositiontaking_20 SMALLMONEY,
-	@v154mpositiontaking_20 SMALLMONEY,
 	
 	--v161
 	@v161mpositiontaking_81 SMALLMONEY,
@@ -221,23 +179,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@v161mlivepositiontaking_89 SMALLMONEY = 0,
 	@v161mlivepositiontaking_90 SMALLMONEY =0,
 
-	--Racing
-	@v151mpositiontaking_31 smallmoney = 0,
-	@v151mpositiontaking_32 smallmoney = 0,
-	@v151mpositiontaking_41 smallmoney = 0,
-	@v151mpositiontaking_42 smallmoney = 0,
-
-	@v151mpositiontaking_51 smallmoney = 0,
-	@v151mpositiontaking_52 smallmoney = 0,
-
-	@v152mpositiontaking_41 smallmoney = 0,
-	@v152mpositiontaking_42 smallmoney = 0,
-	@v152mpositiontaking_51 smallmoney = 0,
-	@v152mpositiontaking_52 smallmoney = 0,
-
-	@v153mpositiontaking_51 smallmoney = 0,
-	@v153mpositiontaking_52 smallmoney = 0,
-	
 	@v1apositiontaking_1 SMALLMONEY,
 	@v1apositiontaking_2 SMALLMONEY,
 	@v1apositiontaking_3 SMALLMONEY,
@@ -290,7 +231,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@v99apositiontaking_3 SMALLMONEY,
 	@v99apositiontaking_9 SMALLMONEY,
 	@v99apositiontaking_20 SMALLMONEY,
-	@v154apositiontaking_20 SMALLMONEY,
 	
 	--v161
 	@v161apositiontaking_81 SMALLMONEY,
@@ -303,41 +243,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@v161alivepositiontaking_89 SMALLMONEY = 0,
 	@v161alivepositiontaking_90 SMALLMONEY = 0,
 
-	--Racing
-	@v151apositiontaking_31 smallmoney = 0,
-	@v151apositiontaking_32 smallmoney = 0,
-	@v151apositiontaking_41 smallmoney = 0,
-	@v151apositiontaking_42 smallmoney = 0,
-	
-	@v151apositiontaking_51 smallmoney = 0,
-	@v151apositiontaking_52 smallmoney = 0,
-
-	@v152apositiontaking_41 smallmoney = 0,
-	@v152apositiontaking_42 smallmoney = 0,
-	@v152apositiontaking_51 smallmoney = 0,
-	@v152apositiontaking_52 smallmoney = 0,
-
-	@v153apositiontaking_51 smallmoney = 0,
-	@v153apositiontaking_52 smallmoney = 0,
-
-	--Horse Racing PT
-	@v151IBCPositiontaking_31 smallmoney = 0,--AutoIBCPT151_SA
-	@v151IBCPositiontaking_41 smallmoney = 0,--AutoIBCPT151_UK
-	@v151IBCPositiontaking_51 smallmoney = 0,--AutoIBCPT151_AU
-	@v152IBCPositiontaking_41 smallmoney = 0,--AutoIBCPT152_UK 
-	@v152IBCPositiontaking_51 smallmoney = 0,--AutoIBCPT152_AU 
-	@v153IBCPositiontaking_51 smallmoney = 0,--AutoIBCPT153_AU
-
-	--Horse Racing Commission
-	@v151discount_31 decimal(9,8) = 0,	
-	@v151discount_41 decimal(9,8) = 0,
-
-	@v151discount_51 decimal(9,8) = 0,
-	@v152discount_41 decimal(9,8) = 0,
-	@v152discount_51 decimal(9,8) = 0,
-	@v153discount_51 decimal(9,8) = 0,
-
-	
 	@KenoList VARCHAR(4000)='', 
 	@UpdateAll tinyINT = 0,
 
@@ -367,7 +272,7 @@ Revisions:
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]	
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
-	
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -513,40 +418,12 @@ BEGIN
 				@MinBetv99					= @MinBetv99,
 				@MaxBetv99					= @MaxBetv99,
 				@MaxPerMatchv99				= @MaxPerMatchv99,
-
-				@MinBetv154					= @MinBetv154,
-				@MaxBetv154					= @MaxBetv154,
-				@MaxPerMatchv154			= @MaxPerMatchv154,			
+	
 				--Mix Parlay mix sports
 				@MinBetv99MP				= @MinBetv99MP,
 				@MaxBetv99MP				= @MaxBetv99MP,
 				@MaxPerMatchv99MP			= @MaxPerMatchv99MP,
-				
-				--Racing Bet Setting
-				@v151minbet_31			= @v151minbet_31,	
-				@v151maxbet_31			= @v151maxbet_31,	
-				@v151maxpermatch_31		= @v151maxpermatch_31,	
-										 
-				@v151minbet_41			= @v151minbet_41,		
-				@v151maxbet_41			= @v151maxbet_41,		
-				@v151maxpermatch_41		= @v151maxpermatch_41,		
-										 
-				@v151minbet_51			= @v151minbet_51,
-				@v151maxbet_51			= @v151maxbet_51,
-				@v151maxpermatch_51		= @v151maxpermatch_51,
-										
-				@v152minbet_41			= @v152minbet_41,
-				@v152maxbet_41			= @v152maxbet_41,
-				@v152maxpermatch_41		= @v152maxpermatch_41,
-										
-				@v152minbet_51			= @v152minbet_51,
-				@v152maxbet_51			= @v152maxbet_51,
-				@v152maxpermatch_51		= @v152maxpermatch_51,
-										 
-				@v153minbet_51			= @v153minbet_51,
-				@v153maxbet_51			= @v153maxbet_51,
-				@v153maxpermatch_51		= @v153maxpermatch_51,
-
+			
 				--Number game
 				@MinBetv161					= @MinBetv161,
 				@MaxBetv161					= @MaxBetv161,
@@ -600,25 +477,6 @@ BEGIN
 				@v99spositiontaking_3		= @v99spositiontaking_3,
 				@v99spositiontaking_9		= @v99spositiontaking_9,
 				@v99spositiontaking_20		= @v99spositiontaking_20,
-				@v154spositiontaking_20		= @v154spositiontaking_20,
-				
-				--Racing PT
-				@v151spositiontaking_31		= @v151spositiontaking_31,
-				@v151spositiontaking_32		= @v151spositiontaking_32,
-				@v151spositiontaking_41		= @v151spositiontaking_41,
-				@v151spositiontaking_42		= @v151spositiontaking_42,
-									 							
-				@v151spositiontaking_51		= @v151spositiontaking_51,
-				@v151spositiontaking_52		= @v151spositiontaking_52,
-									 							
-				@v152spositiontaking_41		= @v152spositiontaking_41,
-				@v152spositiontaking_42		= @v152spositiontaking_42,
-				@v152spositiontaking_51		= @v152spositiontaking_51,
-				@v152spositiontaking_52		= @v152spositiontaking_52,
-									 							
-				@v153spositiontaking_51		= @v153spositiontaking_51,
-				@v153spositiontaking_52		= @v153spositiontaking_52,
-
 				--v161
 				@v161spositiontaking_81		= @v161spositiontaking_81,
 				@v161spositiontaking_83		= @v161spositiontaking_83,
@@ -676,25 +534,7 @@ BEGIN
 				@v99mpositiontaking_3		= @v99mpositiontaking_3,
 				@v99mpositiontaking_9		= @v99mpositiontaking_9,
 				@v99mpositiontaking_20		= @v99mpositiontaking_20,
-				@v154mpositiontaking_20		= @v154mpositiontaking_20,
 				
-				--Racing
-				@v151mpositiontaking_31		= @v151mpositiontaking_31,
-				@v151mpositiontaking_32		= @v151mpositiontaking_32,
-				@v151mpositiontaking_41		= @v151mpositiontaking_41,
-				@v151mpositiontaking_42		= @v151mpositiontaking_42,
-											 
-				@v151mpositiontaking_51		= @v151mpositiontaking_51,
-				@v151mpositiontaking_52		= @v151mpositiontaking_52,
-											 
-				@v152mpositiontaking_41		= @v152mpositiontaking_41,
-				@v152mpositiontaking_42		= @v152mpositiontaking_42,
-				@v152mpositiontaking_51		= @v152mpositiontaking_51,
-				@v152mpositiontaking_52		= @v152mpositiontaking_52,
-											 
-				@v153mpositiontaking_51		= @v153mpositiontaking_51,
-				@v153mpositiontaking_52		= @v153mpositiontaking_52,
-
 				--v161
 				@v161mpositiontaking_81		= @v161mpositiontaking_81,
 				@v161mpositiontaking_83		= @v161mpositiontaking_83,
@@ -752,34 +592,7 @@ BEGIN
 				@v99apositiontaking_3		= @v99apositiontaking_3,
 				@v99apositiontaking_9		= @v99apositiontaking_9,
 				@v99apositiontaking_20		= @v99apositiontaking_20,
-				@v154apositiontaking_20		= @v154apositiontaking_20,
 				
-				--Racing
-				@v151apositiontaking_31		= @v151apositiontaking_31,
-				@v151apositiontaking_32		= @v151apositiontaking_32,
-				@v151apositiontaking_41		= @v151apositiontaking_41,
-				@v151apositiontaking_42		= @v151apositiontaking_42,
-									 
-				@v151apositiontaking_51		= @v151apositiontaking_51,
-				@v151apositiontaking_52		= @v151apositiontaking_52,
-									 
-				@v152apositiontaking_41		= @v152apositiontaking_41,
-				@v152apositiontaking_42		= @v152apositiontaking_42,
-				@v152apositiontaking_51		= @v152apositiontaking_51,
-				@v152apositiontaking_52		= @v152apositiontaking_52,
-									 
-				@v153apositiontaking_51		= @v153apositiontaking_51,
-				@v153apositiontaking_52		= @v153apositiontaking_52,
-
-				-- IBC Horse Racing PT 
-				@v151IBCPositiontaking_31	= @v151IBCPositiontaking_31,
-				@v151IBCPositiontaking_41	= @v151IBCPositiontaking_41,
-				@v151IBCPositiontaking_51	= @v151IBCPositiontaking_51,
-											 
-				@v152IBCPositiontaking_41	= @v152IBCPositiontaking_41 ,
-				@v152IBCPositiontaking_51	= @v152IBCPositiontaking_51 ,
-											
-				@v153IBCPositiontaking_51	= @v153IBCPositiontaking_51,
 
 				--v161
 				@v161apositiontaking_81		= @v161apositiontaking_81,
@@ -791,16 +604,7 @@ BEGIN
 				@v161alivepositiontaking_87 = @v161alivepositiontaking_87,
 				@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
 				@v161alivepositiontaking_90 = @v161alivepositiontaking_90,			
-				
-				--Horse Racing Commission
-				@v151discount_31			= @v151discount_31,	
-				@v151discount_41			= @v151discount_41,
-				@v151discount_51			= @v151discount_51,
-
-				@v152discount_41			= @v152discount_41,
-				@v152discount_51			= @v152discount_51,
-				@v153discount_51			= @v153discount_51,
-
+			
 				@isvalid					= @isvalid OUTPUT,
 				@errmsg						= @errmsg OUTPUT,
 				@errcode					= @errcode OUTPUT,
@@ -866,7 +670,6 @@ BEGIN
 				union all select 	99 as sporttype, 3 as bettype, @v99spositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 9 as bettype, @v99spositiontaking_9 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 20 as bettype, @v99spositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
-				union all select 	154 as sporttype, 20 as bettype, @v154spositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
 				
 				
 			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
@@ -975,7 +778,6 @@ BEGIN
 				union all select 	99 as sporttype, 3 as bettype, @v99spositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 9 as bettype, @v99spositiontaking_9 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 20 as bettype, @v99spositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
-				union all select 	154 as sporttype, 20 as bettype, @v154spositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
 				
 			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
 	where c.srecommend = @custid and c.roleid = 1 and (
@@ -1079,7 +881,6 @@ BEGIN
 				union all select 	99 as sporttype, 3 as bettype, @v99apositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 9 as bettype, @v99apositiontaking_9 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 20 as bettype, @v99apositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
-				union all select 	154 as sporttype, 20 as bettype, @v154apositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
 				
 			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
 	where c.srecommend = @custid and c.roleid = 1 and 
@@ -1144,7 +945,7 @@ BEGIN
 		UNION all	SELECT 11 AS sporttype,0 AS MP, @MinBetv11 AS MinBet, @MaxBetv11 AS MaxBet, @MaxPerMatchv11 AS MaxPerMatch
 		UNION all	SELECT 44 AS sporttype,0 AS MP, @MinBetv44 AS MinBet, @MaxBetv44 AS MaxBet, @MaxPerMatchv44 AS MaxPerMatch
 		UNION all	SELECT 99 AS sporttype,0 AS MP, @MinBetv99 AS MinBet, @MaxBetv99 AS MaxBet, @MaxPerMatchv99 AS MaxPerMatch	 
-		UNION all	SELECT 154 AS sporttype,0 AS MP, @MinBetv154 AS MinBet, @MaxBetv154 AS MaxBet, @MaxPerMatchv154 AS MaxPerMatch	 
+			 
 		UNION all	SELECT 99 AS sporttype,1 AS MP, @MinBetv99MP AS MinBet, @MaxBetv99MP AS MaxBet, @MaxPerMatchv99MP AS MaxPerMatch	 
 		UNION all	SELECT 161 AS sporttype,0 AS MP, @MinBetv161 AS MinBet, @MaxBetv161 AS MaxBet, @MaxPerMatchv161 AS MaxPerMatch	 
 	) AS b ON sports.sporttype = b.sporttype
@@ -1161,147 +962,6 @@ BEGIN
 						END, @ErrCode = 102
 		RETURN
 	END
-	----------------------------Horse Racing---------------------------------------
-
-	select @ErrAcc = ''
-	select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
-	from 
-		custinfo as c with (NOLOCK) 
-		inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
-		inner join (
-						  select 	151 as sporttype, 31 as bettype, @v151spositiontaking_31 as maxpositiontaking
-				union all select 	151 as sporttype, 32 as bettype, @v151spositiontaking_32 as maxpositiontaking
-				union all select 	151 as sporttype, 41 as bettype, @v151spositiontaking_41 as maxpositiontaking
-				union all select 	151 as sporttype, 42 as bettype, @v151spositiontaking_42 as maxpositiontaking
-				union all select 	151 as sporttype, 51 as bettype, @v151spositiontaking_51 as maxpositiontaking
-				union all select 	151 as sporttype, 52 as bettype, @v151spositiontaking_52 as maxpositiontaking
-				union all select 	152 as sporttype, 41 as bettype, @v152spositiontaking_41 as maxpositiontaking
-				union all select 	152 as sporttype, 42 as bettype, @v152spositiontaking_42 as maxpositiontaking
-				union all select 	152 as sporttype, 51 as bettype, @v152spositiontaking_51 as maxpositiontaking
-				union all select 	152 as sporttype, 52 as bettype, @v152spositiontaking_52 as maxpositiontaking
-				union all select 	153 as sporttype, 51 as bettype, @v153spositiontaking_51 as maxpositiontaking
-				union all select 	153 as sporttype, 52 as bettype, @v153spositiontaking_52 as maxpositiontaking
-			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-		inner join @tmp_Bettype as t ON t.typeid = b.bettype
-	where c.srecommend = @custid and c.roleid = 3 and (
-							((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or 
-							((cs.mpositiontaking>b.maxpositiontaking))
-						)  
-	group by username, t.typenamee
-
-	if @ErrAcc<>''
-
-	BEGIN
-		Select @ErrMsg = 
-					case @Language 
-							when 'E' then 'Existing masters exceeded new super position taking ('+@ErrAcc+') (for Racing).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20013,@Language) + ' ('+@ErrAcc+') (' + [dbo].[f_Get_SportNameBySporttype](151,@Language) + ')'
-					end, @ErrCode = 103
-		return
-	END
-
-	--check all u1<=s4 if i1=1
-	select @ErrAcc = ''
-	select top 100 @ErrAcc = @ErrAcc + username +', '
-	from 
-		custinfo as c with (NOLOCK) 
-		inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
-		inner join (
-						  select 	151 as sporttype, 31 as bettype, @v151spositiontaking_31 as maxpositiontaking
-				union all select 	151 as sporttype, 32 as bettype, @v151spositiontaking_32 as maxpositiontaking
-				union all select 	151 as sporttype, 41 as bettype, @v151spositiontaking_41 as maxpositiontaking
-				union all select 	151 as sporttype, 42 as bettype, @v151spositiontaking_42 as maxpositiontaking
-				union all select 	151 as sporttype, 51 as bettype, @v151spositiontaking_51 as maxpositiontaking
-				union all select 	151 as sporttype, 52 as bettype, @v151spositiontaking_52 as maxpositiontaking
-				union all select 	152 as sporttype, 41 as bettype, @v152spositiontaking_41 as maxpositiontaking
-				union all select 	152 as sporttype, 42 as bettype, @v152spositiontaking_42 as maxpositiontaking
-				union all select 	152 as sporttype, 51 as bettype, @v152spositiontaking_51 as maxpositiontaking
-				union all select 	152 as sporttype, 52 as bettype, @v152spositiontaking_52 as maxpositiontaking
-				union all select 	153 as sporttype, 51 as bettype, @v153spositiontaking_51 as maxpositiontaking
-				union all select 	153 as sporttype, 52 as bettype, @v153spositiontaking_52 as maxpositiontaking
-			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	where c.srecommend = @custid and c.roleid = 1 and (
-				(cs.spositiontaking+cs.mpositiontaking+cs.apositiontaking>b.maxpositiontaking)
-				)
-	group by username
-	if @ErrAcc<>''
-	BEGIN
-		Select @ErrMsg = @username + ': ' +
-					case @Language 
-							when 'E' then 'Existing members exceeded new super position taking ('+@ErrAcc+') (for Racing).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20014,@Language) + ' ('+@ErrAcc+') (' + [dbo].[f_Get_SportNameBySporttype](151,@Language) + ')'
-					end, @ErrCode = 104
-		return
-	END
-
-	--Check all m1+a1<=m4
-	select @ErrAcc = ''
-	select top 100 @ErrAcc = @ErrAcc + username +', '
-	from 
-		custinfo as c with (NOLOCK) 
-		inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
-		inner join (
-						  select 	151 as sporttype, 31 as bettype, @v151mpositiontaking_31 as maxpositiontaking
-				union all select 	151 as sporttype, 32 as bettype, @v151mpositiontaking_32 as maxpositiontaking
-				union all select 	151 as sporttype, 41 as bettype, @v151mpositiontaking_41 as maxpositiontaking
-				union all select 	151 as sporttype, 42 as bettype, @v151mpositiontaking_42 as maxpositiontaking
-				union all select 	151 as sporttype, 51 as bettype, @v151mpositiontaking_51 as maxpositiontaking
-				union all select 	151 as sporttype, 52 as bettype, @v151mpositiontaking_52 as maxpositiontaking
-				union all select 	152 as sporttype, 41 as bettype, @v152mpositiontaking_41 as maxpositiontaking
-				union all select 	152 as sporttype, 42 as bettype, @v152mpositiontaking_42 as maxpositiontaking
-				union all select 	152 as sporttype, 51 as bettype, @v152mpositiontaking_51 as maxpositiontaking
-				union all select 	152 as sporttype, 52 as bettype, @v152mpositiontaking_52 as maxpositiontaking
-				union all select 	153 as sporttype, 51 as bettype, @v153mpositiontaking_51 as maxpositiontaking
-				union all select 	153 as sporttype, 52 as bettype, @v153mpositiontaking_52 as maxpositiontaking
-			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	where c.srecommend = @custid and c.roleid = 1 and (
-				(cs.mpositiontaking+cs.apositiontaking>b.maxpositiontaking)  
-				)
-	group by username
-	if @ErrAcc<>''
-	BEGIN
-		Select @ErrMsg = @username + ': ' +
-					case @Language 
-							when 'E' then 'Existing members exceeded new master position taking ('+@ErrAcc+') (for Racing).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20012,@Language) + ' ('+@ErrAcc+').'
-					end, @ErrCode = 108
-		return
-	END
-
-	--Check all a1<=a4
-	select @ErrAcc = ''
-	select top 100 @ErrAcc = @ErrAcc + username +', '
-	from 
-		custinfo as c with (NOLOCK) 
-		inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
-		inner join (
-						  select 	151 as sporttype, 31 as bettype, @v151apositiontaking_31 as maxpositiontaking
-				union all select 	151 as sporttype, 32 as bettype, @v151apositiontaking_32 as maxpositiontaking
-				union all select 	151 as sporttype, 41 as bettype, @v151apositiontaking_41 as maxpositiontaking
-				union all select 	151 as sporttype, 42 as bettype, @v151apositiontaking_42 as maxpositiontaking
-				union all select 	151 as sporttype, 51 as bettype, @v151apositiontaking_51 as maxpositiontaking
-				union all select 	151 as sporttype, 52 as bettype, @v151apositiontaking_52 as maxpositiontaking
-				union all select 	152 as sporttype, 41 as bettype, @v152apositiontaking_41 as maxpositiontaking
-				union all select 	152 as sporttype, 42 as bettype, @v152apositiontaking_42 as maxpositiontaking
-				union all select 	152 as sporttype, 51 as bettype, @v152apositiontaking_51 as maxpositiontaking
-				union all select 	152 as sporttype, 52 as bettype, @v152apositiontaking_52 as maxpositiontaking
-				union all select 	153 as sporttype, 51 as bettype, @v153apositiontaking_51 as maxpositiontaking
-				union all select 	153 as sporttype, 52 as bettype, @v153apositiontaking_52 as maxpositiontaking
-			) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	where c.srecommend = @custid and c.roleid = 1 and (
-				(cs.apositiontaking>b.maxpositiontaking)  
-				)
-	group by username
-	if @ErrAcc<>''
-	BEGIN
-		Select @ErrMsg = @username + ': ' +
-					case @Language 
-							when 'E' then 'Existing members exceeded new agent position taking ('+@ErrAcc+') (for Racing).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20017,@Language) + ' ('+@ErrAcc+').'
-					end, @ErrCode = 109
-		return
-	END
-
 	-----------------------------------------------END------------------------------------------------------------------------------------------
 	/*----------------------------
 	UPDATE Customer Info
@@ -1316,17 +976,10 @@ BEGIN
 		MaxPerMatch10 = @MaxPerMatchv10,
 		MaxPerMatch11 = @MaxPerMatchv11,
 		MaxPerMatch44 = @MaxPerMatchv44,
-		MaxPerMatch99 = @MaxPerMatchv99,
-		MaxPerMatch154 = @MaxPerMatchv154,
+		MaxPerMatch99 = @MaxPerMatchv99,		
 		MaxPerMatch99MP = @MaxPerMatchv99MP,
 		MaxPerMatch161 = @MaxPerMatchv161,
-		MaxPerBall161 = @MaxPerBallv161,
-		maxpermatch151		= @v151MaxPerMatch_31,
-		maxpermatch151_OT	= @v151MaxPerMatch_41,
-		MaxPerMatch151_AU	= @v151MaxPerMatch_51,
-		MaxPerMatch152_UK	= @v152MaxPerMatch_41,
-		MaxPerMatch152_AU	= @v152MaxPerMatch_51,
-		MaxPerMatch153_AU	= @v153MaxPerMatch_51
+		MaxPerBall161 = @MaxPerBallv161		
 	where custid = @custid 
 	if (@@error <> 0)
 	begin
@@ -1343,8 +996,8 @@ BEGIN
 
 	UPDATE Dep_CustSetting WITH (ROWLOCK, UPDLOCK)
 	SET	
-		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11 when 44 then @MinBetv44  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) when 154 then @MinBetv154 else MinBet end,
-		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11 when 44 then @MaxBetv44  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) when 154 then @MaxBetv154  else MaxBet end,
+		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11 when 44 then @MinBetv44  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end)  else MinBet end,
+		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11 when 44 then @MaxBetv44  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end)  else MaxBet end,
 		apositiontaking = CASE
 							WHEN sporttype = 1 and bettype = 1 and islive = 0 THEN @v1apositiontaking_1
 							WHEN sporttype = 1 and bettype = 2 and islive = 0 THEN @v1apositiontaking_2
@@ -1398,7 +1051,7 @@ BEGIN
 							WHEN sporttype = 99 and bettype = 3 THEN @v99apositiontaking_3 
 							WHEN sporttype = 99 and bettype = 9 THEN @v99apositiontaking_9 
 							WHEN sporttype = 99 and bettype = 20 THEN @v99apositiontaking_20
-							WHEN sporttype = 154 and bettype = 20 THEN @v154apositiontaking_20
+							
 						  ELSE
 							apositiontaking
 						  END,--End Agent PT
@@ -1456,8 +1109,7 @@ BEGIN
 							WHEN sporttype = 99 and bettype = 3 THEN @v99mpositiontaking_3 
 							WHEN sporttype = 99 and bettype = 9 THEN @v99mpositiontaking_9 
 							WHEN sporttype = 99 and bettype = 20 THEN @v99mpositiontaking_20
-							WHEN sporttype = 154 and bettype = 20 THEN @v154mpositiontaking_20
-
+						
 						  ELSE
 							mpositiontaking
 						  END,--End Maser PT
@@ -1514,8 +1166,7 @@ BEGIN
 							WHEN sporttype = 99 and bettype = 3 THEN @v99spositiontaking_3 
 							WHEN sporttype = 99 and bettype = 9 THEN @v99spositiontaking_9 
 							WHEN sporttype = 99 and bettype = 20 THEN @v99spositiontaking_20
-							WHEN sporttype = 154 and bettype = 20 THEN @v154spositiontaking_20
-
+						
 						  ELSE
 							spositiontaking
 						  END--End Super PT
@@ -1535,35 +1186,17 @@ BEGIN
 	update dep_custsetting3rd with (ROWLOCK, UPDLOCK)
 	set	
 		MinBet = CASE 
-					WHEN sporttype = 161 THEN @MinBetv161 
-					WHEN sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151MinBet_31 
-					WHEN sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151MinBet_41 
-					WHEN sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151MinBet_51 
-					WHEN sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152MinBet_41 
-					WHEN sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152MinBet_51 
-					WHEN sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153MinBet_51 
+					WHEN sporttype = 161 THEN @MinBetv161 					
 				 ELSE 
 					MinBet
 				 END,
 		MaxBet = CASE 
-					WHEN sporttype = 161 THEN @MaxBetv161 
-					WHEN sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151MaxBet_31 
-					WHEN sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151MaxBet_41 
-					WHEN sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151MaxBet_51 
-					WHEN sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152MaxBet_41 
-					WHEN sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152MaxBet_51 
-					WHEN sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153MaxBet_51 
+					WHEN sporttype = 161 THEN @MaxBetv161 					
 				 ELSE
 					MaxBet
 				 END,
 		apositiontaking = CASE 
-							WHEN  sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151apositiontaking_31 
-							WHEN  sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151apositiontaking_41 
-							WHEN  sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151apositiontaking_51 
-							WHEN  sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152apositiontaking_41 
-							WHEN  sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152apositiontaking_51 
-							WHEN  sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153apositiontaking_51 
-
+							
 							WHEN sporttype = 161 and bettype = 81 and islive = 0 THEN @v161apositiontaking_81 
 							WHEN sporttype = 161 and bettype = 83 and islive = 0 THEN @v161apositiontaking_83 
 							WHEN sporttype = 161 and bettype = 86 and islive = 0 THEN @v161apositiontaking_86 
@@ -1577,13 +1210,7 @@ BEGIN
 							apositiontaking
 						END,
 		mpositiontaking = CASE 
-							WHEN  sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151mpositiontaking_31 
-							WHEN  sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151mpositiontaking_41 
-							WHEN  sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151mpositiontaking_51 
-							WHEN  sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152mpositiontaking_41 
-							WHEN  sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152mpositiontaking_51 
-							WHEN  sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153mpositiontaking_51 
-
+							
 							WHEN sporttype = 161 and bettype = 81 and islive = 0 THEN @v161mpositiontaking_81 
 							WHEN sporttype = 161 and bettype = 83 and islive = 0 THEN @v161mpositiontaking_83 
 							WHEN sporttype = 161 and bettype = 86 and islive = 0 THEN @v161mpositiontaking_86 
@@ -1597,13 +1224,7 @@ BEGIN
 							mpositiontaking
 						END,
 		spositiontaking = CASE 
-							WHEN  sporttype = 151 AND (bettype = 31 OR bettype = 32) THEN @v151spositiontaking_31 
-							WHEN  sporttype = 151 AND (bettype = 41 OR bettype = 42) THEN @v151spositiontaking_41 
-							WHEN  sporttype = 151 AND (bettype = 51 OR bettype = 52) THEN @v151spositiontaking_51 
-							WHEN  sporttype = 152 AND (bettype = 41 OR bettype = 42) THEN @v152spositiontaking_41 
-							WHEN  sporttype = 152 AND (bettype = 51 OR bettype = 52) THEN @v152spositiontaking_51 
-							WHEN  sporttype = 153 AND (bettype = 51 OR bettype = 52) THEN @v153spositiontaking_51 
-
+							
 							WHEN sporttype = 161 and bettype = 81 and islive = 0 THEN @v161spositiontaking_81 
 							WHEN sporttype = 161 and bettype = 83 and islive = 0 THEN @v161spositiontaking_83 
 							WHEN sporttype = 161 and bettype = 86 and islive = 0 THEN @v161spositiontaking_86 
@@ -1629,406 +1250,7 @@ BEGIN
 	end
 	-----------------------Update Commision-------------------------------------------------
 
-	--Update @Super: g4, s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK)
-	SET
-		sdiscount = CASE WHEN bettype IN (31,32) AND sporttype = 151 THEN @v151discount_31 
-						 WHEN bettype IN (41,42) AND sporttype = 151 THEN @v151discount_41 
-						 WHEN bettype IN (51,52) AND sporttype = 151 THEN @v151discount_51 
-						 WHEN bettype IN (41,42) AND sporttype = 152 THEN @v152discount_41
-						 WHEN bettype IN (51,52) AND sporttype = 152 THEN @v152discount_51
-						 WHEN bettype IN (51,52) AND sporttype = 153 THEN @v153discount_51
-						 ELSE sdiscount END
-	WHERE custid=@custid 
-			and sporttype in (151,152,153)
 
-	IF (@@ERROR <> 0)
-	BEGIN	
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END	, @ErrCode = 107
-		RETURN
-	END
-
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-		SET adiscount = CASE WHEN cs.adiscount>@v151discount_31 THEN @v151discount_31 ELSE adiscount END
-		FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-		WHERE c.srecommend = @custid AND c.roleid = 3 AND cs.bettype IN(31,32) AND cs.sporttype = 151
-		IF (@@ERROR <> 0)
-		BEGIN
-			ROLLBACK TRANSACTION
-			SELECT @ErrMsg = CASE @Language 
-								WHEN 'E' THEN 'Update process is unsuccessful !'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-							END	, @ErrCode = 108
-			RETURN
-	END
-
-	--Update g2=g4 if g2>g4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET discount = CASE WHEN cs.discount > @v151discount_31  THEN  @v151discount_31 ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 2 AND cs.bettype IN(31,32) AND cs.sporttype = 151
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END	, @ErrCode = 109
-		RETURN
-	END
-
-	--Update g4 at Member level
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET sdiscount = @v151discount_31
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid 
-		AND c.recommend <> 52466
-		AND c.roleid = 1 
-		AND cs.bettype IN(31,32) 
-		AND cs.sporttype = 151
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END	, @ErrCode = 110	
-		RETURN
-	END
-
-	--Update m3=s4 if m3>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET adiscount = CASE WHEN cs.adiscount>@v151discount_41 THEN @v151discount_41 ELSE adiscount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 3 AND cs.bettype IN (41,42) AND cs.sporttype = 151 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 111	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--Update a2=s4 if a2>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	discount = CASE WHEN cs.discount>@v151discount_41 THEN @v151discount_41 ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 2 AND cs.bettype IN(41,42) AND cs.sporttype = 151 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 112	
-		RETURN
-	END
-		
-	---------------------------------------------------
-	--Update s4 to member level
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	 sdiscount = @v151discount_41
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid 
-		AND c.recommend <> 52466
-		AND c.roleid = 1 
-		AND cs.bettype IN(41,42) 
-		AND cs.sporttype = 151
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 113	
-		RETURN
-	END
-
-	---------------------------------------------------
-		--Update m3=s4 if m3>s4
-		UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-		SET adiscount = CASE WHEN cs.adiscount>@v151discount_51 THEN @v151discount_51 ELSE adiscount END 
-		FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-		WHERE c.srecommend = @custid AND c.roleid = 3 AND cs.bettype IN (51,52) AND cs.sporttype = 151 
-		IF (@@ERROR <> 0)
-		BEGIN
-			ROLLBACK TRANSACTION
-			SELECT @ErrMsg = CASE @Language 
-								WHEN 'E' THEN 'Update process is unsuccessful !'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-							END, @ErrCode = 114	
-			RETURN
-		END
-
-		---------------------------------------------------
-	--Update a2=s4 if a2>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	discount = CASE WHEN cs.discount>@v151discount_51 THEN @v151discount_51 ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 2 AND cs.bettype IN(51,52) AND cs.sporttype = 151 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 115
-		RETURN
-	END
-		
-	---------------------------------------------------
-	--Update s4 to member level
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	 sdiscount = @v151discount_51
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid 
-		AND c.recommend <> 52466
-		AND c.roleid = 1 
-		AND cs.bettype IN(51,52) 
-		AND cs.sporttype = 151
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 116	
-		RETURN
-	END
-
-	--Update m3=s4 if m3>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET adiscount = CASE WHEN cs.adiscount>@v152discount_41 THEN @v152discount_41 ELSE adiscount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 3 AND cs.bettype IN (41,42) AND cs.sporttype = 152 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 117	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--Update a2=s4 if a2>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	discount = CASE WHEN cs.discount>@v152discount_41 THEN @v152discount_41 ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 2 AND cs.bettype IN(41,42) AND cs.sporttype = 152 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 118	
-		RETURN
-	END
-		
-	---------------------------------------------------
-	--Update s4 to member level
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	 sdiscount = @v152discount_41
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid 
-		AND c.recommend <> 52466
-		AND c.roleid = 1 
-		AND cs.bettype IN(41,42) 
-		AND cs.sporttype = 152
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 119	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--Update m3=s4 if m3>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET adiscount = CASE WHEN cs.adiscount>@v152discount_51 THEN @v152discount_51 ELSE adiscount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 3 AND cs.bettype IN (51,52) AND cs.sporttype = 152 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 120	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--Update a2=s4 if a2>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	discount = CASE WHEN cs.discount>@v152discount_51 THEN @v152discount_51 ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 2 AND cs.bettype IN(51,52) AND cs.sporttype = 152 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 121	
-		RETURN
-	END
-		
-	---------------------------------------------------
-	--Update s4 to member level
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	 sdiscount = @v152discount_51
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid 
-		AND c.recommend <> 52466
-		AND c.roleid = 1 
-		AND cs.bettype IN(51,52) 
-		AND cs.sporttype = 152
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 122	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--Update m3=s4 if m3>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET adiscount = CASE WHEN cs.adiscount>@v153discount_51 THEN @v153discount_51 ELSE adiscount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 3 AND cs.bettype IN (51,52) AND cs.sporttype = 153 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 123	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--Update a2=s4 if a2>s4
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	discount = CASE WHEN cs.discount>@v153discount_51 THEN @v153discount_51 ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 2 AND cs.bettype IN(51,52) AND cs.sporttype = 153 
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 124	
-		RETURN
-	END
-		
-	---------------------------------------------------
-	--Update s4 to member level
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET	 sdiscount = @v153discount_51
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid 
-		AND c.recommend <> 52466
-		AND c.roleid = 1 
-		AND cs.bettype IN(51,52) 
-		AND cs.sporttype = 153
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 125	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--At member level, update adiscount = sdiscount  if adiscount > sdiscount
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET adiscount = CASE WHEN cs.adiscount>cs.sdiscount THEN cs.sdiscount ELSE adiscount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 1 AND sporttype IN (151,152,153)
-	--and cs.adiscount>cs.sdiscount
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 126
-		RETURN
-	END
-
-	---------------------------------------------------
-	--At member level, update discount = adiscount  if discount > adiscount
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET    discount = CASE WHEN cs.discount>cs.adiscount THEN adiscount ELSE discount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 1 AND sporttype IN (151,152,153)
-	--and cs.discount>cs.adiscount
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 127	
-		RETURN
-	END
-
-	---------------------------------------------------
-	--At member level, leave the playerdiscount the value as it is
-	/*
-	UPDATE Dep_CustSetting3rd WITH (ROWLOCK, UPDLOCK) 
-	SET    playerdiscount = CASE WHEN cs.playerdiscount>cs.discount THEN discount ELSE playerdiscount END 
-	FROM Dep_CustSetting3rd AS cs INNER JOIN custinfo AS c WITH (NOLOCK) ON cs.custid = c.custid
-	WHERE c.srecommend = @custid AND c.roleid = 1  AND sporttype IN (151,152,153)
-	-- and cs.playerdiscount>cs.discount
-	*/
-	IF (@@ERROR <> 0)
-	BEGIN
-		ROLLBACK TRANSACTION
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						END, @ErrCode = 128	
-		RETURN
-	END
-
-	---------------------------END HR COMM----------------------------------------
-	UPDATE CustSuper WITH (ROWLOCK, UPDLOCK)
-		SET AutoIBCPositionTaking_Tote	= @v151IBCPositiontaking_31,
-			AutoIBCPositionTaking_Fixed = @v151IBCPositiontaking_41,
-			AutoIBCPT151_AU				= @v151IBCPositiontaking_51,
-			AutoIBCPT152_UK				= @v152IBCPositiontaking_41,
-			AutoIBCPT152_AU				= @v152IBCPositiontaking_51,
-			AutoIBCPT153_AU				= @v153IBCPositiontaking_51
-	WHERE custid=@custid
-
-	if (@@error <> 0)
-	begin
-		
-		Select @ErrMsg = case @Language 
-							when 'E' then 'Update process is unsuccessful !'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
-						end	, @ErrCode = 104 
-		return
-	end
 
 	--Keno
 	--Check PT
@@ -2134,9 +1356,7 @@ BEGIN
 						@minbetv99  = @minbetv99 ,
 						@maxbetv99  = @maxbetv99 ,
 						@maxpermatchv99  = @maxpermatchv99 ,
-						@minbetv154  = @minbetv154 ,
-						@maxbetv154  = @maxbetv154 ,
-						@maxpermatchv154  = @maxpermatchv154 ,
+					
 						@minbetv99mp  = @minbetv99mp ,
 						@maxbetv99mp  = @maxbetv99mp ,
 						@maxpermatchv99mp  = @maxpermatchv99mp ,
@@ -2144,30 +1364,8 @@ BEGIN
 						@maxbetv161  = @maxbetv161 ,
 						@maxpermatchv161  = @maxpermatchv161 ,
 						@maxperballv161  = @maxperballv161 ,
-						@v151minbet_31			 = @v151minbet_31,	
-						@v151maxbet_31			 = @v151maxbet_31,	
-						@v151maxpermatch_31		 = @v151maxbet_31,	
-
-						@v151minbet_41			= @v151minbet_41,		
-						@v151maxbet_41			= @v151maxbet_41,		
-						@v151maxpermatch_41		= @v151maxpermatch_41,		
-		
-						@v151minbet_51			 = @v151minbet_51,
-						@v151maxbet_51			 = @v151maxbet_51,
-						@v151maxpermatch_51		 = @v151maxpermatch_51,
-
-						@v152minbet_41		 = @v152minbet_41,
-						@v152maxbet_41		 = @v152maxbet_41,
-						@v152maxpermatch_41  = @v152maxpermatch_41 ,
-		
-						@v152minbet_51		 = @v152minbet_51,
-						@v152maxbet_51		 = @v152maxbet_51,
-						@v152maxpermatch_51  = @v152maxpermatch_51 ,
-		
-						@v153minbet_51		 = @v153minbet_51,
-						@v153maxbet_51		 = @v153maxbet_51,
-						@v153maxpermatch_51  = @v153maxpermatch_51 ,
-
+					
+						
 						@v1spositiontaking_1  = @v1spositiontaking_1 ,
 						@v1spositiontaking_2  = @v1spositiontaking_2 ,
 						@v1spositiontaking_3  = @v1spositiontaking_3 ,
@@ -2218,8 +1416,7 @@ BEGIN
 						@v99spositiontaking_2  = @v99spositiontaking_2 ,
 						@v99spositiontaking_3  = @v99spositiontaking_3 ,
 						@v99spositiontaking_20  = @v99spositiontaking_20 ,
-						@v154spositiontaking_20  = @v154spositiontaking_20 ,
-
+					
 						@v99spositiontaking_9  = @v99spositiontaking_9 ,
 
 						@v161spositiontaking_81  = @v161spositiontaking_81 ,
@@ -2232,22 +1429,6 @@ BEGIN
 						@v161slivepositiontaking_87	 = @v161slivepositiontaking_87,
 						@v161slivepositiontaking_89	 = @v161slivepositiontaking_89,
 						@v161slivepositiontaking_90	 = @v161slivepositiontaking_90,
-
-						@v151spositiontaking_31  = @v151spositiontaking_31 ,
-						@v151spositiontaking_32  = @v151spositiontaking_32 ,
-						@v151spositiontaking_41  = @v151spositiontaking_41 ,
-						@v151spositiontaking_42  = @v151spositiontaking_42 ,
-		
-						@v151spositiontaking_51  = @v151spositiontaking_51 ,
-						@v151spositiontaking_52  = @v151spositiontaking_52 ,
-
-						@v152spositiontaking_41  = @v152spositiontaking_41 ,
-						@v152spositiontaking_42  = @v152spositiontaking_42 ,
-						@v152spositiontaking_51  = @v152spositiontaking_51 ,
-						@v152spositiontaking_52  = @v152spositiontaking_52 ,
-
-						@v153spositiontaking_51  = @v153spositiontaking_51 ,
-						@v153spositiontaking_52  = @v153spositiontaking_52 ,
 
 						@v1mpositiontaking_1  = @v1mpositiontaking_1 ,
 						@v1mpositiontaking_2  = @v1mpositiontaking_2 ,
@@ -2299,8 +1480,7 @@ BEGIN
 						@v99mpositiontaking_2  = @v99mpositiontaking_2 ,
 						@v99mpositiontaking_3  = @v99mpositiontaking_3 ,
 						@v99mpositiontaking_20  = @v99mpositiontaking_20 ,
-						@v154mpositiontaking_20  = @v154mpositiontaking_20 ,
-
+						
 						@v99mpositiontaking_9  = @v99mpositiontaking_9 ,
 
 						@v161mpositiontaking_81  = @v161mpositiontaking_81 ,
@@ -2314,29 +1494,7 @@ BEGIN
 						@v161mlivepositiontaking_89  = @v161mlivepositiontaking_89 ,
 						@v161mlivepositiontaking_90  = @v161mlivepositiontaking_90 ,
 
-						@v151mpositiontaking_31  = @v151mpositiontaking_31 ,
-						@v151mpositiontaking_32  = @v151mpositiontaking_32 ,
-						@v151mpositiontaking_41  = @v151mpositiontaking_41 ,
-						@v151mpositiontaking_42  = @v151mpositiontaking_42 ,
-
-						@v151mpositiontaking_51  = @v151mpositiontaking_51 ,
-						@v151mpositiontaking_52  = @v151mpositiontaking_52 ,
-
-						@v152mpositiontaking_41  = @v152mpositiontaking_41 ,
-						@v152mpositiontaking_42  = @v152mpositiontaking_42 ,
-						@v152mpositiontaking_51  = @v152mpositiontaking_51 ,
-						@v152mpositiontaking_52  = @v152mpositiontaking_52 ,
-
-						@v153mpositiontaking_51  = @v153mpositiontaking_51 ,
-						@v153mpositiontaking_52  = @v153mpositiontaking_52 ,
-
-						@v151discount_31  = @v151discount_31 ,
-						@v151discount_41  = @v151discount_41 ,
-
-						@v151discount_51  = @v151discount_51 ,
-						@v152discount_41  = @v152discount_41 ,
-						@v152discount_51  = @v152discount_51 ,
-						@v153discount_51  = @v153discount_51 ,
+						
 
 						@KenoList  = @KenoList ,
 			
@@ -2379,9 +1537,7 @@ BEGIN
 						@minbetv99  = @minbetv99 ,
 						@maxbetv99  = @maxbetv99 ,
 						@maxpermatchv99  = @maxpermatchv99 ,
-						@minbetv154  = @minbetv154 ,
-						@maxbetv154  = @maxbetv154 ,
-						@maxpermatchv154  = @maxpermatchv154 ,
+						
 						@minbetv99mp  = @minbetv99mp ,
 						@maxbetv99mp  = @maxbetv99mp ,
 						@maxpermatchv99mp  = @maxpermatchv99mp ,
@@ -2389,30 +1545,7 @@ BEGIN
 						@maxbetv161  = @maxbetv161 ,
 						@maxpermatchv161  = @maxpermatchv161 ,
 						@maxperballv161  = @maxperballv161 ,
-						@v151minbet_31			 = @v151minbet_31,	
-						@v151maxbet_31			 = @v151maxbet_31,	
-						@v151maxpermatch_31		 = @v151maxbet_31,	
-
-						@v151minbet_41			= @v151minbet_41,		
-						@v151maxbet_41			= @v151maxbet_41,		
-						@v151maxpermatch_41		= @v151maxpermatch_41,		
-		
-						@v151minbet_51			 = @v151minbet_51,
-						@v151maxbet_51			 = @v151maxbet_51,
-						@v151maxpermatch_51		 = @v151maxpermatch_51,
-
-						@v152minbet_41		 = @v152minbet_41,
-						@v152maxbet_41		 = @v152maxbet_41,
-						@v152maxpermatch_41  = @v152maxpermatch_41 ,
-		
-						@v152minbet_51		 = @v152minbet_51,
-						@v152maxbet_51		 = @v152maxbet_51,
-						@v152maxpermatch_51  = @v152maxpermatch_51 ,
-		
-						@v153minbet_51		 = @v153minbet_51,
-						@v153maxbet_51		 = @v153maxbet_51,
-						@v153maxpermatch_51  = @v153maxpermatch_51 ,
-
+						
 						@v1apositiontaking_1  = @v1apositiontaking_1 ,
 						@v1apositiontaking_2  = @v1apositiontaking_2 ,
 						@v1apositiontaking_3  = @v1apositiontaking_3 ,
@@ -2464,8 +1597,7 @@ BEGIN
 						@v99apositiontaking_2  = @v99apositiontaking_2 ,
 						@v99apositiontaking_3  = @v99apositiontaking_3 ,
 						@v99apositiontaking_20  = @v99apositiontaking_20 ,
-						@v154apositiontaking_20  = @v154apositiontaking_20 ,
-
+						
 						@v99apositiontaking_9  = @v99apositiontaking_9 ,
 
 						@v161apositiontaking_81  = @v161apositiontaking_81 ,
@@ -2479,21 +1611,6 @@ BEGIN
 						@v161alivepositiontaking_89	 = @v161alivepositiontaking_89,
 						@v161alivepositiontaking_90	 = @v161alivepositiontaking_90,
 
-						@v151apositiontaking_31  = @v151apositiontaking_31 ,
-						@v151apositiontaking_32  = @v151apositiontaking_32 ,
-						@v151apositiontaking_41  = @v151apositiontaking_41 ,
-						@v151apositiontaking_42  = @v151apositiontaking_42 ,
-		
-						@v151apositiontaking_51  = @v151apositiontaking_51 ,
-						@v151apositiontaking_52  = @v151apositiontaking_52 ,
-
-						@v152apositiontaking_41  = @v152apositiontaking_41 ,
-						@v152apositiontaking_42  = @v152apositiontaking_42 ,
-						@v152apositiontaking_51  = @v152apositiontaking_51 ,
-						@v152apositiontaking_52  = @v152apositiontaking_52 ,
-
-						@v153apositiontaking_51  = @v153apositiontaking_51 ,
-						@v153apositiontaking_52  = @v153apositiontaking_52 ,
 
 						@v1mpositiontaking_1  = @v1mpositiontaking_1 ,
 						@v1mpositiontaking_2  = @v1mpositiontaking_2 ,
@@ -2545,8 +1662,7 @@ BEGIN
 						@v99mpositiontaking_2  = @v99mpositiontaking_2 ,
 						@v99mpositiontaking_3  = @v99mpositiontaking_3 ,
 						@v99mpositiontaking_20  = @v99mpositiontaking_20 ,
-						@v154mpositiontaking_20  = @v154mpositiontaking_20 ,
-
+						
 						@v99mpositiontaking_9  = @v99mpositiontaking_9 ,
 
 						@v161mpositiontaking_81  = @v161mpositiontaking_81 ,
@@ -2560,30 +1676,7 @@ BEGIN
 						@v161mlivepositiontaking_89  = @v161mlivepositiontaking_89 ,
 						@v161mlivepositiontaking_90  = @v161mlivepositiontaking_90 ,
 
-						@v151mpositiontaking_31  = @v151mpositiontaking_31 ,
-						@v151mpositiontaking_32  = @v151mpositiontaking_32 ,
-						@v151mpositiontaking_41  = @v151mpositiontaking_41 ,
-						@v151mpositiontaking_42  = @v151mpositiontaking_42 ,
-
-						@v151mpositiontaking_51  = @v151mpositiontaking_51 ,
-						@v151mpositiontaking_52  = @v151mpositiontaking_52 ,
-
-						@v152mpositiontaking_41  = @v152mpositiontaking_41 ,
-						@v152mpositiontaking_42  = @v152mpositiontaking_42 ,
-						@v152mpositiontaking_51  = @v152mpositiontaking_51 ,
-						@v152mpositiontaking_52  = @v152mpositiontaking_52 ,
-
-						@v153mpositiontaking_51  = @v153mpositiontaking_51 ,
-						@v153mpositiontaking_52  = @v153mpositiontaking_52 ,
-
-						@v151discount_31  = @v151discount_31 ,
-						@v151discount_41  = @v151discount_41 ,
-
-						@v151discount_51  = @v151discount_51 ,
-						@v152discount_41  = @v152discount_41 ,
-						@v152discount_51  = @v152discount_51 ,
-						@v153discount_51  = @v153discount_51 ,
-						
+					
 						@KenoList  = @KenoList ,
 			
 						@Language  = @Language ,
@@ -2660,10 +1753,6 @@ BEGIN
 	'MaxBv99="'+ coalesce(cast(@MaxBetv99 as varchar(50)),space(1))+ '" ' +
 	'MPMv99="'+ coalesce(cast(@MaxPerMatchv99 as varchar(50)),space(1))+ '" ' +
 
-	'MinBv154="'+ coalesce(cast(@MinBetv154 as varchar(50)),space(1))+ '" ' +
-	'MaxBv154="'+ coalesce(cast(@MaxBetv154 as varchar(50)),space(1))+ '" ' +
-	'MPMv154="'+ coalesce(cast(@MaxPerMatchv154 as varchar(50)),space(1))+ '" ' +
-
 	'MinBv161="'+ coalesce(cast(@MinBetv161 as varchar(50)),space(1))+ '" ' +
 	'MaxBv161="'+ coalesce(cast(@MaxBetv161 as varchar(50)),space(1))+ '" ' +
 	'MPMv161="'+ coalesce(cast(@MaxPerMatchv161 as varchar(50)),space(1))+ '" ' +
@@ -2671,24 +1760,7 @@ BEGIN
 	'MinBv99MP="'+ coalesce(cast(@MinBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@MaxBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MPMv99MP="'+ coalesce(cast(@MaxPerMatchv99MP as varchar(50)),space(1))+ '" ' +
-	'v151MinB_31="'+ coalesce(cast(@v151MinBet_31 as varchar(50)),space(1)) + '" ' +
-	'v151MaxB_31="'+ coalesce(cast(@v151MaxBet_31 as varchar(50)),space(1)) + '" ' +
-	'v151MPM_31="'+ coalesce(cast(@v151MaxPerMatch_31 as varchar(50)),space(1)) + '" ' +
-	'v151MinB_41="'+ coalesce(cast(@v151MinBet_41 as varchar(50)),space(1)) + '" ' +
-	'v151MaxB_41="'+ coalesce(cast(@v151MaxBet_41 as varchar(50)),space(1)) + '" ' +
-	'v151MPM_41="'+ coalesce(cast(@v151MaxPerMatch_41 as varchar(50)),space(1)) + '" ' +
-	'v151MinB_51="'+ coalesce(cast(@v151MinBet_51 as varchar(50)),space(1)) + '" ' +
-	'v151MaxB_51="'+ coalesce(cast(@v151MaxBet_51 as varchar(50)),space(1)) + '" ' +
-	'v151MPM_51="'+ coalesce(cast(@v151MaxPerMatch_51 as varchar(50)),space(1)) + '" ' +
-	'v152MinB_41="'+ coalesce(cast(@v152MinBet_41 as varchar(50)),space(1)) + '" ' +
-	'v152MaxB_41="'+ coalesce(cast(@v152MaxBet_41 as varchar(50)),space(1)) + '" ' +
-	'v152MPM_41="'+ coalesce(cast(@v152MaxPerMatch_41 as varchar(50)),space(1)) + '" ' +
-	'v152MinB_51="'+ coalesce(cast(@v152MinBet_51 as varchar(50)),space(1)) + '" ' +
-	'v152MaxB_51="'+ coalesce(cast(@v152MaxBet_51 as varchar(50)),space(1)) + '" ' +
-	'v152MPM_51="'+ coalesce(cast(@v152MaxPerMatch_51 as varchar(50)),space(1)) + '" ' +
-	'v153MinB_51="'+ coalesce(cast(@v153MinBet_51 as varchar(50)),space(1)) + '" ' +
-	'v153MaxB_51="'+ coalesce(cast(@v153MaxBet_51 as varchar(50)),space(1)) + '" ' +
-	'v153MPM_51="'+ coalesce(cast(@v153MaxPerMatch_51 as varchar(50)),space(1)) + '" ' +
+	
 	'/>'+
 	'<Keno '+
 	@str_bet+
@@ -2717,7 +1789,7 @@ BEGIN
 					'MPMv' + cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MPM  as varchar(50)),space(1))+ '" ' +	
 					CASE WHEN Sporttype=161 THEN 'MPBv161="'+ coalesce(cast(MPB as varchar(50)),space(1))+ '" ' ELSE '' END
 			FROM #data_old
-			WHERE (Sporttype <=100 OR Sporttype in (154,161))  AND islive=0
+			WHERE (Sporttype <=100 OR Sporttype in (161))  AND islive=0
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM,MPB
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
@@ -2818,8 +1890,6 @@ BEGIN
 	'v99spt_9="'+ COALESCE(CAST(@v99spositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_20="'+ COALESCE(CAST(@v99spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v154spt_20="'+ COALESCE(CAST(@v154spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v161spt_81="'+ COALESCE(CONVERT(VARCHAR(50),@v161spositiontaking_81,2),SPACE(1)) + '" ' +
 	'v161spt_83="'+ COALESCE(CONVERT(VARCHAR(50),@v161spositiontaking_83,2),SPACE(1)) + '" ' +
 	'v161spt_86="'+ COALESCE(CONVERT(VARCHAR(50),@v161spositiontaking_86,2),SPACE(1)) + '" ' +
@@ -2883,8 +1953,7 @@ BEGIN
 	'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_9="'+ COALESCE(CAST(@v99mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(CAST(@v99mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154mpt_20="'+ COALESCE(CAST(@v154mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	
 	'v161mpt_81="'+ COALESCE(CONVERT(VARCHAR(50),@v161mpositiontaking_81,2),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CONVERT(VARCHAR(50),@v161mpositiontaking_83,2),SPACE(1)) + '" ' +
 	'v161mpt_86="'+ COALESCE(CONVERT(VARCHAR(50),@v161mpositiontaking_86,2),SPACE(1)) + '" ' +
@@ -2947,8 +2016,7 @@ BEGIN
 	'v99apt_3="'+ COALESCE(CAST(@v99apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(CAST(@v99apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(CAST(@v99apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154apt_20="'+ COALESCE(CAST(@v154apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	
 	'v161apt_81="'+ COALESCE(CONVERT(VARCHAR(50),@v161apositiontaking_81,2),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CONVERT(VARCHAR(50),@v161apositiontaking_83,2),SPACE(1)) + '" ' +
 	'v161apt_86="'+ COALESCE(CONVERT(VARCHAR(50),@v161apositiontaking_86,2),SPACE(1)) + '" ' +
@@ -3038,8 +2106,6 @@ BEGIN
 	'v99spt_9="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v154spt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v161spt_81="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161spt_83="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161spt_86="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
@@ -3103,8 +2169,7 @@ BEGIN
 	'v99mpt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_9="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154mpt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	
 	'v161mpt_81="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161mpt_83="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161mpt_86="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
@@ -3167,8 +2232,7 @@ BEGIN
 	'v99apt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_9="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v154apt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
+	
 	'v161apt_81="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161apt_83="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
 	'v161apt_86="'+ COALESCE(CONVERT(VARCHAR(50),@pt_NG,2),SPACE(1)) + '" ' +
@@ -3190,38 +2254,14 @@ BEGIN
 		@duration = @duration
 
 	Select @LogSPData = '<Acc_Dep_CustomerUpdMember_Com custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
-	'v151discount_31="'+ coalesce(cast(@v151discount_31 as varchar(50)),space(1)) + '" ' +
-	'v151discount_41="'+ coalesce(cast(@v151discount_41 as varchar(50)),space(1)) + '" ' +
-	'v151discount_51="'+ coalesce(cast(@v151discount_51 as varchar(50)),space(1)) + '" ' +
-	'v152discount_41="'+ coalesce(cast(@v152discount_41 as varchar(50)),space(1)) + '" ' +
-	'v152discount_51="'+ coalesce(cast(@v152discount_51 as varchar(50)),space(1)) + '" ' +
-	'v153discount_51="'+ coalesce(cast(@v153discount_51 as varchar(50)),space(1)) + '" ' +
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />'
 
-	DECLARE @v151discount_31_ decimal(9,8) = 0,	
-			@v151discount_41_ decimal(9,8) = 0,
-			@v151discount_51_ decimal(9,8) = 0,
-			@v152discount_41_ decimal(9,8) = 0,
-			@v152discount_51_ decimal(9,8) = 0,
-			@v153discount_51_ decimal(9,8) = 0
-	select @v151discount_31_=SupRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 151 AND bettype =31
-	select @v151discount_41_=SupRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 151 AND bettype =41
-	select @v151discount_51_=SupRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 151 AND bettype =51
-	select @v152discount_41_=SupRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 152 AND bettype =41
-	select @v152discount_51_=SupRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 152 AND bettype =51
-	select @v153discount_51_=SupRBDiscount FROM #data_old WHERE custid=@custID and sporttype = 153 AND bettype =51
-
-	Select @LogSPData2 = '<Acc_Dep_CustomerUpdMember_Com custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
-	'v151discount_31="'+ coalesce(cast(@v151discount_31_ as varchar(50)),space(1)) + '" ' +
-	'v151discount_41="'+ coalesce(cast(@v151discount_41_ as varchar(50)),space(1)) + '" ' +
-	'v151discount_51="'+ coalesce(cast(@v151discount_51_ as varchar(50)),space(1)) + '" ' +
-	'v152discount_41="'+ coalesce(cast(@v152discount_41_ as varchar(50)),space(1)) + '" ' +
-	'v152discount_51="'+ coalesce(cast(@v152discount_51_ as varchar(50)),space(1)) + '" ' +
-	'v153discount_51="'+ coalesce(cast(@v153discount_51_ as varchar(50)),space(1)) + '" ' +
+	
+	Select @LogSPData2 = '<Acc_Dep_CustomerUpdMember_Com custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +	
 	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
 	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 (
 	@custid		int OUTPUT,
@@ -6,13 +6,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@username	varchar(30),
 	@userpwd	varchar(40) = '123qwe',
 	@recommend	int, -- Agent ID
-
-	@Disable151_31 bit = 0,-- @DisableHorseRacing -> @Disable151_31
-	@Disable151_41 bit = 0,-- @DisableOpenTote -> @Disable151_41
-	@Disable151_51 bit = 0, -- @Disable151_AU -> @Disable151_51
-	@Disable152_41 bit = 0, -- @Disable152_UK -> @Disable152_41
-	@Disable152_51 bit = 0, -- @Disable152_AU -> @Disable152_51
-	@Disable153_51 bit = 0,-- @Disable153_AU -> @Disable153_51
 	
 	--number game status
 	@DisableNumber bit = 0,	
@@ -52,10 +45,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@MinBetv99 money,
 	@MaxBetv99 money,
 	@MaxPerMatchv99 money,
-	--HRFO
-	@MinBetv154 money,
-	@MaxBetv154 money,
-	@MaxPerMatchv154 money,
+	
 
 	-- mix parlay of mixed sports
 	@MinBetv99mp money,
@@ -68,31 +58,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 
 	@MaxPerBallv161 money = 0,	
 
-	--Racing Bet Setting
-	@v151minbet_31			money = 0,	-- old name: @minbet_31
-	@v151maxbet_31			money = 0,	-- old name: @maxbet_31
-	@v151maxpermatch_31		money = 0,	-- old name: @maxpermatch_31
-
-	@v151minbet_41			money,		-- old name: @minbet_41
-	@v151maxbet_41			money,		-- old name: @maxbet_41
-	@v151maxpermatch_41		money,		-- old name: @maxpermatch_41
 	
-	@v151minbet_51			money = 0,
-	@v151maxbet_51			money = 0,
-	@v151maxpermatch_51		money = 0,
-
-	@v152minbet_41		money = 0,
-	@v152maxbet_41		money = 0,
-	@v152maxpermatch_41 money = 0,
-
-	@v152minbet_51		money = 0,
-	@v152maxbet_51		money = 0,
-	@v152maxpermatch_51 money = 0,
-
-	@v153minbet_51		money = 0,
-	@v153maxbet_51		money = 0,
-	@v153maxpermatch_51 money = 0,
-
 	@v1apositiontaking_1 smallmoney,
 	@v1apositiontaking_2 smallmoney,
 	@v1apositiontaking_3 smallmoney,
@@ -147,29 +113,11 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@v99apositiontaking_2 smallmoney,
 	@v99apositiontaking_3 smallmoney,
 	@v99apositiontaking_20 smallmoney,
-	--HRFO
-	@v154apositiontaking_20 smallmoney,
+
 	
 	-- mix parlay of mixed sports	
 	@v99apositiontaking_9 smallmoney, 
 
-	--Racing
-	@v151apositiontaking_31 smallmoney = 0,
-	@v151apositiontaking_32 smallmoney = 0,
-	@v151apositiontaking_41 smallmoney = 0,
-	@v151apositiontaking_42 smallmoney = 0,
-	
-	@v151apositiontaking_51 smallmoney = 0,
-	@v151apositiontaking_52 smallmoney = 0,
-
-	@v152apositiontaking_41 smallmoney = 0,
-	@v152apositiontaking_42 smallmoney = 0,
-	@v152apositiontaking_51 smallmoney = 0,
-	@v152apositiontaking_52 smallmoney = 0,
-
-	@v153apositiontaking_51 smallmoney = 0,
-	@v153apositiontaking_52 smallmoney = 0,
-	
 	@v161apositiontaking_81 smallmoney,
 	@v161apositiontaking_83 smallmoney,
 	@v161apositiontaking_86 smallmoney,
@@ -180,15 +128,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@v161alivepositiontaking_87 smallmoney,
 	@v161alivepositiontaking_89 smallmoney = 0,	
 	@v161alivepositiontaking_90 smallmoney = 0,
-	
-	--Horse Racing Commission
-	@v151playerdiscount_31 decimal(9,8) = 0,	
-	@v151playerdiscount_41 decimal(9,8) = 0,
-
-	@v151playerdiscount_51 decimal(9,8) = 0,
-	@v152playerdiscount_41 decimal(9,8) = 0,
-	@v152playerdiscount_51 decimal(9,8) = 0,
-	@v153playerdiscount_51 decimal(9,8) = 0,
 
 	--Keno
 	@KenoList VARCHAR(4000)='',
@@ -226,7 +165,7 @@ Revisions:
     - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
     - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
     - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
-    
+    - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -282,11 +221,9 @@ BEGIN
 		@UplineClosed bit,
 		@DisableOutright bit,
 		
-		@UplineSyncLiveCasino bit,
-		@DisableCasinoBonus BIT,
 		
-		@DisableHRFO bit,
-
+		@DisableCasinoBonus BIT,
+	
 		@v1mpositiontaking_1 smallmoney,
 		@v1mpositiontaking_2 smallmoney,
 		@v1mpositiontaking_3 smallmoney,
@@ -338,26 +275,7 @@ BEGIN
 		@v99mpositiontaking_2 smallmoney,
 		@v99mpositiontaking_3 smallmoney,
 		@v99mpositiontaking_20 smallmoney,
-		--HRFO
-		@v154mpositiontaking_20 smallmoney,
 		
-		--Racing
-		@v151mpositiontaking_31 smallmoney ,
-		@v151mpositiontaking_32 smallmoney ,
-		@v151mpositiontaking_41 smallmoney ,
-		@v151mpositiontaking_42 smallmoney ,
-										   
-		@v151mpositiontaking_51 smallmoney ,
-		@v151mpositiontaking_52 smallmoney ,
-										   
-		@v152mpositiontaking_41 smallmoney ,
-		@v152mpositiontaking_42 smallmoney ,
-		@v152mpositiontaking_51 smallmoney ,
-		@v152mpositiontaking_52 smallmoney ,
-										   
-		@v153mpositiontaking_51 smallmoney ,
-		@v153mpositiontaking_52 smallmoney ,
-
 		-- mix parlay of mixed sports
 		@v99mpositiontaking_9 smallmoney,
 		
@@ -426,9 +344,7 @@ BEGIN
 		@v99spositiontaking_2 smallmoney,
 		@v99spositiontaking_3 smallmoney,	
 		@v99spositiontaking_20 smallmoney,	
-		--HRFO
-		@v154spositiontaking_20 smallmoney,
-		
+	
 		@v99spositiontaking_9 smallmoney,
 
 		@v161spositiontaking_81 smallmoney, 				
@@ -440,73 +356,21 @@ BEGIN
 		@v161slivepositiontaking_86 smallmoney,
 		@v161slivepositiontaking_87	smallmoney,
 		@v161slivepositiontaking_89	smallmoney,
-		@v161slivepositiontaking_90	smallmoney,
+		@v161slivepositiontaking_90	smallmoney
 
-		--Racing
-		@v151spositiontaking_31 smallmoney ,
-		@v151spositiontaking_32 smallmoney ,
-		@v151spositiontaking_41 smallmoney ,
-		@v151spositiontaking_42 smallmoney ,
-										   
-		@v151spositiontaking_51 smallmoney ,
-		@v151spositiontaking_52 smallmoney ,
-										   
-		@v152spositiontaking_41 smallmoney ,
-		@v152spositiontaking_42 smallmoney ,
-		@v152spositiontaking_51 smallmoney ,
-		@v152spositiontaking_52 smallmoney ,
-										   
-		@v153spositiontaking_51 smallmoney ,
-		@v153spositiontaking_52 smallmoney ,
-
-		--Horse Racing Commission
-		@v151sdiscount_31 decimal(9,8),	
-		@v151sdiscount_41 decimal(9,8),
-		@v151sdiscount_51 decimal(9,8),
-		@v152sdiscount_41 decimal(9,8),
-		@v152sdiscount_51 decimal(9,8),
-		@v153sdiscount_51 decimal(9,8),
-
-		@v151adiscount_31 decimal(9,8),	
-		@v151adiscount_41 decimal(9,8),
-		@v151adiscount_51 decimal(9,8),
-		@v152adiscount_41 decimal(9,8),
-		@v152adiscount_51 decimal(9,8),
-		@v153adiscount_51 decimal(9,8),
-
-		@v151discount_31 decimal(9,8),	
-		@v151discount_41 decimal(9,8),
-		@v151discount_51 decimal(9,8),
-		@v152discount_41 decimal(9,8),
-		@v152discount_51 decimal(9,8),
-		@v153discount_51 decimal(9,8),
-		@v162apositiontaking_1101 money,
-		@v162mpositiontaking_1101 money,
-		@v162spositiontaking_1101 money,
-		@v162discount_1101 decimal(9,8),
-		@v162adiscount_1101 decimal(9,8),
-		@v162sdiscount_1101 decimal(9,8)
-		
 
 	select 
 		@currency = currency, 
 		@Msuspended = reject,
 		@UplineClosed = closed,
-		@UplineSyncLiveCasino = SyncLiveCasino,
+	
 		@srecommend = srecommend,
 		@mrecommend = mrecommend,
 		@matchlimit = matchlimit,
-		@Disable151_31 = case when DisableHorseRacing = 1 then 1 else @Disable151_31 end,
-		@Disable151_41 = case when DisableOpenTote = 1 then 1 else @Disable151_41 end,
-		@Disable151_51 = case when Disable151_AU = 1 then 1 else @Disable151_51 end,
-		@Disable152_41 = case when Disable152_UK = 1 then 1 else @Disable152_41 end,
-		@Disable152_51 = case when Disable152_AU = 1 then 1 else @Disable152_51 end,
-		@Disable153_51 = case when Disable153_AU = 1 then 1 else @Disable153_51 end,
 		@DisableOutright = DisableOutright,
 		
-		@DisableCasinoBonus = 1,
-		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end,
-		@DisableHRFO= ci.DisableHRFixedOdds
+		@DisableCasinoBonus = 1	,
+		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end	
 	from CustInfo as ci with (NOLOCK) 
 	where CustID = @recommend
 
@@ -558,24 +422,9 @@ BEGIN
 		@v99mpositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v99mpositiontaking_20 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		
-		@v154mpositiontaking_20 = CASE WHEN cs.sporttype = 154 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
+
 
 		@v99mpositiontaking_9 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 9 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-		--Racing
-		@v151mpositiontaking_31 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_32 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 32 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_41 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_42 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_51  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-		@v151mpositiontaking_52  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END,
-										   
-		@v152mpositiontaking_41 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v152mpositiontaking_42 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v152mpositiontaking_51 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v152mpositiontaking_52 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-										   
-		@v153mpositiontaking_51  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
-		@v153mpositiontaking_52  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.mpositiontaking ELSE 0 END ,
 
 		-- mix parlay of mixed sports
 		
@@ -649,24 +498,10 @@ BEGIN
 		@v99spositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 		@v99spositiontaking_20 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 
-		@v154spositiontaking_20 = CASE WHEN cs.sporttype = 154 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
+	
 
 		@v99spositiontaking_9 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 9 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-		--Racing
-		@v151spositiontaking_31 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_32 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 32 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_41 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_42 = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_51  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-		@v151spositiontaking_52  = CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END,
-										   
-		@v152spositiontaking_41 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v152spositiontaking_42 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 42 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v152spositiontaking_51 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v152spositiontaking_52 = CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-										   
-		@v153spositiontaking_51  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
-		@v153spositiontaking_52  = CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 52 AND cs3.islive = 0 THEN cs3.spositiontaking ELSE 0 END ,
+		
 
 		-- mix parlay of mixed sports
 		
@@ -692,32 +527,7 @@ BEGIN
 		INNER JOIN Dep_CustSetting3rd AS cs3 WITH (NOLOCK) ON cs3.custid = cs.custid
 	WHERE cs.custid = @mrecommend
 
-	SELECT @v151sdiscount_31 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 THEN cs3.sdiscount ELSE 0 END),
-		@v151sdiscount_41 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 THEN cs3.sdiscount ELSE 0 END),
-		@v151sdiscount_51 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 THEN cs3.sdiscount ELSE 0 END),
-		@v152sdiscount_41 = MAX(CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 THEN cs3.sdiscount ELSE 0 END),
-		@v152sdiscount_51 = MAX(CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 THEN cs3.sdiscount ELSE 0 END),
-		@v153sdiscount_51 = MAX(CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 THEN cs3.sdiscount ELSE 0 END)
-	FROM Dep_CustSetting3rd AS cs3 WITH (NOLOCK)
-	WHERE cs3.custid = @srecommend
 
-	SELECT @v151adiscount_31 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 THEN cs3.adiscount ELSE 0 END),
-		@v151adiscount_41 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 THEN cs3.adiscount ELSE 0 END),
-		@v151adiscount_51 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 THEN cs3.adiscount ELSE 0 END),
-		@v152adiscount_41 = MAX(CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 THEN cs3.adiscount ELSE 0 END),
-		@v152adiscount_51 = MAX(CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 THEN cs3.adiscount ELSE 0 END),
-		@v153adiscount_51 = MAX(CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 THEN cs3.adiscount ELSE 0 END)
-	FROM Dep_CustSetting3rd AS cs3 WITH (NOLOCK)
-	WHERE cs3.custid = @mrecommend
-
-	SELECT @v151discount_31 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 31 THEN cs3.discount ELSE 0 END),
-		@v151discount_41 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 41 THEN cs3.discount ELSE 0 END),
-		@v151discount_51 = MAX(CASE WHEN cs3.sporttype = 151 AND cs3.bettype = 51 THEN cs3.discount ELSE 0 END),
-		@v152discount_41 = MAX(CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 41 THEN cs3.discount ELSE 0 END),
-		@v152discount_51 = MAX(CASE WHEN cs3.sporttype = 152 AND cs3.bettype = 51 THEN cs3.discount ELSE 0 END),
-		@v153discount_51 = MAX(CASE WHEN cs3.sporttype = 153 AND cs3.bettype = 51 THEN cs3.discount ELSE 0 END)
-	FROM Dep_CustSetting3rd AS cs3 WITH (NOLOCK)
-	WHERE cs3.custid = @recommend
 
 	Select @ErrCode = 0
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -760,11 +570,7 @@ BEGIN
 		@MinBetv99				=@MinBetv99,
 		@MaxBetv99				=@MaxBetv99,
 		@MaxPerMatchv99			=@MaxPerMatchv99,	
-		
-		@MinBetv154				=@MinBetv154,
-		@MaxBetv154				=@MaxBetv154,
-		@MaxPerMatchv154		=@MaxPerMatchv154,
-
+	
 		--Mix Parlay mix sports
 		@MinBetv99MP			= @MinBetv99MP,
 		@MaxBetv99MP			= @MaxBetv99MP,
@@ -828,25 +634,6 @@ BEGIN
 		@v99apositiontaking_9		= @v99apositiontaking_9,
 		@v99apositiontaking_20		= @v99apositiontaking_20,
 
-		@v154apositiontaking_20		= @v154apositiontaking_20,
-									
-		--Racing					= --Racing
-		@v151apositiontaking_31		= @v151apositiontaking_31,
-		@v151apositiontaking_32		= @v151apositiontaking_32,
-		@v151apositiontaking_41		= @v151apositiontaking_41,
-		@v151apositiontaking_42		= @v151apositiontaking_42,
-									
-		@v151apositiontaking_51		= @v151apositiontaking_51,
-		@v151apositiontaking_52		= @v151apositiontaking_52,
-									
-		@v152apositiontaking_41		= @v152apositiontaking_41,
-		@v152apositiontaking_42		= @v152apositiontaking_42,
-		@v152apositiontaking_51		= @v152apositiontaking_51,
-		@v152apositiontaking_52		= @v152apositiontaking_52,
-									
-		@v153apositiontaking_51		= @v153apositiontaking_51,
-		@v153apositiontaking_52		= @v153apositiontaking_52,
-									
 		@v161apositiontaking_81		= @v161apositiontaking_81, 
 		@v161apositiontaking_83		= @v161apositiontaking_83, 
 		@v161apositiontaking_86		= @v161apositiontaking_86, 
@@ -857,13 +644,7 @@ BEGIN
 		@v161alivepositiontaking_89 = @v161alivepositiontaking_89,
 		@v161alivepositiontaking_90 = @v161alivepositiontaking_90,
 
-		@v151discount_31			= @v151playerdiscount_31,
-		@v151discount_41			= @v151playerdiscount_41,
-		@v151discount_51			= @v151playerdiscount_51,
-		@v152discount_41			= @v152playerdiscount_41,
-		@v152discount_51			= @v152playerdiscount_51,
-		@v153discount_51			= @v153playerdiscount_51,
-
+	
 		@isvalid=@isvalid OUTPUT,
 		@errmsg=@ErrMsg OUTPUT,
 		@errcode=@errcode OUTPUT,
@@ -905,25 +686,18 @@ BEGIN
 		@TransferOption = NULL,
 		@suspended = 0,
 		@closed=@UplineClosed,
-		@Disable151_31 = @Disable151_31,
-		@Disable151_41 = @Disable151_41,
-		@Disable151_51 = @Disable151_51,
-		@Disable152_41 = @Disable152_41,
-		@Disable152_51 = @Disable152_51,
-		@Disable153_51 = @Disable153_51,
-		@DisableOutright = @DisableOutright,
-		@Disable162_1101 = 0,
+	
+		@DisableOutright = @DisableOutright,		
 		
 		@DisableCasinoBonus = @DisableCasinoBonus,
 		@matchlimit = @matchlimit,
 
 		--20150309@Johnson: disable virtual rate as default
 		@virtualmultiplier = 0,
-		@DisableFinancial = 0,
+		
 		@DisableCasino = 0,
-		@IsInternal = 0,
+		@IsInternal = 0,	
 		@DisableNumber = @DisableNumber,
-		@DisableBingo = 0,
 		@MaxPerMatch = @MaxPerMatchv1,
 		@MaxPerMatchv2 = @MaxPerMatchv2,
 		@MaxPerMatchv3 = @MaxPerMatchv3,
@@ -933,31 +707,19 @@ BEGIN
 		@MaxPerMatchv11 = @MaxPerMatchv11,
 		@MaxPerMatchv44 = @MaxPerMatchv44,
 		@MaxPerMatchv99 = @MaxPerMatchv99,
-		@MaxPerMatchv154 = @MaxPerMatchv154,
-		@DisableHRFO	=  @DisableHRFO,
+		
+	
 
 		@MaxPerMatchv99MP = @MaxPerMatchv99MP,
 		@MaxPerMatchv161 = @MaxPerMatchv161,	
 		@MaxPerBallv161 = @MaxPerBallv161,
 		
-		--v151
-		@MaxPerMatchv151_31 = @v151maxpermatch_31,
-		@MaxPerMatchv151_41 = @v151maxpermatch_41,
-		@MaxPerMatchv151_51 = @v151maxpermatch_51,
-		
-		--v152
-		@MaxPerMatchv152_41  = @v152maxpermatch_41,
-		@MaxPerMatchv152_51 = @v152maxpermatch_51,
-		
-		--v153
-		@MaxPerMatchv153_51 = @v153maxpermatch_51,
 
 		@hidekeno=@DisableKeno,
 
 		@credit = 0,
 		@maxcredit = 0,
-		@DisableP2P = 1,
-		@DisableFUNP2P = 1,
+	
 		@IP = @IP,
 		@TransferOption_dec = 0,
 		@Language = @Language,
@@ -970,9 +732,7 @@ BEGIN
 
 	SELECT @Rollback= ' DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
 					 ' DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-					 ' DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-			 		 ' DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
-					 ' DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  ='+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+
+					 ' DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))+			 		
 					 ' DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))	+
 					 ' DELETE CustGameType WITH(ROWLOCK) WHERE custid = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))	+
 					 ' EXEC Acc_CustomerInsUserInfo_Rollback @CustID = '+COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1))
@@ -1042,7 +802,7 @@ BEGIN
 	UNION ALL	SELECT @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, @v99spositiontaking_3, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
 	UNION ALL	SELECT @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
 
-	UNION ALL	SELECT @custid, 20, 154, @v154apositiontaking_20, @v154mpositiontaking_20, @v154spositiontaking_20, 0, 0, 0, 0, @MinBetv154, @MaxBetv154, 0
+	
 	--Mix Sports Parlay
 	UNION ALL	SELECT @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, @v99spositiontaking_9, 0, 0, 0, 0, @MinBetv99MP, @MaxBetv99MP, 0
 
@@ -1065,26 +825,8 @@ BEGIN
 	--insert into CustSetting3rd
 	INSERT INTO [dbo].[Dep_CustSetting3rd]([custId], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking],  [playerdiscount], [discount], [adiscount], [sdiscount], [Minbet], [Maxbet], [islive])
 
-	--v151
-				SELECT @custid, 31, 151, @v151apositiontaking_31, @v151mpositiontaking_31, @v151spositiontaking_31, @v151playerdiscount_31, @v151discount_31, @v151adiscount_31, @v151sdiscount_31, @v151minbet_31, @v151maxbet_31, 0
-	UNION ALL	SELECT @custid, 32, 151, @v151apositiontaking_32, @v151mpositiontaking_32, @v151spositiontaking_32, @v151playerdiscount_31, @v151discount_31, @v151adiscount_31, @v151sdiscount_31, @v151minbet_31, @v151maxbet_31, 0
-	UNION ALL	SELECT @custid, 41, 151, @v151apositiontaking_41, @v151mpositiontaking_41, @v151spositiontaking_41, @v151playerdiscount_41,@v151discount_41, @v151adiscount_41, @v151sdiscount_41, @v151minbet_41, @v151maxbet_41, 0
-	UNION ALL	SELECT @custid, 42, 151, @v151apositiontaking_42, @v151mpositiontaking_42, @v151spositiontaking_42, @v151playerdiscount_41, @v151discount_41, @v151adiscount_41, @v151sdiscount_41, @v151minbet_41, @v151maxbet_41, 0
-	UNION ALL	SELECT @custid, 51, 151, @v151apositiontaking_51, @v151mpositiontaking_51, @v151spositiontaking_51, @v151playerdiscount_51, @v151discount_51, @v151adiscount_51, @v151sdiscount_51, @v151minbet_51, @v151maxbet_51, 0
-	UNION ALL	SELECT @custid, 52, 151, @v151apositiontaking_52, @v151mpositiontaking_52, @v151spositiontaking_52, @v151playerdiscount_51, @v151discount_51, @v151adiscount_51, @v151sdiscount_51, @v151minbet_51, @v151maxbet_51, 0
-
-	--v152
-	UNION ALL	SELECT @custid, 41, 152, @v152apositiontaking_41, @v152mpositiontaking_41, @v152spositiontaking_41, @v152playerdiscount_41, @v152discount_41, @v152adiscount_41, @v152sdiscount_41, @v152minbet_41, @v152maxbet_41, 0
-	UNION ALL	SELECT @custid, 42, 152, @v152apositiontaking_42, @v152mpositiontaking_42, @v152spositiontaking_42, @v152playerdiscount_41, @v152discount_41, @v152adiscount_41, @v152sdiscount_41, @v152minbet_41, @v152maxbet_41, 0
-	UNION ALL	SELECT @custid, 51, 152, @v152apositiontaking_51, @v152mpositiontaking_51, @v152spositiontaking_51, @v152playerdiscount_51, @v152discount_51, @v152adiscount_51, @v152sdiscount_51, @v152minbet_51, @v152maxbet_51, 0
-	UNION ALL	SELECT @custid, 52, 152, @v152apositiontaking_52, @v152mpositiontaking_52, @v152spositiontaking_52, @v152playerdiscount_51, @v152discount_51, @v152adiscount_51, @v152sdiscount_51, @v152minbet_51, @v152maxbet_51, 0
-
-	--v153
-	UNION ALL	SELECT @custid, 51, 153, @v153apositiontaking_51, @v153mpositiontaking_51, @v153spositiontaking_51, @v153playerdiscount_51, @v153discount_51, @v153adiscount_51, @v153sdiscount_51, @v153minbet_51, @v153maxbet_51, 0
-	UNION ALL	SELECT @custid, 52, 153, @v153apositiontaking_52, @v153mpositiontaking_52, @v153spositiontaking_52, @v153playerdiscount_51, @v153discount_51, @v153adiscount_51, @v153sdiscount_51, @v153minbet_51, @v153maxbet_51, 0
-
 	--v161
-	UNION ALL	SELECT @custid, 81, 161, @v161apositiontaking_81, @v161mpositiontaking_81, @v161spositiontaking_81, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
+		SELECT @custid, 81, 161, @v161apositiontaking_81, @v161mpositiontaking_81, @v161spositiontaking_81, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
 	UNION ALL	SELECT @custid, 83, 161, @v161apositiontaking_83, @v161mpositiontaking_83, @v161spositiontaking_83, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
 	UNION ALL	SELECT @custid, 85, 161, @v161alivepositiontaking_85, @v161mlivepositiontaking_85, 0, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 1--live
 
@@ -1095,9 +837,6 @@ BEGIN
 	UNION ALL	SELECT @custid, 88, 161, @v161apositiontaking_88, @v161mpositiontaking_88, @v161spositiontaking_88, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
 	UNION ALL	SELECT @custid, 89, 161, @v161alivepositiontaking_89, @v161mlivepositiontaking_89, @v161slivepositiontaking_89, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 1--live
 	UNION ALL	SELECT @custid, 90, 161, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 1--live
-
-	--v162
-	select @v162apositiontaking_1101 = apositiontaking, @v162mpositiontaking_1101 = mpositiontaking,@v162spositiontaking_1101 = spositiontaking, @v162discount_1101 = discount, @v162adiscount_1101=adiscount,@v162sdiscount_1101=sdiscount from CustSettingGame WITH(NOLOCK) where custid = @recommend and bettype = 1101 and sporttype = 162
 
 
 	if @@error <> 0
@@ -1117,105 +856,6 @@ BEGIN
 		return
 	END
 
-	--Insert Into P2P Setting
-	INSERT INTO  dbo.P2PGAMESETTING WITH(ROWLOCK)
-		(custId,bettype,StakeLevel1,StakeLevel2,StakeLevel3,StakeLevel4,StakeLevel5)
-	SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1001
-	UNION ALL 
-	SELECT @custid  , bettype , StakeLevel1 , 0 , 0 , 0 , 0 FROM P2PGameSetting WITH(NOLOCK) WHERE custid = @recommend AND bettype = 1002
-
-
-	if @@error <> 0
-	BEGIN
-		--Error occurs
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Create member fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-							end	
-				, @ErrCode=216
-		
-		-- ROLLBACK MANUALLY
-		Delete dep_custsetting with (ROWLOCK) where custid  =@custid
-		Delete dep_CustSetting3rd with (ROWLOCK) where custid  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-			
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		return
-	END
-
-
-	INSERT INTO dbo.P2PGroupComm WITH(ROWLOCK)
-			   (custId,groupID,sdiscount,adiscount,discount,playerdiscount)
-	SELECT @custid custId
-		,P2PGroupComm.groupID
-		,GC_S.sdiscount
-		,GC_M.adiscount
-		,P2PGroupComm.discount
-		,0 playerdiscount
-	FROM dbo.P2PGroupComm WITH(NOLOCK) 
-	INNER JOIN (
-		SELECT groupID
-			,sdiscount
-		FROM dbo.P2PGroupComm WITH(NOLOCK) 
-		WHERE custid = @srecommend
-		) GC_S ON GC_S.GROUPID = P2PGroupComm.GROUPID
-	INNER JOIN (
-		SELECT groupID
-			,adiscount
-		FROM dbo.P2PGroupComm WITH(NOLOCK) 
-		WHERE custid = @mrecommend
-		) GC_M ON GC_M.GROUPID = P2PGroupComm.GROUPID
-	WHERE custid = @recommend;
-
-	if @@error <> 0
-	BEGIN
-		--Error occurs
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Create member fail. Please try again'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40018,@Language)
-							end	
-				, @ErrCode=216
-		
-		-- ROLLBACK MANUALLY
-		Delete dep_custsetting with (ROWLOCK) where custid  =@custid
-		Delete dep_CustSetting3rd with (ROWLOCK) where custid  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		return
-	END
-
-	SELECT	@v162apositiontaking_1101 = CASE WHEN @UplineSyncLiveCasino = 1 THEN @v162apositiontaking_1101 ELSE 0 END,
-			@v162mpositiontaking_1101 = CASE WHEN @UplineSyncLiveCasino = 1 THEN @v162mpositiontaking_1101 ELSE 0 END,
-			@v162spositiontaking_1101 = CASE WHEN @UplineSyncLiveCasino = 1 THEN @v162spositiontaking_1101 ELSE 0 END,
-			@v162discount_1101 = CASE WHEN @UplineSyncLiveCasino = 1 THEN @v162discount_1101 ELSE 0 END,
-			@v162adiscount_1101 = CASE WHEN @UplineSyncLiveCasino = 1 THEN @v162adiscount_1101 ELSE 0 END,
-			@v162sdiscount_1101 = CASE WHEN @UplineSyncLiveCasino = 1 THEN @v162sdiscount_1101 ELSE 0 END
-	--- insert into custsettingGame
-	INSERT INTO custsettingGame(CustID, Bettype, Sporttype, apositiontaking, mpositiontaking, spositiontaking, playerdiscount, discount, adiscount, sdiscount, autopositiontaking, isautopositiontaking, autompositiontaking, isautompositiontaking)
-		SELECT @custid, 1101, 162, @v162apositiontaking_1101, @v162mpositiontaking_1101, @v162spositiontaking_1101, 0, @v162discount_1101, @v162adiscount_1101, @v162sdiscount_1101, 0, 0, 0, 0
-			
-	if @@error <> 0
-	BEGIN
-
-		--Error occur
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Create customer failed. Please try again.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							end,
-			@ErrCode = 210
-			
-		-- ROLLBACK MANUALLY
-		Delete dep_custsetting with (ROWLOCK) where custid  =@custid
-		Delete dep_CustSetting3rd with (ROWLOCK) where custid  =@custid
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE custsettingGame WITH (ROWLOCK) WHERE custId  =@custid
-			
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN
-	END
 	--Keno
 
 	/**********************************
@@ -1235,9 +875,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID		
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1258,9 +896,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1283,9 +919,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1332,9 +966,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1357,9 +989,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1382,9 +1012,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 	
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID		
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1409,9 +1037,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 		
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1455,9 +1081,7 @@ BEGIN
 		--EXEC sp_executesql @Rollback 
 		DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId =@custid
 		DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE P2PGameSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE P2PGroupComm WITH (ROWLOCK) WHERE custId  =@custid
+		DELETE Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID	
 		DELETE CustGameType WITH(ROWLOCK) WHERE custid =@custid
 		DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
 		DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid
@@ -1517,22 +1141,8 @@ BEGIN
 		@CustID = @CustID,
 		@ActionID = 2415,
 		@TrackingValue = @LogSPData,
-		@duration = @duration
-		
-	--Log commission
-	SELECT @LogSPData = '<Acc_Dep_CustomerInsMember_Ag custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151discount_31="'+ COALESCE(CAST(@v151playerdiscount_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151discount_41="'+ COALESCE(CAST(@v151playerdiscount_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151discount_51="'+ COALESCE(CAST(@v151playerdiscount_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152discount_41="'+ COALESCE(CAST(@v152playerdiscount_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152discount_51="'+ COALESCE(CAST(@v152playerdiscount_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153discount_51="'+ COALESCE(CAST(@v153playerdiscount_51 AS VARCHAR(50)),SPACE(1)) + '" />'
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-		@UserID = @Creator,
-		@CustID = @CustID,
-		@ActionID = 2604,
-		@TrackingValue = @LogSPData,
-		@duration = @duration
+		@duration = @duration		
+
 		
 	--log bet Setting
 	Select @LogSPData = '<Acc_Dep_CustomerInsMember_Ag custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
@@ -1566,9 +1176,6 @@ BEGIN
 	'MaxBv99="'+ coalesce(cast(@maxbetv99 as varchar(50)),space(1)) + '" ' +
 	'MPMv99="'+ coalesce(cast(@maxpermatchv99 as varchar(50)),space(1)) + '" ' +
 
-	'MinBv154="'+ coalesce(cast(@minbetv154 as varchar(50)),space(1)) + '" ' +
-	'MaxBv154="'+ coalesce(cast(@maxbetv154 as varchar(50)),space(1)) + '" ' +
-	'MPMv154="'+ coalesce(cast(@maxpermatchv154 as varchar(50)),space(1)) + '" ' +
 
 	'MinBv99MP="'+ coalesce(cast(@minbetv99mp as varchar(50)),space(1)) + '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@maxbetv99mp as varchar(50)),space(1)) + '" ' +
@@ -1576,25 +1183,7 @@ BEGIN
 	'MinBv161="' + coalesce(cast(@minbetv161 as varchar(50)),space(1)) + '" ' +
 	'MaxBv161="' + coalesce(cast(@maxbetv161 as varchar(50)),space(1)) + '" ' +
 	'MPMv161="' + coalesce(cast(@maxpermatchv161 as varchar(50)),space(1)) + '" ' +
-	'MPBv161="' + coalesce(cast(@maxperballv161 as varchar(50)), space(1)) + '" ' +
-	'MinBv151_31="'+ COALESCE(CAST(@v151minbet_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv151_31="'+ COALESCE(CAST(@v151maxbet_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv151_31="'+ COALESCE(CAST(@v151maxpermatch_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv151_41="'+ COALESCE(CAST(@v151minbet_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv151_41="'+ COALESCE(CAST(@v151maxbet_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv151_41="'+ COALESCE(CAST(@v151maxpermatch_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv151_51="'+ COALESCE(CAST(@v151minbet_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv151_51="'+ COALESCE(CAST(@v151maxbet_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv151_51="'+ COALESCE(CAST(@v151maxpermatch_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv152_41="'+ COALESCE(CAST(@v152minbet_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv152_41="'+ COALESCE(CAST(@v152maxbet_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv152_41="'+ COALESCE(CAST(@v152maxpermatch_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv152_51="'+ COALESCE(CAST(@v152minbet_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv152_51="'+ COALESCE(CAST(@v152maxbet_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv152_51="'+ COALESCE(CAST(@v152maxpermatch_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MinBv153_51="'+ COALESCE(CAST(@v153minbet_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv153_51="'+ COALESCE(CAST(@v153maxbet_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv153_51="'+ COALESCE(CAST(@v153maxpermatch_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'MPBv161="' + coalesce(cast(@maxperballv161 as varchar(50)), space(1)) + '" ' +	
 
 	@str_bet + ' />'
 	
@@ -1608,14 +1197,9 @@ BEGIN
 	--Log Status
 	Select @LogSPData = '<Acc_Dep_CustomerInsMember_Ag custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'closed="'+ coalesce(cast(@UplineClosed as varchar(1)),space(1)) + '" ' +
-	'DisableHorseRacing="'+ coalesce(cast(@Disable151_31 as varchar(1)),space(1)) + '" ' +
-	'DisableOT="'+ coalesce(cast(@Disable151_41 as varchar(1)),space(1)) + '" ' +
-	'Disable151_51="'+ coalesce(cast(@Disable151_51 as varchar(1)),space(1)) + '" ' +
-	'Disable152_41="'+ coalesce(cast(@Disable152_41 as varchar(1)),space(1)) + '" ' +
-	'Disable152_51="'+ coalesce(cast(@Disable152_51 as varchar(1)),space(1)) + '" ' +
-	'Disable153_51="'+ coalesce(cast(@Disable153_51 as varchar(1)),space(1)) + '" ' +
 	'DisableOutright="'+ coalesce(cast(@DisableOutright as varchar(1)),space(1)) + '" ' +
 	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" />'
+
 	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 		@UserID = @Creator,
 		@CustID = @CustID,
@@ -1687,19 +1271,7 @@ BEGIN
 
 	@str_spt+
 
-	'v151spt_31="'+ COALESCE(CAST(@v151spositiontaking_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151spt_32="'+ COALESCE(CAST(@v151spositiontaking_32 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151spt_41="'+ COALESCE(CAST(@v151spositiontaking_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151spt_42="'+ COALESCE(CAST(@v151spositiontaking_42 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151spt_51="'+ COALESCE(CAST(@v151spositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151spt_52="'+ COALESCE(CAST(@v151spositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152spt_41="'+ COALESCE(CAST(@v152spositiontaking_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152spt_42="'+ COALESCE(CAST(@v152spositiontaking_42 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152spt_51="'+ COALESCE(CAST(@v152spositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152spt_52="'+ COALESCE(CAST(@v152spositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153spt_51="'+ COALESCE(CAST(@v153spositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153spt_52="'+ COALESCE(CAST(@v153spositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" />' +
-
+	
 
 	'<m mpt_1="'+ COALESCE(CAST(@v1mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'mpt_2="'+ COALESCE(CAST(@v1mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1765,18 +1337,7 @@ BEGIN
 
 	@str_mpt+
 
-	'v151mpt_31="'+ COALESCE(CAST(@v151mpositiontaking_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151mpt_32="'+ COALESCE(CAST(@v151mpositiontaking_32 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151mpt_41="'+ COALESCE(CAST(@v151mpositiontaking_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151mpt_42="'+ COALESCE(CAST(@v151mpositiontaking_42 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151mpt_51="'+ COALESCE(CAST(@v151mpositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151mpt_52="'+ COALESCE(CAST(@v151mpositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152mpt_41="'+ COALESCE(CAST(@v152mpositiontaking_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152mpt_42="'+ COALESCE(CAST(@v152mpositiontaking_42 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152mpt_51="'+ COALESCE(CAST(@v152mpositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152mpt_52="'+ COALESCE(CAST(@v152mpositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153mpt_51="'+ COALESCE(CAST(@v153mpositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153mpt_52="'+ COALESCE(CAST(@v153mpositiontaking_52 AS VARCHAR(50)),SPACE(1)) + 
+	
 	'" />' +
 
 	'<ag apt_1="'+ COALESCE(CAST(@v1apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1841,18 +1402,7 @@ BEGIN
 
 	@str_apt+
 
-	'v151apt_31="'+ COALESCE(CAST(@v151apositiontaking_31 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151apt_32="'+ COALESCE(CAST(@v151apositiontaking_32 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151apt_41="'+ COALESCE(CAST(@v151apositiontaking_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151apt_42="'+ COALESCE(CAST(@v151apositiontaking_42 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151apt_51="'+ COALESCE(CAST(@v151apositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v151apt_52="'+ COALESCE(CAST(@v151apositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152apt_41="'+ COALESCE(CAST(@v152apositiontaking_41 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152apt_42="'+ COALESCE(CAST(@v152apositiontaking_42 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152apt_51="'+ COALESCE(CAST(@v152apositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v152apt_52="'+ COALESCE(CAST(@v152apositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153apt_51="'+ COALESCE(CAST(@v153apositiontaking_51 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v153apt_52="'+ COALESCE(CAST(@v153apositiontaking_52 AS VARCHAR(50)),SPACE(1)) + '" '+
+	
 	 ' />'+
 	'</Acc_Dep_CustomerInsMember_Ag>' 
 

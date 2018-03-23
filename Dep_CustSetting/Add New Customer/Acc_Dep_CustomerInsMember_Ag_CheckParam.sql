@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
 	
 	@recommend int,
 	@MinBetv1 money,
@@ -36,11 +37,7 @@
 	@MinBetv99 money,
 	@MaxBetv99 money,
 	@MaxPerMatchv99 money,
-	
-	@MinBetv154 money,
-	@MaxBetv154 money,
-	@MaxPerMatchv154 money,	
-	
+
 	--Mix Parlay mix sports
 	@MinBetv99MP money,
 	@MaxBetv99MP money,
@@ -104,24 +101,6 @@
 	@v99apositiontaking_9 smallmoney,
 	@v99apositiontaking_20 smallmoney,
 
-	@v154apositiontaking_20 smallmoney,
-	
-	--Racing
-	@v151apositiontaking_31 smallmoney,
-	@v151apositiontaking_32 smallmoney,
-	@v151apositiontaking_41 smallmoney,
-	@v151apositiontaking_42 smallmoney,
-	
-	@v151apositiontaking_51 smallmoney,
-	@v151apositiontaking_52 smallmoney,
-
-	@v152apositiontaking_41 smallmoney,
-	@v152apositiontaking_42 smallmoney,
-	@v152apositiontaking_51 smallmoney,
-	@v152apositiontaking_52 smallmoney,
-
-	@v153apositiontaking_51 smallmoney,
-	@v153apositiontaking_52 smallmoney,
 	
 	@v161apositiontaking_81 smallmoney, 
 	@v161apositiontaking_83 smallmoney, 
@@ -133,12 +112,6 @@
 	@v161alivepositiontaking_89 smallmoney,
 	@v161alivepositiontaking_90 smallmoney,
 
-	@v151discount_31 decimal(9,8),	
-	@v151discount_41 decimal(9,8),
-	@v151discount_51 decimal(9,8),
-	@v152discount_41 decimal(9,8),
-	@v152discount_51 decimal(9,8),
-	@v153discount_51 decimal(9,8),
 
 	@isvalid bit OUTPUT, 
 	@errmsg nvarchar(4000) OUTPUT,
@@ -159,6 +132,7 @@ Revisions:
    - 20130912@Don: Extend value range for Number Game PT from 0.9 to 1
    - 20140505@Florent: Add Sport HRFO
    - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
+   - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 Param's Explanation:
 • @ErrCode:
     = 0: check valid parameters successfully.
@@ -210,9 +184,6 @@ if
 	or @MaxBetv99 <0
 	or @MaxPerMatchv99 <0
 
-	or @MinBetv154 <0
-	or @MaxBetv154 <0
-	or @MaxPerMatchv154 <0
 		
 	--Mix Parlay mix sports
 	or @MinBetv99MP <0
@@ -224,30 +195,6 @@ if
 	or @MaxBetv161 <0
 	or @MaxPerBallv161 < 0
 	or @MaxPerMatchv161 <0
-	
-	--Racing
-	or @v151apositiontaking_31 < 0
-	or @v151apositiontaking_32 < 0
-	or @v151apositiontaking_41 < 0
-	or @v151apositiontaking_42 < 0
-							   
-	or @v151apositiontaking_51 < 0
-	or @v151apositiontaking_52 < 0
-	 						   
-	or @v152apositiontaking_41 < 0
-	or @v152apositiontaking_42 < 0
-	or @v152apositiontaking_51 < 0
-	or @v152apositiontaking_52 < 0
-	 						   
-	or @v153apositiontaking_51 < 0
-	or @v153apositiontaking_52 < 0	
-	
-	or @v151discount_31 < 0
-	or @v151discount_41 < 0
-	or @v151discount_51 < 0
-	or @v152discount_41 < 0
-	or @v152discount_51 < 0
-	or @v153discount_51 < 0
 
 	or @recommend <=0
 	
@@ -312,10 +259,7 @@ if
 	or @v99apositiontaking_3  <0
 	or @v99apositiontaking_9 <0
 	or @v99apositiontaking_20  <0
-	or @v154apositiontaking_20  <0
-	
-	
-	
+
 	or @v161apositiontaking_81 <0
 	or @v161apositiontaking_83 <0
 	or @v161apositiontaking_86 <0
