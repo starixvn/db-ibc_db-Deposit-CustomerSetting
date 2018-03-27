@@ -1,3 +1,4 @@
+/*<info serverAlias="DBEXT-BODB02" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CurrencySel]
 AS
 /*
@@ -9,6 +10,7 @@ AS
 		- 20150918@Francis: Add currency with exchangeid = 13 
 		- 20160315@Winnie: Add MKK
 		- 20170327@Elodie: Add HK$ [Redmine: #74110]
+		- 20180323@Johnson: Exclude list currencies not use [Redmine: #92611]
 */
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from interfering with SELECT statements.
@@ -16,28 +18,6 @@ BEGIN
 
     select exchangeid, code, currency from exchange 
 	where 
-	code not in (select a.code from (select count(code) as b, code from exchange where Code <> '' group by code having count(code)>=2) a)
-	and exchangeid not in (42, 48)
-	union
-	select exchangeid, code, currency from exchange where code = 'USD' and currency = '$US'
-	union
-	select exchangeid, code, currency from exchange where code = 'IDR' and currency = 'IN'
-	union
-	select exchangeid, code, currency from exchange where code = 'JPY' and currency = 'JPY'
-	union
-	select exchangeid, code, currency from exchange where code = 'KRW' and currency = 'Won'
-	union
-	select exchangeid, code, currency from exchange where code = 'THB' and currency = 'THB'
-	union
-	select exchangeid, code, currency from exchange where code = 'THB' and currency = 'TB'
-	union
-	select exchangeid, code, currency from exchange where code = 'USD' and currency = 'US$'
-	union
-	select exchangeid, code, currency from exchange where code = '' and currency = 'UUS'
-	union 
-	select exchangeid, code, currency from exchange where code = 'CNY' and currency = 'RMB' 
-	union   
-	select exchangeid, code, currency from exchange where code = 'MMK' and currency = 'MKK'
-	union   
-	select exchangeid, code, currency from exchange where code = 'HKD' and currency = 'HK$'
+		exchangeid not in (16,17,21,22,27,28,31,33,34,35,36,37,40,42,43,44,47,48,50,62)	
 END
+GO
