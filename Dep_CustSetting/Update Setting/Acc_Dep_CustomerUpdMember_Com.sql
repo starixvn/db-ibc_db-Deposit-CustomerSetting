@@ -273,6 +273,7 @@ Revisions:
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
+	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -285,35 +286,34 @@ Param's Explanation:
 */
 BEGIN
 	----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Sports TABLE (SportType SMALLINT, SportName NVARCHAR(50))
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
-
 	BEGIN TRY
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBAGE.bodb02.dbo.Sports WITH (NOLOCK)		
+		SELECT *
+		INTO #tmp_Sports
+		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
-		INSERT INTO @tmp_Sports (SportType, SportName)
-		SELECT SportType, SportName FROM DBTXN.bodb02.dbo.Sports WITH (NOLOCK)	
-	END CATCH
-
-	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
-	END TRY
-	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
-	END CATCH
+		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Sports
+			INSERT INTO #tmp_Sports
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
+		END
+	END CATCH	
 
 	BEGIN TRY		
-		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBAGE.bodb02.dbo.GameType WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_GameType
+		FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
-		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_GameType') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_GameType
+			INSERT INTO #tmp_GameType
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBTXN')	
+		END
 	END CATCH
 	----- /David @ 09 JUN 2015 -------------------
 
@@ -933,8 +933,8 @@ BEGIN
 
 	-----------------------------------------------Validate Min & Max Bet-------------------------------------------------------------------
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType +  (CASE WHEN MP=0 THEN sportname ELSE 'Mixed Sports' END )       + ', '
-	from @tmp_Sports sports inner join
+	SELECT @ErrType = @ErrType +  (CASE WHEN MP=0 THEN sports.Name ELSE 'Mixed Sports' END )       + ', '
+	from #tmp_Sports sports inner join
 	(
 					SELECT 1 AS sporttype,0 AS MP, @MinBetv1 AS MinBet, @MaxBetv1 AS MaxBet, @MaxPerMatchv1 AS MaxPerMatch
 		UNION all	SELECT 2 AS sporttype,0 AS MP, @MinBetv2 AS MinBet, @MaxBetv2 AS MaxBet, @MaxPerMatchv2 AS MaxPerMatch
@@ -948,7 +948,7 @@ BEGIN
 			 
 		UNION all	SELECT 99 AS sporttype,1 AS MP, @MinBetv99MP AS MinBet, @MaxBetv99MP AS MaxBet, @MaxPerMatchv99MP AS MaxPerMatch	 
 		UNION all	SELECT 161 AS sporttype,0 AS MP, @MinBetv161 AS MinBet, @MaxBetv161 AS MaxBet, @MaxPerMatchv161 AS MaxPerMatch	 
-	) AS b ON sports.sporttype = b.sporttype
+	) AS b ON sports.ID = b.sporttype
 	where (MinBet<>0 AND MaxBet <> 0 AND  MinBet>MaxBet) 
 	OR (MaxBet<> 0 AND MaxPerMatch <> 0 AND MaxBet>MaxPerMatch) 
 	OR (MinBet <> 0 AND MaxPerMatch <> 0 AND MinBet>MaxPerMatch) 
@@ -1289,7 +1289,7 @@ BEGIN
 	update g set g.MinBet = d.MinBet
 		  ,g.MaxBet = d.MaxBet
 		 ,g.MaxPerGameType = d.MaxPerMatch	
-	FROM CustGameType g WITH (ROWLOCK, UPDLOCK) INNER JOIN @tmp_GameType gt on g.GameTypeID=gt.GameTypeID
+	FROM CustGameType g WITH (ROWLOCK, UPDLOCK) INNER JOIN #tmp_GameType gt on g.GameTypeID=gt.ID
 		 INNER JOIN #data d ON d.Bettype=gt.IBCBetTypeID
 	where CustID=@custID 
 	IF (@@error <> 0)

@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_Com]
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_Com]
 	@CustID INT, -- Super ID
 	
 	@v180MaxPerMatch MONEY,
@@ -68,7 +69,7 @@ Revisions:
 	- 20131108@Elodie: Splitting bodb02 into CustDB (call bettype by link database)
 	- 20131231@Francis: Hotfix failing to update settings of new Virtual Sports for an old super
     - 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
-    
+    - 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -78,15 +79,19 @@ Param's Explanation:
 */
  
  ----- David @ 09 JUN 2015 -------------------
-	DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))
-	
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 ----- /David @ 09 JUN 2015 -------------------
 
@@ -106,21 +111,21 @@ SELECT @ErrCode = 0
 
 --Virtual Soccer
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 180 as sporttype, 1201 as bettype, @v180spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 180
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
@@ -270,21 +275,21 @@ END
 
 --Virtual Horse Racing
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 181 as sporttype, 1231 as bettype, @v181spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 181
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
@@ -432,21 +437,21 @@ END
 
 --Virtual Greyhounds
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 182 as sporttype, 1231 as bettype, @v182spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 182
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
@@ -594,21 +599,21 @@ END
 
 --Virtual Speedway
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 183 as sporttype, 1231 as bettype, @v183spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 183
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
@@ -758,21 +763,21 @@ END
 
 --Virtual Motor Racing
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 184 as sporttype, 1231 as bettype, @v184spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 184
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
@@ -920,21 +925,21 @@ END
 
 --Virtual Cycling
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 185 as sporttype, 1231 as bettype, @v185spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 185
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
@@ -1084,21 +1089,21 @@ END
 
 --Virtual Tennis
 select @ErrAcc = ''
-select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.typenamee+', '
+select top 100 @ErrAcc = @ErrAcc + username +', ', @ErrType = @ErrType + t.Name+', '
 from 
 	custinfo as c with (NOLOCK) 
 	inner join Dep_CustSetting3rd as cs with (NOLOCK) on c.custid = cs.custid
 	inner join (
 					select 186 as sporttype, 1220 as bettype, @v186spositiontaking as maxpositiontaking
 		) as b on cs.sporttype=b.sporttype and cs.bettype = b.bettype
-	inner join @tmp_Bettype as t ON t.typeid = b.bettype
+	inner join #tmp_Bettype as t ON t.ID = b.bettype
 where c.srecommend = @custid 
 	AND cs.sporttype = 186
 	AND c.roleid = 3 
 	AND (
 			((cs.spositiontaking+cs.mpositiontaking>b.maxpositiontaking)) or ((cs.mpositiontaking>b.maxpositiontaking))
 		)
-group by username, t.typenamee
+group by username, t.Name
 
 if @ErrAcc<>''
 
