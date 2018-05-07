@@ -159,6 +159,7 @@ AS
 	 - 20170519@Winnie:  support Bonus [Redmine: #72797]
 	 - 20180222@Elodie: Set uGroup = C for all new AE88 RMB members [Redmine: #90965]
 	 - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	 - 20180424@Winnie: [Licensee Settings] - Apply Default Odds Group for Different Sub-Licensees [RedmineID: #93358]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -642,10 +643,12 @@ BEGIN
 	--20141212@Jamie: Set ugroup = a for Alog (USD,GBP) [redmine:#25577]    
 	--20150928@Victor: Set uGroup = C for all new Asiabet88 KRW members [redmine: 44141]
 	-- 20180222@Elodie: Set uGroup = C for all new AE88 RMB members [Redmine: #90965]   
+	-- 20180424@Winnie: Set uGroup = C for all new subsidiary ‘88ps’ RMB and USD members [Redmine: #90965]   
 	SELECT @ugroup = 
 	CASE	WHEN @site = 'Asiabet88' AND  @currency IN (3,6) THEN 'b' 	
 			WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'		
 			WHEN @site = 'Ae88' AND @currency = 13 THEN 'c'	
+			WHEN @site = 'Bobo88' AND @AgentID IN (28031433,28589030) THEN 'c'	
 			ELSE 'a'    
 	END    
 	     
