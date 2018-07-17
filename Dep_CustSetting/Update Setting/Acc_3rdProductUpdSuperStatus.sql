@@ -240,14 +240,8 @@ BEGIN
 			END
 		END
 		
-		IF @ProductID=13
-			EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
-										,@CustID	=@CustID
-										,@UserID	=@UserID
-										,@ErrMsg	=@ErrMsg
-
-		IF @ProductID=25
-			EXEC Acc_CustomerInsDummyTradeCashOut	@ProductID	=@ProductID	
+	
+		EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
 										,@CustID	=@CustID
 										,@UserID	=@UserID
 										,@ErrMsg	=@ErrMsg
