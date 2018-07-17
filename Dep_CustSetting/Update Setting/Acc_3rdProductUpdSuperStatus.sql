@@ -22,6 +22,8 @@ AS
 		- 20151105@Patrick: Support RnG Game & rename field named DisableMicroGame to DisableMicroGameLC
 		- 20160803@Winnie: #61777 BetTrade new commercial term
 		- 20170227@Winnie: Add CashOut [RedmineID: #71727]
+		- 20180717@Winnie: NAP - Enable Cash out: Adjust the setting to reflect 100% profit of Cash Out to group [RedmineID: #90870]
+
 	Param's Explanation:
 */
 BEGIN
@@ -237,12 +239,17 @@ BEGIN
 			END
 		END
 		
-		EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
+		IF @ProductID=13
+			EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
 										,@CustID	=@CustID
 										,@UserID	=@UserID
 										,@ErrMsg	=@ErrMsg
 
-
+		IF @ProductID=25
+			EXEC Acc_CustomerInsDummyTradeCashOut	@ProductID	=@ProductID	
+										,@CustID	=@CustID
+										,@UserID	=@UserID
+										,@ErrMsg	=@ErrMsg
 
 		IF @IsEnable = 0
 			SET @ApplyToMember = 1
