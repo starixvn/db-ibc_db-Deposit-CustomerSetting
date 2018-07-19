@@ -75,10 +75,10 @@ BEGIN
 	SELECT	@ErrCode	    = 0		
 		,	@ErrMsg			= ''
 
-	IF  @ApplyExistedMem=1
+	IF  @ApplyExistedMem=1 AND @AgentID=0 AND @IsAgentOnly=0
 	BEGIN
 		EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
-			@custid = @CustID
+			@custid = @SuperID
 			,@Language = 'E'
 			,@ErrMsg = @ErrMsg OUTPUT
 			,@ErrCode=@ErrCode OUTPUT
@@ -454,7 +454,7 @@ BEGIN
 		IF @ApplyExistedMem=1
 		BEGIN
 			EXEC Acc_Dep_DynamicCustSetting_02
-					@ActionID=3,
+					@ActionID=2,
 					@CustID=@AgentID,
 					@BetLimit=@BetLimit,
 					@ApplyExistedMem=@ApplyExistedMem
