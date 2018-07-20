@@ -1,11 +1,11 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
+ï»¿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
 
-ALTER PROCEDURE dbo.Acc_Dep_CustSetting_BetLimitFullLineUpd 
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitFullLineUpd] 
 	  @SuperID				INT
 	, @BetLimit				VARCHAR(MAX)
-	, @AgentID				INT=0
+	, @AgentID				INT
 	, @IsAgentOnly			BIT
 	, @ApplyExistedMem		BIT=0	
 	, @UserID				INT
@@ -22,7 +22,7 @@ AS
 		- 20170928@Winnie: Insert Settings Into DCS Structure - Redmine: 82346
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 	Param's Explanation:
-	• @BetLimit:
+	ï¿½ @BetLimit:
 		<ROOT>
 				<BetLimit 
 						SportType="1" 
@@ -40,6 +40,7 @@ BEGIN
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
+		, @mrecommend	INT
 		
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
@@ -74,17 +75,6 @@ BEGIN
 
 	SELECT	@ErrCode	    = 0		
 		,	@ErrMsg			= ''
-
-	IF  @ApplyExistedMem=1 AND @AgentID=0 AND @IsAgentOnly=0
-	BEGIN
-		EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
-			@custid = @SuperID
-			,@Language = 'E'
-			,@ErrMsg = @ErrMsg OUTPUT
-			,@ErrCode=@ErrCode OUTPUT
-	END
-	IF @ErrCode <> 0 
-		RETURN 	
 	
 	--Parse XML	
 	DECLARE @iDoc INT
@@ -103,373 +93,163 @@ BEGIN
 			)
 
 	EXEC sp_xml_removedocument @iDoc
-	IF (@AgentID=0 OR @IsAgentOnly=0)
-	BEGIN
-			--get old settings
-		INSERT INTO @OldBetLimitTbl
-		SELECT bl.SportType
-			, bl.BetType
-			, bl.MinBet
-			, bl.MaxBet
-			, bl.MaxPerMatch
-		FROM dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK)
-			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
-			WHERE bl.custid = @SuperID
 
-		-- Select ProductID and SettingLevel
-		SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
-		FROM (	SELECT TOP 1 ps.ProductID, ps.SettingLevel
-				FROM Dep_ProductSettingDetail AS psd WITH(NOLOCK)
-					INNER JOIN	@NewBetLimitTbl AS tmp ON	psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType
-					INNER JOIN Dep_ProductSetting AS ps WITH (NOLOCK) ON ps.ProductSettingID = psd.ProductSettingID
-				WHERE	ps.ProductID IS NOT NULL
-					AND	ps.SettingLevel IS NOT NULL
-					AND ps.SettingType = 2	-- Bet Limit
-			 ) iq
-
-
-		IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
-									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@SuperID)
-		BEGIN
-			EXEC Acc_Dep_DynamicCustSetting_02
-					@ActionID=1,
-					@CustID=@SuperID,
-					@BetLimit=@BetLimit,
-					@ApplyExistedMem=@ApplyExistedMem
-				
-		END
-		ELSE
-		BEGIN
-			EXEC Acc_Dep_DynamicCustSetting_02
-					@ActionID=0,
-					@CustID=@SuperID,
-					@BetLimit=@BetLimit,
-					@ApplyExistedMem=@ApplyExistedMem
-	
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT @SuperID,ProductSettingID
-				FROM Dep_ProductSetting WITH(NOLOCK)
-				WHERE ProductID=@ProductID AND SettingType=2
-		END
-		SELECT @ErrMsg='Update Bet Setting successfully'
-		--START LOGGING
-
-		-- Select ProductName
-		SELECT @ProductName = p.ProductName
-		FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
-			WHERE p.ProductID = @ProductID
-
-		-- Log old data
-		IF @SettingLevel = 1			-- Product setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					NULL							AS '@ApplyExistedMem',
-					(
-						SELECT	@ProductID							AS '@ProductID',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @OldBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		ELSE IF @SettingLevel = 2		-- SportType setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					NULL							AS '@ApplyExistedMem',
-					(
-						SELECT	SportType							AS '@SportType',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @OldBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		ELSE IF @SettingLevel = 3		-- BetType setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',			
-					@IP								AS '@IP',
-					NULL							AS '@ApplyExistedMem',
-					(
-						SELECT	BetType								AS '@BetType',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @OldBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					NULL							AS '@ApplyExistedMem',
-					(
-						SELECT	SportType							AS '@SportType',
-								BetType								AS '@BetType',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @OldBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-
-		-- Log new updated data
-		IF @SettingLevel = 1			-- Product setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					@ApplyExistedMem				AS '@ApplyExistedMem',
-					(
-						SELECT	@ProductID							AS '@ProductID',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @NewBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		ELSE IF @SettingLevel = 2		-- SportType setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',			
-					@IP								AS '@IP',
-					@ApplyExistedMem				AS '@ApplyExistedMem',
-					(
-						SELECT	SportType							AS '@SportType',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @NewBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		ELSE IF @SettingLevel = 3		-- BetType setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					@ApplyExistedMem				AS '@ApplyExistedMem',
-					(
-						SELECT	BetType								AS '@BetType',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @NewBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
-		BEGIN
-			SET @xml = (
-			SELECT	@ProductID						AS '@ProductID',
-					@ProductName					AS '@ProductName',
-					@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',			
-					@IP								AS '@IP',
-					@ApplyExistedMem				AS '@ApplyExistedMem',
-					(
-						SELECT	SportType							AS '@SportType',
-								BetType								AS '@BetType',
-								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
-								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
-								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
-						FROM @NewBetLimitTbl
-						FOR XML PATH('BetLimit'),
-						TYPE
-					)
-			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
-			TYPE
-		)
-		END
-		SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-
-		SELECT @endRun = GETDATE()
-			, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
-
-		BEGIN TRY
-			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-							, @CustID			= @SuperID
-							, @ActionID			= 394
-							, @TrackingValue	= @logSpData
-							, @TrackingValue2	= @logSpData_Old
-							, @duration			= @duration
-		END TRY
-		BEGIN CATCH
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-							, @CustID			= @SuperID
-							, @ActionID			= 394
-							, @TrackingValue	= @logSpData
-							, @TrackingValue2	= @logSpData_Old
-							, @duration			= @duration
-		END CATCH
-	END
-	ELSE IF(@AgentID<>0)
-	BEGIN
 	CREATE TABLE #tempSMA(
 					CustID			INT,
 					SportType		INT ,
 					BetType			INT ,
 					MinBet			MONEY,
 					MaxBet			MONEY,
-					MaxPerMatch		MONEY,
-					mrecommend		INT)
+					MaxPerMatch		MONEY)
+	CREATE TABLE #tempS(
+					CustID			INT,
+					SportType		INT ,
+					BetType			INT ,
+					MinBet			MONEY,
+					MaxBet			MONEY,
+					MaxPerMatch		MONEY)
 				--get old settings
-		INSERT INTO @OldBetLimitTbl
-		SELECT bl.SportType
-			, bl.BetType
-			, bl.MinBet
-			, bl.MaxBet
-			, bl.MaxPerMatch
-		FROM dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK)
-			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
-			WHERE bl.custid = @AgentID
+	INSERT INTO @OldBetLimitTbl
+	SELECT bl.SportType
+		, bl.BetType
+		, bl.MinBet
+		, bl.MaxBet
+		, bl.MaxPerMatch
+	FROM dbo.Dep_CustBetSetting_Agent bl WITH (NOLOCK)
+		INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = bl.sporttype	AND tmp.BetType = bl.bettype
+		WHERE bl.custid = @AgentID
 
-		-- Select ProductID and SettingLevel
-		SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
-		FROM (	SELECT TOP 1 ps.ProductID, ps.SettingLevel
-				FROM Dep_ProductSettingDetail AS psd WITH(NOLOCK)
-					INNER JOIN	@NewBetLimitTbl AS tmp ON	psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType
-					INNER JOIN Dep_ProductSetting AS ps WITH (NOLOCK) ON ps.ProductSettingID = psd.ProductSettingID
-				WHERE	ps.ProductID IS NOT NULL
-					AND	ps.SettingLevel IS NOT NULL
-					AND ps.SettingType = 2	-- Bet Limit
-			 ) iq
+	-- Select ProductID and SettingLevel
+	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
+	FROM (	SELECT TOP 1 ps.ProductID, ps.SettingLevel
+			FROM Dep_ProductSettingDetail AS psd WITH(NOLOCK)
+				INNER JOIN	@NewBetLimitTbl AS tmp ON	psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType
+				INNER JOIN Dep_ProductSetting AS ps WITH (NOLOCK) ON ps.ProductSettingID = psd.ProductSettingID
+			WHERE	ps.ProductID IS NOT NULL
+				AND	ps.SettingLevel IS NOT NULL
+				AND ps.SettingType = 2	-- Bet Limit
+		 ) iq
 
-		IF(@IsAgentOnly=0)
-		BEGIN			
-			INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,mrecommend)
-			SELECT c.CustID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch,c.mrecommend
-			FROM Customer c WITH(NOLOCK)			
-				CROSS APPLY @NewBetLimitTbl s
-			WHERE c.srecommend=@SuperID AND c.roleid IN(2,3,4)
-
-			UPDATE main
-			SET main.minbet			= tmp.MinBet
-				, main.maxbet		= tmp.MaxBet
-				, main.maxpermatch	= tmp.MaxperMatch
-			FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-			WHERE (
-						main.minbet		<> tmp.MinBet
-					OR main.maxbet		<> tmp.MaxBet
-					OR main.maxpermatch <> tmp.MaxperMatch
+	IF(@IsAgentOnly=0)
+	BEGIN		
+		SELECT @mrecommend=mrecommend FROM Customer WITH(NOLOCK) WHERE custid=@AgentID
+			
+		INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		SELECT @SuperID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
+		FROM @NewBetLimitTbl s
+		UNION ALL
+		SELECT @mrecommend,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
+		FROM @NewBetLimitTbl s
+		UNION ALL 
+		SELECT @AgentID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
+		FROM @NewBetLimitTbl s		
+					
+		INSERT INTO #tempS(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		SELECT @SuperID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
+		FROM @NewBetLimitTbl s	
+		
+		IF EXISTS (SELECT TOP 1 1	
+					FROM #tempS tmp	
+						INNER JOIN Customer c WITH(NOLOCK) ON tmp.CustId=c.srecommend
+						INNER JOIN dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK) ON main.CustID=c.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+					WHERE (
+								main.minbet		> tmp.MinBet
+								OR main.maxbet	> tmp.MaxBet
+								OR main.maxpermatch > tmp.MaxperMatch
+							)
 					)
-
-			 DELETE t 
-			 FROM #tempSMA t 
-			 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
-
-			 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-			 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
-			 FROM #tempSMA t
-		END
-		ELSE IF (@IsAgentOnly=1)
 		BEGIN
-			INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,mrecommend)
-			SELECT c.CustID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch,c.mrecommend
-			FROM Customer c WITH(NOLOCK)			
-				CROSS APPLY @NewBetLimitTbl s
-			WHERE c.recommend=@AgentID
-
-			UPDATE main
-			SET main.minbet			= tmp.MinBet
-				, main.maxbet		= tmp.MaxBet
-				, main.maxpermatch	= tmp.MaxperMatch
-			FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-			WHERE (
-						main.minbet		<> tmp.MinBet
-					OR main.maxbet		<> tmp.MaxBet
-					OR main.maxpermatch <> tmp.MaxperMatch
-					)
-
-			 DELETE t 
-			 FROM #tempSMA t 
-			 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
-
-			 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-			 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
-			 FROM #tempSMA t
+			SELECT @ErrCode=100
+			SELECT @ErrMsg='Break rule Bet Setting. Update failed.'
+			RETURN
 		END
-		IF @ApplyExistedMem=1
+		
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+		WHERE (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
+				)
+
+		 DELETE t 
+		 FROM #tempSMA t 
+		 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
+
+		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
+		 FROM #tempSMA t
+		 IF NOT EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@SuperID)
 		BEGIN
-			EXEC Acc_Dep_DynamicCustSetting_02
-					@ActionID=2,
-					@CustID=@AgentID,
-					@BetLimit=@BetLimit,
-					@ApplyExistedMem=@ApplyExistedMem
-				
-		END
-
-		SELECT @ErrMsg='Update Bet Setting successfully'
-		--START LOGGING
-
-		-- Select ProductName
-		SELECT @ProductName = p.ProductName
-		FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
-			WHERE p.ProductID = @ProductID
-
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
+			SELECT @SuperID,ProductSettingID
+			FROM Dep_ProductSetting WITH(NOLOCK)
+			WHERE ProductID=@ProductID AND SettingType=2
+		END					
 	END
+	ELSE IF (@IsAgentOnly=1)
+	BEGIN
+		INSERT INTO #tempS(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		SELECT @SuperID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
+		FROM @NewBetLimitTbl s	
+	
+		IF EXISTS (SELECT TOP 1 1	
+					FROM #tempS c
+						LEFT JOIN dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK) ON main.CustID=c.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+					WHERE c.CustID IS NULL
+					)
+		BEGIN
+			SELECT @ErrCode=100
+			SELECT @ErrMsg='Break rule Bet Setting. Update failed.'
+			RETURN
+		END
+	
+		INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		SELECT @AgentID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
+		FROM @NewBetLimitTbl s
+	
+		UPDATE main
+		SET main.minbet			= tmp.MinBet
+			, main.maxbet		= tmp.MaxBet
+			, main.maxpermatch	= tmp.MaxperMatch
+		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+		WHERE (
+					main.minbet		<> tmp.MinBet
+				OR main.maxbet		<> tmp.MaxBet
+				OR main.maxpermatch <> tmp.MaxperMatch
+				)
+
+		 DELETE t 
+		 FROM #tempSMA t 
+		 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
+
+		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
+		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
+		 FROM #tempSMA t
+	END
+	IF @ApplyExistedMem=1
+	BEGIN
+		EXEC Acc_Dep_DynamicCustSetting_02
+				@ActionID=0,
+				@CustID=@AgentID,
+				@BetLimit=@BetLimit,
+				@ApplyExistedMem=@ApplyExistedMem		
+	END
+
+	SELECT @ErrMsg='Update Bet Setting successfully'
+	--START LOGGING
+
+	-- Select ProductName
+	SELECT @ProductName = p.ProductName
+	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
+		WHERE p.ProductID = @ProductID
+
 END
 
 
