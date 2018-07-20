@@ -19,6 +19,7 @@ AS
 	Original:
 	Revisions:
 		- 20171009@Winnie: select status of DCS product RedmineID:#82346
+		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 	Param's Explanation:
 */
 BEGIN

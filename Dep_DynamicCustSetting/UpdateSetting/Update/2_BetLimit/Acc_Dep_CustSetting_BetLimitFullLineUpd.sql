@@ -101,13 +101,7 @@ BEGIN
 					MinBet			MONEY,
 					MaxBet			MONEY,
 					MaxPerMatch		MONEY)
-	CREATE TABLE #tempS(
-					CustID			INT,
-					SportType		INT ,
-					BetType			INT ,
-					MinBet			MONEY,
-					MaxBet			MONEY,
-					MaxPerMatch		MONEY)
+
 				--get old settings
 	INSERT INTO @OldBetLimitTbl
 	SELECT bl.SportType
@@ -143,27 +137,7 @@ BEGIN
 		UNION ALL 
 		SELECT @AgentID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
 		FROM @NewBetLimitTbl s		
-					
-		INSERT INTO #tempS(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-		SELECT @SuperID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
-		FROM @NewBetLimitTbl s	
-		
-		IF EXISTS (SELECT TOP 1 1	
-					FROM #tempS tmp	
-						INNER JOIN Customer c WITH(NOLOCK) ON tmp.CustId=c.srecommend
-						INNER JOIN dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK) ON main.CustID=c.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-					WHERE (
-								main.minbet		> tmp.MinBet
-								OR main.maxbet	> tmp.MaxBet
-								OR main.maxpermatch > tmp.MaxperMatch
-							)
-					)
-		BEGIN
-			SELECT @ErrCode=100
-			SELECT @ErrMsg='Break rule Bet Setting. Update failed.'
-			RETURN
-		END
-		
+
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
@@ -194,20 +168,6 @@ BEGIN
 	END
 	ELSE IF (@IsAgentOnly=1)
 	BEGIN
-		INSERT INTO #tempS(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-		SELECT @SuperID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
-		FROM @NewBetLimitTbl s	
-	
-		IF EXISTS (SELECT TOP 1 1	
-					FROM #tempS c
-						LEFT JOIN dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK) ON main.CustID=c.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-					WHERE c.CustID IS NULL
-					)
-		BEGIN
-			SELECT @ErrCode=100
-			SELECT @ErrMsg='Break rule Bet Setting. Update failed.'
-			RETURN
-		END
 	
 		INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
 		SELECT @AgentID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
