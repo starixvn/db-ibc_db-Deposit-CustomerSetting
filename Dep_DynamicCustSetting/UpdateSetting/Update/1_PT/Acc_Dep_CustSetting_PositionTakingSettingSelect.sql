@@ -9,7 +9,7 @@ AS
 	DB: DBCUST/CustDB
 	Original:
 	Revision:
-		
+		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 	Param's Explanation:
 	
 	*/
@@ -28,13 +28,13 @@ BEGIN
 			WHERE CustID=@CustID  )
 	BEGIN
 	
-			SELECT  SuperPT 
+			SELECT  AgentPT 
 			FROM 	#SportBettypeFilter ft 
 			INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype AND ft.IsLive=bl.IsLive
 			WHERE CustID=@CustID  
 	END
 	ELSE
-			SELECT 0 AS SuperPT 
+			SELECT 0 AS AgentPT 
 END
 
 
