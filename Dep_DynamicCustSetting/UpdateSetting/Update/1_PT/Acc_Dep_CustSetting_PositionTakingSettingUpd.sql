@@ -97,7 +97,7 @@ BEGIN
 				INNER JOIN #SportBettypeFilter t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType
 		 ELSE
 			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-			SELECT @mrecommend,SportType,BetType,IsLive,@PT,@PT,@PT
+			SELECT @mrecommend,SportType,BetType,IsLive,0,@PT,0
 			FROM #SportBettypeFilter t
 
 		IF NOT EXISTS (SELECT TOP 1 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
@@ -108,17 +108,17 @@ BEGIN
 	IF EXISTS (SELECT TOP 1 1 FROM 	#SportBettypeFilter ft 
 								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 									WHERE CustID=@AgentID)
-			UPDATE a
-				SET
-					 SuperPT  = 0
-					,MasterPT = @PT
-					,AgentPT  = 0
-			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #SportBettypeFilter t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType
+		UPDATE a
+			SET
+				 SuperPT  = 0
+				,MasterPT = 0
+				,AgentPT  = @PT
+		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #SportBettypeFilter t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType
 	ELSE
-			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-			SELECT @AgentID,SportType,BetType,IsLive,@PT,@PT,@PT
-			FROM #SportBettypeFilter t
+		INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+		SELECT @AgentID,SportType,BetType,IsLive,0,0,@PT
+		FROM #SportBettypeFilter t
 	
 	EXEC Acc_Dep_DynamicCustSetting_01
 	@ActionID=0,
