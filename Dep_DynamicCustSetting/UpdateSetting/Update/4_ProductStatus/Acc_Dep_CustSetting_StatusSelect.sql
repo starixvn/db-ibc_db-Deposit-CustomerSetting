@@ -26,7 +26,7 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE  @IsDisabled			BIT = 1 
 			 ,@IsDisabledDownline	BIT = 1
-			 ,@IsDisabledUpline		BIT = 1
+			 ,@IsDisabledUpline		BIT = 0
 			 ,@HasDownline			BIT = 0 
 			 ,@bitmapOrder			TINYINT=0
 			 ,@SportType			INT=0
