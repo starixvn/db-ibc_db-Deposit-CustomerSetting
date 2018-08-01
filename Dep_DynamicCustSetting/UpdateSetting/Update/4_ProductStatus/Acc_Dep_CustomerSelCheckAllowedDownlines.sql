@@ -13,7 +13,7 @@ DB: DBCUST/CUSTDB
 Original SP:           
   
 Revisions:         
-  
+  -20180801@Winnie: Create SP
 Param's Explanation:  
    
 */    
@@ -26,7 +26,7 @@ BEGIN
   @LimitDownlines INT,    
   @TotalDownlines INT    
      
- SET @LimitDownlinesMin = 40000   --comment to test  
+ SET @LimitDownlinesMin = 40000   
  SET @LimitDownlinesMax = 100000
 
  --GET TOTALDOWNLINE    
