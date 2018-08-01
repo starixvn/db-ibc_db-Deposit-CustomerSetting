@@ -210,6 +210,224 @@ BEGIN
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 		WHERE p.ProductID = @ProductID
 
+	-- Log old data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					NULL							AS '@IsAgentOnly',
+					NULL							AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	@ProductID							AS '@ProductID',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @OldBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					NULL							AS '@IsAgentOnly',
+					NULL							AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	SportType							AS '@SportType',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @OldBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',			
+					@IP								AS '@IP',
+					NULL							AS '@IsAgentOnly',
+					NULL							AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	BetType								AS '@BetType',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @OldBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					NULL							AS '@IsAgentOnly',
+					NULL							AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	SportType							AS '@SportType',
+								BetType								AS '@BetType',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @OldBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+		-- Log new updated data
+		IF @SettingLevel = 1			-- Product setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					@IsAgentOnly					AS '@IsAgentOnly',
+					@ApplyExistedMem				AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	@ProductID							AS '@ProductID',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @NewBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 2		-- SportType setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',			
+					@IP								AS '@IP',
+					@IsAgentOnly					AS '@IsAgentOnly',
+					@ApplyExistedMem				AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	SportType							AS '@SportType',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @NewBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 3		-- BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					@IsAgentOnly					AS '@IsAgentOnly',
+					@ApplyExistedMem				AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	BetType								AS '@BetType',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @NewBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		ELSE IF @SettingLevel = 4		-- SportType BetType setting level
+		BEGIN
+			SET @xml = (
+			SELECT	@ProductID						AS '@ProductID',
+					@ProductName					AS '@ProductName',
+					@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',			
+					@IP								AS '@IP',
+					@IsAgentOnly					AS '@IsAgentOnly',
+					@ApplyExistedMem				AS '@ApplyExistedMem',
+					@AgentID						AS '@AgentID',
+					(
+						SELECT	SportType							AS '@SportType',
+								BetType								AS '@BetType',
+								CONVERT(DECIMAL(20,2), MinBet)		AS '@MinBet',
+								CONVERT(DECIMAL(20,2), MaxBet)		AS '@MaxBet',
+								CONVERT(DECIMAL(20,2), MaxPerMatch)	AS '@MaxPerMatch'
+						FROM @NewBetLimitTbl
+						FOR XML PATH('BetLimit'),
+						TYPE
+					)
+			FOR XML PATH('Acc_Dep_CustSetting_BetLimitFullLineUpd'),
+			TYPE
+		)
+		END
+		SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+		SELECT @endRun = GETDATE()
+			, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
+
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+							, @CustID			= @SuperID
+							, @ActionID			= 394
+							, @TrackingValue	= @logSpData
+							, @TrackingValue2	= @logSpData_Old
+							, @duration			= @duration
+		END TRY
+		BEGIN CATCH
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
+							, @CustID			= @SuperID
+							, @ActionID			= 394
+							, @TrackingValue	= @logSpData
+							, @TrackingValue2	= @logSpData_Old
+							, @duration			= @duration
+		END CATCH
 END
 
 

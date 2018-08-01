@@ -42,7 +42,12 @@ BEGIN
 
 	SELECT	@ErrCode	= 0
 		,	@ErrMsg			= ''
-
+	
+	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
+	 @custid = @AgentID
+	,@Language = 'E'
+	,@ErrMsg = @ErrMsg OUTPUT
+	,@ErrCode= @ErrCode OUTPUT
 
 	IF @ErrCode <> 0 
 		RETURN 
@@ -136,6 +141,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -154,6 +161,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -173,6 +182,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -192,6 +203,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -215,6 +228,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -233,6 +248,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -252,6 +269,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -271,6 +290,8 @@ BEGIN
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
 				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',			
 				@IP								AS '@IP',
 				(
