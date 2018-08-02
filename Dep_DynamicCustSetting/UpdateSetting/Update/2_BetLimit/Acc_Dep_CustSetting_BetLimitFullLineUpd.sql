@@ -75,6 +75,16 @@ BEGIN
 
 	SELECT	@ErrCode	    = 0		
 		,	@ErrMsg			= ''
+
+		
+	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
+	 @custid = @AgentID
+	,@Language = 'E'
+	,@ErrMsg = @ErrMsg OUTPUT
+	,@ErrCode= @ErrCode OUTPUT
+	
+	IF @ErrCode <> 0 
+		RETURN 
 	
 	--Parse XML	
 	DECLARE @iDoc INT
