@@ -24,17 +24,26 @@ BEGIN
  DECLARE @LimitDownlinesMin INT,   --Peak hours  
   @LimitDownlinesMax INT,    -- Normal   
   @LimitDownlines INT,    
-  @TotalDownlines INT    
+  @TotalDownlines INT,
+  @RoleID		  INT   
      
  SET @LimitDownlinesMin = 40000   
  SET @LimitDownlinesMax = 100000
 
  --GET TOTALDOWNLINE    
  SET @TotalDownlines=1    
-       
- SELECT  @TotalDownlines = count(1)     
- FROM Custinfo WITH (NOLOCK)    
- WHERE srecommend=@custID     
+
+ SELECT @RoleID=RoleID FROM Customer WITH(NOLOCK) WHERE Custid=@custid
+ 
+ IF(@RoleID=4)     
+	 SELECT  @TotalDownlines = count(1)     
+	 FROM Custinfo WITH (NOLOCK)    
+	 WHERE srecommend=@custID     
+ 
+ IF(@RoleID=2)     
+	 SELECT  @TotalDownlines = count(1)     
+	 FROM Custinfo WITH (NOLOCK)    
+	 WHERE recommend=@custID     
         
  SELECT  @LimitDownlines = CASE  WHEN  datename(weekday, getdate()) in ('Saturday','Sunday' ) and 
            datepart(hour, getdate()) between 7 and  14 --Weekend's peak hour, from 7PM - 2AM (GMT+8)    

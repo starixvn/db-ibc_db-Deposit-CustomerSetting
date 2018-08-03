@@ -43,6 +43,7 @@ BEGIN
 
 	IF @RoleID=4
 	BEGIN
+
 		IF EXISTS(SELECT TOP 1 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
 			SELECT @HasDownline=1			
 
@@ -109,6 +110,7 @@ BEGIN
 	
 	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@bitmapOrder AS bitmapOrder,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline,@IsDisabledUpline AS IsDisabledUpline
 END
+
 
 GO
 
