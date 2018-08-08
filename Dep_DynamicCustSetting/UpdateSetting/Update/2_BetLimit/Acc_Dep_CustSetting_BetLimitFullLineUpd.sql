@@ -168,8 +168,8 @@ BEGIN
 
 		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
 		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
-		 FROM #tempSMA t		 		
-	END
+		 FROM #tempSMA t
+
 	
 	IF @ApplyExistedMem=1
 	BEGIN
