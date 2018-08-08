@@ -44,10 +44,10 @@ BEGIN
 	IF @RoleID=4
 	BEGIN
 
-		IF EXISTS(SELECT TOP 1 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
+		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
 			SELECT @HasDownline=1			
 
-		IF EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+		IF EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 										INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
 									WHERE ProductID=@ProductID AND SettingType =4 AND CustID=@CustID)	
 		BEGIN	
@@ -59,7 +59,7 @@ BEGIN
 			IF	@HasDownline<>0
 			BEGIN
 				IF EXISTS (
-					SELECT TOP 1 1													
+					SELECT  1													
 					FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 						INNER JOIN Customer b WITH(NOLOCK)	ON stt.CustID = b.CustID
 					WHERE b.srecommend=@CustID AND b.roleid=1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 
@@ -73,7 +73,7 @@ BEGIN
 	END
 	ELSE 
 	BEGIN
-		IF EXISTS(SELECT TOP 1 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.recommend= @CustID	AND s.Roleid=1)
+		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.recommend= @CustID	AND s.Roleid=1)
 			SELECT @HasDownline=1	
 		
 		SELECT @IsDisabledUpline=ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder)),1)	
@@ -93,7 +93,7 @@ BEGIN
 		IF	@HasDownline<>0
 		BEGIN
 			IF EXISTS (
-				SELECT TOP 1 1													
+				SELECT  1													
 				FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 					INNER JOIN Customer b WITH(NOLOCK)	ON stt.CustID = b.CustID
 				WHERE b.recommend=@CustID AND b.roleid=1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 

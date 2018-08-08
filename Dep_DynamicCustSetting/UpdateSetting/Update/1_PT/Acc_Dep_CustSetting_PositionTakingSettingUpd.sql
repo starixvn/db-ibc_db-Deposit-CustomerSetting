@@ -75,7 +75,7 @@ BEGIN
 
 	IF(@IsAgentOnly=0)
 	BEGIN
-		IF EXISTS (SELECT TOP 1 1 FROM 	#SportBettypeFilter ft 
+		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
 									INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 										WHERE CustID=@SuperID)
 			UPDATE a
@@ -90,7 +90,7 @@ BEGIN
 			SELECT @SuperID,SportType,BetType,IsLive,@PT,@PT,@PT
 			FROM #SportBettypeFilter t
 
-		IF EXISTS (SELECT TOP 1 1 FROM 	#SportBettypeFilter ft 
+		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
 								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 									WHERE CustID=@mrecommend)
 			UPDATE a
@@ -105,12 +105,12 @@ BEGIN
 			SELECT @mrecommend,SportType,BetType,IsLive,0,@PT,0
 			FROM #SportBettypeFilter t
 
-		IF NOT EXISTS (SELECT TOP 1 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
+		IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
 			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 			VALUES( @SuperID,@ProductSettingID)	
 	END
 
-	IF EXISTS (SELECT TOP 1 1 FROM 	#SportBettypeFilter ft 
+	IF EXISTS (SELECT  1 FROM 	#SportBettypeFilter ft 
 								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 									WHERE CustID=@AgentID)
 		UPDATE a

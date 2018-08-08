@@ -178,7 +178,7 @@ BEGIN
 				@ApplyExistedMem=@ApplyExistedMem		
 	END
 
-	IF NOT EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+	IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@SuperID)
 		BEGIN
 			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
