@@ -125,8 +125,7 @@ BEGIN
 		SELECT @AgentID,SportType,BetType,IsLive,0,0,@PT
 		FROM #SportBettypeFilter t
 	
-	EXEC Acc_Dep_DynamicCustSetting_01
-	@ActionID=0,
+	EXEC Acc_Dep_DynamicCustSetting_01	
 	@CustID=@AgentID,
 	@PT=@PT,					
 	@ProductID=@ProductID	

@@ -137,22 +137,24 @@ BEGIN
 	IF(@IsAgentOnly=0)
 	BEGIN		
 		SELECT @mrecommend=mrecommend FROM Customer WITH(NOLOCK) WHERE custid=@AgentID
-			
+					
 		INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
 		SELECT @SuperID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
 		FROM @NewBetLimitTbl s
 		UNION ALL
 		SELECT @mrecommend,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
 		FROM @NewBetLimitTbl s
-		UNION ALL 
+
+	END
+		INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
 		SELECT @AgentID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
-		FROM @NewBetLimitTbl s		
+		FROM @NewBetLimitTbl s
 
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
-		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
+		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK)
 			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE (
 					main.minbet		<> tmp.MinBet
@@ -166,51 +168,25 @@ BEGIN
 
 		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
 		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
-		 FROM #tempSMA t
-		 IF NOT EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+		 FROM #tempSMA t		 		
+	END
+	
+	IF @ApplyExistedMem=1
+	BEGIN
+		EXEC Acc_Dep_DynamicCustSetting_02				
+				@CustID=@AgentID,
+				@BetLimit=@BetLimit,
+				@ApplyExistedMem=@ApplyExistedMem		
+	END
+
+	IF NOT EXISTS (SELECT TOP 1 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType =2 AND CustID=@SuperID)
 		BEGIN
 			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 			SELECT @SuperID,ProductSettingID
 			FROM Dep_ProductSetting WITH(NOLOCK)
 			WHERE ProductID=@ProductID AND SettingType=2
-		END					
-	END
-	ELSE IF (@IsAgentOnly=1)
-	BEGIN
-	
-		INSERT INTO #tempSMA(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-		SELECT @AgentID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch
-		FROM @NewBetLimitTbl s
-	
-		UPDATE main
-		SET main.minbet			= tmp.MinBet
-			, main.maxbet		= tmp.MaxBet
-			, main.maxpermatch	= tmp.MaxperMatch
-		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
-		WHERE (
-					main.minbet		<> tmp.MinBet
-				OR main.maxbet		<> tmp.MaxBet
-				OR main.maxpermatch <> tmp.MaxperMatch
-				)
-
-		 DELETE t 
-		 FROM #tempSMA t 
-		 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
-
-		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
-		 FROM #tempSMA t
-	END
-	IF @ApplyExistedMem=1
-	BEGIN
-		EXEC Acc_Dep_DynamicCustSetting_02
-				@ActionID=0,
-				@CustID=@AgentID,
-				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem		
-	END
+		END			
 
 	SELECT @ErrMsg='Update Bet Setting successfully'
 	--START LOGGING
