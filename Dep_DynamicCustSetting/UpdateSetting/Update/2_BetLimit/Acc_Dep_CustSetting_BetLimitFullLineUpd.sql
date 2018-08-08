@@ -64,8 +64,7 @@ BEGIN
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
-	CREATE TABLE #tmpAgent (AgentID INT PRIMARY KEY)
-
+	
 	--Check if XML is null or empty
 	IF @BetLimit IS NULL
 		OR @BetLimit = ''
