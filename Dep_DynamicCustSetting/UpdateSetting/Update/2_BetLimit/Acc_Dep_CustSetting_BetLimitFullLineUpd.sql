@@ -174,8 +174,7 @@ BEGIN
 	BEGIN
 		EXEC Acc_Dep_DynamicCustSetting_02				
 				@CustID=@AgentID,
-				@BetLimit=@BetLimit,
-				@ApplyExistedMem=@ApplyExistedMem		
+				@BetLimit=@BetLimit
 	END
 
 	IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
