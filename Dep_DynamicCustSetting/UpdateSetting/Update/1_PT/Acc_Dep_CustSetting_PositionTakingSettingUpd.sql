@@ -73,6 +73,9 @@ BEGIN
 			INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
 			WHERE CustID=@AgentID  
 
+	IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
+		SELECT @IsAgentOnly=0
+
 	IF(@IsAgentOnly=0)
 	BEGIN
 		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
