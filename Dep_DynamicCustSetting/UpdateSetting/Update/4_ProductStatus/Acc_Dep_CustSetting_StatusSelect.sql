@@ -26,7 +26,7 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE  @IsDisabled			BIT = 1 
 			 ,@IsDisabledDownline	BIT = 1
-			 ,@IsDisabledUpline		BIT = 0
+			 ,@IsDisabledUpline		BIT = 1
 			 ,@HasDownline			BIT = 0 
 			 ,@bitmapOrder			TINYINT=0
 			 ,@SportType			INT=0
@@ -43,7 +43,7 @@ BEGIN
 
 	IF @RoleID=4
 	BEGIN
-
+		SELECT @IsDisabledUpline=0
 		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
 			SELECT @HasDownline=1			
 
@@ -73,9 +73,10 @@ BEGIN
 	END
 	ELSE 
 	BEGIN
-		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.recommend= @CustID	AND s.Roleid=1)
+		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK) WHERE s.recommend= @CustID	AND s.Roleid=1)
 			SELECT @HasDownline=1	
 		
+		print @bitmapOrder
 		SELECT @IsDisabledUpline=ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder)),1)	
 		FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 		WHERE stt.CustID = @srecommend	
@@ -96,11 +97,13 @@ BEGIN
 				SELECT  1													
 				FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 					INNER JOIN Customer b WITH(NOLOCK)	ON stt.CustID = b.CustID
-				WHERE b.recommend=@CustID AND b.roleid=1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 
-			BEGIN			
+				WHERE b.recommend=@CustID AND b.roleid=1 AND (SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder))=1) 				
+			BEGIN						
 				SELECT @IsDisabledDownline = 1
 			END
-			ELSE
+			ELSE IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	
+							INNER JOIN Dep_CustProductStatus cs WITH(NOLOCK) ON s.custid=cs.CustID
+								WHERE s.recommend= @CustID	AND s.Roleid=1)
 			BEGIN				
 				SELECT @IsDisabledDownline = 0		
 			END
@@ -110,6 +113,7 @@ BEGIN
 	
 	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@bitmapOrder AS bitmapOrder,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline,@IsDisabledUpline AS IsDisabledUpline
 END
+
 
 
 GO
