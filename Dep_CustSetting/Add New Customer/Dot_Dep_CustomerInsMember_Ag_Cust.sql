@@ -162,6 +162,7 @@ AS
 	 - 20180424@Winnie: [Licensee Settings] - Apply Default Odds Group for Different Sub-Licensees [RedmineID: #93358]
 	 - 20180529@Winnie: Set uGroup = B for all new AE88 RMB members [Redmine: #95986]
 	 - 20180725@Winnie: Bobo88 - Set default odds group for different Sub-Licensee_88ps. Change from C to A [Redmine: #98885]
+	 - 20180809@Sophia: HA - remove SP Lrf_CustomerInfoIns [Redmine: #99464]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -1785,13 +1786,6 @@ BEGIN
 	END    
 	*/    
 	          
-	--Copy Customer Info to DBLIC.bodb_Licensee.dbo.LicenseeCustinfo    
-	EXEC DBLIC.bodb_Licensee.dbo.Lrf_CustomerInfoIns    
-	 @CustID = @CustID,    
-	 @Recommend = @AgentID,    
-	 @Username = @Username,    
-	 @Username2=@DepositUserName,    
-	 @Currency = @currency    
 	     
 	    
 	IF @AffiliateID is not NULL    
@@ -1806,16 +1800,8 @@ BEGIN
 	 @Currency = @currency,    
 	 @Recommend = @recommend,    
 	 @Email = @Email    
-	/*    
-	    
-	--Copy Customer Info to DBLIC.bodb_Licensee.dbo.LicenseeCustinfo    
-	EXEC DBLIC.bodb_Licensee.dbo.Lrf_CustomerInfoIns    
-	 @CustID = @CustID,    
-	 @Recommend = @AgentID,    
-	 @Username = @Username,    
-	 @Username2=@DepositUserName,    
-	 @Currency = @currency    
-	*/    
+	
+	
 	    
 	--Set default player comm    
 	EXEC DBLIC.bodb_Licensee.dbo.Lrf_CustomerSetDefaultComm    
