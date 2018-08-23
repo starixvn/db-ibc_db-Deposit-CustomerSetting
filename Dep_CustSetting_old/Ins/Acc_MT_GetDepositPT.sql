@@ -1,10 +1,4 @@
-USE CustDB
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_MT_GetKenoPT]    Script Date: 6/12/2015 4:03:58 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_MT_GetDepositPT]
     @username  varchar(50),  
     @Sporttype int = 203,
@@ -20,12 +14,13 @@ AS
 
   Revisions:
   -- 20150917@Winnie: Add AGCasino
+  -- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
   Parameters Explanation:
  */
 SET NOCOUNT ON
 IF @Sporttype=250
 SELECT @Bettype=1801
-DECLARE @tmp_Bettype TABLE (TypeID INT, TypeNamee NVARCHAR(50))	
+
 declare @roleid int,
         @custid int,
         @srecommend int,
@@ -34,8 +29,8 @@ declare @roleid int,
         @SAg varchar(50),
         @MAg varchar(50),
         @Ag varchar(50),
-		@sportname varchar(50),
-        @typename varchar(50),
+		@sportname varchar(500),
+        @typename varchar(500),
 		@s4 smallmoney, @m4 smallmoney, @a4 smallmoney, @n4 smallmoney, @l4 smallmoney,
         @s3 smallmoney, @m3 smallmoney, @a3 smallmoney, @n3 smallmoney, @l3 smallmoney,
         @s2 smallmoney ,@m2 smallmoney, @a2 smallmoney, @n2 smallmoney, @l2 smallmoney,
@@ -49,12 +44,18 @@ declare @roleid int,
 	END CATCH
 
 	BEGIN TRY			
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBAGE.bodb02.dbo.Bettype WITH (NOLOCK)
+		SELECT *
+		INTO #tmp_Bettype
+		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
-		INSERT INTO @tmp_Bettype (TypeID, TypeNamee)
-		SELECT TypeID, TypeNamee FROM DBTXN.bodb02.dbo.Bettype WITH (NOLOCK)
+		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
+		BEGIN
+			TRUNCATE TABLE #tmp_Bettype
+			INSERT INTO #tmp_Bettype
+			SELECT *
+			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
+		END
 	END CATCH
 
 	
@@ -90,7 +91,7 @@ select @custid CustID,
        @Ag Ag
 IF @Bettype!=0
 BEGIN
-	SELECT @typename=typenamee FROM @tmp_Bettype WHERE TypeID=@Bettype
+	SELECT @typename=Name FROM #tmp_Bettype WHERE ID=@Bettype
  SELECT
  @s4=su.[spositiontaking],@m4=su.[mpositiontaking],@a4=su.[apositiontaking],@n4=0 ,@l4=p.[MaxPositiontaking]
  FROM Dep_CustSettingGame  su WITH(NOLOCK) 
@@ -124,7 +125,7 @@ END
 ELSE -- bettype=0
 BEGIN
 SELECT @Bettype=2001
-SELECT @typename=typenamee FROM @tmp_Bettype WHERE TypeID=@Bettype
+SELECT @typename=Name FROM #tmp_Bettype WHERE ID=@Bettype
  SELECT 
  @s4=su.[spositiontaking],@m4=su.[mpositiontaking],@a4=su.[apositiontaking],@n4=0 ,@l4=p.[MaxPositiontaking]
  FROM Dep_CustSettingGame  su WITH(NOLOCK) 
@@ -156,7 +157,7 @@ SELECT @typename=typenamee FROM @tmp_Bettype WHERE TypeID=@Bettype
                 @s1 As s1, @m1 AS m1, @a1 AS a1, @n1 AS n1, @l1 As l1 INTO #temp
 
 SELECT @Bettype=2005
-SELECT @typename=typenamee FROM @tmp_Bettype WHERE TypeID=@Bettype
+SELECT @typename=Name FROM #tmp_Bettype WHERE ID=@Bettype
  SELECT 
  @s4=su.[spositiontaking],@m4=su.[mpositiontaking],@a4=su.[apositiontaking],@n4=0 ,@l4=p.[MaxPositiontaking]
  FROM Dep_CustSettingGame  su WITH(NOLOCK) 
