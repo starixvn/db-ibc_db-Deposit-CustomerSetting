@@ -11,6 +11,7 @@ AS
 	DB: DBCUST.CustDB
 	Original: 
 	Revisions:	
+		--20180912@Chris: Change where condition
 	Param's Explanation:  
 	  + @Site		: licensee site name  
 	  +	@Currency	:
@@ -31,7 +32,7 @@ BEGIN
 	INNER JOIN #supers s WITH (NOLOCK) ON s.custid = c.srecommend
 	WHERE c.roleid = 2
 	AND mrecommend NOT IN (SELECT custid FROM dbo.Customer WITH(NOLOCK)
-							   WHERE srecommend in (select custid from #supers) and username like '%Acc%' and roleid=3)
+							   WHERE srecommend in (select custid from #supers) and (username like '%Acc%' or username like '%AFF%') and roleid=3)
 	ORDER BY c.currency, c.custid
 
 	DROP TABLE #supers
