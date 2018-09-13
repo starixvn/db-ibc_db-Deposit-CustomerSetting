@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" executers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Licensee_GetDummy]
 	(
       @Site NVARCHAR(100) = NULL,
