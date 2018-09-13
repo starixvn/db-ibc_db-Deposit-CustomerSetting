@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" executers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Licensee_GetAgent]
 	(	
       @Site NVARCHAR(100) = NULL,
@@ -12,6 +12,7 @@ AS
 	Original: 
 	Revisions:	
 		--20180912@Chris: Change where condition
+		--20180913@Chris: Add permission
 	Param's Explanation:  
 	  + @Site		: licensee site name  
 	  +	@Currency	:
