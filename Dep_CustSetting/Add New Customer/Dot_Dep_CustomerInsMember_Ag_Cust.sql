@@ -163,6 +163,7 @@ AS
 	 - 20180529@Winnie: Set uGroup = B for all new AE88 RMB members [Redmine: #95986]
 	 - 20180725@Winnie: Bobo88 - Set default odds group for different Sub-Licensee_88ps. Change from C to A [Redmine: #98885]
 	 - 20180809@Sophia: HA - remove SP Lrf_CustomerInfoIns [Redmine: #99464]
+	 - 20180524@Winnie: [Licensee Settings] - Apply Default Odds Group for Different Sub-Licensees Change to use new table [RedmineID: #93358]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -646,12 +647,15 @@ BEGIN
 	--20141212@Jamie: Set ugroup = a for Alog (USD,GBP) [redmine:#25577]    
 	--20150928@Victor: Set uGroup = C for all new Asiabet88 KRW members [redmine: 44141]
 	-- 20180222@Elodie: Set uGroup = C for all new AE88 RMB members [Redmine: #90965]  
-	SELECT @ugroup = 
+	/*SELECT @ugroup = 
 	CASE	WHEN @site = 'Asiabet88' AND  @currency IN (3,6) THEN 'b' 	
 			WHEN @site = 'Asiabet88' AND @currency = 45 THEN 'c'		
 			WHEN @site = 'Ae88' AND @currency = 13 THEN 'b'			
 			ELSE 'a'    
-	END    
+	END*/
+
+	IF EXISTS (SELECT TOP 1 1 FROM Dep_DefaultOddGroup WITH(NOLOCK) WHERE AgentID=@AgentID AND IsActive=1)
+		SELECT @ugroup = Ugroup FROM Dep_DefaultOddGroup WITH(NOLOCK) WHERE AgentID=@AgentID AND IsActive=1
 	     
 	--Will check the usergroup here    
 	--MinBet, MaxBet, Commission get from CA Agent    
