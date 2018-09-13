@@ -12,6 +12,7 @@ AS
 	Original: 
 	Revisions:	
 		--20180912@Chris: Change where condition
+		--20180913@Chris: Add permission
 	Param's Explanation:  
 	  + @Site		: licensee site name  
 	  +	@Currency	:

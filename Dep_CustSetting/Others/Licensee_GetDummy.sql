@@ -12,6 +12,7 @@ AS
 	DB: DBCUST.CustDB
 	Original: 
 	Revisions:	
+		--20180913@Chris: Add permission
 	Param's Explanation:  
 	  + @Site		: licensee site name  
 	  +	@Currency	:
