@@ -21,6 +21,7 @@ AS
 	Original:
 	Revisions:
 		- 20171107@Winnie: select status of DCS product RedmineID:#85133
+		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
 	Param's Explanation:
 */
 BEGIN
@@ -31,7 +32,7 @@ CREATE TABLE #tempAgentStakeLevel (Sporttype INT, bettype INT,StakeLevelID INT,P
 CREATE TABLE #tempStakeLevel (Sporttype INT, Bettype INT,StakeLevelID INT,StakeLevelName NVARCHAR(100),IsChecked BIT,MinStake DECIMAL(19,8),MaxStake DECIMAL(19,8),	PRIMARY KEY CLUSTERED (SportType, BetType, StakeLevelID))
 
 SELECT @Currency=d.currency,@SiteID=s.siteid
-FROM Dep_CustSuper d WITH(NOLOCK)
+FROM Customer d WITH(NOLOCK)
 	INNER JOIN Site s WITH(NOLOCK)	 ON d.site=s.site
 WHERE d.custid=@CustID
 

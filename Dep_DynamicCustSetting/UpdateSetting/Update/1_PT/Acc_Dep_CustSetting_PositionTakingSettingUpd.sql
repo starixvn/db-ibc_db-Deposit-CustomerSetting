@@ -1,6 +1,8 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
-	  @CustID		INT
+	  @SuperID		INT
+	, @AgentID		INT
+	, @IsAgentOnly	BIT
 	, @PT			SMALLMONEY
 	, @ProductID	INT
 	, @UserID		INT
@@ -14,6 +16,7 @@ AS
 	Original:
 	Revision:		
 		- 20171009@Winnie: Update PT of DCS product RedmineID:#82346
+		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 	Param's Explanation:
 
 	*/
@@ -24,7 +27,7 @@ BEGIN
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
-		
+	DECLARE @mrecommend	INT
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
 		, @xml				XML	
@@ -39,12 +42,12 @@ BEGIN
 
 	SELECT	@ErrCode	= 0
 		,	@ErrMsg			= ''
-
-	EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
-	 @custid = @CustID
+	
+	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
+	 @custid = @AgentID
 	,@Language = 'E'
 	,@ErrMsg = @ErrMsg OUTPUT
-	,@ErrCode=@ErrCode OUTPUT
+	,@ErrCode= @ErrCode OUTPUT
 
 	IF @ErrCode <> 0 
 		RETURN 
@@ -55,7 +58,7 @@ BEGIN
 	SELECT @ProductName = p.ProductName
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE p.ProductID = @ProductID
-
+	SELECT @mrecommend=mrecommend FROM Customer WITH(NOLOCK) WHERE custid=@AgentID
 		
 	CREATE TABLE #SportBettypeFilter (SportType INT,Bettype INT,IsLive BIT)
 	
@@ -65,33 +68,71 @@ BEGIN
 		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
 	WHERE ProductID = @ProductID AND SettingType=1	
 
-	SELECT @OldPT= SuperPT 
+	SELECT @OldPT= AgentPT 
 			FROM 	#SportBettypeFilter ft 
 			INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-			WHERE CustID=@CustID  
+			WHERE CustID=@AgentID  
 
-	
-	IF EXISTS (SELECT TOP 1 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@CustID)
+	IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
+		SELECT @IsAgentOnly=0
+
+	IF(@IsAgentOnly=0)
 	BEGIN
-		EXEC Acc_Dep_DynamicCustSetting_01
-				@ActionID=1,
-				@CustID=@CustID,
-				@PT=@PT,					
-				@ProductID=@ProductID
-				
+		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
+									INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+										WHERE CustID=@SuperID)
+			UPDATE a
+			 SET
+				   SuperPT  = @PT
+				  ,MasterPT = @PT
+				  ,AgentPT  = @PT
+			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN #SportBettypeFilter t ON a.CustID=@SuperID AND a.SportType=t.SportType AND a.BetType=t.BetType
+		 ELSE
+			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+			SELECT @SuperID,SportType,BetType,IsLive,@PT,@PT,@PT
+			FROM #SportBettypeFilter t
+
+		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
+								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+									WHERE CustID=@mrecommend)
+			UPDATE a
+				SET
+					 SuperPT  = 0
+					,MasterPT = @PT
+					,AgentPT  = 0
+			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+				INNER JOIN #SportBettypeFilter t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType
+		 ELSE
+			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+			SELECT @mrecommend,SportType,BetType,IsLive,0,@PT,0
+			FROM #SportBettypeFilter t
+
+		IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
+			VALUES( @SuperID,@ProductSettingID)	
 	END
+
+	IF EXISTS (SELECT  1 FROM 	#SportBettypeFilter ft 
+								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+									WHERE CustID=@AgentID)
+		UPDATE a
+			SET
+				 SuperPT  = 0
+				,MasterPT = 0
+				,AgentPT  = @PT
+		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #SportBettypeFilter t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType
 	ELSE
-	BEGIN
-		EXEC Acc_Dep_DynamicCustSetting_01
-				@ActionID=0,
-				@CustID=@CustID,
-				@PT=@PT,				
-				@ProductID=@ProductID
-			
-		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-		VALUES( @CustID,@ProductSettingID)
-	END
+		INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+		SELECT @AgentID,SportType,BetType,IsLive,0,0,@PT
+		FROM #SportBettypeFilter t
 	
+	EXEC Acc_Dep_DynamicCustSetting_01	
+	@CustID=@AgentID,
+	@PT=@PT,					
+	@ProductID=@ProductID	
+
 	SELECT @ErrMsg='Update Position Taking successfully'
 	
 	--START LOGGING
@@ -101,7 +142,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -119,7 +162,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -138,7 +183,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -157,7 +204,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				NULL							AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -180,7 +229,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -198,7 +249,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -217,7 +270,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
@@ -236,7 +291,9 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID',
 				@ProductName					AS '@ProductName',
-				@CustID							AS '@CustID',
+				@AgentID						AS '@AgentID',
+				@IsAgentOnly					AS '@IsAgentOnly',
+				@SuperID						AS '@SuperID',
 				@UserID							AS '@UserID',			
 				@IP								AS '@IP',
 				(
@@ -258,7 +315,7 @@ BEGIN
 
 	BEGIN TRY
 		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
+						, @CustID			= @AgentID
 						, @ActionID			= 469
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old
@@ -266,7 +323,7 @@ BEGIN
 	END TRY
 	BEGIN CATCH
 		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @CustID
+						, @CustID			= @AgentID
 						, @ActionID			= 469
 						, @TrackingValue	= @logSpData
 						, @TrackingValue2	= @logSpData_Old

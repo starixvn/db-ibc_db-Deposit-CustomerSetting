@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelUpd]
 		@CustID			INT
 	,	@ProductID		TINYINT
 	,	@StakeLevel		VARCHAR(MAX)	
+	,	@IsAgentOnly	BIT
 	,	@UserID			INT
 	,	@IP				VARCHAR(50)		= ''
 	,	@ErrCode		INT				= 0		OUTPUT
@@ -17,7 +18,7 @@ AS
 
 	Revisions:
 		- 20171113@Winnie: Update Customer's Stake Level Settings - [Redmine: #85113]	
-
+		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -46,6 +47,11 @@ BEGIN
 		,	@SettingLevel				TINYINT
 		,	@ProductSettingID			INT		
 		,	@ActionID					TINYINT=1
+		,	@RoleID						TINYINT
+		,	@srecommend					INT
+		,	@mrecommend					INT
+
+	SELECT @RoleID=RoleID,@srecommend=srecommend,@mrecommend=mrecommend FROM Customer WITH(NOLOCK) WHERE custid=@CustID
 
 	CREATE TABLE	#tmpStake (					
 						SportType			SMALLINT
@@ -90,7 +96,7 @@ BEGIN
 	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType IN(7,8)
 
 	--Check downline
-	EXEC DBEXT.bodb02.dbo.NAP_LM_CustomerSelCheckAllowedDownlines
+	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
 	 @custid = @CustID
 	,@Language = 'E'
 	,@ErrMsg = @ErrMsg OUTPUT
@@ -136,28 +142,58 @@ BEGIN
 			AND ts.BetType = cslm.BetType
 	WHERE	cslm.CustID = @CustID;
 
-	IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@CustID AND ProductSettingID=@ProductSettingID )
+	IF(@RoleID=4)
 	BEGIN
+		IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@CustID AND ProductSettingID=@ProductSettingID )
+		BEGIN
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
+			VALUES( @CustID,@ProductSettingID)
 
-		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-		VALUES( @CustID,@ProductSettingID)
+			SELECT @ActionID=0
+		END
+		-- Get downline and stakelevel
+		INSERT INTO #tblmrecommend(CustID)
+				SELECT custid FROM custinfo WITH (NOLOCK) WHERE roleid=3
+				and username LIKE '%Acc%' and srecommend=@CustID	
 
-		SELECT @ActionID=0
+		INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
+		SELECT CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel
+		FROM CustInfo WITH(NOLOCK)
+			CROSS APPLY #tmpStake
+		 WHERE srecommend=@CustID AND mrecommend NOT IN(SELECT custid FROM #tblmrecommend)
+	END	
+	ELSE IF(@RoleID=2)
+	BEGIN
+		IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@srecommend AND ProductSettingID=@ProductSettingID )
+		BEGIN
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
+			VALUES( @srecommend,@ProductSettingID)
+			SELECT @IsAgentOnly=0
+			SELECT @ActionID=0
+		END
+		IF @IsAgentOnly=0
+		BEGIN
+			INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
+			SELECT @srecommend,4,SportType,BetType,StakeLevelList,MemberStakeLevel
+			FROM #tmpStake
+
+			INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
+			SELECT @mrecommend,3,SportType,BetType,StakeLevelList,MemberStakeLevel
+			FROM #tmpStake				
+		END
+		INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
+		SELECT CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel
+		FROM CustInfo WITH(NOLOCK)
+			CROSS APPLY #tmpStake
+		 WHERE recommend=@CustID
 	END
-	-- Get downline and stakelevel
-	INSERT INTO #tblmrecommend(CustID)
-			SELECT custid FROM custinfo WITH (NOLOCK) WHERE roleid=3
-			and username LIKE '%Acc%' and srecommend=@CustID	
 
-	INSERT INTO #CustStakeLevelDownlines(CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel)
-	SELECT CustID,RoleID,SportType,BetType,StakeLevelList,MemberStakeLevel
-	FROM CustInfo WITH(NOLOCK)
-		CROSS APPLY #tmpStake
-	 WHERE srecommend=@CustID AND mrecommend NOT IN(SELECT custid FROM #tblmrecommend)
-
-	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 10000, @StopRow INT;
+	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 3000, @StopRow INT;
 			
 	SET @MaxRow = (SELECT MAX(ID) FROM #CustStakeLevelDownlines);
+			
+	IF @MaxRow IS NULL
+		RETURN
 			
 	IF	@Threshold >= @MaxRow
 		SET	@Threshold = @MaxRow;
@@ -211,6 +247,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID							AS '@ProductID'
 			,	@ProductName						AS '@ProductName'
+			,	NULL								AS '@IsAgentOnly'
 			,	@CustID								AS '@CustID'
 			,	@UserID								AS '@UserID'		
 			,	@IP									AS '@IP'
@@ -230,6 +267,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID							AS '@ProductID'
 			,	@ProductName						AS '@ProductName'
+			,	NULL								AS '@IsAgentOnly'
 			,	@CustID								AS '@CustID'
 			,	@UserID								AS '@UserID'
 			,	@IP									AS '@IP'
@@ -249,6 +287,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID							AS '@ProductID'
 			,	@ProductName						AS '@ProductName'
+			,	NULL								AS '@IsAgentOnly'
 			,	@CustID								AS '@CustID'
 			,	@UserID								AS '@UserID'			
 			,	@IP									AS '@IP'
@@ -268,6 +307,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID'
 			,	@ProductName					AS '@ProductName'
+			,	NULL							AS '@IsAgentOnly'
 			,	@CustID							AS '@CustID'
 			,	@UserID							AS '@UserID'		
 			,	@IP								AS '@IP'
@@ -291,6 +331,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID							AS '@ProductID'
 			,	@ProductName						AS '@ProductName'
+			,	@IsAgentOnly						AS '@IsAgentOnly'
 			,	@CustID								AS '@CustID'
 			,	@UserID								AS '@UserID'			
 			,	@IP									AS '@IP'
@@ -310,6 +351,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID							AS '@ProductID'
 			,	@ProductName						AS '@ProductName'
+			,	@IsAgentOnly						AS '@IsAgentOnly'
 			,	@CustID								AS '@CustID'
 			,	@UserID								AS '@UserID'			
 			,	@IP									AS '@IP'
@@ -329,6 +371,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID							AS '@ProductID'
 			,	@ProductName						AS '@ProductName'
+			,	@IsAgentOnly						AS '@IsAgentOnly'
 			,	@CustID								AS '@CustID'
 			,	@UserID								AS '@UserID'			
 			,	@IP									AS '@IP'
@@ -348,6 +391,7 @@ BEGIN
 		SET @xml = (
 		SELECT	@ProductID						AS '@ProductID'
 			,	@ProductName					AS '@ProductName'
+			,	@IsAgentOnly					AS '@IsAgentOnly'
 			,	@CustID							AS '@CustID'
 			,	@UserID							AS '@UserID'		
 			,	@IP								AS '@IP'
