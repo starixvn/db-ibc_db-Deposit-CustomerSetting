@@ -24,7 +24,7 @@ AS
 	User: API Licensee  
   
 	Revisions:  
-
+		- 20180921@Johnson: format log [Redmine:#101293]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -186,35 +186,29 @@ BEGIN
 		 RETURN  
 	END  
   
-	SELECT @LogSPData =	'<Dot_Dep_CustomerUpdMemBetSetting_DCS custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +  
-						'MinBet="'+ COALESCE(CAST(@minbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
-						'MaxBet="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
-						'MaxPerMatch="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)),SPACE(1)) + '" ' +  
-						'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +  
-						'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +  
-						'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +  
-						'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +  
-						'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)),SPACE(1)) + '" />'  
+	SELECT @LogSPData =	'<R Sport="'+ COALESCE(CAST(@SportType AS VARCHAR(50)),SPACE(1)) + '" ' +  
+						'BT="'+ COALESCE(CAST(@Bettype AS VARCHAR(50)),SPACE(1)) + '" ' +  	
+						'Min="'+ COALESCE(CAST(@minbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
+						'Max="'+ COALESCE(CAST(@maxbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
+						'MPM="'+ COALESCE(CAST(@maxpermatch AS VARCHAR(50)),SPACE(1)) + '" />'  
   
-	SELECT @TrackingValue2 ='<Dot_Dep_CustomerUpdMemBetSetting_DCS custid="'+ COALESCE(CAST(@custid AS VARCHAR(50)),SPACE(1)) + '" ' +  
-							'MinBet="'+ COALESCE(CAST(@Old_minbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
-							'MaxBet="'+ COALESCE(CAST(@Old_maxbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
-							'MaxPerMatch="'+ COALESCE(CAST(@Old_maxpermatch AS VARCHAR(50)),SPACE(1)) + '" ' +  
-							'UserID="'+ COALESCE(CAST(@UserID AS VARCHAR(50)),SPACE(1)) + '" ' +  
-							'Language="'+ COALESCE(CAST(@Language AS VARCHAR(2)),SPACE(1)) + '" ' +  
-							'IP="'+ COALESCE(CAST(@IP AS VARCHAR(15)),SPACE(1)) + '" ' +  
-							'ErrCode="'+ COALESCE(CAST(@ErrCode AS VARCHAR(50)),SPACE(1)) + '" ' +  
-							'ErrMsg="'+ COALESCE(CAST(@ErrMsg AS VARCHAR(5000)),SPACE(1)) + '" />'  
+	SELECT @TrackingValue2 ='<R Sport="'+ COALESCE(CAST(@SportType AS VARCHAR(50)),SPACE(1)) + '" ' +  
+							'BT="'+ COALESCE(CAST(@Bettype AS VARCHAR(50)),SPACE(1)) + '" ' +  	
+							'Min="'+ COALESCE(CAST(@Old_minbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
+							'Max="'+ COALESCE(CAST(@Old_maxbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
+							'MPM="'+ COALESCE(CAST(@Old_maxpermatch AS VARCHAR(50)),SPACE(1)) + '" />'  
   
 	SET @endRun = getdate()  
 	SET @duration  = datediff (millisecond,@startRun,@endRun)  
   
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP   
+	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
 			@UserID = @UserID,  
 			@CustID = @CustID,  
 			@ActionID = 393,  
 			@TrackingValue = @LogSPData,  
 			@TrackingValue2 = @TrackingValue2,  
-			@duration = @duration
+			@duration = @duration,
+			@Language = @Language,
+			@Ip = @IP
 END 
 GO 
