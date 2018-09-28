@@ -1773,7 +1773,7 @@ BEGIN
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +    
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(4000)),space(1)) + '" />'    
 	 
-	EXEC bodb_Licensee.dbo.LAP_WriteLog_UserLog_RunSP    
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP    
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 617,    
@@ -1783,7 +1783,7 @@ BEGIN
 	--Write commission log    
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
 	'discount="'+ coalesce(cast(@discount as varchar(50)),space(1)) + '" />'    
-	EXEC bodb_Licensee.dbo.LAP_WriteLog_UserLog_RunSP    
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP    
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 216,    
@@ -1796,7 +1796,7 @@ BEGIN
 	'MaxBet="'+ coalesce(cast(@MaxBet as varchar(50)),space(1)) + '" ' +    
 	'MaxPerMatch="'+ coalesce(cast(@MaxPerMatch as varchar(50)),space(1)) + '" />'    
 	   
-	EXEC bodb_Licensee.dbo.LAP_WriteLog_UserLog_RunSP     
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP     
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 315,    
@@ -1807,7 +1807,7 @@ BEGIN
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
 	'AgentPT="'+ coalesce(cast(@apositiontaking_1 as varchar(50)),space(1)) + '" />'    
 	
-	EXEC bodb_Licensee.dbo.LAP_WriteLog_UserLog_RunSP     
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP     
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 422,    
@@ -1819,7 +1819,7 @@ BEGIN
 	'suspended="'+ coalesce(cast(@suspended as varchar(50)),space(1)) + '" ' +   
 	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" ' +    '" />'    
 
-	EXEC bodb_Licensee.dbo.LAP_WriteLog_UserLog_RunSP      
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP      
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 1118,    

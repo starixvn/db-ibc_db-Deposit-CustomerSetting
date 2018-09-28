@@ -24,6 +24,7 @@ AS
 		- 20160803@Winnie: #61777 BetTrade new commercial term
 		- 20170227@Winnie: Add CashOut [RedmineID: #71727]
 		- 20180717@Winnie: NAP - Enable Cash out: Adjust the setting to reflect 100% profit of Cash Out to group [RedmineID: #90870]
+		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 
 	Param's Explanation:
 */
@@ -39,7 +40,7 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	SELECT @ProductName = ProductName
-	FROM DBLIC.bodb_Licensee.dbo.Product3rd WITH (NOLOCK)
+	FROM bodb_Licensee.dbo.Product3rd WITH (NOLOCK)
 	WHERE ProductID = @ProductID
 
 	IF @Productid IN (14,17) -- Microgaming
@@ -332,25 +333,12 @@ BEGIN
 		+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(40)), SPACE(1)) 
 		+ '" ' + 'ErrMsg="' + COALESCE(CAST(@ErrMsg AS VARCHAR(8000)), SPACE(1)) + '" />'
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID, @CustID = @CustID
-			, @ActionID = 1154, @TrackingValue = @LogSPData, @TrackingValue2 = @TrackingValue2, @duration = @duration
-	END TRY
-
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID, @CustID = @CustID, @ActionID = 1154
-			, @TrackingValue = @LogSPData, @TrackingValue2 = @TrackingValue2, @duration = @duration
-	END CATCH
+	EXEC Acc_WriteLog_UserLog_RunSP 
+		@UserID = @UserID, 
+		@CustID = @CustID, 
+		@ActionID = 1154, 
+		@TrackingValue = @LogSPData, 
+		@TrackingValue2 = @TrackingValue2, 
+		@duration = @duration	
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_3rdProductUpdSuperStatus] TO [bodbadminNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_3rdProductUpdSuperStatus] TO [bodbDownlineNet] AS [dbo]
-GO
-
-GRANT EXECUTE ON [dbo].[Acc_3rdProductUpdSuperStatus] TO [bodbExtAccNet] AS [dbo]
-GO
-
-GRANT VIEW DEFINITION ON [dbo].[Acc_3rdProductUpdSuperStatus] TO [vnteam] AS [dbo]
 GO
