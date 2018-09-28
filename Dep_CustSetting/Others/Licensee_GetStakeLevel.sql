@@ -1,3 +1,4 @@
+/*<info serverAlias="DBACC-bodb02" executers="Dot_Intg" executers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Licensee_GetStakeLevel]
 	(
       @Site NVARCHAR(100) = NULL,
@@ -11,6 +12,7 @@ AS
 	DB: DB06.bodb02
 	Original: 
 	Revisions:	
+		- 20180928@Chris: Return Licensee Stake Level - support Allbet only [Redmine: #102270]
 	Param's Explanation:  
 	  + @Site		: licensee site name  
 	  +	@Currency	:
