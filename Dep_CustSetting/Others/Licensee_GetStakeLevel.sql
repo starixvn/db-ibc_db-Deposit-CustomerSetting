@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="Dot_Intg" executers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="Dot_Intg,vnteam" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Licensee_GetStakeLevel]
 	(
       @Site NVARCHAR(100) = NULL,
