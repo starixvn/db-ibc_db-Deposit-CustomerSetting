@@ -1582,64 +1582,7 @@ BEGIN
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 		 RETURN    
 	END
-	/*DOMINIC-CUSTOMER SETTING RENOVATION-END*/    
-	-- 20150806@Patrick: Remove insert default balance value for Credit/Debit Game (merge code)  
-	---------------------------------------------------------------------------------    
-	---- Create default balance for Live casino for new customer    
-	--DECLARE @today smalldatetime    
-	--SET @today = convert(nvarchar(10), current_timestamp,120)    
-	    
-	----INSERT INTO BalanceCreditGame (CustID, winlostdate, Balance )    
-	----VALUES (@CustID, @today, 0)    
-	----EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCreditGame @CustID = @CustID, @winlostdate = @today    
-	    
-	--IF @@error <> 0    
-	--BEGIN     
-	-- --Error occurs    
-	-- SELECT     
-	--  @ErrMsg = 'Add member fail. Please try again',    
-	--  @ErrCode= 219    
-	     
-	-- -- MANUALLY ROLLBACK    
-	-- DELETE Dep_CustSetting WHERE CustID = @CustID    
-	-- DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	
-	-- DELETE CustSettingGame WHERE CustID = @CustID    
-	-- DELETE CustGameType WHERE CustID = @CustID    
-	-- EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid     
-	-- EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID --DELETE BalanceDebit WITH (ROWLOCK) WHERE custid = @custid     
-	-- --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCreditGame @CustID = @CustID --DELETE BalanceCreditGame WITH (ROWLOCK) WHERE custid = @custid     
-	     
-	-- EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
-	-- return    
-	--END    
-	    
-	----INSERT INTO BalanceDebitGame (CustID, winlostdate, Balance )    
-	----VALUES (@CustID, @today, 0)    
-	----EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebitGame @CustID = @CustID, @winlostdate = @today    
-	    
-	    
-	--IF @@error <> 0    
-	--BEGIN     
-	-- --Error occurs    
-	-- SELECT     
-	--  @ErrMsg = 'Add member fail. Please try again',    
-	--  @ErrCode= 220    
-	     
-	-- -- MANUALLY ROLLBACK    
-	-- DELETE Dep_CustSetting WHERE CustID = @CustID    
-	-- DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-
-	-- DELETE CustSettingGame WHERE CustID = @CustID    
-	-- DELETE CustGameType WHERE CustID = @CustID    
-	-- EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid     
-	-- EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID --DELETE BalanceDebit WITH (ROWLOCK) WHERE custid = @custid     
-	-- --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCreditGame @CustID = @CustID --DELETE BalanceCreditGame WITH (ROWLOCK) WHERE custid = @custid    
-	-- --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebitGame @CustID = @CustID --DELETE BalanceDebitGame WITH (ROWLOCK) WHERE custid = @custid     
-	     
-	-- EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
-	-- return    
-	--END    
+	/*HELEN-CUSTOMER SETTING RENOVATION-END*/    
 	    
 	---------------------------------------------------------------------------------    
 	UPDATE customer WITH (ROWLOCK, UPDLOCK) 
@@ -1691,30 +1634,7 @@ BEGIN
 				@ErrMsg = @ErrMsg OUTPUT    
 	  END    
 	 END    
-	END    
-	
-	--******************    
-	--20120831@Henry: Terminate the transfer of all players to BA for ZZun88    
-	/*    
-	ELSE IF @site='Zzun88'    
-	BEGIN    
-	 SET @ErrMsg=''    
-	 SET @ErrCode=0    
-	  
-	     
-	 IF (SELECT EnableBA FROM DBLIC.bodb_licensee.dbo.LicenseeBAConfig WITH (NOLOCK) WHERE LicenseeID = 10) = 1    
-	 BEGIN    
-			EXEC [Lrf_CustomerUpdMemberBAStatus]    
-	   @LicenseeID=10,--Zzun88    
-	   @CustID = @CustID,    
-	   @ModifyBy = 1, --dbaThien    
-	   @IsBA = 1,    
-	   @IP = '',    
-	   @ErrCode = @ErrCode OUTPUT,    
-	   @ErrMsg = @ErrMsg OUTPUT    
-	 END    
-	END    
-	*/    
+	END    		  
 	    
 	IF @AffiliateID is not NULL    
 	EXEC DBAFF12BET.Affiliate_12BET.dbo.Aff_CustomerInsMember     
@@ -1773,7 +1693,7 @@ BEGIN
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +    
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(4000)),space(1)) + '" />'    
 	 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP    
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper    
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 617,    
@@ -1783,7 +1703,7 @@ BEGIN
 	--Write commission log    
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
 	'discount="'+ coalesce(cast(@discount as varchar(50)),space(1)) + '" />'    
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP    
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper    
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 216,    
@@ -1796,7 +1716,7 @@ BEGIN
 	'MaxBet="'+ coalesce(cast(@MaxBet as varchar(50)),space(1)) + '" ' +    
 	'MaxPerMatch="'+ coalesce(cast(@MaxPerMatch as varchar(50)),space(1)) + '" />'    
 	   
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP     
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper     
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 315,    
@@ -1807,7 +1727,7 @@ BEGIN
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
 	'AgentPT="'+ coalesce(cast(@apositiontaking_1 as varchar(50)),space(1)) + '" />'    
 	
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP     
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper     
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 422,    
@@ -1819,7 +1739,7 @@ BEGIN
 	'suspended="'+ coalesce(cast(@suspended as varchar(50)),space(1)) + '" ' +   
 	'DisableNumber="' + coalesce(cast(@DisableNumber as varchar(1)),space(1)) + '" ' +    '" />'    
 
-	EXEC dbo.Acc_WriteLog_UserLog_RunSP      
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper      
 	  @UserID = @CustID,    
 	  @CustID = @CustID,    
 	  @ActionID = 1118,    
