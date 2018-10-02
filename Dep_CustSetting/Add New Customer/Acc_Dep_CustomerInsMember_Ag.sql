@@ -166,6 +166,7 @@ Revisions:
     - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
     - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -660,6 +661,8 @@ BEGIN
 	if exists(select 1 from customer with (NOLOCK) where username = @username)
 		or exists (select 1 from customer with (NOLOCK) where username2 = @username)
 		or exists(select 1 from custsub with (NOLOCK) where username = @username)
+		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
 	BEGIN
 		Select @ErrMsg = case @Language 
 								when 'E' then 'This username is not available.'
