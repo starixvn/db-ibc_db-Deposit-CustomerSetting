@@ -333,7 +333,7 @@ BEGIN
 		+ '" ' + 'IP="' + COALESCE(CAST(@IP AS VARCHAR(40)), SPACE(1)) 
 		+ '" ' + 'ErrMsg="' + COALESCE(CAST(@ErrMsg AS VARCHAR(8000)), SPACE(1)) + '" />'
 
-	EXEC Acc_WriteLog_UserLog_RunSP 
+	EXEC Acc_WriteLog_UserLog_RunSP_Wrapper 
 		@UserID = @UserID, 
 		@CustID = @CustID, 
 		@ActionID = 1154, 
