@@ -1255,7 +1255,6 @@ BEGIN
 	 OR EXISTS (select 1 from customer with(NOLOCK) where username = @UserName)    
 	 or exists (select 1 from custsub with(NOLOCK) where username = @UserName) 
 	 OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-	 OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username) 
 	 OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @DepositUserName)   
 	BEGIN    
 	 Select @ErrMsg = 'The username is not available.', @ErrCode = 11    
