@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 /*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbLicenseeNet,Dot_Member" viewers="vnteam" isFunction="1"></info>*/
 =======
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbLicenseeNet,Dot_Member" viewers="vnteam" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB,DBEXT-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbLicenseeNet,Dot_Member" viewers="vnteam" isFunction="1"></info>*/
 >>>>>>> 102498-admetadata
 USE [CustDB]
 GO
