@@ -2,7 +2,7 @@
 USE [CustDB]
 GO
 
-ALTER FUNCTION [dbo].[f_LAS_GenerateUsername_UAT4]  
+ALTER FUNCTION [dbo].[f_LAS_GenerateUsername]  
 (  
  @recommend INT  
 )   
