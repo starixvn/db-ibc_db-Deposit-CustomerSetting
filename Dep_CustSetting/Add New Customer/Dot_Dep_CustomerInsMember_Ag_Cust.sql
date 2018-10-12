@@ -164,6 +164,7 @@ AS
 	 - 20180809@Sophia: HA - remove SP Lrf_CustomerInfoIns [Redmine: #99464]
 	 - 20180524@Winnie: [Licensee Settings] - Apply Default Odds Group for Different Sub-Licensees Change to use new table [RedmineID: #93358]
 	 - 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
+	 - 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -1233,7 +1234,7 @@ BEGIN
 	select @username = replace(@username, ' ', '')    
 	*/    
 	--20140812: Change rule generate username    
-	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%') OR @UserName IS NULL  
+	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%') OR @UserName IS NULL
 	BEGIN  
 	SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
 	IF @UserName = ''    
@@ -1251,8 +1252,10 @@ BEGIN
 	if exists (select 1 from customer c with (NOLOCK)        
 	   where c.username2 = @DepositUserName    
 		)    
-	 or exists (select 1 from customer with(NOLOCK) where username = @UserName)    
-	 or exists (select 1 from custsub with(NOLOCK) where username = @UserName)    
+	 OR EXISTS (select 1 from customer with(NOLOCK) where username = @UserName)    
+	 OR EXISTS (select 1 from custsub with(NOLOCK) where username = @UserName)
+	 OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+	 OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @DepositUserName)
 	BEGIN    
 	 Select @ErrMsg = 'The username is not available.', @ErrCode = 11    
 	 return    
