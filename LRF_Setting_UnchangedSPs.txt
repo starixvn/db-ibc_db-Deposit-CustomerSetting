@@ -1,4 +1,4 @@
-Lrf_CustomerUpdMemberBAStatus.sql
+dbo.Lrf_CustomerUpdMemberBAStatus.sql
 Lrf_CustomerUpdMemberBAPositionTakingDCS.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql 
 Dep_DynamicCustSetting\UpdateSetting\Update\2_BetLimit\Acc_Dep_CustSetting_BetLimitSettingSelect.sql
