@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Acc_Dep_CustSetting_Check] 
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_Check] 
 	  @CustID			INT	
 	, @AgentID			INT
 	, @Site				VARCHAR(10)
@@ -26,21 +26,20 @@ BEGIN
 
 	DECLARE @ErrType NVARCHAR(200)
 
-	CREATE TABLE #ProductSettingDetail(
-		[SettingType]	SMALLINT NOT NULL,
+	CREATE TABLE #ProductSettingDetail(	
 		[SportType]		SMALLINT NOT NULL,
 		[BetType]		SMALLINT NOT NULL,		
 		SportName		NVARCHAR(50)
-		PRIMARY KEY(SportType,BetType,SettingType)		
+		PRIMARY KEY(SportType,BetType)		
 	)
 
 		
-	INSERT INTO #ProductSettingDetail (SettingType,SportType,BetType)
-	SELECT DISTINCT ps.SettingType,psd.SportType,psd.BetType
+	INSERT INTO #ProductSettingDetail (SportType,BetType)
+	SELECT DISTINCT psd.SportType,psd.BetType
 	FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID
 		INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
-	WHERE lds.CustID =@SuperID AND (@ProductID IS NULL OR ps.ProductID = @ProductID)
+	WHERE lds.CustID =@SuperID AND (@ProductID IS NULL OR ps.ProductID = @ProductID) AND ps.SettingType=2
 
 	UPDATE t
 	 SET t.SportName=s.SportName
@@ -50,11 +49,11 @@ BEGIN
 	SELECT @ErrType=''
 	SELECT @ErrType = @ErrType + sportname + ', '   	
 	FROM dbo.Dep_CustBetSetting_Agent smcs WITH (NOLOCK)
-		INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType = 2
+		INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 		INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 			ON  CBS.SportType = S.SportType AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
 											AND (CBS.AgentID IS NULL OR CBS.AgentID=@AgentID) AND Site=@site AND CurrencyID=@currency 
-	WHERE CBS.MaxBet>smcs.MaxBet OR CBS.MaxPerMatch>smcs.MaxPerMatch
+	WHERE (CBS.MaxBet>smcs.MaxBet OR CBS.MaxPerMatch>smcs.MaxPerMatch) AND smcs.CustID=@AgentID
 
 	IF @ErrType <>''    
 	BEGIN    
