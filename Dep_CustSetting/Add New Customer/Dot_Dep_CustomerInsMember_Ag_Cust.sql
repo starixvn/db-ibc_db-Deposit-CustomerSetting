@@ -1187,7 +1187,7 @@ BEGIN
 	 @AgentID	= @AgentID,    
 	 @Site		= @Site,    
 	 @Currency	= @Currency,    
-	 @ProductID = @ProductID,    
+	 @ProductID = NULL,    
 	 @SuperID	= @SuperID,    
 	 @ErrCode	= @ErrCode OUTPUT,    	   
 	 @ErrMsg	= @ErrMsg OUTPUT
