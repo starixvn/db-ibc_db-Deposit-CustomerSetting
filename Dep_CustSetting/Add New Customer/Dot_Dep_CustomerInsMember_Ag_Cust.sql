@@ -1188,7 +1188,7 @@ BEGIN
 	 @Site		= @Site,    
 	 @Currency	= @Currency,    
 	 @ProductID = NULL,    
-	 @SuperID	= @SuperID,    
+	 @SuperID	= @srecommend,    
 	 @ErrCode	= @ErrCode OUTPUT,    	   
 	 @ErrMsg	= @ErrMsg OUTPUT
 
