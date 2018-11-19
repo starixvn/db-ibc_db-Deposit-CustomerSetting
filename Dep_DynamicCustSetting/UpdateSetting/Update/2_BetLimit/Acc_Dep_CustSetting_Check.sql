@@ -75,7 +75,7 @@ BEGIN
 	IF @ErrType <>''    
 	BEGIN    
 	 SELECT    
-	  @ErrMsg = 'Sorry, max bet must be equal to or less than Master/Agent Max Per Match ('+@ErrType+').',    
+	  @ErrMsg = 'Sorry, Max Per Match must be equal to or less than Master/Agent Max Per Match ('+@ErrType+').',    
 	  @ErrCode = 107    
 	 return    
 	END   
