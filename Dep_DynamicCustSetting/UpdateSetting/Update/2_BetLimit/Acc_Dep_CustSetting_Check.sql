@@ -29,15 +29,14 @@ BEGIN
 	CREATE TABLE #ProductSettingDetail(
 		[SettingType]	SMALLINT NOT NULL,
 		[SportType]		SMALLINT NOT NULL,
-		[BetType]		SMALLINT NOT NULL,
-		[IsLive]		BIT NOT NULL,
+		[BetType]		SMALLINT NOT NULL,		
 		SportName		NVARCHAR(50)
-		PRIMARY KEY(SportType,BetType,IsLive)		
+		PRIMARY KEY(SportType,BetType,SettingType)		
 	)
 
 		
-	INSERT INTO #ProductSettingDetail (SettingType,SportType,BetType,IsLive)
-	SELECT ps.SettingType,psd.SportType,psd.BetType,psd.IsLive
+	INSERT INTO #ProductSettingDetail (SettingType,SportType,BetType)
+	SELECT DISTINCT ps.SettingType,psd.SportType,psd.BetType
 	FROM Dep_LicenseeProductSetting lds WITH (NOLOCK)
 		INNER JOIN Dep_ProductSetting ps WITH (NOLOCK) ON lds.ProductSettingID = PS.ProductSettingID
 		INNER JOIN Dep_ProductSettingDetail psd WITH (NOLOCK) ON psd.ProductSettingID = ps.ProductSettingID
