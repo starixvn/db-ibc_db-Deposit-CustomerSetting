@@ -53,12 +53,29 @@ BEGIN
 		INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 			ON  CBS.SportType = S.SportType AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
 											AND (CBS.AgentID IS NULL OR CBS.AgentID=@AgentID) AND Site=@site AND CurrencyID=@currency 
-	WHERE (CBS.MaxBet>smcs.MaxBet OR CBS.MaxPerMatch>smcs.MaxPerMatch) AND smcs.CustID=@AgentID
+	WHERE (CBS.MaxBet>smcs.MaxBet) AND smcs.CustID=@AgentID
 
 	IF @ErrType <>''    
 	BEGIN    
 	 SELECT    
 	  @ErrMsg = 'Sorry, max bet must be equal to or less than Master/Agent max bet ('+@ErrType+').',    
+	  @ErrCode = 107    
+	 return    
+	END   
+
+	SELECT @ErrType=''
+	SELECT @ErrType = @ErrType + sportname + ', '   	
+	FROM dbo.Dep_CustBetSetting_Agent smcs WITH (NOLOCK)
+		INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
+		INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
+			ON  CBS.SportType = S.SportType AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+											AND (CBS.AgentID IS NULL OR CBS.AgentID=@AgentID) AND Site=@site AND CurrencyID=@currency 
+	WHERE (CBS.MaxPerMatch>smcs.MaxPerMatch) AND smcs.CustID=@AgentID
+
+	IF @ErrType <>''    
+	BEGIN    
+	 SELECT    
+	  @ErrMsg = 'Sorry, max bet must be equal to or less than Master/Agent Max Per Match ('+@ErrType+').',    
 	  @ErrCode = 107    
 	 return    
 	END   
