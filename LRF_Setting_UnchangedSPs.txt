@@ -1,5 +1,0 @@
-dbo.Lrf_CustomerUpdMemberBAStatus.sql
-Lrf_CustomerUpdMemberBAPositionTakingDCS.sql
-Dep_DynamicCustSetting\UpdateSetting\Update\2_BetLimit\Acc_Dep_CustSetting_BetLimitSettingSelect.sql
-Dep_DynamicCustSetting\UpdateSetting\Update\2_BetLimit\Acc_Dep_CustSetting_BetLimitUpd.sql
-Dep_DynamicCustSetting\Others\f_Dep_CustSetting_SportBetTypeSettingSelect.sql
