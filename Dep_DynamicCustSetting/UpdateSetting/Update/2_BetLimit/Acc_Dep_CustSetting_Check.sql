@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_Check] 
 	  @CustID			INT	
 	, @AgentID			INT
