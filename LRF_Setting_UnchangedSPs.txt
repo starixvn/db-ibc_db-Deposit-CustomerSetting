@@ -1,2 +1,1 @@
-dbo.Lrf_CustomerSetDefaultComm.sql 
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql 
+Dep_DynamicCustSetting\UpdateSetting\Update\1_PT\Acc_Dep_CustSetting_PositionTakingSettingUpd.sql
