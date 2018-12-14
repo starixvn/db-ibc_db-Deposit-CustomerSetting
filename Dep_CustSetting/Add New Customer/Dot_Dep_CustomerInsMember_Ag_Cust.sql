@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
 USE CustDB
 GO
 
@@ -165,7 +165,7 @@ AS
 	 - 20180524@Winnie: [Licensee Settings] - Apply Default Odds Group for Different Sub-Licensees Change to use new table [RedmineID: #93358]
 	 - 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 	 - 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
-
+	 - 20181119@Winnie: Check betsetting Esports [Redmine: 100721]		
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -1181,6 +1181,19 @@ BEGIN
 		 @ErrCode = 107    
 	 RETURN    
 	END    
+
+	EXEC dbo.Acc_Dep_CustSetting_Check    
+	 @custid	= @custid,    
+	 @AgentID	= @AgentID,    
+	 @Site		= @Site,    
+	 @Currency	= @Currency,    
+	 @ProductID = NULL,    
+	 @SuperID	= @srecommend,    
+	 @ErrCode	= @ErrCode OUTPUT,    	   
+	 @ErrMsg	= @ErrMsg OUTPUT
+
+	 IF @ErrCode<>0
+		RETURN
 	    
 	select @pwdexpiry = dateadd(dd, 30, getdate())    
 	    
