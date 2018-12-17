@@ -1,4 +1,5 @@
-﻿ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableNumber]
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableNumber]
 	@CustID int,
 	@DisableNumber bit,
 	@DisableDownline bit = true, --Disable all downline
