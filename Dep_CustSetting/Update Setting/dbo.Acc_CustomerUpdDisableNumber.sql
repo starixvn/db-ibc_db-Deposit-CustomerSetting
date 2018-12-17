@@ -118,11 +118,54 @@ end
 IF (@DisableNumber = 1 or (@DisableNumber = 0 and @DisableDownline = 0)) --Disable all downline or enable all downline
 BEGIN TRY
 	--20130926@Kathy: Apply ExecRep 
-	EXEC [Acc_CustomerInfo_Execrep_04]
-		@CustID		= @CustID,
-		@RoleID		= @RoleID,
-		@Action		= 'DisableNumberGame',
-		@DisableNumberGame = @DisableNumber     
+	IF @RoleID=4
+	BEGIN		
+		EXEC [Acc_CustomerInfo_Execrep_04]
+			@CustID		= @CustID,
+			@RoleID		= @RoleID,
+			@Action		= 'DisableNumberGame',
+			@DisableNumberGame = @Disable,
+			
+			@UpdateAllMasters = 1,
+			@UpdateAllAgents =  1,
+			@UpdateAllMembers = 1,
+			
+			@DisableAllMasters = @DisableDownline,
+			@DisableAllAgents =  @DisableDownline,
+			@DisableAllMembers = @DisableDownline  
+	END
+	ELSE IF @RoleID=3
+	BEGIN		
+		EXEC [Acc_CustomerInfo_Execrep_04]
+			@CustID		= @CustID,
+			@RoleID		= @RoleID,
+			@Action		= 'DisableNumberGame',
+			@DisableNumberGame = @Disable,
+			
+			@UpdateAllMasters = 0,
+			@UpdateAllAgents =  1,
+			@UpdateAllMembers = 1,
+			
+			@DisableAllMasters = @DisableDownline,
+			@DisableAllAgents =  @DisableDownline,
+			@DisableAllMembers = @DisableDownline  
+	END
+	ELSE IF @RoleID=2
+	BEGIN		
+		EXEC [Acc_CustomerInfo_Execrep_04]
+			@CustID		= @CustID,
+			@RoleID		= @RoleID,
+			@Action		= 'DisableNumberGame',
+			@DisableNumberGame = @Disable,
+			
+			@UpdateAllMasters = 0,
+			@UpdateAllAgents =  0,
+			@UpdateAllMembers = 1,
+			
+			@DisableAllMasters = @DisableDownline,
+			@DisableAllAgents =  @DisableDownline,
+			@DisableAllMembers = @DisableDownline  
+	END
 END TRY
 BEGIN CATCH
 	SELECT @ErrMsg = 	case @Language 
