@@ -124,7 +124,7 @@ BEGIN TRY
 			@CustID		= @CustID,
 			@RoleID		= @RoleID,
 			@Action		= 'DisableNumberGame',
-			@DisableNumberGame = @Disable,
+			@DisableNumberGame = @DisableNumber,
 			
 			@UpdateAllMasters = 1,
 			@UpdateAllAgents =  1,
@@ -140,7 +140,7 @@ BEGIN TRY
 			@CustID		= @CustID,
 			@RoleID		= @RoleID,
 			@Action		= 'DisableNumberGame',
-			@DisableNumberGame = @Disable,
+			@DisableNumberGame = @DisableNumber,
 			
 			@UpdateAllMasters = 0,
 			@UpdateAllAgents =  1,
@@ -156,7 +156,7 @@ BEGIN TRY
 			@CustID		= @CustID,
 			@RoleID		= @RoleID,
 			@Action		= 'DisableNumberGame',
-			@DisableNumberGame = @Disable,
+			@DisableNumberGame = @DisableNumber,
 			
 			@UpdateAllMasters = 0,
 			@UpdateAllAgents =  0,
