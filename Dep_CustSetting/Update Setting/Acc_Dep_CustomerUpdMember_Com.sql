@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	
 	@CustID INT, -- Super ID
@@ -274,6 +274,7 @@ Revisions:
 	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
+	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
