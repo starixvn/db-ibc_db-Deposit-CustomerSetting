@@ -542,7 +542,7 @@ BEGIN
 									  +'MaxPerMatch_Max = "'+ coalesce(cast(MaxPerMatch_up as varchar(50)),space(1)) + '" '
 									  +'isDisabled = "'+ coalesce(cast(d.isDisabled as varchar(50)),space(1)) + '" ' +
 									  +'aPositionTaking = "'+ coalesce(CONVERT(varchar(50),@vPT,2),space(1)) +'" '
-									  +'aPositionTaking_Max = "'+ coalesce(cast(varchar(50),@vPT_Max ,2),space(1)) +'" '
+									  +'aPositionTaking_Max = "'+ coalesce(CONVERT(varchar(50),@vPT_Max ,2),space(1)) +'" '
 									  +'aPositionTaking_Min = "0" '
 									  + '></product>'
 			FROM #data d inner join #dataUpline d2 on d.bettype=d2.bettype
