@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerSelMember_Com] 
 	@CustID INT
 AS
@@ -17,6 +17,7 @@ Revisions:
 - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 - 20180125@Winnie: Hide inactive products [RedmineID: #86086]   
+- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]  
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -124,7 +125,7 @@ BEGIN
 										  +'MinBet = "'+coalesce(cast(MinBet as varchar(50)),space(1))+ '" ' 
 										  +'MaxPerMatch = "'+ coalesce(cast(MaxPerMatch as varchar(50)),space(1)) + '" ' +
 										  +'isDisabled = "'+ coalesce(cast(isDisabled as varchar(50)),space(1)) + '" ' +
-										  +'sPositionTaking = "'+ coalesce(cast(@vPT as varchar(50)),space(1)) +'" '
+										  +'sPositionTaking = "'+ coalesce(CONVERT(varchar(50),@vPT,2 ),space(1)) +'" '
 										  + '></product>'
 				FROM #data
 				WHERE Bettype=@i
@@ -188,7 +189,7 @@ BEGIN
 			
 			ci.UserName AS UserName
 	FROM CustInfo AS ci WITH (NOLOCK)
-		INNER JOIN CustSuper AS csp WITH (NOLOCK) ON ci.custid = csp.custid
+		INNER JOIN Dep_CustSuper AS csp WITH (NOLOCK) ON ci.custid = csp.custid
 	WHERE ci.custid = @CustID
 
 	DROP TABLE #data
@@ -196,5 +197,3 @@ BEGIN
 END
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMember_Com] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMember_Com] TO [vnteam] AS [dbo]
