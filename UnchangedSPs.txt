@@ -1,3 +1,2 @@
 dbo.Lrf_CustomerUpdMemberBAStatus.sql
-dbo.Lrf_CustomerUpdMemberBA_PositionTaking.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
