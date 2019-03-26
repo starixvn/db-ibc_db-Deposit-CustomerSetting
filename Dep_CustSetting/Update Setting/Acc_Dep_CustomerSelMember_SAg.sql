@@ -334,9 +334,6 @@ BEGIN
 	INNER JOIN @tmp_GameType gt  ON cgt.GameTypeID = gt.GameTypeID
 	WHERE Custid=@CustID 
 
-	select @vPT
-	select cast(@vPT as varchar(50))
-
 	SELECT @KenoList=@KenoList+'<products>'
 	DECLARE @i INT =1501,
 	@j INT =(select max(bettype) from #data)
