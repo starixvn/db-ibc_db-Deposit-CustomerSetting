@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerSelMember_MAgInfo]
 	@CustID INT
 AS
@@ -14,7 +14,8 @@ Revisions:
 - 20140512@Florent: Add sport Keno
 - 20150603@Kathy: Move SP to DBCust.custDB [Redmine:#36216]
 - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
-- 20180125@Winnie: Hide inactive products [RedmineID: #86086]      
+- 20180125@Winnie: Hide inactive products [RedmineID: #86086]    
+- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]  
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -548,8 +549,8 @@ BEGIN
 									  +'MaxPerMatch = "'+ coalesce(cast(MaxPerMatch as varchar(50)),space(1)) + '" ' +
 									  +'MaxPerMatch_Max = "'+ coalesce(cast(MaxPerMatch_up as varchar(50)),space(1)) + '" '
 									  +'isDisabled = "'+ coalesce(cast(d.isDisabled as varchar(50)),space(1)) + '" ' +
-									  +'mPositionTaking = "'+ coalesce(cast(@vPT as varchar(50)),space(1)) +'" '
-									  +'mPositionTaking_Max = "'+ coalesce(cast(@vPT_Max as varchar(50)),space(1)) +'" '
+									  +'mPositionTaking = "'+ coalesce(CONVERT(varchar(50),@vPT,2),space(1)) +'" '
+									  +'mPositionTaking_Max = "'+ coalesce(CONVERT(varchar(50),@vPT_Max,2),space(1)) +'" '
 									  +'mPositionTaking_Min = "0" '
 									  + '></product>'
 			FROM #data d inner join #dataUpline d2 on d.bettype=d2.bettype
@@ -683,5 +684,3 @@ DROP TABLE #data
 
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMember_MAgInfo] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMember_MAgInfo] TO [vnteam] AS [dbo]

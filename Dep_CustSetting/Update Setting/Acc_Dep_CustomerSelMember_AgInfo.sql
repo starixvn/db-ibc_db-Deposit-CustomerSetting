@@ -14,7 +14,8 @@ Revisions:
 - 20140512@Florent: Add keno Sport
 - 20150603@Kathy: Move SP to DBCust.custDB [Redmine:#36216]
 - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
-- 20180125@Winnie: Hide inactive products [RedmineID: #86086]     
+- 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
+- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]    
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -540,8 +541,8 @@ BEGIN
 									  +'MaxPerMatch = "'+ coalesce(cast(MaxPerMatch as varchar(50)),space(1)) + '" ' +
 									  +'MaxPerMatch_Max = "'+ coalesce(cast(MaxPerMatch_up as varchar(50)),space(1)) + '" '
 									  +'isDisabled = "'+ coalesce(cast(d.isDisabled as varchar(50)),space(1)) + '" ' +
-									  +'aPositionTaking = "'+ coalesce(cast(@vPT as varchar(50)),space(1)) +'" '
-									  +'aPositionTaking_Max = "'+ coalesce(cast(@vPT_Max as varchar(50)),space(1)) +'" '
+									  +'aPositionTaking = "'+ coalesce(CONVERT(varchar(50),@vPT,2),space(1)) +'" '
+									  +'aPositionTaking_Max = "'+ coalesce(CONVERT(varchar(50),@vPT_Max ,2),space(1)) +'" '
 									  +'aPositionTaking_Min = "0" '
 									  + '></product>'
 			FROM #data d inner join #dataUpline d2 on d.bettype=d2.bettype

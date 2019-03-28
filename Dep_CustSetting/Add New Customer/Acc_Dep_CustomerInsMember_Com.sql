@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCust-CustDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 (
 	@custid INT OUTPUT,
@@ -294,6 +294,7 @@ Revisions:
     - 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
+	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.

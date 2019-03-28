@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
 	
 	@recommend int,
@@ -133,6 +133,7 @@ Revisions:
    - 20140505@Florent: Add Sport HRFO
    - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
    - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+   - 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 Param's Explanation:
 • @ErrCode:
     = 0: check valid parameters successfully.
@@ -271,57 +272,57 @@ if
 	or @v161alivepositiontaking_90 <0
 	
 	
-	or @v1apositiontaking_1  >0.9
-	or @v1apositiontaking_2  >0.9
-	or @v1apositiontaking_3  >0.9
-	or @v1apositiontaking_4  >0.9
-	or @v1apositiontaking_5  >0.9
-	or @v1apositiontaking_6  >0.9
-	or @v1apositiontaking_7  >0.9
-	or @v1apositiontaking_8  >0.9
-	or @v1apositiontaking_9  >0.9
-	or @v1apositiontaking_10 >0.9
-	or @v1alivepositiontaking_1  >0.9
-	or @v1alivepositiontaking_3  >0.9
-	or @v1alivepositiontaking_7  >0.9
-	or @v1alivepositiontaking_8  >0.9
+	or @v1apositiontaking_1  >1
+	or @v1apositiontaking_2  >1
+	or @v1apositiontaking_3  >1
+	or @v1apositiontaking_4  >1
+	or @v1apositiontaking_5  >1
+	or @v1apositiontaking_6  >1
+	or @v1apositiontaking_7  >1
+	or @v1apositiontaking_8  >1
+	or @v1apositiontaking_9  >1
+	or @v1apositiontaking_10 >1
+	or @v1alivepositiontaking_1  >1
+	or @v1alivepositiontaking_3  >1
+	or @v1alivepositiontaking_7  >1
+	or @v1alivepositiontaking_8  >1
 	
-	or @v2apositiontaking_1  >0.9
-	or @v2apositiontaking_2  >0.9
-	or @v2apositiontaking_3  >0.9
-	or @v2apositiontaking_7  >0.9
-	or @v2apositiontaking_8  >0.9
-	or @v2apositiontaking_20  >0.9
+	or @v2apositiontaking_1  >1
+	or @v2apositiontaking_2  >1
+	or @v2apositiontaking_3  >1
+	or @v2apositiontaking_7  >1
+	or @v2apositiontaking_8  >1
+	or @v2apositiontaking_20  >1
 
-	or @v3apositiontaking_1  >0.9
-	or @v3apositiontaking_2  >0.9
-	or @v3apositiontaking_3  >0.9
-	or @v3apositiontaking_20  >0.9
+	or @v3apositiontaking_1  >1
+	or @v3apositiontaking_2  >1
+	or @v3apositiontaking_3  >1
+	or @v3apositiontaking_20  >1
 
-	or @v5apositiontaking_1  >0.9
-	or @v5apositiontaking_2  >0.9
-	or @v5apositiontaking_3  >0.9
-	or @v5apositiontaking_20  >0.9
+	or @v5apositiontaking_1  >1
+	or @v5apositiontaking_2  >1
+	or @v5apositiontaking_3  >1
+	or @v5apositiontaking_20  >1
 
-	or @v8apositiontaking_1  >0.9
-	or @v8apositiontaking_3  >0.9
-	or @v8apositiontaking_20  >0.9
+	or @v8apositiontaking_1  >1
+	or @v8apositiontaking_3  >1
+	or @v8apositiontaking_20  >1
 
-	or @v10apositiontaking_1  >0.9
-	or @v10apositiontaking_2  >0.9
-	or @v10apositiontaking_3  >0.9
-	or @v10apositiontaking_20  >0.9
+	or @v10apositiontaking_1  >1
+	or @v10apositiontaking_2  >1
+	or @v10apositiontaking_3  >1
+	or @v10apositiontaking_20  >1
 
-	or @v11apositiontaking_1  >0.9
-	or @v11apositiontaking_20  >0.9
+	or @v11apositiontaking_1  >1
+	or @v11apositiontaking_20  >1
 	
-	or @v44apositiontaking_3  >0.9
+	or @v44apositiontaking_3  >1
 	
-	or @v99apositiontaking_1  >0.9
-	or @v99apositiontaking_2  >0.9
-	or @v99apositiontaking_3  >0.9
-	or @v99apositiontaking_9 >0.9
-	or @v99apositiontaking_20  >0.9	
+	or @v99apositiontaking_1  >1
+	or @v99apositiontaking_2  >1
+	or @v99apositiontaking_3  >1
+	or @v99apositiontaking_9 >1
+	or @v99apositiontaking_20  >1
 	
 	
 	or @v161apositiontaking_81 >1
@@ -347,5 +348,3 @@ END
 return
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam] TO [vnteam] AS [dbo]
