@@ -1262,16 +1262,15 @@ BEGIN
 	select @DepositUserName = @site + '$' + @DepositUserName    
 	     
 	--Check the unique username    
-	if exists (select 1 from customer c with (NOLOCK)        
-	   where c.username2 = @DepositUserName    
-		)    
-	 OR EXISTS (select 1 from customer with(NOLOCK) where username = @UserName)    
-	 or exists (select 1 from custsub with(NOLOCK) where username = @UserName) 
-	 OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-	 OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @DepositUserName)   
+	IF	   EXISTS (select 1 from customer c WITH (NOLOCK) WHERE c.username2 = @DepositUserName)    
+		OR EXISTS (select 1 from customer WITH(NOLOCK) WHERE username = @UserName)    
+		OR EXISTS (select 1 from custsub WITH(NOLOCK) WHERE username = @UserName) 
+		OR EXISTS (select 1 from custsub WITH(NOLOCK) WHERE username2 = @DepositUserName) 
+		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @DepositUserName)   
 	BEGIN    
-	 Select @ErrMsg = 'The username is not available.', @ErrCode = 11    
-	 return    
+		SELECT @ErrMsg = 'The username is not available.', @ErrCode = 11    
+		RETURN    
 	END    
 	-----------------------------------------------    
 	--reset the @site param    
