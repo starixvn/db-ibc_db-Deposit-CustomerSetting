@@ -1,6 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
+
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSelect] 
 	@ProductID	INT
 	,@CustID	INT
@@ -106,8 +105,5 @@ BEGIN
 	
 	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@bitmapOrder AS bitmapOrder,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline,@IsDisabledUpline AS IsDisabledUpline
 END
-
-
-
 GO
 
