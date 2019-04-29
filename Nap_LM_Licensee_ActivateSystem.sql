@@ -1,7 +1,4 @@
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBCUST-bodb_licensee" executers="Dot_Member,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Nap_LM_Licensee_ActivateSystem]
 	@LicenseeName	VARCHAR(50),
 	@SystemName		VARCHAR(100),

@@ -1,7 +1,4 @@
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBCUST-bodb_licensee" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Dot_Dep_LM_CreateNewLicensee]
 	@LicenseeName			VARCHAR(50)
 	, @LicenseeType			VARCHAR(50)

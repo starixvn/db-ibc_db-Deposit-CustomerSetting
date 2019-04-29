@@ -1,7 +1,4 @@
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+/*<info serverAlias="DBPTCS-bodb_PlaytechCS" executers="bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Nap_LM_Licensee_EnablePullService]
 	@LicenseeName		VARCHAR(50),
 	@SettingName		varchar(50)
