@@ -168,6 +168,8 @@ Revisions:
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
+	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -358,7 +360,9 @@ BEGIN
 		@v161slivepositiontaking_86 smallmoney,
 		@v161slivepositiontaking_87	smallmoney,
 		@v161slivepositiontaking_89	smallmoney,
-		@v161slivepositiontaking_90	smallmoney
+		@v161slivepositiontaking_90	smallmoney,
+
+		@VirtualMultiplier SMALLMONEY
 
 
 	select 
@@ -372,7 +376,8 @@ BEGIN
 		@DisableOutright = DisableOutright,
 		
 		@DisableCasinoBonus = 1	,
-		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end	
+		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end,
+		@VirtualMultiplier = ci.VirtualMultiplier
 	from CustInfo as ci with (NOLOCK) 
 	where CustID = @recommend
 
@@ -695,9 +700,8 @@ BEGIN
 		
 		@DisableCasinoBonus = @DisableCasinoBonus,
 		@matchlimit = @matchlimit,
-
-		--20150309@Johnson: disable virtual rate as default
-		@virtualmultiplier = 0,
+		
+		@virtualmultiplier = @VirtualMultiplier,
 		
 		@DisableCasino = 0,
 		@IsInternal = 0,	
