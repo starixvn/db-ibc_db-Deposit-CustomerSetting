@@ -79,6 +79,7 @@ Revisions:
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
+	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -120,6 +121,36 @@ BEGIN
 
 	INSERT INTO Dep_CustSuper (custid, currency, username, site)
 	VALUES (@CustID, @currency, @username, @site)
+
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+	SELECT	@CustID, 
+			seqNo,
+			(
+				SELECT TOP 1 bitmap
+				FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
+			) AS bitmapVirtual
+	FROM (
+		SELECT DISTINCT seqNo
+		FROM ProfileVirtualSetting WITH(NOLOCK)
+	) pvs
+	CROSS APPLY (
+		SELECT (
+			SELECT	(
+						SELECT	ipvs.profileID			AS '@p',
+								vr.virtualMultiplier	AS '@v'
+						FROM	ProfileVirtualSetting	AS ipvs WITH(NOLOCK)
+						CROSS APPLY (
+							SELECT CAST(1.00 AS SMALLMONEY) AS virtualMultiplier
+						) vr
+						WHERE	ipvs.seqNo = pvs.seqNo
+						FOR XML PATH ('r'), 
+						TYPE
+					)
+			FOR XML PATH ('root'), 
+			TYPE
+		) AS virtualXML
+	) p	
+
 END
 ELSE IF @roleid = 3
 BEGIN
@@ -128,6 +159,12 @@ BEGIN
 
 	INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)
 	VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+
+	--Virtual rate
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+	SELECT @CustID, seqNo, bitmapVirtual
+	FROM CustVirtualSetting WITH(NOLOCK)
+	WHERE custid = @srecommend
 END
 ELSE IF @roleid = 2
 BEGIN
@@ -136,61 +173,21 @@ BEGIN
 
 	INSERT INTO CustAgent(custId,site, MaxCredit, IsInternal, TransferOption)
 	VALUES(@CustID,@site, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
-END
 
-IF @@ERROR <> 0
-BEGIN
-	SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END,
-		@ErrCode = 112
-		
-	-- ROLLBACK MANUALLY
-	IF @RoleID = 4
-	BEGIN
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-	END
-	ELSE IF @RoleID = 3
-		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-	ELSE IF @RoleID = 2
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-		
-	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			
-	RETURN
+	--Virtual rate
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+	SELECT @CustID, seqNo, bitmapVirtual
+	FROM CustVirtualSetting WITH(NOLOCK)
+	WHERE custid = @mrecommend
 END
-
---Virtual rate
-INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-SELECT	@Custid, 
-		seqNo,
-		(
-			SELECT TOP 1 bitmap
-			FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
-		) AS bitmapVirtual
-FROM (
-	SELECT DISTINCT seqNo
-	FROM ProfileVirtualSetting WITH(NOLOCK)
-) pvs
-CROSS APPLY (
-	SELECT (
-		SELECT	(
-					SELECT	ipvs.profileID			AS '@p',
-							vr.virtualMultiplier	AS '@v'
-					FROM	ProfileVirtualSetting	AS ipvs WITH(NOLOCK)
-					CROSS APPLY (
-						SELECT CAST(1.00 AS SMALLMONEY) AS virtualMultiplier
-					) vr
-					WHERE	ipvs.seqNo = pvs.seqNo
-					FOR XML PATH ('r'), 
-					TYPE
-				)
-		FOR XML PATH ('root'), 
-		TYPE
-	) AS virtualXML
-) p	
+ELSE IF @roleid = 1
+BEGIN	
+	--Virtual rate
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+	SELECT @CustID, seqNo, bitmapVirtual
+	FROM CustVirtualSetting WITH(NOLOCK)
+	WHERE custid = @recommend
+END
 
 IF @@ERROR <> 0
 BEGIN
@@ -213,9 +210,9 @@ BEGIN
 		
 	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-	
+			
 	RETURN
-END		
+END
 
 INSERT INTO [dbo].[custinfo](
 	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch44], [maxpermatch201],[maxpermatch99]
