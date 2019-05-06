@@ -1,4 +1,5 @@
-/*<info serverAlias="DBCUST-bodb_licensee" executers="Dot_Member,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_licensee" executers="bodbLicenseeNet,Dot_Member" viewers="" isFunction="0" isNested="0"></info>*/
+
 CREATE PROCEDURE [dbo].[Nap_LM_Licensee_Insert]
 	@LicenseeName			VARCHAR(50)
 	, @SuperWildCard		VARCHAR(100) = ''
@@ -121,10 +122,15 @@ BEGIN
 	
 	--- CREATE AGENT
 	BEGIN TRY
+		SET @SPErrMsg = ''
 		EXEC Nap_LM_Licensee_AddAgent 
 			@LicenseeName		= @LicenseeName
 			, @SuperWildCard	= @tmpSuperWildCard
 			, @IsSpecial		= @IsSpecial
+			, @ErrMsg			= @SPErrMsg OUTPUT
+
+		INSERT INTO @Error (Msg)
+		VALUES (@SPErrMsg)
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode = 50102
@@ -441,8 +447,4 @@ BEGIN
 		RETURN
 	END
 END
-GO
-GRANT EXECUTE ON [dbo].[Nap_LM_Licensee_Insert] TO [bodbLicenseeNet]
-GO
-GRANT EXECUTE ON [dbo].[Nap_LM_Licensee_Insert] TO [Dot_Member]
 GO

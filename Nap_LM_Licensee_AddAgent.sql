@@ -1,10 +1,12 @@
-/*<info serverAlias="DBCUST-bodb_licensee" executers="Dot_Member,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-bodb_licensee" executers="bodbLicenseeNet,Dot_Member" viewers="" isFunction="0" isNested="0"></info>*/
+
 CREATE PROCEDURE [dbo].[Nap_LM_Licensee_AddAgent]
 	@LicenseeName		VARCHAR(50)
 	, @SuperWildCard	VARCHAR(50)
 	, @Currency			INT = 0
 	, @IsSpecial		BIT = 0
 	, @AffectedRows		INT = 0 OUTPUT
+	, @ErrMsg			NVARCHAR(200) = ''	OUTPUT
 AS
 /*
 	 Created: Amanda
@@ -16,6 +18,7 @@ AS
 	 Revisions:
 	  - 20181120@Amanda: Add Agent/Currency of Licensee [Redmine: #83584]
 	  - 20190418@Amanda: Move code from DBA_CreateLicenseeAgent to this [Redmine: #111321]
+	  - 20190506@Amanda: Add Company Win Limit setting [Redmine: #112684]
 */
 BEGIN
 	SET NOCOUNT ON;
@@ -32,7 +35,7 @@ BEGIN
 		RETURN
 	END
 	
-	DECLARE @super AS TABLE (CustID INT)
+	DECLARE @super AS TABLE (CustID INT, CurrencyId INT)
 	DECLARE @agent AS TABLE (
 						CustID			INT
 					,	UserName		VARCHAR(100)
@@ -43,6 +46,7 @@ BEGIN
 					)
 	DECLARE @SuperWildCardText VARCHAR(50)
 	DECLARE @SumCust1 INT, @SumCust2 INT
+	DECLARE @AddCWLSetting BIT
 
 	SET @SuperWildCardText = @SuperWildCard + '%'
 	SELECT @SumCust1 = COUNT(1) FROM dbo.LicenseeCust WITH (NOLOCK) WHERE LicenseeID = @LicenseeID AND RoleID = 2
@@ -50,19 +54,24 @@ BEGIN
 	-- GET SUPER ID
 	IF @Currency = 0
 	BEGIN
-		INSERT INTO @super (CustID)
-		SELECT custid
+		INSERT INTO @super (CustID, CurrencyId)
+		SELECT custid, currency
 		FROM CUSTDB.dbo.custinfo WITH (NOLOCK)
 		WHERE roleid = 4 AND username LIKE @SuperWildCardText
 	END
 	ELSE
 	BEGIN
-		INSERT INTO @super (CustID)
-		SELECT custid
+		INSERT INTO @super (CustID, CurrencyId)
+		SELECT custid, currency
 		FROM CUSTDB.dbo.custinfo WITH (NOLOCK)
 		WHERE roleid = 4 AND username LIKE @SuperWildCardText AND currency = @Currency
 	END
-		
+	
+	IF EXISTS (SELECT 1 FROM @super c WHERE NOT EXISTS (SELECT TOP 1 1 FROM dbo.LicenseeCust lc WHERE lc.LicenseeID = @LicenseeId AND lc.Currency = c.CurrencyId))
+	BEGIN
+		SET @AddCWLSetting = 1
+	END
+	
 	-- GET LICENSEE AGENTs  
 	IF @LicenseeName = '12BET'
 	BEGIN
@@ -200,9 +209,10 @@ BEGIN
 	SELECT @SumCust2 = COUNT(1) FROM dbo.LicenseeCust WITH (NOLOCK) WHERE LicenseeID = @LicenseeID AND RoleID = 2
 	
 	SET @AffectedRows = @SumCust2 - @SumCust1
+	
+	IF @AddCWLSetting = 1 AND @AffectedRows > 0
+	BEGIN
+		EXEC CustDB.dbo.Dot_Dep_CWL_InsertSetting @LicenseeID = @LicenseeId, @ErrMsg = @ErrMsg OUTPUT
+	END
 END
-GO
-GRANT EXECUTE ON [dbo].[Nap_LM_Licensee_AddAgent] TO [bodbLicenseeNet]
-GO
-GRANT EXECUTE ON [dbo].[Nap_LM_Licensee_AddAgent] TO [Dot_Member]
 GO
