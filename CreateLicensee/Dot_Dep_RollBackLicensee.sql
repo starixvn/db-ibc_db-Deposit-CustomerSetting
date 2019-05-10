@@ -23,4 +23,6 @@ BEGIN
 					DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @CustID	
 					EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
 					DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @CustID
+					DELETE CustGameType WITH(ROWLOCK) WHERE Custid = @custid
+
 END
