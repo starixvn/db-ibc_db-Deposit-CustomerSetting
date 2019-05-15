@@ -166,6 +166,8 @@ AS
 	 - 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 	 - 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
 	 - 20181119@Winnie: Check betsetting Esports [Redmine: 100721]		
+	 - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
