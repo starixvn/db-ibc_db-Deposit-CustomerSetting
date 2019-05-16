@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Dot_Dep_RollBackLicenseeDCS] 
-		@CustID			INT
+		@ListCustID		VARCHAR(MAX)
 		
 AS
 
@@ -14,8 +14,20 @@ AS
  Param's Explanation: 
  */
 BEGIN
+	CREATE TABLE #tblCustomer(CustID INT,isfinished BIT DEFAULT(0))	
+	INSERT INTO #tblCustomer (CustID)
+	SELECT ss.val
+	FROM dbo.strSplit(@ListCustID, ',') AS ss;	
 
-					DELETE Dep_CustProductStatus WITH (ROWLOCK) WHERE custId  =@CustID
-					DELETE Dep_CustPTSetting_Agent WITH (ROWLOCK) WHERE custId  =@CustID
-					DELETE FROM Dep_CustBetSetting_Agent WITH(ROWLOCK) WHERE custId = @CustID		
+	DELETE d 
+	FROM Dep_CustProductStatus d WITH (ROWLOCK) 
+		INNER JOIN #tblCustomer t ON d.custid=t.CustID
+
+	DELETE d
+	FROM Dep_CustPTSetting_Agent d WITH (ROWLOCK) 
+		INNER JOIN #tblCustomer t ON d.custid=t.CustID
+
+	DELETE d
+	FROM Dep_CustBetSetting_Agent d WITH(ROWLOCK)
+		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 END
