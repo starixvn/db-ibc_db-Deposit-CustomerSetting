@@ -1261,15 +1261,14 @@ BEGIN
 	END    
 	END  
 	--20080623: Add sitename prefix to the DepositUsername    
-	select @DepositUserName = @site + '$' + @DepositUserName    
+	SELECT @DepositUserName = @site + '$' + @DepositUserName    
 	     
-	--Check the unique username    
-	IF	   EXISTS (select 1 from customer c WITH (NOLOCK) WHERE c.username2 = @DepositUserName)    
-		OR EXISTS (select 1 from customer WITH(NOLOCK) WHERE username = @UserName)    
-		OR EXISTS (select 1 from custsub WITH(NOLOCK) WHERE username = @UserName) 
-		OR EXISTS (select 1 from custsub WITH(NOLOCK) WHERE username2 = @DepositUserName) 
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @DepositUserName)   
+	DECLARE @IsExistsUsername BIT, @IsExistsUsername2 BIT 
+	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExistsUsername OUTPUT
+	EXEC Age_CustomerCheckExists @username = @DepositUserName, @IsExists = @IsExistsUsername2 OUTPUT
+
+	--Check the unique username and username2
+	IF @IsExistsUsername = 1 OR @IsExistsUsername2 = 1   
 	BEGIN    
 		SELECT @ErrMsg = 'The username is not available.', @ErrCode = 11    
 		RETURN    
