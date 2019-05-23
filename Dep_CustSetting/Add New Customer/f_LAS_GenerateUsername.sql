@@ -77,11 +77,17 @@ BEGIN
   
 		SELECT @UserName = @recommendUsername + @NumTmp  
 		SELECT @UserName = REPLACE(@UserName, ' ', '')  
-		--check username exists or not?  	 
-		EXEC Age_CustomerCheckExists @username = @UserName, @IsExists = @IsExists OUTPUT
 
-		IF @IsExists = 0 
+		--check username exists or not?  	 
+		IF NOT EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username = @username)
+			AND NOT EXISTS (SELECT 1 FROM customer WITH (NOLOCK) WHERE username2 = @username)
+			AND NOT EXISTS(SELECT 1 FROM custsub WITH (NOLOCK) WHERE username = @username)
+			AND NOT EXISTS(SELECT 1 FROM custsub WITH (NOLOCK) WHERE username2 = @username)
+			AND NOT EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+			AND NOT EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+		BEGIN
 			RETURN @UserName  
+		END
   
 		IF @Index > @LimitLoop  
 		BEGIN  
