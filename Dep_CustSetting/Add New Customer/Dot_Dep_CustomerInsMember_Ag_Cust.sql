@@ -1264,7 +1264,7 @@ BEGIN
 	SELECT @DepositUserName = @site + '$' + @DepositUserName    
 	     
 	DECLARE @IsExistsUsername BIT
-	EXEC Age_CustomerCheckExists @username = @DepositUserName, @IsExists = @IsExistsUsername OUTPUT
+	EXEC Acc_Dep_CustomerCheckExists @username = @DepositUserName, @IsExists = @IsExistsUsername OUTPUT
 
 	--Check the unique username2
 	IF @IsExistsUsername = 1
