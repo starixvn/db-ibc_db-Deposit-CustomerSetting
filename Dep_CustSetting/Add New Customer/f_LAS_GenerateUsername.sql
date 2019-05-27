@@ -44,13 +44,15 @@ BEGIN
 		AND username NOT LIKE @recommendUsername+'%'+'BetTrade'  
 		AND username NOT LIKE @recommendUsername+'%'+'CashOut'
 		AND username NOT LIKE @recommendUsername+'%'+'ClearBal'  
+		AND recommend = @recommend
 		AND RoleId = 1)  
 
 	SELECT @NumOfMem2 = ISNULL(CAST(REPLACE(username, @recommendUsername, '') AS INT), 0)  
 	FROM dbo.Dep_Customer_Archived WITH(NOLOCK)  
 	WHERE custid = (SELECT MAX(custid)   
 					FROM dbo.Dep_Customer_Archived WITH(NOLOCK)   
-					WHERE username LIKE @recommendUsername + '%')
+					WHERE username LIKE @recommendUsername + '%'
+						AND recommend = @recommend)
 	
 	IF ISNULL(@NumOfMem2,0) > ISNULL(@NumOfMem,0) SELECT @NumOfMem=@NumOfMem2
   
