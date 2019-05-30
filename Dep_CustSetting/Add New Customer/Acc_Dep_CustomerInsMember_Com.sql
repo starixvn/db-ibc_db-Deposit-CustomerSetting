@@ -295,6 +295,7 @@ Revisions:
     - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
+	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -578,11 +579,10 @@ BEGIN
 	END
 	--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-	IF EXISTS(SELECT 1 FROM Customer WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Customer WITH (NOLOCK) WHERE username2 = @username)
-		OR EXISTS(SELECT 1 FROM custSub WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
-		OR EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+	DECLARE @IsExists BIT 
+	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
+
+	IF @IsExists = 1
 	BEGIN
 		SELECT @ErrMsg = CASE @Language 
 							WHEN 'E' THEN 'This username is not available.'

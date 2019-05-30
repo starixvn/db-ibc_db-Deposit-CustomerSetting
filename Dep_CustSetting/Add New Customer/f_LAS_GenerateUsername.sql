@@ -17,17 +17,19 @@ AS
   - 20150717@Winnie: Change for exclude bettrade ACC  
   - 20170304@Winnie:  Change for exclude CashOut ACC [Redmine: #72107]
   - 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
+  - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+
  Parameters Explanation:  
 */  
   
 BEGIN  
 	IF @recommend = 0 OR @recommend IS NULL  
 	BEGIN  
-	RETURN ''  
+		RETURN ''  
 	END  
   
-	DECLARE @LimitLoop INT, @Index INT, @Username VARCHAR(50)  
-	, @NumTmp VARCHAR(10), @NumOfMem INT, @NumOfMem2 INT, @recommendUsername VARCHAR(50)  
+	DECLARE @LimitLoop INT, @Index INT, @Username VARCHAR(50), @IsExists BIT,
+			@NumTmp VARCHAR(10), @NumOfMem INT, @NumOfMem2 INT, @recommendUsername VARCHAR(50)  
 	SELECT @LimitLoop = 1000, @Index = 0, @Username = ''  
   
 	SELECT @recommendUsername = username  
@@ -42,57 +44,59 @@ BEGIN
 		AND username NOT LIKE @recommendUsername+'%'+'BetTrade'  
 		AND username NOT LIKE @recommendUsername+'%'+'CashOut'
 		AND username NOT LIKE @recommendUsername+'%'+'ClearBal'  
+		AND recommend = @recommend
 		AND RoleId = 1)  
 
 	SELECT @NumOfMem2 = ISNULL(CAST(REPLACE(username, @recommendUsername, '') AS INT), 0)  
 	FROM dbo.Dep_Customer_Archived WITH(NOLOCK)  
 	WHERE custid = (SELECT MAX(custid)   
-	FROM dbo.Dep_Customer_Archived WITH(NOLOCK)   
-	WHERE username LIKE @recommendUsername + '%' 
-	)
+					FROM dbo.Dep_Customer_Archived WITH(NOLOCK)   
+					WHERE username LIKE @recommendUsername + '%'
+						AND recommend = @recommend)
 	
 	IF ISNULL(@NumOfMem2,0) > ISNULL(@NumOfMem,0) SELECT @NumOfMem=@NumOfMem2
-
   
 	SELECT @NumTmp = CAST(@NumOfMem AS VARCHAR(10))  
 	IF @NumOfMem IS NULL --for case new agent  
 	BEGIN  
-	SET @NumOfMem = 0  
+		SET @NumOfMem = 0  
 	END  
   
 	WHILE 1 = 1  
 	BEGIN  
-	SET @Username = ''  
-	--increase num of member  
-	SET @NumOfMem = @NumOfMem + 1  
+		SET @Username = ''  
+		--increase num of member  
+		SET @NumOfMem = @NumOfMem + 1  
   
-	IF LEN(@NumOfMem) < 3  
-	BEGIN  
-	SET @NumTmp = RIGHT('00' + CAST(@NumOfMem AS VARCHAR(10)), 3)  
-	END  
-	ELSE  
-	BEGIN  
-	SET @NumTmp = CAST(@NumOfMem AS VARCHAR(10))  
-	END  
-  
-	SELECT @UserName = @recommendUsername + @NumTmp  
-	SELECT @UserName = REPLACE(@UserName, ' ', '')  
-	--check username exists or not?  
-	IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.customer WITH(NOLOCK) WHERE username = @UserName)  
-	BEGIN  
-		IF NOT EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE username = @UserName) 
-			AND NOT EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+		IF LEN(@NumOfMem) < 3  
 		BEGIN  
-			RETURN @UserName  
+			SET @NumTmp = RIGHT('00' + CAST(@NumOfMem AS VARCHAR(10)), 3)  
 		END  
-	END  
+		ELSE  
+		BEGIN  
+			SET @NumTmp = CAST(@NumOfMem AS VARCHAR(10))  
+		END  
   
-	IF @Index > @LimitLoop  
-	BEGIN  
-	RETURN ''  
-	END  
+		SELECT @UserName = @recommendUsername + @NumTmp  
+		SELECT @UserName = REPLACE(@UserName, ' ', '')  
+
+		--check username exists or not?  	 
+		IF NOT EXISTS(SELECT 1 FROM customer WITH(NOLOCK) WHERE username = @username)
+			AND NOT EXISTS (SELECT 1 FROM customer WITH (NOLOCK) WHERE username2 = @username)
+			AND NOT EXISTS(SELECT 1 FROM custsub WITH (NOLOCK) WHERE username = @username)
+			AND NOT EXISTS(SELECT 1 FROM custsub WITH (NOLOCK) WHERE username2 = @username)
+			AND NOT EXISTS(SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username= @username)
+			AND NOT EXISTS (SELECT 1 FROM Dep_Customer_Archived WITH (NOLOCK) WHERE username2 = @username)
+		BEGIN
+			RETURN @UserName  
+		END
   
-	SET @Index = @Index + 1  
+		IF @Index > @LimitLoop  
+		BEGIN  
+			RETURN ''  
+		END  
+  
+		SET @Index = @Index + 1  
 	END  
    
 	RETURN ''  
