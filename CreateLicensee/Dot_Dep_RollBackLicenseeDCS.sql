@@ -30,4 +30,8 @@ BEGIN
 	DELETE d
 	FROM Dep_CustBetSetting_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
+
+	DELETE d
+	FROM Dep_CustPTGroupSetting d WITH(ROWLOCK)
+		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 END
