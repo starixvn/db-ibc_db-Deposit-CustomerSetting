@@ -32,6 +32,6 @@ BEGIN
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 
 	DELETE d
-	FROM Dep_CustPTGroupSetting d WITH(ROWLOCK)
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
+	FROM Dep_CustPTGroupSetting_Member d WITH(ROWLOCK)
+		INNER JOIN #tblCustomer t ON d.AgentID=t.CustID	
 END
