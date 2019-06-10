@@ -74,7 +74,7 @@ BEGIN
 	
 	--- CREATE LICENSEE
 	BEGIN TRY
-		DECLARE @AffectedDate DATETIME, @EditBetSetting BIT
+		DECLARE @AffectedDate DATETIME, @EditBetSetting BIT=0
 	
 		IF ISNULL(@EffectiveDate, '') <> ''
 		BEGIN
