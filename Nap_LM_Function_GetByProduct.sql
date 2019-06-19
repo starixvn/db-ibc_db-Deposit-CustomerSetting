@@ -41,6 +41,12 @@ BEGIN
 			OR FunctionId BETWEEN 51 AND 56
 			OR FunctionId BETWEEN 36 AND 43
 			OR FunctionId BETWEEN 7 AND 33
+		UNION ALL 
+		SELECT	0 AS ProductId -- SB
+				,FunctionID  
+				,2 AS TypeId -- LA
+		FROM dbo.Functions WITH (NOLOCK)	
+		WHERE FunctionId = 6 OR  ParentId = 6
 	END
 
 	IF @ProductCode = 'RB'
