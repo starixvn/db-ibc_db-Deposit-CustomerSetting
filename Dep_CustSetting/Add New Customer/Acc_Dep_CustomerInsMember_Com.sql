@@ -36,10 +36,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 	@MaxBetv11 MONEY,
 	@MaxPerMatchv11 MONEY,
 	
-	@MinBetv44 MONEY,
-	@MaxBetv44 MONEY,
-	@MaxPerMatchv44 MONEY,
-	
 	@MinBetv99 MONEY,
 	@MaxBetv99 MONEY,
 	@MaxPerMatchv99 MONEY,
@@ -49,14 +45,11 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 	@MaxBetv99MP MONEY,
 	@MaxPerMatchv99MP MONEY,
 
-
 	--Number game
 	@MinBetv161 MONEY,
 	@MaxBetv161 MONEY,
 	@MaxPerMatchv161 MONEY,
-	@MaxPerBallv161 MONEY = 0,
-	
-	
+	@MaxPerBallv161 MONEY = 0,	
 	
 	@v1spositiontaking_1 SMALLMONEY,
 	@v1spositiontaking_2 SMALLMONEY,
@@ -102,8 +95,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 
 	@v11spositiontaking_1 SMALLMONEY,
 	@v11spositiontaking_20 SMALLMONEY,
-	
-	@v44spositiontaking_3 SMALLMONEY,
 	
 	@v99spositiontaking_1 SMALLMONEY,
 	@v99spositiontaking_2 SMALLMONEY,
@@ -169,8 +160,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 	@v11mpositiontaking_1 SMALLMONEY,
 	@v11mpositiontaking_20 SMALLMONEY,
 	
-	@v44mpositiontaking_3 SMALLMONEY,
-	
 	@v99mpositiontaking_1 SMALLMONEY,
 	@v99mpositiontaking_2 SMALLMONEY,
 	@v99mpositiontaking_3 SMALLMONEY,
@@ -234,9 +223,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 
 	@v11apositiontaking_1 SMALLMONEY,
 	@v11apositiontaking_20 SMALLMONEY,
-	
-	@v44apositiontaking_3 SMALLMONEY,
-	
+
 	@v99apositiontaking_1 SMALLMONEY,
 	@v99apositiontaking_2 SMALLMONEY,
 	@v99apositiontaking_3 SMALLMONEY,
@@ -296,6 +283,7 @@ Revisions:
 	- 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]  
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
+	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -348,8 +336,7 @@ BEGIN
 
 	EXEC dbo.Acc_Dep_CustomerInsMember_Com_CheckParam
 				@custid						= @custid OUTPUT,
-				@currency					= @currency,		
-			
+				@currency					= @currency,	
 				@MinBet						= @MinBetv1,
 				@MaxBet						= @MaxBetv1,
 				@MaxPerMatch				= @MaxPerMatchv1,
@@ -370,11 +357,7 @@ BEGIN
 				@MaxPerMatchv10				= @MaxPerMatchv10,
 				@MinBetv11					= @MinBetv11,
 				@MaxBetv11					= @MaxBetv11,
-				@MaxPerMatchv11				= @MaxPerMatchv11,
-				
-				@MinBetv44					= @MinBetv44,
-				@MaxBetv44					= @MaxBetv44,
-				@MaxPerMatchv44				= @MaxPerMatchv44,
+				@MaxPerMatchv11				= @MaxPerMatchv11,			
 				
 				@MinBetv99					= @MinBetv99,
 				@MaxBetv99					= @MaxBetv99,
@@ -430,9 +413,7 @@ BEGIN
 				@v10spositiontaking_20		= @v10spositiontaking_20,
 				@v11spositiontaking_1		= @v11spositiontaking_1,
 				@v11spositiontaking_20		= @v11spositiontaking_20,
-				
-				@v44spositiontaking_3		= @v44spositiontaking_3,
-				
+			
 				@v99spositiontaking_1		= @v99spositiontaking_1,
 				@v99spositiontaking_2		= @v99spositiontaking_2,
 				@v99spositiontaking_3		= @v99spositiontaking_3,
@@ -488,9 +469,7 @@ BEGIN
 				@v10mpositiontaking_20		= @v10mpositiontaking_20,
 				@v11mpositiontaking_1		= @v11mpositiontaking_1,
 				@v11mpositiontaking_20		= @v11mpositiontaking_20,
-				
-				@v44mpositiontaking_3		= @v44mpositiontaking_3,
-				
+					
 				@v99mpositiontaking_1		= @v99mpositiontaking_1,
 				@v99mpositiontaking_2		= @v99mpositiontaking_2,
 				@v99mpositiontaking_3		= @v99mpositiontaking_3,
@@ -547,9 +526,7 @@ BEGIN
 				@v10apositiontaking_20		= @v10apositiontaking_20,
 				@v11apositiontaking_1		= @v11apositiontaking_1,
 				@v11apositiontaking_20		= @v11apositiontaking_20,
-				
-				@v44apositiontaking_3		= @v44apositiontaking_3,
-				
+		
 				@v99apositiontaking_1		= @v99apositiontaking_1,
 				@v99apositiontaking_2		= @v99apositiontaking_2,
 				@v99apositiontaking_3		= @v99apositiontaking_3,
@@ -624,8 +601,7 @@ BEGIN
 		@MaxPerMatchv5 = @MaxPerMatchv5,
 		@MaxPerMatchv8 = @MaxPerMatchv8,
 		@MaxPerMatchv10 = @MaxPerMatchv10,
-		@MaxPerMatchv11 = @MaxPerMatchv11,
-		@MaxPerMatchv44 = @MaxPerMatchv44,
+		@MaxPerMatchv11 = @MaxPerMatchv11,	
 		@MaxPerMatchv99 = @MaxPerMatchv99,
 		@MaxPerMatchv99MP = @MaxPerMatchv99MP,
 		@MaxPerMatchv161 = @MaxPerMatchv161,
@@ -711,8 +687,6 @@ BEGIN
 	UNION ALL	SELECT @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, 0, 0, 0, 0, @MinBetv11, @MaxBetv11, 0
 	UNION ALL	SELECT @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, 0, 0, 0, 0, @MinBetv11, @MaxBetv11, 0
 
-	UNION ALL	SELECT @custid, 3, 44, @v44apositiontaking_3, @v44mpositiontaking_3, @v44spositiontaking_3, 0, 0, 0, 0, @MinBetv44, @MaxBetv44, 0
-
 	UNION ALL	SELECT @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, @v99spositiontaking_1, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
 	UNION ALL	SELECT @custid, 2, 99, @v99apositiontaking_2, @v99mpositiontaking_2, @v99spositiontaking_2, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
 	UNION ALL	SELECT @custid, 3, 99, @v99apositiontaking_3, @v99mpositiontaking_3, @v99spositiontaking_3, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
@@ -742,7 +716,7 @@ BEGIN
 	INSERT INTO [dbo].[Dep_CustSetting3rd]([custId], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking],  [playerdiscount], [discount], [adiscount], [sdiscount], [Minbet], [Maxbet], [islive])
 
 	--v161
-		SELECT @custid, 81, 161, @v161apositiontaking_81, @v161mpositiontaking_81, @v161spositiontaking_81, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
+	SELECT @custid, 81, 161, @v161apositiontaking_81, @v161mpositiontaking_81, @v161spositiontaking_81, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
 	UNION ALL	SELECT @custid, 83, 161, @v161apositiontaking_83, @v161mpositiontaking_83, @v161spositiontaking_83, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 0--nonlive
 	UNION ALL	SELECT @custid, 85, 161, @v161alivepositiontaking_85, @v161mlivepositiontaking_85, @v161slivepositiontaking_85, 0, 0, 0, 0, @MinBetv161, @MaxBetv161, 1--live
 
@@ -916,15 +890,9 @@ BEGIN
 	'MaxBv11="'+ COALESCE(CAST(@MaxBetv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv11="'+ COALESCE(CAST(@MaxPerMatchv11 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'MinBv44="'+ COALESCE(CAST(@MinBetv44 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MaxBv44="'+ COALESCE(CAST(@MaxBetv44 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv44="'+ COALESCE(CAST(@MaxPerMatchv44 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'MinBv99="'+ COALESCE(CAST(@MinBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv99="'+ COALESCE(CAST(@MaxBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	
+	'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 AS VARCHAR(50)),SPACE(1)) + '" ' +	
 
 	'MinBv99MP="'+ COALESCE(CAST(@MinBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv99MP="'+ COALESCE(CAST(@MaxBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -989,9 +957,6 @@ BEGIN
 	'v11spt_1="'+ COALESCE(CAST(@v11spositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11spt_20="'+ COALESCE(CAST(@v11spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44spt_3="'+ COALESCE(CAST(@v44spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-
 	'v99spt_1="'+ COALESCE(CAST(@v99spositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_2="'+ COALESCE(CAST(@v99spositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_3="'+ COALESCE(CAST(@v99spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1053,8 +1018,6 @@ BEGIN
 
 	'v11mpt_1="'+ COALESCE(CAST(@v11mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11mpt_20="'+ COALESCE(CAST(@v11mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44mpt_3="'+ COALESCE(CAST(@v44mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' + 
 
 	'v99mpt_1="'+ COALESCE(CAST(@v99mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_2="'+ COALESCE(CAST(@v99mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1118,8 +1081,6 @@ BEGIN
 
 	'v11apt_1="'+ COALESCE(CAST(@v11apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11apt_20="'+ COALESCE(CAST(@v11apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44apt_3="'+ COALESCE(CAST(@v44apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v99apt_1="'+ COALESCE(CAST(@v99apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_2="'+ COALESCE(CAST(@v99apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +

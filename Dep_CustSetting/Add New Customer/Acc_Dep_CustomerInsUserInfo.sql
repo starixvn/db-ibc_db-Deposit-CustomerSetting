@@ -35,7 +35,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@MaxPerMatchv8 MONEY,
 	@MaxPerMatchv10 MONEY,
 	@MaxPerMatchv11 MONEY,
-	@MaxPerMatchv44 MONEY,
+
 	--v201
 	@MaxPerMatchv201 MONEY = 0,	
 	@MaxPerMatchv99 MONEY,
@@ -80,6 +80,7 @@ Revisions:
 	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
+	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -221,7 +222,7 @@ INSERT INTO [dbo].[custinfo](
 	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3, DisableCasinoBonus,HideKeno
 	,DisableHorseRacing,DisableOpenTote,Disable151_AU,Disable152_UK,Disable152_AU,Disable153_AU)
 VALUES(
-	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11,@MaxPerMatchv44, @MaxPerMatchv201, @MaxPerMatchv99
+	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11,NULL, @MaxPerMatchv201, @MaxPerMatchv99
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
 	,@DisableOutright, @DisableCasino, @DisableNumber
 	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3, @DisableCasinoBonus,@HideKeno
@@ -253,4 +254,3 @@ BEGIN
 	RETURN
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerInsUserInfo] TO [vnteam] AS [dbo]

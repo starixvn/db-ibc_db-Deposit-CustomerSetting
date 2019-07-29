@@ -30,10 +30,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
 	@MaxBetv11 money,
 	@MaxPerMatchv11 money,
 	
-	@MinBetv44 money,
-	@MaxBetv44 money,
-	@MaxPerMatchv44 money,
-	
 	@MinBetv99 money,
 	@MaxBetv99 money,
 	@MaxPerMatchv99 money,
@@ -93,8 +89,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
 	@v11apositiontaking_1 smallmoney,
 	@v11apositiontaking_20 smallmoney,
 	
-	@v44apositiontaking_3 smallmoney,
-	
 	@v99apositiontaking_1 smallmoney,
 	@v99apositiontaking_2 smallmoney,
 	@v99apositiontaking_3 smallmoney,
@@ -134,6 +128,7 @@ Revisions:
    - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
    - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
    - 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
+   - 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 Param's Explanation:
 • @ErrCode:
     = 0: check valid parameters successfully.
@@ -176,11 +171,7 @@ if
 	or @MinBetv11 <0
 	or @MaxBetv11 <0
 	or @MaxPerMatchv11 <0
-	
-	or @MinBetv44 <0
-	or @MaxBetv44 <0
-	or @MaxPerMatchv44 <0
-	
+
 	or @MinBetv99 <0
 	or @MaxBetv99 <0
 	or @MaxPerMatchv99 <0
@@ -251,9 +242,7 @@ if
 	or @v10apositiontaking_20  <0
 
 	or @v11apositiontaking_1  <0
-	or @v11apositiontaking_20  <0
-	
-	or @v44apositiontaking_3  <0
+	or @v11apositiontaking_20  <0	
 		
 	or @v99apositiontaking_1  <0
 	or @v99apositiontaking_2  <0
@@ -315,8 +304,6 @@ if
 
 	or @v11apositiontaking_1  >1
 	or @v11apositiontaking_20  >1
-	
-	or @v44apositiontaking_3  >1
 	
 	or @v99apositiontaking_1  >1
 	or @v99apositiontaking_2  >1
