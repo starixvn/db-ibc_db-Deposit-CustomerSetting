@@ -2180,8 +2180,8 @@ BEGIN
 
 	UPDATE Dep_CustSetting WITH (ROWLOCK, UPDLOCK)
 	SET
-		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11 when 44 then @MinBetv44 when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
-		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11 when 44 then @MaxBetv44  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
+		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
+		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
 		mpositiontaking = CASE
 							WHEN sporttype = 1 and bettype = 1 and islive = 0 THEN @v1mpositiontaking_1
 							WHEN sporttype = 1 and bettype = 2 and islive = 0 THEN @v1mpositiontaking_2
