@@ -649,9 +649,7 @@ BEGIN
 
 				union all select 	11 as sporttype, 1 as bettype, @v11spositiontaking_1 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	11 as sporttype, 20 as bettype, @v11spositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
-				
-				union all select 	44 as sporttype, 3 as bettype, @v44spositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
-				
+							
 				union all select 	99 as sporttype, 1 as bettype, @v99spositiontaking_1 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 2 as bettype, @v99spositiontaking_2 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 3 as bettype, @v99spositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
@@ -757,9 +755,7 @@ BEGIN
 
 				union all select 	11 as sporttype, 1 as bettype, @v11spositiontaking_1 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	11 as sporttype, 20 as bettype, @v11spositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
-				
-				union all select 	44 as sporttype, 3 as bettype, @v44spositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
-				
+			
 				union all select 	99 as sporttype, 1 as bettype, @v99spositiontaking_1 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 2 as bettype, @v99spositiontaking_2 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 3 as bettype, @v99spositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
