@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerSelMember_AgInfo]
 	@CustID INT
 AS
@@ -16,6 +16,7 @@ Revisions:
 - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 - 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
 - 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]    
+- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -36,8 +37,7 @@ DECLARE @MinBetv1						MONEY,
 		@MinBetv10_Max					MONEY,  
 		@MinBetv11						MONEY,  
 		@MinBetv11_Max					MONEY,  
-		@MinBetv44						MONEY,  
-		@MinBetv44_Max					MONEY,
+	
 		@MinBetv99						MONEY,  
 		@MinBetv99_Max					MONEY,	
 		
@@ -55,8 +55,7 @@ DECLARE @MinBetv1						MONEY,
 		@MaxBetv10_Min					MONEY,
 		@MaxBetv11						MONEY,
 		@MaxBetv11_Min					MONEY,
-		@MaxBetv44						MONEY,
-		@MaxBetv44_Min					MONEY,
+	
 		@MaxBetv99						MONEY,
 		@MaxBetv99_Min					MONEY,		
 
@@ -77,7 +76,7 @@ DECLARE @MinBetv1						MONEY,
 		@MaxPerMatchv8_Min  MONEY,
 		@MaxPerMatchv10_Min  MONEY,
 		@MaxPerMatchv11_Min  MONEY,
-		@MaxPerMatchv44_Min  MONEY,
+		
 		@MaxPerMatchv99_Min  MONEY,		
 		@MaxPerMatchv99MP_Min  MONEY,
 		@MaxPerMatchv161_Min  MONEY,
@@ -96,8 +95,7 @@ DECLARE @MinBetv1						MONEY,
 		@MaxPerMatchv10_Max				MONEY,
 		@MaxPerMatchv11					MONEY,
 		@MaxPerMatchv11_Max				MONEY,	
-		@MaxPerMatchv44					MONEY,
-		@MaxPerMatchv44_Max				MONEY,	
+		
 		@MaxPerMatchv99					MONEY,
 		@MaxPerMatchv99_Max				MONEY,	
 		@MaxPerMatchv99MP				MONEY,
@@ -205,9 +203,6 @@ SELECT  @MinBetv1 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.mi
 		@MinBetv11 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 11 THEN cs.minbet ELSE 0 END),
 		@MaxBetv11 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 11 THEN cs.maxbet ELSE 0 END),
 		
-		@MinBetv44 = max(CASE WHEN cs.bettype = 3 AND cs.sporttype = 44 THEN cs.minbet ELSE 0 END),
-		@MaxBetv44 = max(CASE WHEN cs.bettype = 3 AND cs.sporttype = 44 THEN cs.maxbet ELSE 0 END),
-		
 		@MinBetv99 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 99 THEN cs.minbet ELSE 0 END),
 		@MaxBetv99 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 99 THEN cs.maxbet ELSE 0 END),
 
@@ -297,12 +292,6 @@ FROM
 	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend OR cs.CustID = ci.Recommend) AND cs.bettype = 1 AND cs.sporttype=11
 WHERE ci.custid = @CustID		
 
-SELECT	@MinBetv44_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv44_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend OR cs.CustID = ci.Recommend) AND cs.bettype = 3 AND cs.sporttype=44
-WHERE ci.custid = @CustID
 
 SELECT	@MinBetv99_Max = max(case when MinBet = 0 then NULL else MinBet end),
 		@MaxBetv99_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
@@ -384,7 +373,7 @@ Select
 	@MaxPerMatchv8_Min = 0,
 	@MaxPerMatchv10_Min = 0,
 	@MaxPerMatchv11_Min = 0,
-	@MaxPerMatchv44_Min = 0,
+
 	@MaxPerMatchv99_Min = 0,
 
 	@MaxPerMatchv99MP_Min = 0,
@@ -398,7 +387,7 @@ Select
 	@MaxPerMatchv8_Max = Min(case when cs.MaxPerMatch8 = 0 then NULL else cs.MaxPerMatch8 end),
 	@MaxPerMatchv10_Max = Min(case when cs.MaxPerMatch10 = 0 then NULL else cs.MaxPerMatch10 end),
 	@MaxPerMatchv11_Max = Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 end),	
-	@MaxPerMatchv44_Max = Min(case when cs.MaxPerMatch44 = 0 then NULL else cs.MaxPerMatch44 end),
+	
 	@MaxPerMatchv99_Max = Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),
 	
 	@MaxPerMatchv99MP_Max = Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),
@@ -574,7 +563,7 @@ SELECT @MinBetv1  AS MinBetv1,
 	@MinBetv8     AS MinBetv8,
 	@MinBetv10    AS MinBetv10,
 	@MinBetv11    AS MinBetv11,	
-	@MinBetv44    AS MinBetv44,	
+	
 	@MinBetv99    AS MinBetv99,
 	@MinBetv99MP  AS minbetv99MP,
 	@MinBetv161   AS minbetv161,
@@ -587,7 +576,7 @@ SELECT @MinBetv1  AS MinBetv1,
 	isnull(@MinBetv8_Max,0)     AS MinBetv8_Max,
 	isnull(@MinBetv10_Max,0)    AS MinBetv10_Max,
 	isnull(@MinBetv11_Max,0)    AS MinBetv11_Max,	
-	isnull(@MinBetv44_Max,0)    AS MinBetv44_Max,
+	
 	isnull(@MinBetv99_Max,0)    AS MinBetv99_Max,	
 	isnull(@MinBetv99MP_Max,0)  AS minbetv99MP_Max,
 	isnull(@MinBetv161_Max,0)   AS minbetv161_Max,
@@ -599,7 +588,7 @@ SELECT @MinBetv1  AS MinBetv1,
 	@MaxBetv8 AS MaxBetv8,
 	@MaxBetv10 AS MaxBetv10,
 	@MaxBetv11 AS MaxBetv11,	
-	@MaxBetv44 AS MaxBetv44,
+	
 	@MaxBetv99 AS MaxBetv99,
 
 	@MaxBetv99MP AS maxbetv99MP,
@@ -614,7 +603,7 @@ SELECT @MinBetv1  AS MinBetv1,
 	isnull(@MaxBetv8_Min,0) AS MaxBetv8_Min,
 	isnull(@MaxBetv10_Min,0) AS MaxBetv10_Min,
 	isnull(@MaxBetv11_Min,0) AS MaxBetv11_Min,	
-	isnull(@MaxBetv44_Min,0) AS MaxBetv44_Min,
+	
 	isnull(@MaxBetv99_Min,0) AS MaxBetv99_Min,
 	
 	isnull(@MaxBetv99MP_Min,0) AS Maxbetv99MP_Min,
@@ -637,7 +626,7 @@ SELECT @MinBetv1  AS MinBetv1,
 	isnull(@MaxPerMatchv8_Max,0)			AS MaxPerMatchv8_Max,		
 	isnull(@MaxPerMatchv10_Max,0)			AS MaxPerMatchv10_Max,		
 	isnull(@MaxPerMatchv11_Max,0)			AS MaxPerMatchv11_Max,		
-	isnull(@MaxPerMatchv44_Max,0)			AS MaxPerMatchv44_Max,
+	
 	isnull(@MaxPerMatchv99_Max,0)			AS MaxPerMatchv99_Max,	
 	isnull(@MaxPerMatchv99MP_Max,0)			AS MaxPerMatchv99MP_Max,	
 	isnull(@MaxPerMatchv161_Max,0)			AS MaxPerMatchv161_Max,	
@@ -649,7 +638,7 @@ SELECT @MinBetv1  AS MinBetv1,
 	ci.MaxPerMatch8				AS MaxPerMatchv8,		
 	ci.MaxPerMatch10			AS MaxPerMatchv10,		
 	ci.MaxPerMatch11			AS MaxPerMatchv11,		
-	ci.MaxPerMatch44			AS MaxPerMatchv44,
+
 	ci.MaxPerMatch99			AS MaxPerMatchv99,			
 	ci.MaxPerMatch99MP			AS MaxPerMatchv99MP,	
 	ci.MaxPerMatch161			AS MaxPerMatchv161,	
@@ -669,4 +658,3 @@ GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMember_AgInfo] TO [bodbAdminNet] AS [
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMember_AgInfo] TO [bodbAdminNet] AS [dbo]
 GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMember_AgInfo] TO [vnteam] AS [dbo]

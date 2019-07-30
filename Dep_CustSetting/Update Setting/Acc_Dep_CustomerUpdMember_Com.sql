@@ -31,9 +31,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 	@MaxBetv11 MONEY,
 	@MaxPerMatchv11 MONEY,
 	
-	@MinBetv44 MONEY,
-	@MaxBetv44 MONEY,
-	@MaxPerMatchv44 MONEY,
 	
 	@MinBetv99 MONEY,
 	@MaxBetv99 MONEY,
@@ -94,8 +91,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 
 	@v11spositiontaking_1 SMALLMONEY,
 	@v11spositiontaking_20 SMALLMONEY,
-	
-	@v44spositiontaking_3 SMALLMONEY,
+
 	
 	@v99spositiontaking_1 SMALLMONEY,
 	@v99spositiontaking_2 SMALLMONEY,
@@ -159,9 +155,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 
 	@v11mpositiontaking_1 SMALLMONEY,
 	@v11mpositiontaking_20 SMALLMONEY,
-	
-	@v44mpositiontaking_3 SMALLMONEY,
-	
+
 	@v99mpositiontaking_1 SMALLMONEY,
 	@v99mpositiontaking_2 SMALLMONEY,
 	@v99mpositiontaking_3 SMALLMONEY,
@@ -223,9 +217,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Com]
 
 	@v11apositiontaking_1 SMALLMONEY,
 	@v11apositiontaking_20 SMALLMONEY,
-	
-	@v44apositiontaking_3 SMALLMONEY,
-	
+
 	@v99apositiontaking_1 SMALLMONEY,
 	@v99apositiontaking_2 SMALLMONEY,
 	@v99apositiontaking_3 SMALLMONEY,
@@ -275,6 +267,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
+	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -411,11 +404,7 @@ BEGIN
 				@MinBetv11					= @MinBetv11,
 				@MaxBetv11					= @MaxBetv11,
 				@MaxPerMatchv11				= @MaxPerMatchv11,
-				
-				@MinBetv44					= @MinBetv44,
-				@MaxBetv44					= @MaxBetv44,
-				@MaxPerMatchv44				= @MaxPerMatchv44,
-				
+			
 				@MinBetv99					= @MinBetv99,
 				@MaxBetv99					= @MaxBetv99,
 				@MaxPerMatchv99				= @MaxPerMatchv99,
@@ -470,8 +459,7 @@ BEGIN
 				@v10spositiontaking_20		= @v10spositiontaking_20,
 				@v11spositiontaking_1		= @v11spositiontaking_1,
 				@v11spositiontaking_20		= @v11spositiontaking_20,
-				
-				@v44spositiontaking_3		= @v44spositiontaking_3,
+			
 				
 				@v99spositiontaking_1		= @v99spositiontaking_1,
 				@v99spositiontaking_2		= @v99spositiontaking_2,
@@ -527,8 +515,7 @@ BEGIN
 				@v10mpositiontaking_20		= @v10mpositiontaking_20,
 				@v11mpositiontaking_1		= @v11mpositiontaking_1,
 				@v11mpositiontaking_20		= @v11mpositiontaking_20,
-				
-				@v44mpositiontaking_3		= @v44mpositiontaking_3,
+	
 				
 				@v99mpositiontaking_1		= @v99mpositiontaking_1,
 				@v99mpositiontaking_2		= @v99mpositiontaking_2,
@@ -585,8 +572,7 @@ BEGIN
 				@v10apositiontaking_20		= @v10apositiontaking_20,
 				@v11apositiontaking_1		= @v11apositiontaking_1,
 				@v11apositiontaking_20		= @v11apositiontaking_20,
-				
-				@v44apositiontaking_3		= @v44apositiontaking_3,
+	
 				
 				@v99apositiontaking_1		= @v99apositiontaking_1,
 				@v99apositiontaking_2		= @v99apositiontaking_2,
@@ -875,8 +861,7 @@ BEGIN
 				union all select 	11 as sporttype, 1 as bettype, @v11apositiontaking_1 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	11 as sporttype, 20 as bettype, @v11apositiontaking_20 as maxpositiontaking,  0 as maxlivepositiontaking
 				
-				union all select 	44 as sporttype, 3 as bettype, @v44apositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
-				
+			
 				union all select 	99 as sporttype, 1 as bettype, @v99apositiontaking_1 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 2 as bettype, @v99apositiontaking_2 as maxpositiontaking,  0 as maxlivepositiontaking
 				union all select 	99 as sporttype, 3 as bettype, @v99apositiontaking_3 as maxpositiontaking,  0 as maxlivepositiontaking
@@ -944,7 +929,7 @@ BEGIN
 		UNION all	SELECT 8 AS sporttype,0 AS MP, @MinBetv8 AS MinBet, @MaxBetv8 AS MaxBet, @MaxPerMatchv8 AS MaxPerMatch
 		UNION all	SELECT 10 AS sporttype,0 AS MP, @MinBetv10 AS MinBet, @MaxBetv10 AS MaxBet, @MaxPerMatchv10 AS MaxPerMatch
 		UNION all	SELECT 11 AS sporttype,0 AS MP, @MinBetv11 AS MinBet, @MaxBetv11 AS MaxBet, @MaxPerMatchv11 AS MaxPerMatch
-		UNION all	SELECT 44 AS sporttype,0 AS MP, @MinBetv44 AS MinBet, @MaxBetv44 AS MaxBet, @MaxPerMatchv44 AS MaxPerMatch
+		
 		UNION all	SELECT 99 AS sporttype,0 AS MP, @MinBetv99 AS MinBet, @MaxBetv99 AS MaxBet, @MaxPerMatchv99 AS MaxPerMatch	 
 			 
 		UNION all	SELECT 99 AS sporttype,1 AS MP, @MinBetv99MP AS MinBet, @MaxBetv99MP AS MaxBet, @MaxPerMatchv99MP AS MaxPerMatch	 
@@ -976,7 +961,7 @@ BEGIN
 		MaxPerMatch8 = @MaxPerMatchv8,
 		MaxPerMatch10 = @MaxPerMatchv10,
 		MaxPerMatch11 = @MaxPerMatchv11,
-		MaxPerMatch44 = @MaxPerMatchv44,
+		
 		MaxPerMatch99 = @MaxPerMatchv99,		
 		MaxPerMatch99MP = @MaxPerMatchv99MP,
 		MaxPerMatch161 = @MaxPerMatchv161,
@@ -1045,8 +1030,6 @@ BEGIN
 							WHEN sporttype = 11 and bettype = 1 THEN @v11apositiontaking_1 
 							WHEN sporttype = 11 and bettype = 20 THEN @v11apositiontaking_20
 							
-							WHEN sporttype = 44 and bettype = 3 THEN @v44apositiontaking_3 
-							
 							WHEN sporttype = 99 and bettype = 1 THEN @v99apositiontaking_1 
 							WHEN sporttype = 99 and bettype = 2 THEN @v99apositiontaking_2 
 							WHEN sporttype = 99 and bettype = 3 THEN @v99apositiontaking_3 
@@ -1103,8 +1086,6 @@ BEGIN
 							WHEN sporttype = 11 and bettype = 1 THEN @v11mpositiontaking_1 
 							WHEN sporttype = 11 and bettype = 20 THEN @v11mpositiontaking_20
 							
-							WHEN sporttype = 44 and bettype = 3 THEN @v44mpositiontaking_3 
-							
 							WHEN sporttype = 99 and bettype = 1 THEN @v99mpositiontaking_1 
 							WHEN sporttype = 99 and bettype = 2 THEN @v99mpositiontaking_2 
 							WHEN sporttype = 99 and bettype = 3 THEN @v99mpositiontaking_3 
@@ -1159,9 +1140,7 @@ BEGIN
 
 							WHEN sporttype = 11 and bettype = 1 THEN @v11spositiontaking_1 
 							WHEN sporttype = 11 and bettype = 20 THEN @v11spositiontaking_20
-							
-							WHEN sporttype = 44 and bettype = 3 THEN @v44spositiontaking_3 
-							
+						
 							WHEN sporttype = 99 and bettype = 1 THEN @v99spositiontaking_1 
 							WHEN sporttype = 99 and bettype = 2 THEN @v99spositiontaking_2 
 							WHEN sporttype = 99 and bettype = 3 THEN @v99spositiontaking_3 
@@ -1350,9 +1329,7 @@ BEGIN
 						@minbetv11  = @minbetv11 ,
 						@maxbetv11  = @maxbetv11 ,
 						@maxpermatchv11  = @maxpermatchv11 ,
-						@minbetv44  = @minbetv44 ,
-						@maxbetv44  = @maxbetv44 ,
-						@maxpermatchv44  = @maxpermatchv44 ,
+						
 						
 						@minbetv99  = @minbetv99 ,
 						@maxbetv99  = @maxbetv99 ,
@@ -1411,7 +1388,6 @@ BEGIN
 						@v11spositiontaking_1  = @v11spositiontaking_1 ,
 						@v11spositiontaking_20  = @v11spositiontaking_20 ,
 						
-						@v44spositiontaking_3  = @v44spositiontaking_3 ,
 						
 						@v99spositiontaking_1  = @v99spositiontaking_1 ,
 						@v99spositiontaking_2  = @v99spositiontaking_2 ,
@@ -1475,7 +1451,6 @@ BEGIN
 						@v11mpositiontaking_1  = @v11mpositiontaking_1 ,
 						@v11mpositiontaking_20  = @v11mpositiontaking_20 ,
 						
-						@v44mpositiontaking_3  = @v44mpositiontaking_3 ,
 						
 						@v99mpositiontaking_1  = @v99mpositiontaking_1 ,
 						@v99mpositiontaking_2  = @v99mpositiontaking_2 ,
@@ -1531,9 +1506,7 @@ BEGIN
 						@minbetv11  = @minbetv11 ,
 						@maxbetv11  = @maxbetv11 ,
 						@maxpermatchv11  = @maxpermatchv11 ,
-						@minbetv44  = @minbetv44 ,
-						@maxbetv44  = @maxbetv44 ,
-						@maxpermatchv44  = @maxpermatchv44 ,
+						
 						
 						@minbetv99  = @minbetv99 ,
 						@maxbetv99  = @maxbetv99 ,
@@ -1591,8 +1564,6 @@ BEGIN
 
 						@v11apositiontaking_1  = @v11apositiontaking_1 ,
 						@v11apositiontaking_20  = @v11apositiontaking_20 ,
-						
-						@v44apositiontaking_3  = @v44apositiontaking_3 ,
 						
 						@v99apositiontaking_1  = @v99apositiontaking_1 ,
 						@v99apositiontaking_2  = @v99apositiontaking_2 ,
@@ -1656,8 +1627,6 @@ BEGIN
 
 						@v11mpositiontaking_1  = @v11mpositiontaking_1 ,
 						@v11mpositiontaking_20  = @v11mpositiontaking_20 ,
-						
-						@v44mpositiontaking_3  = @v44mpositiontaking_3 ,
 						
 						@v99mpositiontaking_1  = @v99mpositiontaking_1 ,
 						@v99mpositiontaking_2  = @v99mpositiontaking_2 ,
@@ -1745,10 +1714,6 @@ BEGIN
 	'MinBv11="'+ coalesce(cast(@MinBetv11 as varchar(50)),space(1))+ '" ' +
 	'MaxBv11="'+ coalesce(cast(@MaxBetv11 as varchar(50)),space(1))+ '" ' +
 	'MPMv11="'+ coalesce(cast(@MaxPerMatchv11 as varchar(50)),space(1))+ '" ' +
-
-	'MinBv44="'+ coalesce(cast(@MinBetv44 as varchar(50)),space(1))+ '" ' +
-	'MaxBv44="'+ coalesce(cast(@MaxBetv44 as varchar(50)),space(1))+ '" ' +
-	'MPMv44="'+ coalesce(cast(@MaxPerMatchv44 as varchar(50)),space(1))+ '" ' +
 
 	'MinBv99="'+ coalesce(cast(@MinBetv99 as varchar(50)),space(1))+ '" ' +
 	'MaxBv99="'+ coalesce(cast(@MaxBetv99 as varchar(50)),space(1))+ '" ' +
@@ -1883,8 +1848,6 @@ BEGIN
 	'v11spt_1="'+ COALESCE(CAST(@v11spositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11spt_20="'+ COALESCE(CAST(@v11spositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44spt_3="'+ COALESCE(CAST(@v44spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v99spt_1="'+ COALESCE(CAST(@v99spositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_2="'+ COALESCE(CAST(@v99spositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_3="'+ COALESCE(CAST(@v99spositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1947,8 +1910,6 @@ BEGIN
 	'v11mpt_1="'+ COALESCE(CAST(@v11mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11mpt_20="'+ COALESCE(CAST(@v11mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44mpt_3="'+ COALESCE(CAST(@v44mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v99mpt_1="'+ COALESCE(CAST(@v99mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_2="'+ COALESCE(CAST(@v99mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2009,8 +1970,6 @@ BEGIN
 
 	'v11apt_1="'+ COALESCE(CAST(@v11apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11apt_20="'+ COALESCE(CAST(@v11apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44apt_3="'+ COALESCE(CAST(@v44apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v99apt_1="'+ COALESCE(CAST(@v99apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_2="'+ COALESCE(CAST(@v99apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2099,8 +2058,6 @@ BEGIN
 	'v11spt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11spt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44spt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v99spt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99spt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2163,8 +2120,6 @@ BEGIN
 	'v11mpt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11mpt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44mpt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v99mpt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2225,8 +2180,6 @@ BEGIN
 
 	'v11apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11apt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44apt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v99apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +

@@ -17,7 +17,8 @@ Revisions:
 - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 - 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 - 20180125@Winnie: Hide inactive products [RedmineID: #86086]   
-- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]  
+- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
+- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -33,7 +34,7 @@ BEGIN
 			@MinBetv8			MONEY,  
 			@MinBetv10			MONEY,  
 			@MinBetv11			MONEY, 
-			@MinBetv44			MONEY,  	
+			
 			@MinBetv99			MONEY,  
 		
 			@MaxBetv1			MONEY,
@@ -43,7 +44,7 @@ BEGIN
 			@MaxBetv8			MONEY,
 			@MaxBetv10			MONEY,
 			@MaxBetv11			MONEY,
-			@MaxBetv44			MONEY,
+			
 			@MaxBetv99			MONEY,
 			
 			@MinBetv99MP		MONEY,
@@ -59,7 +60,7 @@ BEGIN
 			@MaxPerMatchv8		MONEY,
 			@MaxPerMatchv10		MONEY,
 			@MaxPerMatchv11		MONEY,		
-			@MaxPerMatchv44		MONEY,
+			
 			@MaxPerMatchv99		MONEY,
 			
 			@MaxPerMatchv99MP	MONEY,
@@ -80,7 +81,7 @@ BEGIN
 	SELECT @MinBetv8 = MinBet,	@MaxBetv8 = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 1 and cs.sporttype=8
 	SELECT @MinBetv10 = MinBet,@MaxBetv10 = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 1 and cs.sporttype=10
 	SELECT @MinBetv11 = MinBet, @MaxBetv11 = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 1 and cs.sporttype=11
-	SELECT @MinBetv44 = MinBet, @MaxBetv44 = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 3 and cs.sporttype=44
+	
 	SELECT @MinBetv99 = MinBet, @MaxBetv99 = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 1 and cs.sporttype=99
 	
 	--Mix parlay mixed sports 
@@ -152,7 +153,7 @@ BEGIN
 			@MinBetv8  AS MinBetv8,
 			@MinBetv10 AS MinBetv10,
 			@MinBetv11 AS MinBetv11,	
-			@MinBetv44 AS MinBetv44,
+			
 			@MinBetv99 AS MinBetv99,		
 			@MinBetv99MP AS MinBetv99MP,
 			@MinBetv161 AS MinBetv161,	
@@ -164,7 +165,7 @@ BEGIN
 			@MaxBetv8 AS MaxBetv8,
 			@MaxBetv10 AS MaxBetv10,
 			@MaxBetv11 AS MaxBetv11,	
-			@MaxBetv44 AS MaxBetv44,
+			
 			@MaxBetv99 AS MaxBetv99,		
 			@MaxBetv99MP AS MaxBetv99MP,
 			@MaxBetv161 AS MaxBetv161,
@@ -179,7 +180,7 @@ BEGIN
 			ci.MaxPerMatch8					AS MaxPerMatchv8,			
 			ci.MaxPerMatch10				AS MaxPerMatchv10,			
 			ci.MaxPerMatch11				AS MaxPerMatchv11,			
-			ci.MaxPerMatch44				AS MaxPerMatchv44,
+		
 			ci.MaxPerMatch99				AS MaxPerMatchv99,			
 			
 			ci.MaxPerMatch99MP				AS MaxPerMatchv99MP,		
