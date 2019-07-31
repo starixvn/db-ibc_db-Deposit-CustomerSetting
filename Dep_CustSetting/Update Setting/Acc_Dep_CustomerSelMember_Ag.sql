@@ -40,8 +40,7 @@ BEGIN
 			@MinBetv10_Max					MONEY,  
 			@MinBetv11						MONEY,  
 			@MinBetv11_Max					MONEY,  
-			@MinBetv44						MONEY,  
-			@MinBetv44_Max					MONEY,  
+			
 			@MinBetv99						MONEY,  
 			@MinBetv99_Max					MONEY,  
 		
