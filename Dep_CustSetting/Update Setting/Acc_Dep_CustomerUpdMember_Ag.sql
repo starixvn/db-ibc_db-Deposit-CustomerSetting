@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@custid int,-- MemberID
 	
@@ -29,10 +29,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@minbetv11 money,
 	@maxbetv11 money,
 	@maxpermatchv11 money,
-	
-	@minbetv44 money,
-	@maxbetv44 money,
-	@maxpermatchv44 money,
 	
 	@minbetv99 money,
 	@maxbetv99 money,
@@ -110,7 +106,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 	@v11apositiontaking_1 smallmoney,
 	@v11apositiontaking_20 smallmoney,
 	
-	@v44apositiontaking_3 smallmoney,
 	
 	@v99apositiontaking_1 smallmoney,
 	@v99apositiontaking_2 smallmoney,
@@ -160,9 +155,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 
 	@v11mpositiontaking_1 smallmoney,
 	@v11mpositiontaking_20 smallmoney,
-	
-	@v44mpositiontaking_3 smallmoney,
-	
+
 	@v99mpositiontaking_1 smallmoney,
 	@v99mpositiontaking_2 smallmoney,
 	@v99mpositiontaking_3 smallmoney,
@@ -228,9 +221,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_Ag]
 
 	@v11spositiontaking_1 SMALLMONEY,
 	@v11spositiontaking_20 SMALLMONEY,
-	
-	@v44spositiontaking_3 SMALLMONEY,
-	
+
 	@v99spositiontaking_1 SMALLMONEY,
 	@v99spositiontaking_2 SMALLMONEY,
 	@v99spositiontaking_3 SMALLMONEY,
@@ -275,6 +266,7 @@ Revisions:
 	- 20170808@Winnie: Change Data Type of Sporttype [RedmineID: #73545]	
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]  
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
+	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -377,7 +369,7 @@ BEGIN
 		@MinMinBetv8 money, @MaxMaxBetv8 money, @MaxMaxPerMatchv8 money,
 		@MinMinBetv10 money, @MaxMaxBetv10 money, @MaxMaxPerMatchv10 money,
 		@MinMinBetv11 money, @MaxMaxBetv11 money, @MaxMaxPerMatchv11 money,
-		@MinMinBetv44 money, @MaxMaxBetv44 money, @MaxMaxPerMatchv44 money,
+		
 		@MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,		
 		@MinMinBetv99MP money, @MaxMaxBetv99MP money, @MaxMaxPerMatchv99MP money,
 		@MinMinBetv161 money, @MaxMaxBetv161 money, @MaxMaxPerMatchv161 money,
@@ -479,20 +471,7 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](11,@Language) + ')'
 					end
 		return
-	END
-
-	if 
-		@MinBetv44 <0
-		or @MaxBetv44 <0
-		or @MaxPerMatchv44 <0		
-	BEGIN
-		select @ErrCode = 8
-		Select @ErrMsg = 	case @Language 
-							when 'E' then 'Wrong Min bet/ Max bet/ Max per match (for Muay Thai).'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](44,@Language) + ')'
-					end
-		return
-	END
+	END	
 
 	if 
 		@MinBetv99 <0
@@ -616,14 +595,7 @@ BEGIN
 	where ci.custid = @recommend
 
 	--
-	Select 
-		@MinMinBetv44 = Max(case when MinBet = 0 then NULL else MinBet end), 
-		@MaxMaxBetv44 = Min(case when MaxBet = 0 then NULL else MaxBet end)
-	from 
-		dep_custsetting as cs WITH (NOLOCK)
-		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.Recommend or cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend)
-		and cs.bettype = 3 and cs.sporttype=44
-	where ci.custid = @recommend
+	
 	--
 	Select 
 		@MinMinBetv99 = Max(case when MinBet = 0 then NULL else MinBet end), 
@@ -659,7 +631,7 @@ BEGIN
 		@MaxMaxPerMatchv8 = Min(case when cs.MaxPerMatch8 = 0 then NULL else cs.MaxPerMatch8 end), 	
 		@MaxMaxPerMatchv10 = Min(case when cs.MaxPerMatch10 = 0 then NULL else cs.MaxPerMatch10 end), 	
 		@MaxMaxPerMatchv11 = Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 end), 	
-		@MaxMaxPerMatchv44 = Min(case when cs.MaxPerMatch44 = 0 then NULL else cs.MaxPerMatch44 end), 	
+		
 		@MaxMaxPerMatchv99 = Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),
 		
 		@MaxMaxPerMatchv99MP = Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),
@@ -1000,53 +972,7 @@ BEGIN
 					
 		return
 	END
-	---44
-	if (@MinBetv44 <> 0 and @MaxBetv44 <> 0 and @MinBetv44>@MaxBetv44) or (@MaxBetv44 <> 0 and @MaxPerMatchv44 <> 0 and @MaxBetv44>@MaxPerMatchv44)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						case @Language 
-							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match (for MuayThai)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](44,@Language) + ')'
-						end						
-						+ char(13) + char(10) + convert(varchar(20), @MinBetv44) + '-' + convert(varchar(20), @MaxBetv44) + '-' + convert(varchar(20), @MaxPerMatchv44), @ErrCode = 132
-					
-		return
-	END
-		
-	IF (@MinMinBetv44>0 AND @MinBetv44>0 AND @MinBetv44<@MinMinBetv44)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						CASE @Language 
-							WHEN 'E' THEN 'Min bet must be equal to or greater than Agent min bet (for MuayThai)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10006,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](44,@Language) + ')'
-						END						
-						+' (' + CONVERT(VARCHAR(20), @MinMinBetv44) + ').', @ErrCode = 133
-					
-		return
-	END	
-	IF (@MaxMaxBetv44>0 AND @MaxBetv44>0 AND @MaxBetv44>@MaxMaxBetv44)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						CASE @Language 
-							WHEN 'E' THEN 'Max bet must be equal to or less than Agent max bet (for MuayThai)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10007,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](44,@Language) + ')'
-						END						
-						+' (' + CONVERT(VARCHAR(20), @MaxMaxBetv44) + ').', @ErrCode = 134
-					
-		return
-	END
-		
-	IF (@MaxMaxPerMatchv44>0 AND @MaxPerMatchv44>0 AND @MaxPerMatchv44>@MaxMaxPerMatchv44)
-	BEGIN
-		SELECT @ErrMsg =	@UserName + ': '+
-						CASE @Language 
-							WHEN 'E' THEN 'Max Per Match must be equal to or less than Agent Max Per Match (for MuayThai)'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](10008,@Language) + ' (' + [dbo].[f_Get_SportNameBySporttype](44,@Language) + ')'
-						END						
-						+' (' + CONVERT(VARCHAR(20), @MaxMaxPerMatchv44) + ').', @ErrCode = 135
-					
-		return
-	END
+	
 	---
 	if (@MinBetv99 <> 0 and @MaxBetv99 <> 0 and @MinBetv99>@MaxBetv99) or (@MaxBetv99 <> 0 and @MaxPerMatchv99 <> 0 and @MaxBetv99>@MaxPerMatchv99)
 	BEGIN
@@ -1440,27 +1366,7 @@ BEGIN
 		return
 	END
 	---44
-	--check a2<=a4
-	select @ErrType = ''
-	select @ErrType = @ErrType + sports.Name + '-'+ bettype.Name  + '-Max: '+ cast((scs.apositiontaking) as varchar(10)) + '<br>'
-	from custinfo as c with (NOLOCK) inner join dep_custsetting as scs with (NOLOCK) on c.srecommend = scs.custid inner join 
-		(
-					select 3 as bettype, 44 as sporttype, @v44apositiontaking_3 as apositiontaking, 0 as alivepositiontaking, @v44mpositiontaking_3 as mpositiontaking, 0 as mlivepositiontaking
-			
-		) as b on scs.sporttype=b.sporttype and scs.bettype = b.bettype
-		inner join #tmp_Sports sports on b.sporttype = sports.ID
-		inner join #tmp_Bettype bettype on b.bettype = bettype.ID
-	where c.custid = @recommend and (b.apositiontaking>scs.apositiontaking)
-	if @ErrType <>''
-	BEGIN
-		select @ErrCode = 12
-		Select @ErrMsg = @UserName + ': '+
-					case @Language 
-							when 'E' then 'Wrong position taking (max set by company).<br>'+@ErrType
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](20005,@Language) + '<br>' + @ErrType
-					end
-		return
-	END
+	
 	---
 	--check a2<=a4
 	select @ErrType = ''
@@ -1553,7 +1459,7 @@ BEGIN
 		MaxPerMatch8 = @MaxPerMatchv8,
 		MaxPerMatch10 = @MaxPerMatchv10,
 		MaxPerMatch11 = @MaxPerMatchv11,
-		MaxPerMatch44 = @MaxPerMatchv44,
+		
 		MaxPerMatch99 = @MaxPerMatchv99,
 		
 		MaxPerMatch99MP = @MaxPerMatchv99MP,
@@ -1613,9 +1519,7 @@ BEGIN
 
 		@v11mpositiontaking_1 = CASE WHEN cs.sporttype = 11 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v11mpositiontaking_20  = CASE WHEN cs.sporttype = 11 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-		
-		@v44mpositiontaking_3 = CASE WHEN cs.sporttype = 44 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-		
+	
 		@v99mpositiontaking_1  = CASE WHEN cs.sporttype = 99 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v99mpositiontaking_2 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 2 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v99mpositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
@@ -1687,9 +1591,7 @@ BEGIN
 
 		@v11spositiontaking_1 = CASE WHEN cs.sporttype = 11 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 		@v11spositiontaking_20  = CASE WHEN cs.sporttype = 11 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-		
-		@v44spositiontaking_3 = CASE WHEN cs.sporttype = 44 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-		
+	
 		@v99spositiontaking_1  = CASE WHEN cs.sporttype = 99 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 		@v99spositiontaking_2 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 2 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 		@v99spositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
@@ -1722,8 +1624,8 @@ BEGIN
 
 	UPDATE Dep_CustSetting WITH (ROWLOCK, UPDLOCK)
 	SET	
-		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11 when 44 then @MinBetv44 when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
-		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11 when 44 then @MaxBetv44 when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
+		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
+		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
 		apositiontaking = CASE
 							WHEN sporttype = 1 and bettype = 1 and islive = 0 THEN @v1apositiontaking_1
 							WHEN sporttype = 1 and bettype = 2 and islive = 0 THEN @v1apositiontaking_2
@@ -1770,8 +1672,7 @@ BEGIN
 							WHEN sporttype = 11 and bettype = 1 THEN @v11apositiontaking_1 
 							WHEN sporttype = 11 and bettype = 20 THEN @v11apositiontaking_20
 							
-							WHEN sporttype = 44 and bettype = 3 THEN @v44apositiontaking_3 
-							
+						
 							WHEN sporttype = 99 and bettype = 1 THEN @v99apositiontaking_1 
 							WHEN sporttype = 99 and bettype = 2 THEN @v99apositiontaking_2 
 							WHEN sporttype = 99 and bettype = 3 THEN @v99apositiontaking_3 
@@ -1827,8 +1728,6 @@ BEGIN
 
 							WHEN sporttype = 11 and bettype = 1 THEN @v11mpositiontaking_1 
 							WHEN sporttype = 11 and bettype = 20 THEN @v11mpositiontaking_20
-							
-							WHEN sporttype = 44 and bettype = 3 THEN @v44mpositiontaking_3 
 							
 							WHEN sporttype = 99 and bettype = 1 THEN @v99mpositiontaking_1 
 							WHEN sporttype = 99 and bettype = 2 THEN @v99mpositiontaking_2 
@@ -2057,10 +1956,7 @@ BEGIN
 	'MinBv11="'+ coalesce(cast(@MinBetv11 as varchar(50)),space(1))+ '" ' +
 	'MaxBv11="'+ coalesce(cast(@MaxBetv11 as varchar(50)),space(1))+ '" ' +
 	'MPMv11="'+ coalesce(cast(@MaxPerMatchv11 as varchar(50)),space(1))+ '" ' +
-	--
-	'MinBv44="'+ coalesce(cast(@MinBetv44 as varchar(50)),space(1))+ '" ' +
-	'MaxBv44="'+ coalesce(cast(@MaxBetv44 as varchar(50)),space(1))+ '" ' +
-	'MPMv44="'+ coalesce(cast(@MaxPerMatchv44 as varchar(50)),space(1))+ '" ' +
+	--	
 
 	'MinBv99="'+ coalesce(cast(@MinBetv99 as varchar(50)),space(1))+ '" ' +
 	'MaxBv99="'+ coalesce(cast(@MaxBetv99 as varchar(50)),space(1))+ '" ' +
@@ -2189,8 +2085,6 @@ BEGIN
 	'v11mpt_1="'+ COALESCE(CAST(@v11mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11mpt_20="'+ COALESCE(CAST(@v11mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44mpt_3="'+ COALESCE(CAST(@v44mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v99mpt_1="'+ COALESCE(CAST(@v99mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_2="'+ COALESCE(CAST(@v99mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_3="'+ COALESCE(CAST(@v99mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2254,8 +2148,6 @@ BEGIN
 
 	'v11apt_1="'+ COALESCE(CAST(@v11apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11apt_20="'+ COALESCE(CAST(@v11apositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44apt_3="'+ COALESCE(CAST(@v44apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v99apt_1="'+ COALESCE(CAST(@v99apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_2="'+ COALESCE(CAST(@v99apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2347,8 +2239,6 @@ BEGIN
 	'v11mpt_1="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11mpt_20="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
-	'v44mpt_3="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
 	'v99mpt_1="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_2="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_3="'+ COALESCE(CAST(@mpt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2410,8 +2300,6 @@ BEGIN
 
 	'v11apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11apt_20="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44apt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v99apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99apt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +

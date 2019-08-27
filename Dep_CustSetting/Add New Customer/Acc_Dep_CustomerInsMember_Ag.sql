@@ -37,15 +37,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@MinBetv11 money,
 	@MaxBetv11 money,
 	@MaxPerMatchv11 money,
-	
-	@MinBetv44 money,
-	@MaxBetv44 money,
-	@MaxPerMatchv44 money,
-	
+
 	@MinBetv99 money,
 	@MaxBetv99 money,
-	@MaxPerMatchv99 money,
-	
+	@MaxPerMatchv99 money,	
 
 	-- mix parlay of mixed sports
 	@MinBetv99mp money,
@@ -105,9 +100,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@v10apositiontaking_20 smallmoney,
 
 	@v11apositiontaking_1 smallmoney,
-	@v11apositiontaking_20 smallmoney,
-	
-	@v44apositiontaking_3 smallmoney,
+	@v11apositiontaking_20 smallmoney,	
 
 	@v99apositiontaking_1 smallmoney,
 	@v99apositiontaking_2 smallmoney,
@@ -170,7 +163,7 @@ Revisions:
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
-
+	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -272,9 +265,7 @@ BEGIN
 		@v10mpositiontaking_20 smallmoney,
 
 		@v11mpositiontaking_1 smallmoney,
-		@v11mpositiontaking_20 smallmoney,
-		
-		@v44mpositiontaking_3 smallmoney,
+		@v11mpositiontaking_20 smallmoney,		
 		
 		@v99mpositiontaking_1 smallmoney,
 		@v99mpositiontaking_2 smallmoney,
@@ -341,9 +332,7 @@ BEGIN
 		@v10spositiontaking_20 smallmoney,
 		
 		@v11spositiontaking_1 smallmoney,	
-		@v11spositiontaking_20 smallmoney,
-		
-		@v44spositiontaking_3 smallmoney,
+		@v11spositiontaking_20 smallmoney,	
 		
 		@v99spositiontaking_1 smallmoney,
 		@v99spositiontaking_2 smallmoney,
@@ -422,9 +411,7 @@ BEGIN
 
 		@v11mpositiontaking_1 = CASE WHEN cs.sporttype = 11 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v11mpositiontaking_20  = CASE WHEN cs.sporttype = 11 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-		
-		@v44mpositiontaking_3 = CASE WHEN cs.sporttype = 44 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
-		
+	
 		@v99mpositiontaking_1  = CASE WHEN cs.sporttype = 99 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v99mpositiontaking_2 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 2 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
 		@v99mpositiontaking_3 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.mpositiontaking ELSE 0 END,
@@ -497,9 +484,7 @@ BEGIN
 		@v10spositiontaking_20 = CASE WHEN cs.sporttype = 10 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 
 		@v11spositiontaking_1 = CASE WHEN cs.sporttype = 11 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-		@v11spositiontaking_20  = CASE WHEN cs.sporttype = 11 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
-		
-		@v44spositiontaking_3 = CASE WHEN cs.sporttype = 44 AND cs.bettype = 3 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
+		@v11spositiontaking_20  = CASE WHEN cs.sporttype = 11 AND cs.bettype = 20 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,	
 		
 		@v99spositiontaking_1  = CASE WHEN cs.sporttype = 99 AND cs.bettype = 1 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
 		@v99spositiontaking_2 = CASE WHEN cs.sporttype = 99 AND cs.bettype = 2 AND cs.islive = 0 THEN cs.spositiontaking ELSE 0 END,
@@ -569,11 +554,7 @@ BEGIN
 
 		@MinBetv11				= @MinBetv11,
 		@MaxBetv11				= @MaxBetv11,
-		@MaxPerMatchv11			= @MaxPerMatchv11,
-		
-		@MinBetv44				= @MinBetv44,
-		@MaxBetv44				= @MaxBetv44,
-		@MaxPerMatchv44			= @MaxPerMatchv44,
+		@MaxPerMatchv11			= @MaxPerMatchv11,	
 		
 		@MinBetv99				=@MinBetv99,
 		@MaxBetv99				=@MaxBetv99,
@@ -633,8 +614,6 @@ BEGIN
 									
 		@v11apositiontaking_1		= @v11apositiontaking_1,
 		@v11apositiontaking_20		= @v11apositiontaking_20,
-		
-		@v44apositiontaking_3		= @v44apositiontaking_3,
 		
 		@v99apositiontaking_1		= @v99apositiontaking_1,
 		@v99apositiontaking_2		= @v99apositiontaking_2,
@@ -712,8 +691,7 @@ BEGIN
 		@MaxPerMatchv5 = @MaxPerMatchv5,
 		@MaxPerMatchv8 = @MaxPerMatchv8,
 		@MaxPerMatchv10 = @MaxPerMatchv10,
-		@MaxPerMatchv11 = @MaxPerMatchv11,
-		@MaxPerMatchv44 = @MaxPerMatchv44,
+		@MaxPerMatchv11 = @MaxPerMatchv11,		
 		@MaxPerMatchv99 = @MaxPerMatchv99,
 		
 	
@@ -802,8 +780,6 @@ BEGIN
 
 	UNION ALL	SELECT @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, 0, 0, 0, 0, @MinBetv11, @MaxBetv11, 0
 	UNION ALL	SELECT @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, 0, 0, 0, 0, @MinBetv11, @MaxBetv11, 0
-
-	UNION ALL	SELECT @custid, 3, 44, @v44apositiontaking_3, @v44mpositiontaking_3, @v44spositiontaking_3, 0, 0, 0, 0, @MinBetv44, @MaxBetv44, 0  
 
 	UNION ALL	SELECT @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, @v99spositiontaking_1, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
 	UNION ALL	SELECT @custid, 2, 99, @v99apositiontaking_2, @v99mpositiontaking_2, @v99spositiontaking_2, 0, 0, 0, 0, @MinBetv99, @MaxBetv99, 0
@@ -1176,10 +1152,6 @@ BEGIN
 	'MaxBv11="'+ coalesce(cast(@maxbetv11 as varchar(50)),space(1)) + '" ' +
 	'MPMv11="'+ coalesce(cast(@maxpermatchv11 as varchar(50)),space(1)) + '" ' +
 
-	'MinBv44="'+ coalesce(cast(@minbetv44 as varchar(50)),space(1)) + '" ' +
-	'MaxBv44="'+ coalesce(cast(@maxbetv44 as varchar(50)),space(1)) + '" ' +
-	'MPMv44="'+ coalesce(cast(@maxpermatchv44 as varchar(50)),space(1)) + '" ' +
-
 	'MinBv99="'+ coalesce(cast(@minbetv99 as varchar(50)),space(1)) + '" ' +
 	'MaxBv99="'+ coalesce(cast(@maxbetv99 as varchar(50)),space(1)) + '" ' +
 	'MPMv99="'+ coalesce(cast(@maxpermatchv99 as varchar(50)),space(1)) + '" ' +
@@ -1324,8 +1296,6 @@ BEGIN
 
 	'v11mpt_1="'+ COALESCE(CAST(@v11mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v11mpt_20="'+ COALESCE(CAST(@v11mpositiontaking_20 AS VARCHAR(50)),SPACE(1)) + '" ' +
-
-	'v44mpt_3="'+ COALESCE(CAST(@v44mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v99mpt_1="'+ COALESCE(CAST(@v99mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v99mpt_2="'+ COALESCE(CAST(@v99mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
