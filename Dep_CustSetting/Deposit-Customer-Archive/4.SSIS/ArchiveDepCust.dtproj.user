@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DataTransformationsUserConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Configurations>
+    <Configuration>
+      <Name>Development</Name>
+      <Options>
+        <UserIDs>
+          <ConfigurationSetting>
+            <Id>DBDW.bodb_Account</Id>
+            <Name>DBDW.bodb_Account</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPOOFlO/P60q8rzI6wugnFwAAAAAkAAAARABCAEQAVwAuAGIAbwBkAGIAXwBBAGMAYwBvAHUAbgB0AAAAEGYAAAABAAAgAAAArFvYjEhoWkSlTQxW+QoXoC14u4yhFVEvV5iolM0e+SsAAAAADoAAAAACAAAgAAAAmYrfpO4E3JWXQtpq4oZqSAWPHnJhkKBzswf0I/RyTKMQAAAArs0duClX5GSi+hBrkGTOq0AAAADU01yjN34rDvie8++Bpxp0jBFUChFFhLKgdB5nlIqRje4qW3xThmVx8HwJhYWjIBDn/JK2X9frPDtEx+9xI41t</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBDW.bodb_staging</Id>
+            <Name>DBDW.bodb_staging</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPOOFlO/P60q8rzI6wugnFwAAAAAkAAAARABCAEQAVwAuAGIAbwBkAGIAXwBzAHQAYQBnAGkAbgBnAAAAEGYAAAABAAAgAAAAN4HrFKRafZQ3gJcF+/nOHmBld2faV2ktgW+3xoul6L4AAAAADoAAAAACAAAgAAAA78dVAw9B1EyWKrcgS0vP9Rbe/VZON6y2CJnhRaRGqQkQAAAAI5EHdAzojHfLmoVPOurCQUAAAADP23dYZdaZWCjneofsVIVabaaF/C0jhi0BgWCGuGxBj1aUzmIjm8vfWiGeYQtJTlTxwY4y9+/NOSKeZ6viunYC</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBDW.bodb_Audit</Id>
+            <Name>DBDW.bodb_Audit</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPOOFlO/P60q8rzI6wugnFwAAAAAgAAAARABCAEQAVwAuAGIAbwBkAGIAXwBBAHUAZABpAHQAAAAQZgAAAAEAACAAAABsqktoo0h0DoWk9AKpfuZbGVFoT5f/qyQTX/fRbVbFfQAAAAAOgAAAAAIAACAAAAB35t70PJIJMY0U5KUa355AV0mbgVdFEwDc/L+pep0e3RAAAAD4uAkG2JHUu8J+UQOcnrb+QAAAAHdKpO5FcBUK4lHbLQspBuOl/1o01NH8lmFAm6bP3sVGml8h3FbPvmxLEv2RlRm3UNG0Ry6SJwCiFd1Rcrori0E=</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DB05.Bodb_Archive_Customer_Licensee</Id>
+            <Name>DB05.Bodb_Archive_Customer_Licensee</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAczFOJJ3yxkSWURrZgi0XwAAAAABIAAAARABCADAANQAuAEIAbwBkAGIAXwBBAHIAYwBoAGkAdgBlAF8AQwB1AHMAdABvAG0AZQByAF8ATABpAGMAZQBuAHMAZQBlAAAAA2YAAMAAAAAQAAAASnUm1y84+XJW3jWFGsClawAAAAAEgAAAoAAAABAAAACYF9/U5NfXWQpaCDsnLLU5EAAAADoCI3Avw2k7hnZEASmgeAcUAAAApjQotl55Ok7Vl/5DXtV+cTaGYKI=</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBCUST.CustDB</Id>
+            <Name>DBCUST.CustDB</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAczFOJJ3yxkSWURrZgi0XwAAAAAAcAAAARABCAEMAVQBTAFQALgBDAHUAcwB0AEQAQgAAAANmAADAAAAAEAAAAFKH5YsLPw4JWUEgDPZxPB4AAAAABIAAAKAAAAAQAAAAWz9WFlxDfIO9DbZp88gj1BAAAAD9mxP43hjPF+hpJ0xBEMzgFAAAACgDq7cMTRZ2+qD1h2QvASbUwzGk</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBLOG.Bodb_CustomerLog</Id>
+            <Name>DBLOG.Bodb_CustomerLog</Name>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBLIC.Bodb_Licensee</Id>
+            <Name>DBLIC.Bodb_Licensee</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAczFOJJ3yxkSWURrZgi0XwAAAAAAoAAAARABCAEwASQBDAC4AQgBvAGQAYgBfAEwAaQBjAGUAbgBzAGUAZQAAAANmAADAAAAAEAAAAAI/LJfhHKAkkbiBEAeOTjYAAAAABIAAAKAAAAAQAAAAJtjRR0hEB3ZjySTIO+hu3BAAAABZcxdwUROTLm3I05eah52CFAAAAKpbLTLbfI2mW5WbdlI82Ov/s9Fs</Value>
+          </ConfigurationSetting>
+        </UserIDs>
+        <UserPasswords>
+          <ConfigurationSetting>
+            <Id>DBDW.bodb_Account</Id>
+            <Name>DBDW.bodb_Account</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPOOFlO/P60q8rzI6wugnFwAAAAAkAAAARABCAEQAVwAuAGIAbwBkAGIAXwBBAGMAYwBvAHUAbgB0AAAAEGYAAAABAAAgAAAA3YVpzxnaXoRebtLOyrIcBHhr7Ublr0zc9eXA+0645l8AAAAADoAAAAACAAAgAAAA/0CNc77p1DS7ynG43emCuiwbDZ20pkuF2pw8ligdUYIgAAAAkUmwp0fSMMUVuWClyXBtM9z3f5Te3BJlwggReT1vuSJAAAAA9jT3/2jIDLtMo7w/WorDZmSSZ+9AsDhWi3ni7s7ZWnzWvcOYOgQ7aIJEY+1XMzFAk1arxfURg4Q7la7kOaDa6Q==</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBDW.bodb_staging</Id>
+            <Name>DBDW.bodb_staging</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPOOFlO/P60q8rzI6wugnFwAAAAAkAAAARABCAEQAVwAuAGIAbwBkAGIAXwBzAHQAYQBnAGkAbgBnAAAAEGYAAAABAAAgAAAAhWaPFH028ZZ+CcrzPEzMoIpHxxwJmckuPPCnVIA17RAAAAAADoAAAAACAAAgAAAAwfPMznc2HFspcDHOQq7ZNlrEo4bxUvqgl/GTuKpf4hUgAAAA8HpVOpUTSwL9JglHF9BMmoMQg2tx5nH2CN4nEjY7GFRAAAAAKEDl+CuDdtLeTy40tKVW2kxWpMqzwFuULxwhaTCuMnAZFhvmUA7FZmI48tCWJLEQJed8T+LHJAzNZY/9krpO7Q==</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBDW.bodb_Audit</Id>
+            <Name>DBDW.bodb_Audit</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAPOOFlO/P60q8rzI6wugnFwAAAAAgAAAARABCAEQAVwAuAGIAbwBkAGIAXwBBAHUAZABpAHQAAAAQZgAAAAEAACAAAACaZeua3QxwzQBLl5eMOKygEnHwVmh5jfPElmdTcPcbEQAAAAAOgAAAAAIAACAAAADVgAyUgn4aQLZq4VNnBdq0mNh8bDXv+LF7jRkCIa4WiyAAAACvoBix2W5KdyDSUQ0HxNhRjBgY+D4eC5qlrKj7eHdzKEAAAAA2M42/pNO5wU6uuP5xxDBEeC+V0j9u8OT3vDO8o4GFPrXbZHFF1diTBoXjNX+e+9nDvfG4u5dP/QDZJ+ZHUPGk</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DB05.Bodb_Archive_Customer_Licensee</Id>
+            <Name>DB05.Bodb_Archive_Customer_Licensee</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAczFOJJ3yxkSWURrZgi0XwAAAAABIAAAARABCADAANQAuAEIAbwBkAGIAXwBBAHIAYwBoAGkAdgBlAF8AQwB1AHMAdABvAG0AZQByAF8ATABpAGMAZQBuAHMAZQBlAAAAA2YAAMAAAAAQAAAAVfpJvilwZWY5jlZjsZvMaQAAAAAEgAAAoAAAABAAAADisKLRq1Cc/bDJCrzR2GglGAAAALHchyWVlyn0cWQAQklLE1lAPoTArR6fWxQAAAAKdsnOFopJneporbCKlU6xpKVe1g==</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBCUST.CustDB</Id>
+            <Name>DBCUST.CustDB</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAczFOJJ3yxkSWURrZgi0XwAAAAAAcAAAARABCAEMAVQBTAFQALgBDAHUAcwB0AEQAQgAAAANmAADAAAAAEAAAAG0gmxbgvib+Lb07bBvy5V4AAAAABIAAAKAAAAAQAAAAnftDaQFxMcyf1i3OsiiQXRgAAADrWOU1PZRWOmfSuK2oWoW7mRpOjK263RIUAAAAQvHJ9SJlZ/0i2vYbzbpnWMMC7As=</Value>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBLOG.Bodb_CustomerLog</Id>
+            <Name>DBLOG.Bodb_CustomerLog</Name>
+          </ConfigurationSetting>
+          <ConfigurationSetting>
+            <Id>DBLIC.Bodb_Licensee</Id>
+            <Name>DBLIC.Bodb_Licensee</Name>
+            <Value xsi:type="xsd:string">AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAczFOJJ3yxkSWURrZgi0XwAAAAAAoAAAARABCAEwASQBDAC4AQgBvAGQAYgBfAEwAaQBjAGUAbgBzAGUAZQAAAANmAADAAAAAEAAAAK26UXLwz7WkzucKuZMd7HAAAAAABIAAAKAAAAAQAAAASI1D8yoAHUhGZbsw3/hQfhgAAAARECGUd9lQRsFlvIDBGjXOgFBB4SM8MWUUAAAAOTMXUkqd49LM71uQX64s1M65+54=</Value>
+          </ConfigurationSetting>
+        </UserPasswords>
+        <OfflineMode>false</OfflineMode>
+        <ProgressReporting>true</ProgressReporting>
+      </Options>
+    </Configuration>
+  </Configurations>
+</DataTransformationsUserConfiguration>

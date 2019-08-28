@@ -1,0 +1,17 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{D183A3D8-5FD8-494B-B014-37F57B35E655}") = "ArchiveDepCust", "ArchiveDepCust.dtproj", "{50109529-C5E5-4C1C-8B19-A2EDCE2BB074}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Development|Default = Development|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{50109529-C5E5-4C1C-8B19-A2EDCE2BB074}.Development|Default.ActiveCfg = Development
+		{50109529-C5E5-4C1C-8B19-A2EDCE2BB074}.Development|Default.Build.0 = Development
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
