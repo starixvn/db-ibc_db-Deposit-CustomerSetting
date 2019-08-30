@@ -1,8 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,Dot_member" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 
-ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] @ProductID INT
+ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] 
+	@ProductID INT
 	, @CustID INT
 	, @IsEnable BIT
 	, @ApplyToMember BIT = 0	
@@ -25,6 +24,7 @@ AS
 		- 20170227@Winnie: Add CashOut [RedmineID: #71727]
 		- 20180717@Winnie: NAP - Enable Cash out: Adjust the setting to reflect 100% profit of Cash Out to group [RedmineID: #90870]
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
+		- 20190901@Elodie: Remove Inactive product [Redmine:#118699]
 
 	Param's Explanation:
 */
@@ -43,183 +43,76 @@ BEGIN
 	FROM bodb_Licensee.dbo.Product3rd WITH (NOLOCK)
 	WHERE ProductID = @ProductID
 
-	IF @Productid IN (14,17) -- Microgaming
+	SELECT @IsEnabled_Old = ISNULL(IsEnabled, 0)
+	FROM dbo.Dep_SupperProductSetting WITH (NOLOCK)
+	WHERE CustID = @CustID
+		AND ProductId = @ProductId
+
+	-- Update Status for Super
+	IF EXISTS (SELECT 1
+				FROM dbo.Dep_SupperProductSetting WITH (NOLOCK)
+				WHERE CustID = @CustID
+					AND ProductId = @ProductId)
+			
 	BEGIN
-		DECLARE @RoleId INT
-
-		SELECT @IsEnabled_Old = CASE WHEN @ProductID = 14 THEN ~ ISNULL(DisableMicrogameLC, 1)
-									WHEN  @ProductID = 17 THEN ~ ISNULL(DisableMicrogameRNG, 1) END
-			, @RoleId = RoleId
-		FROM dbo.custInfo WITH (NOLOCK)
-		WHERE CustID = @CustID
-		
-		--check concurrent users
-		IF (@IsEnabled_Old = @IsEnable )
-		BEGIN
-			SELECT @ErrMsg = 'Invalid data because it has changed by some other people. Please refresh the page.'			
-			RETURN		
-		END	
-		--check upline status
-		DECLARE @UplineStatus BIT
-		IF @RoleId = 1
-		BEGIN
-			SELECT @UplineStatus = CASE WHEN @ProductID = 14 THEN ~ ISNULL(DisableMicrogameLC, 1)
-										WHEN  @ProductID = 17 THEN ~ ISNULL(DisableMicrogameRNG, 1) END
-			FROM dbo.custInfo WITH (NOLOCK)
-			WHERE custid = (SELECT recommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID)
-		END
-		ELSE IF @RoleId = 2
-		BEGIN
-			SELECT @UplineStatus = CASE WHEN @ProductID = 14 THEN ~ ISNULL(DisableMicrogameLC, 1)
-										WHEN  @ProductID = 17 THEN ~ ISNULL(DisableMicrogameRNG, 1) END
-			FROM dbo.custInfo WITH (NOLOCK)
-			WHERE custid = (SELECT mrecommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID)
-		END
-		ELSE IF @RoleId = 3
-		BEGIN
-			SELECT @UplineStatus = CASE WHEN @ProductID = 14 THEN ~ ISNULL(DisableMicrogameLC, 1)
-										WHEN  @ProductID = 17 THEN ~ ISNULL(DisableMicrogameRNG, 1) END
-			FROM dbo.custInfo WITH (NOLOCK)
-			WHERE custid = (SELECT srecommend FROM dbo.custInfo WITH (NOLOCK) WHERE custid = @CustID)
-		END
-		ELSE IF @RoleId = 4--not checking the upline when the customer is the super
-		BEGIN
-			SET @UplineStatus = 1
-		END
-		
-		IF @UplineStatus = 0 AND @IsEnable = 1
-		BEGIN
-			SELECT @ErrMsg = 'Upline was disabled. Can not enable.'
-			RETURN
-		END
-
-		IF @ProductID = 14
-		BEGIN
-			UPDATE dbo.custInfo WITH (ROWLOCK)
-			SET DisableMicrogameLC = ~ @IsEnable
-			WHERE CustID = @CustID
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not update'
-
-				RETURN
-			END
-		END
-		ELSE IF @ProductID = 17
-		BEGIN
-			UPDATE dbo.custInfo WITH (ROWLOCK)
-			SET DisableMicrogameRNG = ~ @IsEnable
-			WHERE CustID = @CustID
-
-			IF (@@ERROR <> 0)
-			BEGIN
-				SELECT @ErrMsg = 'Could not update'
-
-				RETURN
-			END
-		END
-
-		IF @IsEnable = 0
-			SET @ApplyToMember = 1
-
-		-- Update Status for all downline members
-		IF (@ApplyToMember = 1)
-		BEGIN
-			IF @RoleId = 4
-			BEGIN
-				INSERT INTO #CustList (CustID)
-				SELECT rm.CustID
-				FROM Customer rm WITH (NOLOCK)
-					INNER JOIN Customer ag WITH (NOLOCK)
-					ON rm.srecommend = ag.Custid
-				WHERE rm.srecommend = @CustID
-					AND ag.Username NOT LIKE '%' + ag.site + '%' + 'ACC%'
-			END
-			ELSE IF @RoleId = 3
-			BEGIN
-				INSERT INTO #CustList (CustID)
-				SELECT rm.CustID
-				FROM Customer rm WITH (NOLOCK)
-					INNER JOIN Customer ag WITH (NOLOCK)
-					ON rm.srecommend = ag.Custid
-				WHERE rm.mrecommend = @CustID
-					AND ag.Username NOT LIKE '%' + ag.site + '%' + 'ACC%'
-			END
-			ELSE
-			BEGIN
-				INSERT INTO #CustList (CustID)
-				SELECT rm.CustID
-				FROM Customer rm WITH (NOLOCK)
-					INNER JOIN Customer ag WITH (NOLOCK)
-					ON rm.srecommend = ag.Custid
-				WHERE rm.recommend = @CustID
-					AND ag.Username NOT LIKE '%' + ag.site + '%' + 'ACC%'
-			END
-
-			SELECT @RowCount = @@rowcount
-
-			WHILE (@CurrRow <= @RowCount)
-			BEGIN
-				IF @ProductID = 14
-				BEGIN
-					UPDATE dbo.custInfo WITH (ROWLOCK, UPDLOCK)
-					SET DisableMicrogameLC = ~ @IsEnable
-					WHERE CustID IN (SELECT CustID
-									FROM #CustList
-									WHERE RowNo BETWEEN @CurrRow AND (@CurrRow + @RowPerBatch - 1))
-
-					IF (@@ERROR <> 0)
-					BEGIN
-						SELECT @ErrMsg = 'Could not update'
-
-						RETURN
-					END
-				END
-				ELSE IF @ProductID = 17
-				BEGIN
-					UPDATE dbo.custInfo WITH (ROWLOCK, UPDLOCK)
-					SET DisableMicrogameRNG = ~ @IsEnable
-					WHERE CustID IN (SELECT CustID
-									FROM #CustList
-									WHERE RowNo BETWEEN @CurrRow AND (@CurrRow + @RowPerBatch - 1))
-
-					IF (@@ERROR <> 0)
-					BEGIN
-						SELECT @ErrMsg = 'Could not update'
-
-						RETURN
-					END
-				END
-
-				SELECT @CurrRow = @CurrRow + @RowPerBatch
-
-				WAITFOR DELAY '00:00:00.300'
-			END
-
-			DROP TABLE #CustList
-		END
-	--end 14
-	END
-	ELSE
-	BEGIN
-		SELECT @IsEnabled_Old = ISNULL(IsEnabled, 0)
-		FROM dbo.Dep_SupperProductSetting WITH (NOLOCK)
+		UPDATE dbo.Dep_SupperProductSetting WITH (ROWLOCK)
+		SET IsEnabled = @IsEnable
 		WHERE CustID = @CustID
 			AND ProductId = @ProductId
 
-		-- Update Status for Super
-		IF (EXISTS (SELECT 1
-					FROM dbo.Dep_SupperProductSetting WITH (NOLOCK)
-					WHERE CustID = @CustID
-						AND ProductId = @ProductId
-						AND @ProductId NOT IN (14,17))
-				)
+		IF (@@ERROR <> 0)
 		BEGIN
-			UPDATE dbo.Dep_SupperProductSetting WITH (ROWLOCK)
+			SELECT @ErrMsg = 'Could not update'
+
+			RETURN
+		END
+	END
+	ELSE 
+	BEGIN
+		INSERT INTO dbo.Dep_SupperProductSetting (CustID, ProductId, IsEnabled)
+		VALUES (@CustID, @ProductId, @IsEnable)
+
+		IF (@@ERROR <> 0)
+		BEGIN
+			SELECT @ErrMsg = 'Could not insert'
+
+			RETURN
+		END
+	END
+		
+	EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
+									,@CustID	=@CustID
+									,@UserID	=@UserID
+									,@ErrMsg	=@ErrMsg
+
+	IF @IsEnable = 0
+		SET @ApplyToMember = 1
+
+	-- Update Status for all downline members
+	IF (@ApplyToMember = 1)
+	BEGIN
+		INSERT INTO #CustList (CustID)
+		SELECT rm.CustID
+		FROM Customer rm WITH (NOLOCK)
+			INNER JOIN Customer ag WITH (NOLOCK)
+			ON rm.recommend = ag.Custid
+		WHERE rm.srecommend = @CustID
+			AND rm.roleid = 1
+			AND ag.Username NOT LIKE '%' + ag.site + '%' + 'ACC%'
+
+		SELECT @RowCount = @@rowcount
+
+		WHILE (@CurrRow <= @RowCount)
+		BEGIN
+			UPDATE dbo.Dep_CustProductSetting WITH (ROWLOCK, UPDLOCK)
 			SET IsEnabled = @IsEnable
-			WHERE CustID = @CustID
-				AND ProductId = @ProductId
+			WHERE ProductId = @ProductId
+				AND CustID IN (
+					SELECT CustID
+					FROM #CustList
+					WHERE RowNo BETWEEN @CurrRow
+							AND (@CurrRow + @RowPerBatch - 1)
+					)
 
 			IF (@@ERROR <> 0)
 			BEGIN
@@ -227,11 +120,18 @@ BEGIN
 
 				RETURN
 			END
-		END
-		ELSE IF (@ProductId NOT IN (14,17))
-		BEGIN
-			INSERT INTO dbo.Dep_SupperProductSetting (CustID, ProductId, IsEnabled)
-			VALUES (@CustID, @ProductId, @IsEnable)
+
+			INSERT INTO dbo.Dep_CustProductSetting (CustID, ProductId, IsEnabled)
+			SELECT c.CustID, @ProductId, @IsEnable
+			FROM #CustList c
+			WHERE NOT EXISTS (
+					SELECT 1
+					FROM dbo.Dep_CustProductSetting cs WITH (NOLOCK)
+					WHERE cs.CustID = c.CustID
+						AND cs.ProductId = @ProductId
+					)
+				AND RowNo BETWEEN @CurrRow
+					AND (@CurrRow + @RowPerBatch - 1)
 
 			IF (@@ERROR <> 0)
 			BEGIN
@@ -239,79 +139,13 @@ BEGIN
 
 				RETURN
 			END
+
+			SELECT @CurrRow = @CurrRow + @RowPerBatch
+
+			WAITFOR DELAY '00:00:00.300'
 		END
-		
-	
-		EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
-										,@CustID	=@CustID
-										,@UserID	=@UserID
-										,@ErrMsg	=@ErrMsg
 
-		IF @IsEnable = 0
-			SET @ApplyToMember = 1
-
-		-- Update Status for all downline members
-		IF (@ApplyToMember = 1)
-		BEGIN
-			INSERT INTO #CustList (CustID)
-			SELECT rm.CustID
-			FROM Customer rm WITH (NOLOCK)
-				INNER JOIN Customer ag WITH (NOLOCK)
-				ON rm.recommend = ag.Custid
-			WHERE rm.srecommend = @CustID
-				AND rm.roleid = 1
-				AND ag.Username NOT LIKE '%' + ag.site + '%' + 'ACC%'
-
-			SELECT @RowCount = @@rowcount
-
-			WHILE (
-					@CurrRow <= @RowCount
-					AND @ProductId NOT IN (14,17)
-					)
-			BEGIN
-				UPDATE dbo.Dep_CustProductSetting WITH (ROWLOCK, UPDLOCK)
-				SET IsEnabled = @IsEnable
-				WHERE ProductId = @ProductId
-					AND CustID IN (
-						SELECT CustID
-						FROM #CustList
-						WHERE RowNo BETWEEN @CurrRow
-								AND (@CurrRow + @RowPerBatch - 1)
-						)
-
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not update'
-
-					RETURN
-				END
-
-				INSERT INTO dbo.Dep_CustProductSetting (CustID, ProductId, IsEnabled)
-				SELECT c.CustID, @ProductId, @IsEnable
-				FROM #CustList c
-				WHERE NOT EXISTS (
-						SELECT 1
-						FROM dbo.Dep_CustProductSetting cs WITH (NOLOCK)
-						WHERE cs.CustID = c.CustID
-							AND cs.ProductId = @ProductId
-						)
-					AND RowNo BETWEEN @CurrRow
-						AND (@CurrRow + @RowPerBatch - 1)
-
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert'
-
-					RETURN
-				END
-
-				SELECT @CurrRow = @CurrRow + @RowPerBatch
-
-				WAITFOR DELAY '00:00:00.300'
-			END
-
-			DROP TABLE #CustList
-		END
+		DROP TABLE #CustList
 	END
 
 	-- Write log
