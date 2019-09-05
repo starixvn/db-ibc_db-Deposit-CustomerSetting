@@ -248,8 +248,6 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 	@KenoList VARCHAR(4000)='',
 	@DisableKeno BIT = 0,
 	--------------------------------
-
-	@DisableCasinoBonus BIT = 1,
 	
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
@@ -284,6 +282,7 @@ Revisions:
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
+	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -591,9 +590,6 @@ BEGIN
 		
 		@DisableNumber = @DisableNumber,
 		@DisableCasino = 0,
-	
-		@DisableCasinoBonus = @DisableCasinoBonus,
-
 		
 		@MaxPerMatch = @MaxPerMatchv1,
 		@MaxPerMatchv2 = @MaxPerMatchv2,
@@ -1113,6 +1109,4 @@ BEGIN
 	--DROP TABLE #KenoPT
 
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Com] TO [bodbAdminNet] AS [dbo]
 GO

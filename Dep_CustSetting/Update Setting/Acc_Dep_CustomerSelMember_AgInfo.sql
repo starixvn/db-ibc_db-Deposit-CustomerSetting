@@ -17,6 +17,7 @@ Revisions:
 - 20180125@Winnie: Hide inactive products [RedmineID: #86086] 
 - 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]    
 - 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
+- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -120,57 +121,36 @@ DECLARE @MinBetv1						MONEY,
 		@minbetv180_Max money,
 		@maxbetv180_Min money,
 		@v180aPositionTaking_1201_Max smallmoney,
-		@maxpermatchv180 MONEY,
-		@maxpermatchv180_Max MONEY,
-		@MaxPerMatchv180_Min MONEY,
 		
 		@MinBetv181 MONEY,
 		@MaxBetv181 MONEY,
 		@minbetv181_Max money,
 		@maxbetv181_Min money,
-		@maxpermatchv181 MONEY,
-		@maxpermatchv181_Max MONEY,
-		@MaxPerMatchv181_Min MONEY,
 		
 		@MinBetv182 MONEY,
 		@MaxBetv182 MONEY,
 		@minbetv182_Max money,
 		@maxbetv182_Min money,
-		@maxpermatchv182 MONEY,
-		@maxpermatchv182_Max MONEY,
-		@MaxPerMatchv182_Min MONEY,
 		
 		@MinBetv183 MONEY,
 		@MaxBetv183 MONEY,
 		@minbetv183_Max money,
 		@maxbetv183_Min money,
-		@maxpermatchv183 MONEY,
-		@maxpermatchv183_Max MONEY,
-		@MaxPerMatchv183_Min MONEY,
 		
 		@MinBetv184 MONEY,
 		@MaxBetv184 MONEY,
 		@minbetv184_Max money,
 		@maxbetv184_Min money,
-		@maxpermatchv184 MONEY,
-		@maxpermatchv184_Max MONEY,
-		@MaxPerMatchv184_Min MONEY,
 		
 		@MinBetv185 MONEY,
 		@MaxBetv185 MONEY,
 		@minbetv185_Max money,
 		@maxbetv185_Min money,
-		@maxpermatchv185 MONEY,
-		@maxpermatchv185_Max MONEY,
-		@MaxPerMatchv185_Min MONEY,
 		
 		@MinBetv186 MONEY,
 		@MaxBetv186 MONEY,
 		@minbetv186_Max money,
 		@maxbetv186_Min money,
-		@maxpermatchv186 MONEY,
-		@maxpermatchv186_Max MONEY,
-		@MaxPerMatchv186_Min MONEY,
 
 		--Keno
 		@KenoList VARCHAR(4000)='', 				
@@ -392,15 +372,7 @@ Select
 	
 	@MaxPerMatchv99MP_Max = Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),
 	@MaxPerMatchv161_Max = Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),
-	@MaxPerBallv161_Max = Min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 end),
-			
-	@MaxPerMatchv180_Max = Min(case when cs.MaxPerMatch180 = 0 then NULL else cs.MaxPerMatch180 end),
-	@MaxPerMatchv181_Max = Min(case when cs.MaxPerMatch181 = 0 then NULL else cs.MaxPerMatch181 end),
-	@MaxPerMatchv182_Max = Min(case when cs.MaxPerMatch182 = 0 then NULL else cs.MaxPerMatch182 end),
-	@MaxPerMatchv183_Max = Min(case when cs.MaxPerMatch183 = 0 then NULL else cs.MaxPerMatch183 end),
-	@MaxPerMatchv184_Max = Min(case when cs.MaxPerMatch184 = 0 then NULL else cs.MaxPerMatch184 end),
-	@MaxPerMatchv185_Max = Min(case when cs.MaxPerMatch185 = 0 then NULL else cs.MaxPerMatch185 end),
-	@MaxPerMatchv186_Max = Min(case when cs.MaxPerMatch186 = 0 then NULL else cs.MaxPerMatch186 end)
+	@MaxPerBallv161_Max = Min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 end)
 from 
 	custinfo as cs WITH (NOLOCK) 
 	INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend OR cs.CustID = ci.Recommend)
@@ -415,62 +387,43 @@ SELECT	@v1aPositionTaking_1_Max = max(CASE WHEN cs.bettype = 1 AND cs.sporttype 
 FROM Dep_CustSetting AS cs WITH (NOLOCK)
 	LEFT JOIN Dep_CustSetting3rd AS cs3rd WITH (NOLOCK) ON cs.custid = cs3rd.custid
  WHERE cs.custid = @recommend
- 
- -- Virtual Sports
-SELECT @maxpermatchv180 = ci.maxpermatch180, @maxpermatchv181 = maxpermatch181, @maxpermatchv182 = maxpermatch182,@maxpermatchv183 = maxpermatch183,@maxpermatchv184 = maxpermatch184,@maxpermatchv185 = maxpermatch185,@maxpermatchv186 = maxpermatch186
-FROM custinfo ci with (nolock)
-WHERE ci.custid = @CustID
 
 Select @VirtualSportList = '<products><product SportType = "180" MaxBet = "'+ coalesce(cast(@MaxBetv180 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv180_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv180 as varchar(50)),space(1)) + '" ' +
 'MinBet_Max = "'+ coalesce(cast(isnull(@MinBetv180_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv180 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv180_Max,0) as varchar(50)),space(1)) + '" ' +
 'aPositionTaking = "'+ coalesce(cast(@v180aPositionTaking_1201 as varchar(50)),space(1)) + '" ' +
 'aPositionTaking_Max = "'+ coalesce(cast(@v180aPositionTaking_1201_Max as varchar(50)),space(1)) + '"></product>' +
 
 '<product SportType = "181" MaxBet = "'+ coalesce(cast(@MaxBetv181 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv181_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv181 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv181_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv181 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv181_Max,0) as varchar(50)),space(1)) + '"></product>' +
+'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv181_Max,0) as varchar(50)),space(1)) + '"></product>' +
 
 '<product SportType = "182" MaxBet = "'+ coalesce(cast(@MaxBetv182 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv182_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv182 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv182_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv182 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv182_Max,0) as varchar(50)),space(1)) + '"></product>' +
+'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv182_Max,0) as varchar(50)),space(1)) + '"></product>' +
 
 '<product SportType = "183" MaxBet = "'+ coalesce(cast(@MaxBetv183 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv183_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv183 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv183_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv183 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv183_Max,0) as varchar(50)),space(1)) + '"></product>' +
+'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv183_Max,0) as varchar(50)),space(1)) + '"></product>' +
 
 '<product SportType = "184" MaxBet = "'+ coalesce(cast(@MaxBetv184 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv184_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv184 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv184_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv184 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv184_Max,0) as varchar(50)),space(1)) + '"></product>' +
+'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv184_Max,0) as varchar(50)),space(1)) + '"></product>' +
 
 '<product SportType = "185" MaxBet = "'+ coalesce(cast(@MaxBetv185 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv185_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv185 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv185_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv185 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv185_Max,0) as varchar(50)),space(1)) + '"></product>' +
+'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv185_Max,0) as varchar(50)),space(1)) + '"></product>' +
 
 '<product SportType = "186" MaxBet = "'+ coalesce(cast(@MaxBetv186 as varchar(50)),space(1)) + '" ' +
 'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv186_Min,0) as varchar(50)),space(1)) + '" ' +
 'MinBet = "'+ coalesce(cast(@MinBetv186 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max = "'+ coalesce(cast(isnull(@MinBetv186_Max,0) as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch = "'+ coalesce(cast(@maxpermatchv186 as varchar(50)),space(1)) + '" ' +
-'MaxPerMatch_Max = "'+ coalesce(cast(isnull(@MaxPerMatchv186_Max,0) as varchar(50)),space(1)) + '"></product>' +
+'MinBet_Max = "'+ coalesce(cast(isnull(@MinBetv186_Max,0) as varchar(50)),space(1)) + '"></product>' +
 + '</products>'
 
 --Keno
@@ -653,8 +606,4 @@ DROP TABLE #dataUpline
 DROP TABLE #data
 
 
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMember_AgInfo] TO [bodbAdminNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMember_AgInfo] TO [bodbAdminNet] AS [dbo]
 GO
