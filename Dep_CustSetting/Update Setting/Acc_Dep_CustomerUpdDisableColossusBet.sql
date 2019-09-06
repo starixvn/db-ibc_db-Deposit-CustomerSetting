@@ -48,8 +48,7 @@ BEGIN
 	DECLARE @roleid INT,  
 			@Disable_Old BIT,  
 			@UplineDisable BIT,     
-			@HasDownline BIT = 0 
-			,@DisableDownlines_Old BIT = 0
+			@HasDownline BIT = 0 			
 
 
 	SELECT @roleid = roleid,  
@@ -72,78 +71,7 @@ BEGIN
 	FROM dbo.CustInfo WITH (NOLOCK)  
 	WHERE (@RoleID = 4 AND srecommend = @CustID and roleid = 3)  
 		OR (@RoleID = 3 AND mrecommend = @CustID and roleid = 2)  
-		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  
-	
-	
-	IF @HasDownline = 1
-	BEGIN
-		IF @roleid = 4 
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE srecommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 3
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE mrecommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-		ELSE IF @roleid = 2
-		BEGIN
-			IF EXISTS (SELECT TOP 1 1 FROM dbo.custInfo WITH(NOLOCK) WHERE recommend = @custid AND DisableColossusBet = 1)
-				SET @DisableDownlines_Old = 1
-		END
-	END
-
-	IF @Disable_old = @Disable AND @DisableDownlines_Old <> @EnableDownlines
-	RETURN
-	IF @Disable = 0 -- check status upline  
-	BEGIN  
-		IF @RoleID = 4  --not checking the upline when the customer is the super  
-			SELECT @UplineDisable = 0  
-		IF @RoleID = 3  
-			SELECT @UplineDisable = ISNULL(c1.DisableColossusBet, 0)  
-			FROM custInfo c1 WITH (NOLOCK)  
-			WHERE c1.custid = (SELECT c2.srecommend FROM custInfo c2 WITH (NOLOCK) WHERE c2.custid = @CustID)  
-
-		IF @RoleID = 2  
-			SELECT @UplineDisable = ISNULL(c1.DisableColossusBet, 0)  
-			FROM custInfo c1 WITH (NOLOCK)  
-			WHERE c1.custid = (SELECT c2.mrecommend FROM custInfo c2 WITH (NOLOCK) WHERE c2.custid = @CustID)  
-
-		IF @RoleID = 1  
-			SELECT @UplineDisable = ISNULL(c1.DisableColossusBet, 0)  
-			FROM custInfo c1 WITH (NOLOCK)  
-			WHERE c1.custid = (SELECT c2.recommend FROM custInfo c2 WITH (NOLOCK) WHERE c2.custid = @CustID)  
-
-	END  
-
-	IF @UplineDisable = 1  
-	BEGIN  
-		SELECT @ErrMsg =  CASE @Language   
-								WHEN 'E' THEN 'Account was disabled Colossus Bets. Unable to edit downlines.'  
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](60032,@Language)  
-						END, @ErrCode = 101  
-		RETURN  
-	END   
-	IF ((@Disable = 1 AND @Disable_Old = 0) OR
-	 (@DisableDownlines_Old = 0 AND @EnableDownlines = 0 AND @HasDownline = 1)) AND @SystemID=2 AND @roleid IN (4,3,2)
-	BEGIN
-		SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to disable for downlines.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](60035,@Language)
-						END, @ErrCode = 102
-		RETURN
-	END 
-
-	IF @Disable = 1 AND @EnableDownlines = 1 AND @HasDownline=1
-	BEGIN
-		SELECT @ErrMsg =  CASE @Language 
-							WHEN 'E' THEN 'You are not allowed to perform this action.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](90012,@Language)
-						END, @ErrCode = 103
-		RETURN
-	END 
-	
+		OR (@RoleID = 2 AND recommend = @CustID and roleid = 1)  	
 
 	-- Update chính nó  
 	UPDATE dbo.CustInfo WITH(ROWLOCK, UPDLOCK)  
@@ -189,17 +117,17 @@ BEGIN
 	 
 	SELECT @LogSPData = '<Acc_Dep_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
+		'EnableDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
 		'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" '+    
 		'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(400)),space(1))+'" '+    
 		'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+'" />'    
-	 
+
 	SELECT @LogSPData_Old = '<Acc_Dep_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable_old as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ CASE WHEN @DisableDownlines_Old = 1 THEN  coalesce(cast(0 as varchar(50)),space(1)) ELSE  coalesce(cast(1 as varchar(50)),space(1)) END +'" '+    
+		'EnableDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
@@ -223,7 +151,7 @@ BEGIN
 
 	SELECT @LogSPData = '<Acc_Dep_CustomerUpdDisableColossusBet CustID="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" '+    
 		'Disable="'+ coalesce(cast(@Disable as varchar(50)),space(1)) + '" '+    
-		'ApplyDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
+		'EnableDownlines="'+ coalesce(cast(@EnableDownlines as varchar(50)),space(1)) + '" '+    
 		'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" '+    
 		'SubAccName="' + coalesce(cast(dbo.f_GetSubUsername(@SubAccID) AS VARCHAR(30)), space(1)) + '" ' +  
 		'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+'" '+    
