@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]     
 	@CustID int = 0,  
 	@ReinitOldBalance BIT = 1,
@@ -18,6 +18,7 @@ AS
 		- 20181119@Dominic: Check betsetting Esports [Redmine: 100721]
 		- 20181227@Dominic: Check if dormant member is archived completely
 		- 20190305@Dominic: Add @CheckUniqueUsername2
+		- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
 	? @ReinitOldBalance: flag to reinit old balance   
@@ -126,10 +127,6 @@ BEGIN
 	 @minbetv11 money,     
 	 @maxbetv11 money,     
 	 @maxpermatchv11 money,    
-	 
-	 @minbetv44 money,     
-	 @maxbetv44 money,     
-	 @maxpermatchv44 money, 
 	
 
 	 @minbetv99 money,     
@@ -196,8 +193,6 @@ BEGIN
 	    
 	 @v11apositiontaking_1 smallmoney,    
 	 @v11apositiontaking_20 smallmoney,     
-
-	 @v44apositiontaking_3 smallmoney,    
 	
 	 @v99apositiontaking_1 smallmoney,    
 	 @v99apositiontaking_2 smallmoney,    
@@ -229,8 +224,7 @@ BEGIN
 	 @MinMinBetv5 money, @MaxMaxBetv5 money, @MaxMaxPerMatchv5 money,    
 	 @MinMinBetv8 money, @MaxMaxBetv8 money, @MaxMaxPerMatchv8 money,    
 	 @MinMinBetv10 money, @MaxMaxBetv10 money, @MaxMaxPerMatchv10 money,    
-	 @MinMinBetv11 money, @MaxMaxBetv11 money, @MaxMaxPerMatchv11 money,    
-	 @MinMinBetv44 money, @MaxMaxBetv44 money, @MaxMaxPerMatchv44 money,  
+	 @MinMinBetv11 money, @MaxMaxBetv11 money, @MaxMaxPerMatchv11 money,
 
 	     
 	 @MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,     
@@ -293,8 +287,6 @@ BEGIN
 	 @v11mpositiontaking_1 smallmoney,    
 	    
 	 @v11mpositiontaking_20 smallmoney,    
-	 
-	 @v44mpositiontaking_3 smallmoney, 
 	 
 	 @v99mpositiontaking_1 smallmoney,    
 	 @v99mpositiontaking_2 smallmoney,    
@@ -363,7 +355,6 @@ BEGIN
 	 @v11spositiontaking_1 smallmoney,    
 	 @v11spositiontaking_20 smallmoney,    
 	 
-	  @v44spositiontaking_3 smallmoney,   
 
 	    
 	 @v99spositiontaking_1 smallmoney,    
@@ -400,7 +391,7 @@ BEGIN
 	 @maxdiscountcs decimal(9,8),    
 	
 	     
-	 --v161    
+	 ----v161    
 	 @v161discount decimal(9,8),    
 	 @v161adiscount decimal(9,8),    
 	 @v161sdiscount decimal(9,8),    
@@ -410,8 +401,7 @@ BEGIN
 	 @v202sdiscount_1501 decimal(9,8),    
 	 @DisableNumber bit,-- for number game    
 	 
-	 @DoubleCommLosing BIT,-- double comm losing status    
-	 @DisableCasinoBonus BIT,    
+	 @DoubleCommLosing BIT,-- double comm losing status       
 
 	
 	 @HideKeno BIT,    
@@ -556,7 +546,6 @@ BEGIN
 	 @maxpermatchv8 = maxpermatch8,    
 	 @maxpermatchv10 = maxpermatch10,    
 	 @maxpermatchv11 = maxpermatch11,    
-	 @maxpermatchv44 = maxpermatch44,
   
 	 @maxpermatchv161 = maxpermatch161,--number game    
 	 @maxperballv161 = maxperball161,    
@@ -573,8 +562,7 @@ BEGIN
 	
 	
 	 @DisableNumber  = ISNULL(DisableNumber,0),    
-	 @DoubleCommLosing = DoubleCommLosing,    
-	 @DisableCasinoBonus = 1, --20130805@Elodie hardcode    
+	 @DoubleCommLosing = DoubleCommLosing,     
 	 @HideKeno = HideKeno    
 	FROM custinfo ci WITH(NOLOCK)     
 	 inner join customer c WITH(NOLOCK) ON ci.custid = c.custid    
@@ -638,8 +626,6 @@ BEGIN
 	  ,@maxbetv10  = MAX(CASE WHEN sporttype = 10 AND bettype =1 THEN maxbet ELSE 0 END)    
 	  ,@minbetv11  = MAX(CASE WHEN sporttype = 11 AND bettype =1 THEN minbet ELSE 0 END)    
 	  ,@maxbetv11  = MAX(CASE WHEN sporttype = 11 AND bettype =1 THEN maxbet ELSE 0 END)    
-	  ,@minbetv44  = MAX(CASE WHEN sporttype = 44 AND bettype =3 THEN minbet ELSE 0 END)    
-	  ,@maxbetv44  = MAX(CASE WHEN sporttype = 44 AND bettype =3 THEN maxbet ELSE 0 END)
 	  ,@minbetv99  = MAX(CASE WHEN sporttype = 99 AND bettype =1 THEN minbet ELSE 0 END)    
 	  ,@maxbetv99  = MAX(CASE WHEN sporttype = 99 AND bettype =1 THEN maxbet ELSE 0 END)    
 	  ,@minbetv99MP = MAX(CASE WHEN sporttype = 99 AND bettype =9 THEN minbet ELSE 0 END)    
@@ -651,13 +637,12 @@ BEGIN
 	
 	FROM Dep_Custsetting WITH(NOLOCK)    
 	WHERE custid = @recommend AND islive=0    
-	 AND bettype IN (1,3,4,5,9) AND sporttype IN (1,2,3,5,8,10,11,44,99)    
+	 AND bettype IN (1,3,4,5,9) AND sporttype IN (1,2,3,5,8,10,11,99)    
 	    
 	    
 	SELECT  
 	   @minbetv161  = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN minbet ELSE 0 END)    
 	  ,@maxbetv161  = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN maxbet ELSE 0 END)      
-	  ,@v161discount  = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN discount ELSE 0 END)    
 	FROM Dep_CustSetting3rd WITH(NOLOCK)    
 	WHERE custid = @recommend AND islive=0    
 	 AND bettype =81 AND sporttype =161
@@ -700,8 +685,6 @@ BEGIN
 	   @maxpermatchv10  = ISNULL(MAX(CASE WHEN SportType = 10 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv10),    
 	   @maxbetv11   = ISNULL(MAX(CASE WHEN SportType = 11 AND Bettype = 1 THEN MaxBet ELSE NULL END),@maxbetv11),     
 	   @maxpermatchv11  = ISNULL(MAX(CASE WHEN SportType = 11 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv11),  
-	   @maxbetv44   = ISNULL(MAX(CASE WHEN SportType = 44 AND Bettype = 3 THEN MaxBet ELSE NULL END),@maxbetv44),     
-	   @maxpermatchv44  = ISNULL(MAX(CASE WHEN SportType = 44 AND Bettype = 3 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv44), 
 	   @maxbetv99   = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN MaxBet ELSE NULL END),@maxbetv99),     
 	   @maxpermatchv99  = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv99),    
 	   @maxbetv99MP  = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 9 THEN MaxBet ELSE NULL END),@maxbetv99MP),     
@@ -730,8 +713,6 @@ BEGIN
 	  @maxpermatchv10   = ISNULL(MAX(CASE WHEN SportType = 10 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv10),    
 	  @maxbetv11    = ISNULL(MAX(CASE WHEN SportType = 11 AND Bettype = 1 THEN MaxBet ELSE NULL END),@maxbetv11),     
 	  @maxpermatchv11   = ISNULL(MAX(CASE WHEN SportType = 11 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv11),   
-	  @maxbetv44    = ISNULL(MAX(CASE WHEN SportType = 44 AND Bettype = 3 THEN MaxBet ELSE NULL END),@maxbetv44),     
-	  @maxpermatchv44   = ISNULL(MAX(CASE WHEN SportType = 44 AND Bettype = 3 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv44),   
 	  @maxbetv99    = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN MaxBet ELSE NULL END),@maxbetv99),     
 	  @maxpermatchv99   = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv99),    
 	  @maxbetv99MP   = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 9 THEN MaxBet ELSE NULL END),@maxbetv99MP),     
@@ -863,11 +844,9 @@ BEGIN
 	  ,@v11apositiontaking_1 = MAX(CASE WHEN bettype = 1 AND sporttype = 11 AND isLive = 0 THEN apositiontaking ELSE 0 END)      
 	  ,@v11apositiontaking_20= MAX(CASE WHEN bettype = 20 AND sporttype= 11 AND isLive = 0 THEN apositiontaking ELSE 0 END)      
 	  
-	  ,@v44apositiontaking_3 = MAX(CASE WHEN bettype = 3 AND sporttype = 44 AND isLive = 0 THEN apositiontaking ELSE 0 END) 
 	  
 	  ,@v11mpositiontaking_1 = MAX(CASE WHEN bettype = 1 AND sporttype = 11 AND isLive = 0 THEN mpositiontaking ELSE 0 END)      
-	  ,@v11mpositiontaking_20= MAX(CASE WHEN bettype = 20 AND sporttype= 11 AND isLive = 0 THEN mpositiontaking ELSE 0 END)      
-	  ,@v44mpositiontaking_3 = MAX(CASE WHEN bettype = 3 AND sporttype = 44 AND isLive = 0 THEN mpositiontaking ELSE 0 END)   
+	  ,@v11mpositiontaking_20= MAX(CASE WHEN bettype = 20 AND sporttype= 11 AND isLive = 0 THEN mpositiontaking ELSE 0 END)       
 	  ,@v99apositiontaking_1 = MAX(CASE WHEN bettype = 1 AND sporttype = 99 AND isLive = 0 THEN apositiontaking ELSE 0 END)      
 	  ,@v99apositiontaking_2 = MAX(CASE WHEN bettype = 2 AND sporttype = 99 AND isLive = 0 THEN apositiontaking ELSE 0 END)      
 	  ,@v99apositiontaking_3 = MAX(CASE WHEN bettype = 3 AND sporttype = 99 AND isLive = 0 THEN apositiontaking ELSE 0 END)      
@@ -882,7 +861,7 @@ BEGIN
 	    
 	 
 	FROM Dep_Custsetting WITH(NOLOCK)    
-	WHERE custid = @recommend and bettype IN (1,2,3,4,5,6,7,8,9,10,20) and sporttype IN (1,2,3,5,8,10,11,44,99)    
+	WHERE custid = @recommend and bettype IN (1,2,3,4,5,6,7,8,9,10,20) and sporttype IN (1,2,3,5,8,10,11,99)    
 	    
 	    
 	SELECT 
@@ -977,7 +956,6 @@ BEGIN
 	select @v11spositiontaking_1 = 0    
 	select @v11spositiontaking_20 = 0    
 
-	select @v44spositiontaking_3 = 0    
 	    
 
 	select @v99spositiontaking_1 = 0    
@@ -1004,13 +982,7 @@ BEGIN
 	FROM Dep_CustSetting WITH(NOLOCK)    
 	WHERE custid = @mrecommend AND sporttype =1 AND bettype IN (1,4,5) AND isLive = 0    
 	    
-	    
-	    
-	SELECT     
-	   @v161adiscount    = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN adiscount ELSE 0 END)    
-	FROM Dep_CustSetting3rd WITH(NOLOCK)    
-	WHERE custid = @mrecommend AND islive=0    
-	 AND bettype =81 AND sporttype =161   
+	 
 
 	--- Keno    
 	select @v202adiscount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN adiscount ELSE 0 END)     
@@ -1022,12 +994,6 @@ BEGIN
 	  ,@sdiscount1x2 = MAX(CASE WHEN bettype = 5 THEN sdiscount ELSE 0 END)   	  
 	FROM Dep_CustSetting WITH(NOLOCK)    
 	WHERE custid = @srecommend AND sporttype =1 AND bettype IN (1,4,5) AND isLive = 0    
-	    
-	SELECT     
-		@v161sdiscount    = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN sdiscount ELSE 0 END)    
-	FROM Dep_CustSetting3rd WITH(NOLOCK)    
-	WHERE custid = @srecommend AND islive=0    
-	 AND bettype =81 AND sporttype =161
 
 	--- Keno    
 	select  @v202sdiscount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN sdiscount ELSE 0 END)      
@@ -1040,9 +1006,6 @@ BEGIN
 	 @playerdiscountcs = case when @playerdiscountcs > @adiscountcs then @adiscountcs else @playerdiscountcs end,    
 	 --1x2    
 	 @playerdiscount1x2 = case when @playerdiscount1x2 > @adiscount1x2 then @adiscount1x2 else @playerdiscount1x2 end,    
-	
-	 --v161    
-	 @v161playerdiscount= case when @v161playerdiscount> @v161discount then @v161discount else @v161playerdiscount end,    
 	 
 	 ---  Keno    
 	 @v202playerdiscount_1501 = case when @v202playerdiscount_1501 > @v202discount_1501 then @v202discount_1501 else @v202playerdiscount_1501 end    
@@ -1066,16 +1029,14 @@ BEGIN
 	  ,@MinMinBetv10 = ISNULL(MAX(CASE WHEN sporttype = 10 AND bettype = 1 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
 	  ,@MaxMaxBetv10 = ISNULL(MIN(CASE WHEN sporttype = 10 AND bettype = 1 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    
 	  ,@MinMinBetv11 = ISNULL(MAX(CASE WHEN sporttype = 11 AND bettype = 1 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
-	  ,@MaxMaxBetv11 = ISNULL(MIN(CASE WHEN sporttype = 11 AND bettype = 1 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    
-	  ,@MinMinBetv44 = ISNULL(MAX(CASE WHEN sporttype = 44 AND bettype = 3 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
-	  ,@MaxMaxBetv44 = ISNULL(MIN(CASE WHEN sporttype = 44 AND bettype = 3 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    
+	  ,@MaxMaxBetv11 = ISNULL(MIN(CASE WHEN sporttype = 11 AND bettype = 1 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)      
 	  ,@MinMinBetv99 = ISNULL(MAX(CASE WHEN sporttype = 99 AND bettype = 1 AND minbet <> 0 THEN minbet ELSE NULL END),0)    ,@MaxMaxBetv99 = ISNULL(MIN(CASE WHEN sporttype = 99 AND bettype = 1 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    
 	  ,@MinMinBetv99MP= ISNULL(MAX(CASE WHEN sporttype = 99 AND bettype = 9 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
 	  ,@MaxMaxBetv99MP= ISNULL(MIN(CASE WHEN sporttype = 99 AND bettype = 9 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    
 	   
 	FROM Dep_Custsetting cs WITH(NOLOCK)    
 	 INNER JOIN custinfo ci WITH(NOLOCK) ON (cs.custid = ci.custid or cs.custid = ci.mrecommend or cs.custid = ci.srecommend)    
-	WHERE ci.custid = @recommend AND cs.bettype IN (1,3,9) AND cs.sporttype IN (1,2,3,5,8,10,11,44,99) and cs.islive = 0    
+	WHERE ci.custid = @recommend AND cs.bettype IN (1,3,9) AND cs.sporttype IN (1,2,3,5,8,10,11,99) and cs.islive = 0    
 	    
 	    
 	    
@@ -1093,7 +1054,6 @@ BEGIN
 	 @MaxMaxPerMatchv8 = IsNull(Min(case when cs.MaxPerMatch8 = 0 then NULL else cs.MaxPerMatch8 end),0),    
 	 @MaxMaxPerMatchv10 = IsNull(Min(case when cs.MaxPerMatch10 = 0 then NULL else cs.MaxPerMatch10 end),0),    
 	 @MaxMaxPerMatchv11 = IsNull(Min(case when cs.MaxPerMatch11 = 0 then NULL else cs.MaxPerMatch11 end),0), 
-	 @MaxMaxPerMatchv44 = IsNull(Min(case when cs.MaxPerMatch44 = 0 then NULL else cs.MaxPerMatch44 end),0), 
 	 
 	 @MaxMaxPerMatchv99 = IsNull(Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),0),    
 	 -- parlay mixed sports    
@@ -1118,7 +1078,6 @@ BEGIN
 	 union all select 8 as sporttype, @MinBetv8 as MinBet, @MinMinBetv8 as MinMinBet    
 	 union all select 10 as sporttype, @MinBetv10 as MinBet, @MinMinBetv10 as MinMinBet    
 	 union all select 11 as sporttype, @MinBetv11 as MinBet, @MinMinBetv11 as MinMinBet     
-	 union all select 44 as sporttype, @MinBetv44 as MinBet, @MinMinBetv44 as MinMinBet 
 	 
 	 union all select 99 as sporttype, @MinBetv99 as MinBet, @MinMinBetv99 as MinMinBet    
 	 --Parlay mixed     
@@ -1155,7 +1114,6 @@ BEGIN
 	 union all select 8 as sporttype, @MaxBetv8 as MaxBet, @MaxMaxBetv8 as MaxMaxBet    
 	 union all select 10 as sporttype, @MaxBetv10 as MaxBet, @MaxMaxBetv10 as MaxMaxBet    
 	 union all select 11 as sporttype, @MaxBetv11 as MaxBet, @MaxMaxBetv11 as MaxMaxBet     
-	 union all select 44 as sporttype, @MaxBetv44 as MaxBet, @MaxMaxBetv44 as MaxMaxBet 
 	 
 	 union all select 99 as sporttype, @MaxBetv99 as MaxBet, @MaxMaxBetv99 as MaxMaxBet      
 	     
@@ -1192,7 +1150,6 @@ BEGIN
 	 union all select 8 as sporttype, @MaxPerMatchv8 as MaxPerMatch, @MaxMaxPerMatchv8 as MaxMaxPerMatch    
 	 union all select 10 as sporttype, @MaxPerMatchv10 as MaxPerMatch, @MaxMaxPerMatchv10 as MaxMaxPerMatch    
 	 union all select 11 as sporttype, @MaxPerMatchv11 as MaxPerMatch, @MaxMaxPerMatchv11 as MaxMaxPerMatch    
-	 union all select 44 as sporttype, @MaxPerMatchv44 as MaxPerMatch, @MaxMaxPerMatchv44 as MaxMaxPerMatch  
 	
 	 union all select 99 as sporttype, @MaxPerMatchv99 as MaxPerMatch, @MaxMaxPerMatchv99 as MaxMaxPerMatch    
 	 --mixed sports    
@@ -1409,8 +1366,7 @@ BEGIN
 	 @virtualmultiplier = @virtualmultiplier,    
 	   
 	 @DisableNumber = @DisableNumber,    
-	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode    
-	 @DisableCasinoBonus = @DisableCasinoBonus,      
+	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode       
 	 
 	 @MaxPerMatch = @MaxPerMatch,    
 	 @MaxPerMatchv2 = @MaxPerMatchv2,    
@@ -1419,7 +1375,6 @@ BEGIN
 	 @MaxPerMatchv8 = @MaxPerMatchv8,    
 	 @MaxPerMatchv10 = @MaxPerMatchv10,    
 	 @MaxPerMatchv11 = @MaxPerMatchv11,    
-	 @MaxPerMatchv44 = @MaxPerMatchv44,
 	
 	 @MaxPerMatchv99 = @MaxPerMatchv99,    
 	 @MaxPerMatchv99MP = @MaxPerMatchv99MP,    
@@ -1528,9 +1483,6 @@ BEGIN
 	select @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv11, @MaxBetv11, 0    
 	UNION ALL    
 	select @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv11, @MaxBetv11, 0    
-	 
-	UNION ALL    
-	select @custid, 3, 44, @v44apositiontaking_3, @v44mpositiontaking_3, @v44spositiontaking_3, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv44, @MaxBetv44, 0  
 	    
 	UNION ALL    
 	select @custid, 1, 99, @v99apositiontaking_1, @v99mpositiontaking_1, @v99spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv99, @MaxBetv99, 0    

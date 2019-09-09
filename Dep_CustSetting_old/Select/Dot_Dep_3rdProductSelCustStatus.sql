@@ -1,4 +1,4 @@
-
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Dot_Dep_3rdProductSelCustStatus @CustID INT
 	, @ProductId INT
 	, @IsEnabled BIT = NULL OUTPUT  
@@ -11,6 +11,7 @@ AS
  Revisions:  
 	- 20151002@Patrick: Support MGC
 	- 20151106@Patrick: Support RnG Game & rename field named DisableMicroGame to DisableMicroGameLC
+	- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 
  Param's Explanation:  
 */  
@@ -19,11 +20,7 @@ BEGIN
    
 	IF @ProductId IN (14,17) --MGC
 	BEGIN
-		SET @IsEnabled = 0
-		SELECT @IsEnabled = CASE WHEN @ProductId = 14 THEN ~DisableMicrogameLC
-								WHEN @ProductId = 17 THEN ~DisableMicrogameRNG END--CASE WHEN ISNULL(DisableMicrogame, 1) = 1 THEN 0 ELSE 1 END
-		FROM dbo.custInfo WITH(NOLOCK)
-		WHERE custid = @CustID
+		RETURN
 	END
 	ELSE
 	BEGIN
@@ -48,6 +45,4 @@ BEGIN
 	END
    
 END  
-GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_3rdProductSelCustStatus] TO [Dot_member]
 GO
