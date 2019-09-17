@@ -1233,61 +1233,51 @@ BEGIN
 	    
 	--Insert general data     
 	EXEC dbo.Dot_Dep_CustomerInsUserInfo    
-	 @custid = @custid OUTPUT,    
-	 @firstname = @firstname,    
-	 @lastname = @lastname,    
-	 @creator = @recommend,    
-	 @username = @username,    
-	 @userpwd = @Password,    
-	 @pwdexpiry = @pwdexpiry,    
-	 @currency = @currency,    
-	 @site = @site,    
-	 @ugroup = @ugroup,    
-	 @srecommend = @srecommend,    
-	 @mrecommend = @mrecommend,    
-	 @recommend = @recommend,    
-	 @roleid = 1,    
-	 @phone = '',    
-	 @mobilephone = '',    
-	 @email = '',    
-	 @fax = '',    
-	 @address = '',    
-	 @city = '',    
-	 @state = '',    
-	 @country = @Country,    
-	 @postal = '',    
-	 @TransferOption = null,    
-	 @suspended = @suspended,    
-
-	 @matchlimit = @matchlimit,    
-	 @virtualmultiplier = @virtualmultiplier,    
-	   
-	 @DisableNumber = @DisableNumber,    
-	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode        
-	 
-	 @MaxPerMatch = @MaxPerMatch,    
-	 @MaxPerMatchv2 = @MaxPerMatchv2,    
-	 @MaxPerMatchv3 = @MaxPerMatchv3,    
-	 @MaxPerMatchv5 = @MaxPerMatchv5,    
-	 @MaxPerMatchv8 = @MaxPerMatchv8,    
-	 @MaxPerMatchv10 = @MaxPerMatchv10,    
-	 @MaxPerMatchv11 = @MaxPerMatchv11,    
-	
-	 @MaxPerMatchv99 = @MaxPerMatchv99,    
-	 @MaxPerMatchv99MP = @MaxPerMatchv99MP,    
-
-	 @MaxPerMatchv161 = @MaxPerMatchv161,    
-	 @MaxPerBallv161 = @MaxPerBallv161,    
+		@custid = @custid OUTPUT,    
+		@firstname = @firstname,    
+		@lastname = @lastname,    
+		@creator = @recommend,    
+		@username = @username,    
+		@userpwd = @Password,    
+		@pwdexpiry = @pwdexpiry,    
+		@currency = @currency,    
+		@site = @site,    
+		@ugroup = @ugroup,    
+		@srecommend = @srecommend,    
+		@mrecommend = @mrecommend,    
+		@recommend = @recommend,    
+		@roleid = 1, 
 	    
-	 @HideKeno = @HideKeno,    
-	 @credit = 0,    
-	 @IP = '',    
-	 @TransferOption_dec = null,    
-	 @Language = 'E',    
-	 @ErrCode = @ErrCode OUTPUT,    
-	 @ErrMsg = @ErrMsg OUTPUT    
+		@country = @Country,    
+		@suspended = @suspended,    
+
+		@credit = 0,  
+		@matchlimit = @matchlimit,    
+		@virtualmultiplier = @virtualmultiplier,    	  	 
+	 
+		@MaxPerMatch = @MaxPerMatch,    
+		@MaxPerMatchv2 = @MaxPerMatchv2,    
+		@MaxPerMatchv3 = @MaxPerMatchv3,    
+		@MaxPerMatchv5 = @MaxPerMatchv5,    
+		@MaxPerMatchv8 = @MaxPerMatchv8,    
+		@MaxPerMatchv10 = @MaxPerMatchv10,    
+		@MaxPerMatchv11 = @MaxPerMatchv11,    	
+		@MaxPerMatchv99 = @MaxPerMatchv99,    
+		@MaxPerMatchv99MP = @MaxPerMatchv99MP,    
+		@MaxPerMatchv161 = @MaxPerMatchv161,    
+		@MaxPerBallv161 = @MaxPerBallv161,    
+	    
+		@DisableNumber = @DisableNumber,    
+		@DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode        
+		@HideKeno = @HideKeno,    
+	   
+		@IP = '',    
+		@Language = 'E',    
+		@ErrCode = @ErrCode OUTPUT,    
+		@ErrMsg = @ErrMsg OUTPUT    
+
 	IF @ErrCode <> 0    
-	 return    
+		RETURN    
 	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
