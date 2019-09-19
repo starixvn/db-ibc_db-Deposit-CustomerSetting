@@ -22,10 +22,6 @@ SELECT @mrecommend=mrecommend FROM custInfo WITH(NOLOCK) WHERE username=@UserNam
 SELECT @mrecommendUsername=Username FROM custInfo WITH(NOLOCK) WHERE custid=@mrecommend
 CREATE TABLE #tempSubUserName(UserName VARCHAR(30))
 
-SELECT @mrecommendUsername = username  
-FROM dbo.custInfo WITH(NOLOCK)  
-WHERE custid = @mrecommend
-
 IF @mrecommendUsername IS NULL
 BEGIN
 	SELECT * FROM #tempSubUserName
