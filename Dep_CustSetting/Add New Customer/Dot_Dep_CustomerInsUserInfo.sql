@@ -20,7 +20,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@country NVARCHAR(50),
 	@suspended BIT = NULL,
 
-	@credit MONEY,
 	@matchlimit SMALLMONEY,
 	@virtualmultiplier SMALLMONEY,
 	
@@ -37,9 +36,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@MaxPerBallv161 MONEY = 0,	
 	
 	@DisableNumber BIT = 0,
-	@DoubleCommLosing BIT = 0,
-	@DisableGoldDeluxe BIT = 0,
-	@HideGoldDeluxe BIT = 0,
 	@HideKeno BIT = 0,		
 	
 	@IP VARCHAR(15)='',
@@ -66,9 +62,6 @@ AS
 BEGIN
     SET NOCOUNT ON 
 	
-	IF @currency = 45 --Gold Deluxe doesn't support WON currency [Redmine: #41785]
-		SELECT @HideGoldDeluxe = 1, @DisableGoldDeluxe = 1
-		
     INSERT INTO Customer   			
 	(username, firstname, lastname, phone, mobilephone, fax, email, address,
 	city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
@@ -131,12 +124,11 @@ BEGIN
 	    @custid, @currency--,1
 	  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
 	  , @MaxPerMatchv99
-	  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, ISNULL(@suspended, 0), @credit, 0, @username
+	  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, ISNULL(@suspended, 0), 0, 0, @username
 	  , @matchlimit, @virtualmultiplier
 	  , 0, 0, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
-	  , 0, 0, 0, 0
-	  ,  @DoubleCommLosing	
-	  , @HideKeno, 0, @DisableGoldDeluxe, @HideGoldDeluxe, 0,1,1
+	  , 0, 0, 0, 0, 0	
+	  , @HideKeno, 0, 0, 0, 0,1,1
 	  , 0, 0
     )
 	

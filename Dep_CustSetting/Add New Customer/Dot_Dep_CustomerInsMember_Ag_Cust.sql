@@ -346,8 +346,7 @@ BEGIN
 			 --Keno    
 			 @v202apositiontaking_1501 SMALLMONEY
 	    
-	DECLARE	 @transcode BIGINT,     
-			 @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,    
+	DECLARE	 @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,    
 			 @MinMinBetv2 MONEY, @MaxMaxBetv2 MONEY, @MaxMaxPerMatchv2 MONEY,    
 			 @MinMinBetv3 MONEY, @MaxMaxBetv3 MONEY, @MaxMaxPerMatchv3 MONEY,    
 			 @MinMinBetv5 MONEY, @MaxMaxBetv5 MONEY, @MaxMaxPerMatchv5 MONEY,    
@@ -362,8 +361,7 @@ BEGIN
 			 --Number game    
 			 @MinMinBetv161 money, @MaxMaxBetv161 money, @MaxMaxPerMatchv161 money, @MaxMaxPerBallv161 money,    
 	    
-			 @AgentCredit money, @Credit_AllOtherMember money, @Aclosed bit,    
-			 @MaxCredit_Mem money,    
+			 @Aclosed bit,    
 			 @Asuspended bit,    
 			-- @AgentMaxPerMatch money, @AgentMaxPerMatchb money,    
 			-- @MaxPerMatch_AllOtherMember money, @MaxPerMatchv2_AllOtherMember money,    
@@ -520,10 +518,7 @@ BEGIN
 			 --Keno    
 			 @v202adiscount_1501 DECIMAL(9,8),    
 			 @v202sdiscount_1501 DECIMAL(9,8),    
-			 @DisableNumber BIT,-- for number game    
-	 
-			 @DoubleCommLosing BIT,-- double comm losing status       
-	
+			 @DisableNumber BIT,-- for number game    	 
 			 @HideKeno BIT,    
 	    
 			 @suspendedFlag VARCHAR(6),    
@@ -571,14 +566,12 @@ BEGIN
 
 		 ----- add more    
 		 @site    = c.site,    
-		 @AgentCredit  = IsNull(Credit, 0),    
 		 @Aclosed   = closed,    
 		 @Asuspended   = reject,    
 		 @matchlimit   = matchlimit,    
 		 @virtualmultiplier = virtualmultiplier,    
 	
-		 @DisableNumber  = ISNULL(DisableNumber,0),    
-		 @DoubleCommLosing = DoubleCommLosing,       
+		 @DisableNumber  = ISNULL(DisableNumber,0),
 		 @HideKeno = HideKeno    
 	FROM custinfo ci WITH(NOLOCK)     
 		INNER JOIN customer c WITH(NOLOCK) ON ci.custid = c.custid    
@@ -892,11 +885,7 @@ BEGIN
 	--if @ErrCode <>0 return     
 	     
 	DECLARE @ErrType VARCHAR(4000)     
-	SELECT @ErrCode = 0    
-	    
-	SELECT @MaxCredit_Mem = isnull(maxcredit,0) 
-	FROM CustAgent WITH (NOLOCK)     
-	WHERE CustID = @recommend    
+	SELECT @ErrCode = 0    	   	  
 	    
 	SELECT @spositiontaking_1 = 0, @slivepositiontaking_1 = 0    
 	SELECT @spositiontaking_3 = 0, @slivepositiontaking_3 = 0      
@@ -1166,42 +1155,7 @@ BEGIN
 	BEGIN    
 	 set @suspended =1    
 	END    
-	    
-	-----------------------------------------------    
-	--generate the username automatically    
-	/* --- old version    
-	Select @username = isnull(max(cast(replace(username, @AgUsername, '') as int)),0)    
-	from customer with (nolock)    
-	where recommend = @recommend and roleid = 1    
-	 and charindex(@AgUsername, username) = 1    
-	*/    
-	/* old version    
-	select @username = isnull(cast(replace(username,@AgUsername,'') as int),0)    
-	from customer witH(nolock)    
-	where custid = ( select max(custid)     
-	    
-		 from dbo.customer with(nolocK)     
-		 where recommend = @recommend     
-		  and roleid = 1           
-		)    
-	        
-	    
-	if isnumeric(@username) = 1    
-	BEGIN    
-	 select @username = convert(varchar(20), convert(int, @username) + 1)    
-	 if len(@username)<3    
-	 BEGIN    
-	  select @Username = right('00' + @username, 3)    
-	 END    
-	END    
-	else    
-	BEGIN    
-	 select @UserName = '001'    
-	END    
-	    
-	select @username = @agusername  + @username    
-	select @username = replace(@username, ' ', '')    
-	*/    
+	    	
 	--20140812: Change rule generate username    
 	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%') OR @UserName IS NULL
 	BEGIN  
@@ -1251,7 +1205,6 @@ BEGIN
 		@country = @Country,    
 		@suspended = @suspended,    
 
-		@credit = 0,  
 		@matchlimit = @matchlimit,    
 		@virtualmultiplier = @virtualmultiplier,    	  	 
 	 
@@ -1268,7 +1221,6 @@ BEGIN
 		@MaxPerBallv161 = @MaxPerBallv161,    
 	    
 		@DisableNumber = @DisableNumber,    
-		@DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode        
 		@HideKeno = @HideKeno,    
 	   
 		@IP = '',    
