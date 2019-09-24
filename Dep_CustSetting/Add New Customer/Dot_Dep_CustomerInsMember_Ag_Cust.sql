@@ -510,10 +510,10 @@ BEGIN
 			 @maxdiscount DECIMAL(9,8),    
 			 @maxdiscountcs DECIMAL(9,8),    
 	     
-			 --v161    
-			 @v161discount DECIMAL(9,8),    
-			 @v161adiscount DECIMAL(9,8),    
-			 @v161sdiscount DECIMAL(9,8),    
+			  --v161    
+			 @v161discount DECIMAL(9,8) = 0,    
+			 @v161adiscount DECIMAL(9,8) = 0,    
+			 @v161sdiscount DECIMAL(9,8) = 0,    
 	
 			 --Keno    
 			 @v202adiscount_1501 DECIMAL(9,8),    
@@ -1186,7 +1186,7 @@ BEGIN
 	 @ugroup = case when @ugroup like 'indo_' then right(@ugroup,1) else @ugroup end    
 	    
 	--Insert general data     
-	EXEC dbo.Dot_Dep_CustomerInsUserInfo    
+	EXEC dbo.Dot_Dep_CustomerInsUserInfo
 		@custid = @custid OUTPUT,    
 		@firstname = @firstname,    
 		@lastname = @lastname,    
