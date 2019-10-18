@@ -511,9 +511,9 @@ BEGIN
 			 @maxdiscountcs DECIMAL(9,8),    
 	     
 			  --v161    
-			 @v161discount DECIMAL(9,8) = 0,    
-			 @v161adiscount DECIMAL(9,8) = 0,    
-			 @v161sdiscount DECIMAL(9,8) = 0,    
+			 @v161discount DECIMAL(9,8),    
+			 @v161adiscount DECIMAL(9,8),    
+			 @v161sdiscount DECIMAL(9,8),  
 	
 			 --Keno    
 			 @v202adiscount_1501 DECIMAL(9,8),    
@@ -641,7 +641,8 @@ BEGIN
 	    
 	SELECT  
 		 @minbetv161	= MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN minbet ELSE 0 END)    
-		,@maxbetv161	= MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN maxbet ELSE 0 END)         
+		,@maxbetv161	= MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN maxbet ELSE 0 END)      
+		,@v161discount  = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN discount ELSE 0 END)    
 	FROM Dep_CustSetting3rd WITH(NOLOCK)    
 	WHERE custid = @recommend AND islive=0 AND bettype = 81 AND sporttype = 161
 	
@@ -951,6 +952,11 @@ BEGIN
 		  ,@adiscount1x2= MAX(CASE WHEN bettype = 5 THEN adiscount ELSE 0 END)    	 
 	FROM Dep_CustSetting WITH(NOLOCK)    
 	WHERE custid = @mrecommend AND sporttype =1 AND bettype IN (1,4,5) AND isLive = 0    	    	    
+	    
+	SELECT     
+	   @v161adiscount   = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN adiscount ELSE 0 END)    
+	FROM Dep_CustSetting3rd WITH(NOLOCK)    
+	WHERE custid = @mrecommend AND islive=0 AND bettype =81 AND sporttype =161   
 
 	--- Keno    
 	SELECT @v202adiscount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN adiscount ELSE 0 END)     
@@ -962,6 +968,11 @@ BEGIN
 		  ,@sdiscount1x2= MAX(CASE WHEN bettype = 5 THEN sdiscount ELSE 0 END)   	  
 	FROM Dep_CustSetting WITH(NOLOCK)    
 	WHERE custid = @srecommend AND sporttype =1 AND bettype IN (1,4,5) AND isLive = 0    
+	    
+	SELECT     
+		@v161sdiscount  = MAX(CASE WHEN sporttype = 161 AND bettype = 81 THEN sdiscount ELSE 0 END)    
+	FROM Dep_CustSetting3rd WITH(NOLOCK)    
+	WHERE custid = @srecommend AND islive=0 AND bettype =81 AND sporttype =161
 
 	--- Keno    
 	SELECT  @v202sdiscount_1501 = MAX(CASE WHEN sporttype = 202 AND bettype = 1501 THEN sdiscount ELSE 0 END)      
@@ -972,7 +983,10 @@ BEGIN
 		 @playerdiscount = case when @playerdiscount > @adiscount then @adiscount else @playerdiscount end,    
 		 @playerdiscountcs = case when @playerdiscountcs > @adiscountcs then @adiscountcs else @playerdiscountcs end,    
 		 --1x2    
-		 @playerdiscount1x2 = case when @playerdiscount1x2 > @adiscount1x2 then @adiscount1x2 else @playerdiscount1x2 end,       
+		 @playerdiscount1x2 = case when @playerdiscount1x2 > @adiscount1x2 then @adiscount1x2 else @playerdiscount1x2 end,    
+	
+		 --v161    
+		 @v161playerdiscount= case when @v161playerdiscount> @v161discount then @v161discount else @v161playerdiscount end,    
 	 
 		 ---  Keno    
 		 @v202playerdiscount_1501 = case when @v202playerdiscount_1501 > @v202discount_1501 then @v202discount_1501 else @v202playerdiscount_1501 end    
