@@ -113,48 +113,6 @@ DECLARE @MinBetv1						MONEY,
 		@v161mPositionTaking_81				MONEY,
 		@v161mPositionTaking_81_Max			MONEY,
 		
-		
-		--Virtual Sports-----------------
-		@VirtualSportList VARCHAR(4000), -- repalace all old params
-		
-		@MinBetv180 MONEY,
-		@MaxBetv180 MONEY,
-		@v180mPositionTaking_1201 SMALLMONEY,
-		@MinBetv180_Max MONEY,
-		@MaxBetv180_Min MONEY,
-		@v180mPositionTaking_1201_Max MONEY,
-		
-		@MinBetv181 MONEY,
-		@MaxBetv181 MONEY,
-		@MinBetv181_Max MONEY,
-		@MaxBetv181_Min MONEY,
-		
-		@MinBetv182 MONEY,
-		@MaxBetv182 MONEY,
-		@MinBetv182_Max MONEY,
-		@MaxBetv182_Min MONEY,
-
-		@MinBetv183 MONEY,
-		@MaxBetv183 MONEY,
-		@MinBetv183_Max MONEY,
-		@MaxBetv183_Min MONEY,
-
-		
-		@MinBetv184 MONEY,
-		@MaxBetv184 MONEY,
-		@MinBetv184_Max MONEY,
-		@MaxBetv184_Min MONEY,
-		
-		@MinBetv185 MONEY,
-		@MaxBetv185 MONEY,
-		@MinBetv185_Max MONEY,
-		@MaxBetv185_Min MONEY,
-		
-		@MinBetv186 MONEY,
-		@MaxBetv186 MONEY,
-		@MinBetv186_Max MONEY,
-		@MaxBetv186_Min MONEY,
-		
 		--Keno
 		@KenoList VARCHAR(4000)='', -- repalace all old params
 		@vPT SMALLMONEY,
@@ -195,31 +153,7 @@ SELECT  @MinBetv1 = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.mi
 
 		@MinBetv161 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.minbet ELSE 0 END),
 		@MaxBetv161 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.maxbet ELSE 0 END),
-		@v161mPositionTaking_81 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.mPositionTaking ELSE 0 END),
-		
-		@MinBetv180 = max(CASE WHEN cs3rd.bettype = 1201 AND cs3rd.sporttype = 180 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv180 = max(CASE WHEN cs3rd.bettype = 1201 AND cs3rd.sporttype = 180 THEN cs3rd.maxbet ELSE 0 END),
-		@v180mPositionTaking_1201 = max(CASE WHEN cs3rd.bettype = 1201 AND cs3rd.sporttype = 180 THEN cs3rd.mPositionTaking ELSE 0 END),
-		
-		@MinBetv181 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 181 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv181 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 181 THEN cs3rd.maxbet ELSE 0 END),
-		
-		@MinBetv182 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 182 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv182 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 182 THEN cs3rd.maxbet ELSE 0 END),
-		
-		@MinBetv183 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 183 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv183 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 183 THEN cs3rd.maxbet ELSE 0 END),
-		
-		@MinBetv184 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 184 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv184 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 184 THEN cs3rd.maxbet ELSE 0 END),
-		
-		@MinBetv185 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 185 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv185 = max(CASE WHEN cs3rd.bettype = 1231 AND cs3rd.sporttype = 185 THEN cs3rd.maxbet ELSE 0 END),
-		
-		@MinBetv186 = max(CASE WHEN cs3rd.bettype = 1220 AND cs3rd.sporttype = 186 THEN cs3rd.minbet ELSE 0 END),
-		@MaxBetv186 = max(CASE WHEN cs3rd.bettype = 1220 AND cs3rd.sporttype = 186 THEN cs3rd.maxbet ELSE 0 END)
-
-		
+		@v161mPositionTaking_81 = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.mPositionTaking ELSE 0 END)	
 FROM Dep_CustSetting AS cs WITH (NOLOCK) 
 	LEFT JOIN Dep_CustSetting3rd AS cs3rd WITH (NOLOCK) ON cs.custid = cs3rd.custid
 WHERE cs.custid = @CustID
@@ -300,56 +234,6 @@ FROM
 	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 81 AND cs.sporttype=161
 WHERE ci.custid = @CustID
 
-SELECT	@MinBetv180_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv180_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1201 AND cs.sporttype=180
-WHERE ci.custid = @CustID
-
-SELECT	@MinBetv181_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv181_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1231 AND cs.sporttype=181
-WHERE ci.custid = @CustID
-
-SELECT	@MinBetv182_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv182_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1231 AND cs.sporttype=182
-WHERE ci.custid = @CustID
-
-SELECT	@MinBetv183_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv183_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1231 AND cs.sporttype=183
-WHERE ci.custid = @CustID
-
-SELECT	@MinBetv184_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv184_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1231 AND cs.sporttype=184
-WHERE ci.custid = @CustID
-
-SELECT	@MinBetv185_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv185_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1231 AND cs.sporttype=185
-WHERE ci.custid = @CustID
-
-SELECT	@MinBetv186_Max = max(case when MinBet = 0 then NULL else MinBet end),
-		@MaxBetv186_Min = min(case when MaxBet = 0 then NULL else MaxBet end)
-FROM 
-	dep_custsetting3rd AS cs WITH (NOLOCK)
-	INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = 1220 AND cs.sporttype=186
-WHERE ci.custid = @CustID
-
-
 Select	
 	@MaxPerMatchv1_Min = 0,
 	@MaxPerMatchv2_Min = 0,
@@ -384,51 +268,11 @@ where ci.custid = @CustID
 
 --PT MAX
 SELECT	@v1mPositionTaking_1_Max = max(CASE WHEN cs.bettype = 1 AND cs.sporttype = 1 THEN cs.mpositiontaking ELSE 0 END),
-		@v161mPositionTaking_81_Max = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.mpositiontaking ELSE 0 END),
-		
-		@v180mPositionTaking_1201_Max = max(CASE WHEN cs3rd.bettype = 1201 AND cs3rd.sporttype = 180 THEN cs3rd.mpositiontaking ELSE 0 END)
+		@v161mPositionTaking_81_Max = max(CASE WHEN cs3rd.bettype = 81 AND cs3rd.sporttype = 161 THEN cs3rd.mpositiontaking ELSE 0 END)
 FROM Dep_CustSetting AS cs WITH (NOLOCK)
 	LEFT JOIN Dep_CustSetting3rd AS cs3rd WITH (NOLOCK) ON cs.custid = cs3rd.custid
  WHERE cs.custid = @mrecommend
 
-Select @VirtualSportList = '<products><product SportType = "180" MaxBet = "'+ coalesce(cast(@MaxBetv180 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv180_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv180 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max = "'+ coalesce(cast(isnull(@MinBetv180_Max,0) as varchar(50)),space(1)) + '" ' +
-'mPositionTaking = "'+ coalesce(cast(@v180mPositionTaking_1201 as varchar(50)),space(1)) + '" ' +
-'mPositionTaking_Max = "'+ coalesce(cast(@v180mPositionTaking_1201_Max as varchar(50)),space(1)) + '"></product>' +
-
-'<product SportType = "181" MaxBet = "'+ coalesce(cast(@MaxBetv181 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv181_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv181 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv181_Max,0) as varchar(50)),space(1)) + '"></product>' +
-
-'<product SportType = "182" MaxBet = "'+ coalesce(cast(@MaxBetv182 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv182_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv182 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv182_Max,0) as varchar(50)),space(1)) + '"></product>' +
-
-'<product SportType = "183" MaxBet = "'+ coalesce(cast(@MaxBetv183 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv183_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv183 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv183_Max,0) as varchar(50)),space(1)) + '"></product>' +
-
-'<product SportType = "184" MaxBet = "'+ coalesce(cast(@MaxBetv184 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv184_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv184 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv184_Max,0) as varchar(50)),space(1)) + '"></product>' +
-
-'<product SportType = "185" MaxBet = "'+ coalesce(cast(@MaxBetv185 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv185_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv185 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max= "'+ coalesce(cast(isnull(@MinBetv185_Max,0) as varchar(50)),space(1)) + '"></product>' +
-
-'<product SportType = "186" MaxBet = "'+ coalesce(cast(@MaxBetv186 as varchar(50)),space(1)) + '" ' +
-'MaxBet_Min = "'+ coalesce(cast(isnull(@MaxBetv186_Min,0) as varchar(50)),space(1)) + '" ' +
-'MinBet = "'+ coalesce(cast(@MinBetv186 as varchar(50)),space(1)) + '" ' +
-'MinBet_Max = "'+ coalesce(cast(isnull(@MinBetv186_Max,0) as varchar(50)),space(1)) + '"></product>' +
-+ '</products>'
-	
 --Keno
 -- 20150603@Kathy: Migrate custDB to new server - DBCust
  DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)
@@ -525,7 +369,6 @@ SELECT @MinBetv1  AS MinBetv1,
 	
 	@MinBetv99MP  AS minbetv99MP,
 	@MinBetv161   AS minbetv161,
-	--@MinBetv180   AS minbetv180,
 
 	isnull(@MinBetv1_Min,0)     AS MinBetv1_Min,
 	isnull(@MinBetv2_Min,0)     AS MinBetv2_Min,
@@ -538,7 +381,6 @@ SELECT @MinBetv1  AS MinBetv1,
 	isnull(@MinBetv99_Min,0)    AS MinBetv99_Min,
 	
 	isnull(@MinBetv99MP_Min,0)  AS minbetv99MP_Min,
-	--isnull(@MinBetv180_Min,0)   AS minbetv180_Min,
 	
 
 	@MaxBetv1		AS MaxBetv1,
@@ -553,7 +395,6 @@ SELECT @MinBetv1  AS MinBetv1,
 	
 	@MaxBetv99MP	AS maxbetv99MP,
 	@MaxBetv161		AS maxbetv161,
-	--@MaxBetv180		AS maxbetv180,
 
 	isnull(@MaxBetv1_Max,0) AS MaxBetv1_Max,
 	isnull(@MaxBetv2_Max,0) AS MaxBetv2_Max,
@@ -567,7 +408,6 @@ SELECT @MinBetv1  AS MinBetv1,
 	
 	isnull(@MaxBetv99MP_Max,0) AS Maxbetv99MP_Max,
 	isnull(@MaxBetv161_Max,0) AS Maxbetv161_Max,
-	--isnull(@MaxBetv180_Max,0) AS Maxbetv180_Max,
 
 	---PT
 	@v1mPositionTaking_1 AS v1mPositionTaking_1,
@@ -575,8 +415,6 @@ SELECT @MinBetv1  AS MinBetv1,
 	@v161mPositionTaking_81 AS v161mPositionTaking_81,
 	@v161mPositionTaking_81_Max AS v161mPositionTaking_81_Max,
 	
-	--@v180mPositionTaking_1201 AS v180mPositionTaking_1201,
-	--@v180mPositionTaking_1201_Max AS v180mPositionTaking_1201_Max,
 
 
 
@@ -609,7 +447,6 @@ SELECT @MinBetv1  AS MinBetv1,
 	ci.MaxPerMatch161			AS MaxPerMatchv161,	
 	ci.MaxPerBall161			AS MaxPerBallv161,	
 	
-	@VirtualSportList AS VirtualSportList,
 	@KenoList AS KenoList,
 
 	@UserName AS UserName
