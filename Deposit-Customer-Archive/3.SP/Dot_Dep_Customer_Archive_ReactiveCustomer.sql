@@ -399,9 +399,7 @@ BEGIN
 	 --Keno    
 	 @v202adiscount_1501 decimal(9,8),    
 	 @v202sdiscount_1501 decimal(9,8),    
-	 @DisableNumber bit,-- for number game    
-	 
-	 @DoubleCommLosing BIT,-- double comm losing status      
+	 @DisableNumber bit,-- for number game        
 
 	
 	 @HideKeno BIT,    
@@ -561,8 +559,7 @@ BEGIN
 	 @virtualmultiplier = virtualmultiplier,    
 	
 	
-	 @DisableNumber  = ISNULL(DisableNumber,0),    
-	 @DoubleCommLosing = DoubleCommLosing,    
+	 @DisableNumber  = ISNULL(DisableNumber,0),     
 	 @HideKeno = HideKeno    
 	FROM custinfo ci WITH(NOLOCK)     
 	 inner join customer c WITH(NOLOCK) ON ci.custid = c.custid    
@@ -1379,8 +1376,7 @@ BEGIN
 	 @matchlimit = @matchlimit,    
 	 @virtualmultiplier = @virtualmultiplier,    
 	   
-	 @DisableNumber = @DisableNumber,    
-	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode        
+	 @DisableNumber = @DisableNumber,        
 	 
 	 @MaxPerMatch = @MaxPerMatch,    
 	 @MaxPerMatchv2 = @MaxPerMatchv2,    
