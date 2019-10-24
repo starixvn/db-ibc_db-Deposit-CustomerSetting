@@ -1,4 +1,4 @@
-/*<info serverAlias="DBEXT-BODB02" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBEXT-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CurrencySel]
 AS
 /*
