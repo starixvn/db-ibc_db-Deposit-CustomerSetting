@@ -115,13 +115,12 @@ BEGIN
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 	  , MatchLimit, VirtualMultiplier
 	  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
-	  , danger, danger2, danger3, Abnormal
-	  ,  DoubleCommLosing
+	  , danger, danger2, danger3, Abnormal, DoubleCommLosing
 	  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive,DisableColossusBet,HideColossusBet
 	  , MaxPerMatch1MP,maxpermatch164)
     VALUES
     (
-	    @custid, @currency--,1
+	    @custid, @currency
 	  , @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11
 	  , @MaxPerMatchv99
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, ISNULL(@suspended, 0), 0, 0, @username
