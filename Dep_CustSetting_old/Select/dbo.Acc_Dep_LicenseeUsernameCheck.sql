@@ -1,3 +1,4 @@
+/*<info serverAlias="DBEXT-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_LicenseeUsernameCheck]
 	@username VARCHAR(30),
 	@Language VARCHAR(2)= 'E',
@@ -9,6 +10,9 @@ AS
 	Create: 20131014@Francis
 	Task: Check if the current Licensee's username exists.
 	DB: DBEXT.BODB02
+
+	Revisions:
+		- 20131014@Francis: Initialize SP
 */
 
 BEGIN
@@ -26,19 +30,4 @@ BEGIN
 	
 
 END
-
-
-
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_LicenseeUsernameCheck] TO [vnteam]
-GO 
- GRANT EXECUTE ON [dbo].[Acc_Dep_LicenseeUsernameCheck] TO [bodbAdminNet]
-GO 
