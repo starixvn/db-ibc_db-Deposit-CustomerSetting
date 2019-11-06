@@ -3,3 +3,9 @@ Dep_CustSetting\Update Setting\Acc_Dep_CustomerUpdMember_Ag.sql
 Dep_CustSetting\Update Setting\Acc_Dep_CustomerUpdMember_Com.sql
 Dep_CustSetting\Update Setting\Acc_Dep_CustomerUpdMember_MAg.sql
 Dep_CustSetting\Update Setting\Acc_Dep_CustomerUpdMember_SAg.sql
+Dep_CustSetting\Update Setting\dbo.Acc_CustomerUpdDisableNumber.sql
+Dep_CustSetting_old\Select\[Acc_AGC_SelSuperSetting].sql
+Dep_CustSetting_old\Update\[Acc_AGC_UpdSuperSetting].sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsLicenseeSubsidiary.sql
+Dep_CustSetting\Update Setting\Acc_Dep_CustomerUpdDisableColossusBet.sql
