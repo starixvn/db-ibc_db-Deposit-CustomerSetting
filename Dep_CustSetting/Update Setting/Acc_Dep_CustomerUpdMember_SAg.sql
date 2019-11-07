@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_SAg]
 
     @custid int, -- Master ID
@@ -201,6 +201,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]     
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501] 
+	- 20191107@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -2888,37 +2889,8 @@ BEGIN
 		@TrackingValue2 = @LogSPData2,
 		@duration = @duration
 
-	Select @LogSPData = '<Acc_Dep_CustomerUpdMember_SAg custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +	
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
-	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />'
-
-	
-
-	Select @LogSPData2 = '<Acc_Dep_CustomerUpdMember_SAg custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
-	
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
-	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />'
-
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
-		@UserID = @UserID,
-		@CustID = @CustID,
-		@ActionID = 2605,
-		@TrackingValue = @LogSPData,
-		@TrackingValue2 = @LogSPData2,
-		@duration = @duration
-
 	DROP TABLE #data
 	DROP TABLE #Data_Upline
 	DROP TABLE #data_old
 END
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMember_SAg] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMember_SAg] TO [bodbExtAccNet]
 GO
