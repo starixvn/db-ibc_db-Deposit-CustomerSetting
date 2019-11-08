@@ -1245,7 +1245,7 @@ BEGIN
 	'v161slivept_90="'+ COALESCE(CONVERT(VARCHAR(50),@v161slivepositiontaking_90,2),SPACE(1)) + '" ' +
 
 	@str_spt+
-
+	' />' +
 	
 
 	'<m mpt_1="'+ COALESCE(CAST(@v1mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1311,7 +1311,7 @@ BEGIN
 	@str_mpt+
 
 	
-	'" />' +
+	' />' +
 
 	'<ag apt_1="'+ COALESCE(CAST(@v1apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'apt_2="'+ COALESCE(CAST(@v1apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
