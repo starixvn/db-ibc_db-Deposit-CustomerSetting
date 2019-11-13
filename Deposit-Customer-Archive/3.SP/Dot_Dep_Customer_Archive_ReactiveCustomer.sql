@@ -1392,8 +1392,7 @@ BEGIN
 	 @MaxPerMatchv161 = @MaxPerMatchv161,    
 	 @MaxPerBallv161 = @MaxPerBallv161,    
 	    
-	 @HideKeno = @HideKeno,    
-	 @credit = 0,    
+	 @HideKeno = @HideKeno,       
 	 @IP = '',    
 	 @TransferOption_dec = null,    
 	 @Language = 'E',    
