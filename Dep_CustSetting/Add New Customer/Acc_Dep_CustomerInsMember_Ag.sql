@@ -164,6 +164,7 @@ Revisions:
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
+	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -218,9 +219,6 @@ BEGIN
 		@Msuspended bit,
 		@UplineClosed bit,
 		@DisableOutright bit,
-		
-		
-		@DisableCasinoBonus BIT,
 	
 		@v1mpositiontaking_1 smallmoney,
 		@v1mpositiontaking_2 smallmoney,
@@ -364,8 +362,6 @@ BEGIN
 		@mrecommend = mrecommend,
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
-		
-		@DisableCasinoBonus = 1	,
 		@DisableNumber = case when DisableNumber = 1 then 1 else @DisableNumber end,
 		@VirtualMultiplier = ci.VirtualMultiplier
 	from CustInfo as ci with (NOLOCK) 
@@ -677,7 +673,6 @@ BEGIN
 	
 		@DisableOutright = @DisableOutright,		
 		
-		@DisableCasinoBonus = @DisableCasinoBonus,
 		@matchlimit = @matchlimit,
 		
 		@virtualmultiplier = @VirtualMultiplier,
@@ -1250,7 +1245,7 @@ BEGIN
 	'v161slivept_90="'+ COALESCE(CONVERT(VARCHAR(50),@v161slivepositiontaking_90,2),SPACE(1)) + '" ' +
 
 	@str_spt+
-
+	' />' +
 	
 
 	'<m mpt_1="'+ COALESCE(CAST(@v1mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -1316,7 +1311,7 @@ BEGIN
 	@str_mpt+
 
 	
-	'" />' +
+	' />' +
 
 	'<ag apt_1="'+ COALESCE(CAST(@v1apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'apt_2="'+ COALESCE(CAST(@v1apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +

@@ -37,16 +37,12 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@MaxPerMatchv11 MONEY,
 
 	--v201
-	@MaxPerMatchv201 MONEY = 0,	
 	@MaxPerMatchv99 MONEY,
 	@MaxPerMatchv99MP MONEY,	
 	@MaxPerMatchv161 MONEY,	
 	@MaxPerBallv161 MONEY = 0,
 	@DisableNumber BIT = 0,
 	@DisableCasino BIT = 0,
-
-	
-	@DisableCasinoBonus BIT = 0,
 	
 	@HideKeno BIT =0,
 
@@ -81,6 +77,7 @@ Revisions:
 	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]
 	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
+	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -216,17 +213,15 @@ BEGIN
 END
 
 INSERT INTO [dbo].[custinfo](
-	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11], [maxpermatch201],[maxpermatch99]
+	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch99]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
 	, DisableOutright, DisableCasino,DisableNumber
-	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3, DisableCasinoBonus,HideKeno
-	,DisableHorseRacing,DisableOpenTote,Disable151_AU,Disable152_UK,Disable152_AU,Disable153_AU)
+	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3,HideKeno)
 VALUES(
-	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11, @MaxPerMatchv201, @MaxPerMatchv99
+	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11, @MaxPerMatchv99
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
 	,@DisableOutright, @DisableCasino, @DisableNumber
-	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3, @DisableCasinoBonus,@HideKeno
-	,1,1,1,1,1,1)
+	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3,@HideKeno)
 
 IF @@ERROR <> 0
 BEGIN 

@@ -1,11 +1,16 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerSelInfo] 
 	@Custid INT
 AS
---@Source Control
 /*
+Created: 20150609@David
+TASk : 
+DB: DBCust.CustDB
+
 Revisions:
   - 20150609@David: Separate CustDB to DBCUST server (Use temp table for sports, bettype, GameType table, call some SPs by link server)
   - 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
+  - 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 */
 
 BEGIN	
@@ -32,24 +37,10 @@ BEGIN
 	   WHEN 8 THEN  ci.maxpermatch8
 	   WHEN 10 THEN  ci.maxpermatch10
 	   WHEN 11 THEN  ci.maxpermatch11
-	   WHEN 44 THEN  ci.maxpermatch44
 	   WHEN 99 THEN  CASE WHEN dc.bettype =9 THEN ci.maxpermatch99MP 
 							ELSE ci.maxpermatch99
 					 END 
-	   WHEN 154 THEN  ci.maxpermatch154	   
 	   WHEN 161 THEN  ci.maxpermatch161
-	   WHEN 151 THEN  CASE dc.bettype 
-						 WHEN 31 THEN ci.maxpermatch151
-						 WHEN 41 THEN ci.maxpermatch151_OT
-						 WHEN 51 THEN ci.MaxPerMatch151_AU						 
-						END
-	   WHEN 152 THEN  CASE dc.bettype 				
-						 WHEN 41 THEN ci.MaxPerMatch152_UK
-						 WHEN 51 THEN ci.MaxPerMatch152_AU
-						END
-	   WHEN 153 THEN  CASE dc.bettype 										 
-						 WHEN 51 THEN ci.MaxPerMatch153_AU
-						END
 		END MPM
 	    ,ci.MaxPerBall161, dc.spositiontaking,dc.mpositiontaking,dc.apositiontaking
 		,0,0,0
@@ -58,32 +49,7 @@ BEGIN
 	UNION ALL -- Racing VirtualSport
 	SELECT dc3.custid,dc3.sporttype,dc3.bettype,dc3.islive,dc3.minbet,dc3.maxbet,
 		CASE dc3.sporttype 
-	   WHEN 151 THEN  CASE dc3.bettype 
-						 WHEN 31 THEN ci.maxpermatch151
-						 WHEN 32 THEN ci.maxpermatch151
-						 WHEN 41 THEN ci.maxpermatch151_OT
-						 WHEN 42 THEN ci.maxpermatch151_OT
-						 WHEN 51 THEN ci.MaxPerMatch151_AU
-						 WHEN 52 THEN ci.MaxPerMatch151_AU
-						END
-	   WHEN 152 THEN  CASE dc3.bettype 				
-						 WHEN 41 THEN ci.MaxPerMatch152_UK
-						 WHEN 42 THEN ci.MaxPerMatch152_UK
-						 WHEN 51 THEN ci.MaxPerMatch152_AU
-						 WHEN 52 THEN ci.MaxPerMatch152_AU
-						END
-	   WHEN 153 THEN  CASE dc3.bettype 										 
-						 WHEN 51 THEN ci.MaxPerMatch153_AU
-						 WHEN 52 THEN ci.MaxPerMatch153_AU
-						END
 	   WHEN 161 THEN ci.maxpermatch161
-	   WHEN 180 THEN ci.maxpermatch180
-	   WHEN 181 THEN ci.maxpermatch181
-	   WHEN 182 THEN ci.maxpermatch182
-	   WHEN 183 THEN ci.maxpermatch183
-	   WHEN 184 THEN ci.maxpermatch184
-	   WHEN 185 THEN ci.maxpermatch185
-	   WHEN 186 THEN ci.maxpermatch186
 	   END MPM,
 	ci.MaxPerBall161,dc3.spositiontaking,dc3.mpositiontaking,dc3.apositiontaking
 	,dc3.sdiscount SupRBDiscount,dc3.adiscount MasRBDiscount,dc3.discount AgRBDiscount
@@ -100,3 +66,4 @@ BEGIN
 	and a.Sporttype=202
 	ORDER by sporttype	
 END
+GO

@@ -1,6 +1,10 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE Task_Dep_Cust_Archive_Clear_Balance 
-	@BatchSize INT = 100 --maximun value is 100, extend column [Message] in bodb_customerlog.DBALog_Archive_Dep_Cust_Process@DB052 to increase batch size
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Task_Dep_Cust_Archive_Clear_Balance] 
+	@BatchSize INT = 100
 AS
 /*
 	Creator : Dominic
@@ -10,6 +14,8 @@ AS
 	Revisions:
 		- 20180912@Dominic: First commit
 		- 20181120@Dominic: Add new column custinfo.maxpermatch164 - Redmine: #104972
+		- 20181120@Dominic: Enhance performance - Redmine: #105480
+		- 20191002@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	Parameter:
 		
 	
@@ -541,7 +547,7 @@ BEGIN
 		END TRY
 		BEGIN CATCH
 
-			SELECT @Message = 'Exception error occurs while turing off BA flag: ' + ERROR_MESSAGE()
+			SELECT @Message = 'Exception error occurs while turning off BA flag: ' + ERROR_MESSAGE()
 
 			RAISERROR(@Message, 11, 1)
 
@@ -565,7 +571,7 @@ BEGIN
 
 			END		
 
-			SELECT @Message='Exception error occurs while turing off BA flag: ' + @LogLstCustID
+			SELECT @Message='Exception error occurs while turning off BA flag: ' + @LogLstCustID
 
 			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 					, @Action='CLEAR-BALANCE'
@@ -576,7 +582,7 @@ BEGIN
 
 		END CATCH
 
-		SELECT @Message='Finish turing off BA flag: ' + @LogLstCustID
+		SELECT @Message='Finish turning off BA flag: ' + @LogLstCustID
 
 		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
@@ -621,20 +627,16 @@ BEGIN
 				,[MatchLimit],[VirtualMultiplier],[maxpermatch],[maxpermatch2]
 				,[maxpermatch3],[maxpermatch5],[maxpermatch8],[maxpermatch10]
 				,[maxpermatch11],[maxpermatch12],[maxpermatch99],[Enabled]
-				,[danger],[maxpermatch151],[maxpermatch201],[DisableHorseRacing]
-				,[DisableFinancial],[DisableCasino],[SyncCasino],[danger2],[danger3]
-				,[DisableOutright],[DisableOpenTote],[maxpermatch151_OT],[MaxPerMatch99MP]
-				,[DisableBingo],[DisableNumber],[maxpermatch161],[SyncBingo],[MaxPerBall161]
-				,[MaxPerMatch151_AU],[MaxPerMatch152_UK],[MaxPerMatch152_AU],[MaxPerMatch153_AU]
-				,[Disable151_AU],[Disable152_UK],[Disable152_AU],[Disable153_AU],[MaxtransferP2P]
-				,[IsAutoResetP2P],[DisableP2P],[DisableFunP2P],[DisableLiveCasino],[SyncLiveCasino]
-				,[DisableVirtualSports],[HideVirtualSports],[maxpermatch180],[Abnormal]
-				,[DoubleCommLosing],[isAutoResetLiveCasino],[MaxWinLiveCasino],[maxpermatch186]
-				,[maxpermatch181],[maxpermatch182],[DisableCasinoBonus],[maxpermatch184]
-				,[DisableHRFixedOdds],[maxpermatch154],[autosuspend2],[maxpermatch183],[maxpermatch185]
+				,[danger]
+				,[DisableCasino],[SyncCasino],[danger2],[danger3]
+				,[DisableOutright],[MaxPerMatch99MP]
+				,[DisableNumber],[maxpermatch161],[MaxPerBall161]
+				,[Abnormal]
+				,[DoubleCommLosing]
+				,[autosuspend2]
 				,[HideKeno],[DisableEsports],[HideGoldDeluxe],[DisableGoldDeluxe],[DisableSuperLive]
-				,[DisableColossusBet],[HideColossusBet],[MaxPerMatch44],[DisableMicrogameLC],[DisableMicrogameRNG]
-				,[DisableBinaryOptions],[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
+				,[DisableColossusBet],[HideColossusBet]
+				,[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
 				,[maxpermatch164]
 			   )
 		SELECT [username],[custid],[currency],[roleid],[srecommend],[mrecommend]
@@ -642,20 +644,16 @@ BEGIN
 				,[MatchLimit],[VirtualMultiplier],[maxpermatch],[maxpermatch2]
 				,[maxpermatch3],[maxpermatch5],[maxpermatch8],[maxpermatch10]
 				,[maxpermatch11],[maxpermatch12],[maxpermatch99],[Enabled]
-				,[danger],[maxpermatch151],[maxpermatch201],[DisableHorseRacing]
-				,[DisableFinancial],[DisableCasino],[SyncCasino],[danger2],[danger3]
-				,[DisableOutright],[DisableOpenTote],[maxpermatch151_OT],[MaxPerMatch99MP]
-				,[DisableBingo],[DisableNumber],[maxpermatch161],[SyncBingo],[MaxPerBall161]
-				,[MaxPerMatch151_AU],[MaxPerMatch152_UK],[MaxPerMatch152_AU],[MaxPerMatch153_AU]
-				,[Disable151_AU],[Disable152_UK],[Disable152_AU],[Disable153_AU],[MaxtransferP2P]
-				,[IsAutoResetP2P],[DisableP2P],[DisableFunP2P],[DisableLiveCasino],[SyncLiveCasino]
-				,[DisableVirtualSports],[HideVirtualSports],[maxpermatch180],[Abnormal]
-				,[DoubleCommLosing],[isAutoResetLiveCasino],[MaxWinLiveCasino],[maxpermatch186]
-				,[maxpermatch181],[maxpermatch182],[DisableCasinoBonus],[maxpermatch184]
-				,[DisableHRFixedOdds],[maxpermatch154],[autosuspend2],[maxpermatch183],[maxpermatch185]
+				,[danger]
+				,[DisableCasino],[SyncCasino],[danger2],[danger3]
+				,[DisableOutright],[MaxPerMatch99MP]
+				,[DisableNumber],[maxpermatch161],[MaxPerBall161]
+				,[Abnormal]
+				,[DoubleCommLosing]
+				,[autosuspend2]
 				,[HideKeno],[DisableEsports],[HideGoldDeluxe],[DisableGoldDeluxe],[DisableSuperLive]
-				,[DisableColossusBet],[HideColossusBet],[MaxPerMatch44],[DisableMicrogameLC],[DisableMicrogameRNG]
-				,[DisableBinaryOptions],[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
+				,[DisableColossusBet],[HideColossusBet]
+				,[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
 				,[maxpermatch164]
 		FROM DBCUST.CustDB.dbo.custInfo WITH(NOLOCK)
 		WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
@@ -894,9 +892,27 @@ BEGIN
 			), 1, 1, '');
 
 	/******************************Step 5: Delete Customer/CustInfo in main database******************************/
-	
-		IF NOT EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE CustID NOT IN (SELECT CustID FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.customer))
-			AND NOT EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE CustID NOT IN (SELECT CustID FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.custinfo))
+		IF ((
+				SELECT COUNT(1)
+				FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.customer WITH (NOLOCK)
+				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived)
+			) 
+			=
+			(
+				SELECT COUNT(1)
+				FROM #Dep_Customer_Archived
+			))
+			AND
+			((
+				SELECT COUNT(1)
+				FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.custinfo WITH (NOLOCK)
+				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived)
+			) 
+			=
+			(
+				SELECT COUNT(1)
+				FROM #Dep_Customer_Archived
+			))
 		BEGIN
 			BEGIN TRY
 				--Delete CustInfo/Customer
@@ -977,3 +993,4 @@ BEGIN
 				, @Status='Done'
 				, @Message=@Message
 END
+GO

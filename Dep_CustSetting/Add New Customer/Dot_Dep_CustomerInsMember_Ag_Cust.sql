@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust]     
 	@FirstName NVARCHAR(50),    
 	@LastName NVARCHAR(50),    
@@ -167,6 +165,7 @@ AS
 	 - 20181119@Winnie: Check betsetting Esports [Redmine: 100721]		
 	 - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	 - 20190805@Winnie: Remove MuyaThai [Redmine:#117501]
+	 - 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -347,8 +346,7 @@ BEGIN
 			 --Keno    
 			 @v202apositiontaking_1501 SMALLMONEY
 	    
-	DECLARE	 @transcode BIGINT,     
-			 @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,    
+	DECLARE	 @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY,    
 			 @MinMinBetv2 MONEY, @MaxMaxBetv2 MONEY, @MaxMaxPerMatchv2 MONEY,    
 			 @MinMinBetv3 MONEY, @MaxMaxBetv3 MONEY, @MaxMaxPerMatchv3 MONEY,    
 			 @MinMinBetv5 MONEY, @MaxMaxBetv5 MONEY, @MaxMaxPerMatchv5 MONEY,    
@@ -363,8 +361,7 @@ BEGIN
 			 --Number game    
 			 @MinMinBetv161 money, @MaxMaxBetv161 money, @MaxMaxPerMatchv161 money, @MaxMaxPerBallv161 money,    
 	    
-			 @AgentCredit money, @Credit_AllOtherMember money, @Aclosed bit,    
-			 @MaxCredit_Mem money,    
+			 @Aclosed bit,    
 			 @Asuspended bit,    
 			-- @AgentMaxPerMatch money, @AgentMaxPerMatchb money,    
 			-- @MaxPerMatch_AllOtherMember money, @MaxPerMatchv2_AllOtherMember money,    
@@ -513,19 +510,15 @@ BEGIN
 			 @maxdiscount DECIMAL(9,8),    
 			 @maxdiscountcs DECIMAL(9,8),    
 	     
-			 --v161    
+			  --v161    
 			 @v161discount DECIMAL(9,8),    
 			 @v161adiscount DECIMAL(9,8),    
-			 @v161sdiscount DECIMAL(9,8),    
+			 @v161sdiscount DECIMAL(9,8),  
 	
 			 --Keno    
 			 @v202adiscount_1501 DECIMAL(9,8),    
 			 @v202sdiscount_1501 DECIMAL(9,8),    
-			 @DisableNumber BIT,-- for number game    
-	 
-			 @DoubleCommLosing BIT,-- double comm losing status    
-			 @DisableCasinoBonus BIT,    
-	
+			 @DisableNumber BIT,-- for number game    	 
 			 @HideKeno BIT,    
 	    
 			 @suspendedFlag VARCHAR(6),    
@@ -573,15 +566,12 @@ BEGIN
 
 		 ----- add more    
 		 @site    = c.site,    
-		 @AgentCredit  = IsNull(Credit, 0),    
 		 @Aclosed   = closed,    
 		 @Asuspended   = reject,    
 		 @matchlimit   = matchlimit,    
 		 @virtualmultiplier = virtualmultiplier,    
 	
-		 @DisableNumber  = ISNULL(DisableNumber,0),    
-		 @DoubleCommLosing = DoubleCommLosing,    
-		 @DisableCasinoBonus = 1, --20130805@Elodie hardcode    
+		 @DisableNumber  = ISNULL(DisableNumber,0),
 		 @HideKeno = HideKeno    
 	FROM custinfo ci WITH(NOLOCK)     
 		INNER JOIN customer c WITH(NOLOCK) ON ci.custid = c.custid    
@@ -896,11 +886,7 @@ BEGIN
 	--if @ErrCode <>0 return     
 	     
 	DECLARE @ErrType VARCHAR(4000)     
-	SELECT @ErrCode = 0    
-	    
-	SELECT @MaxCredit_Mem = isnull(maxcredit,0) 
-	FROM CustAgent WITH (NOLOCK)     
-	WHERE CustID = @recommend    
+	SELECT @ErrCode = 0    	   	  
 	    
 	SELECT @spositiontaking_1 = 0, @slivepositiontaking_1 = 0    
 	SELECT @spositiontaking_3 = 0, @slivepositiontaking_3 = 0      
@@ -1183,42 +1169,7 @@ BEGIN
 	BEGIN    
 	 set @suspended =1    
 	END    
-	    
-	-----------------------------------------------    
-	--generate the username automatically    
-	/* --- old version    
-	Select @username = isnull(max(cast(replace(username, @AgUsername, '') as int)),0)    
-	from customer with (nolock)    
-	where recommend = @recommend and roleid = 1    
-	 and charindex(@AgUsername, username) = 1    
-	*/    
-	/* old version    
-	select @username = isnull(cast(replace(username,@AgUsername,'') as int),0)    
-	from customer witH(nolock)    
-	where custid = ( select max(custid)     
-	    
-		 from dbo.customer with(nolocK)     
-		 where recommend = @recommend     
-		  and roleid = 1           
-		)    
-	        
-	    
-	if isnumeric(@username) = 1    
-	BEGIN    
-	 select @username = convert(varchar(20), convert(int, @username) + 1)    
-	 if len(@username)<3    
-	 BEGIN    
-	  select @Username = right('00' + @username, 3)    
-	 END    
-	END    
-	else    
-	BEGIN    
-	 select @UserName = '001'    
-	END    
-	    
-	select @username = @agusername  + @username    
-	select @username = replace(@username, ' ', '')    
-	*/    
+	    	
 	--20140812: Change rule generate username    
 	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%') OR @UserName IS NULL
 	BEGIN  
@@ -1249,63 +1200,50 @@ BEGIN
 	 @ugroup = case when @ugroup like 'indo_' then right(@ugroup,1) else @ugroup end    
 	    
 	--Insert general data     
-	EXEC dbo.Acc_CustomerInsUserInfo    
-	 @custid = @custid OUTPUT,    
-	 @firstname = @firstname,    
-	 @lastname = @lastname,    
-	 @creator = @recommend,    
-	 @username = @username,    
-	 @userpwd = @Password,    
-	 @pwdexpiry = @pwdexpiry,    
-	 @currency = @currency,    
-	 @site = @site,    
-	 @ugroup = @ugroup,    
-	 @srecommend = @srecommend,    
-	 @mrecommend = @mrecommend,    
-	 @recommend = @recommend,    
-	 @roleid = 1,    
-	 @phone = '',    
-	 @mobilephone = '',    
-	 @email = '',    
-	 @fax = '',    
-	 @address = '',    
-	 @city = '',    
-	 @state = '',    
-	 @country = @Country,    
-	 @postal = '',    
-	 @TransferOption = null,    
-	 @suspended = @suspended,    
-
-	 @matchlimit = @matchlimit,    
-	 @virtualmultiplier = @virtualmultiplier,    
-	   
-	 @DisableNumber = @DisableNumber,    
-	 @DoubleCommLosing = 0, ----@DoubleCommLosing, 20130111@Lukas: hardcode    
-	 @DisableCasinoBonus = @DisableCasinoBonus,      
-	 
-	 @MaxPerMatch = @MaxPerMatch,    
-	 @MaxPerMatchv2 = @MaxPerMatchv2,    
-	 @MaxPerMatchv3 = @MaxPerMatchv3,    
-	 @MaxPerMatchv5 = @MaxPerMatchv5,    
-	 @MaxPerMatchv8 = @MaxPerMatchv8,    
-	 @MaxPerMatchv10 = @MaxPerMatchv10,    
-	 @MaxPerMatchv11 = @MaxPerMatchv11,    
-	
-	 @MaxPerMatchv99 = @MaxPerMatchv99,    
-	 @MaxPerMatchv99MP = @MaxPerMatchv99MP,    
-
-	 @MaxPerMatchv161 = @MaxPerMatchv161,    
-	 @MaxPerBallv161 = @MaxPerBallv161,    
+	EXEC dbo.Dot_Dep_CustomerInsUserInfo
+		@custid = @custid OUTPUT,    
+		@firstname = @firstname,    
+		@lastname = @lastname,    
+		@creator = @recommend,    
+		@username = @username,    
+		@userpwd = @Password,    
+		@pwdexpiry = @pwdexpiry,    
+		@currency = @currency,    
+		@site = @site,    
+		@ugroup = @ugroup,    
+		@srecommend = @srecommend,    
+		@mrecommend = @mrecommend,    
+		@recommend = @recommend,    
+		@roleid = 1, 
 	    
-	 @HideKeno = @HideKeno,    
-	 @credit = 0,    
-	 @IP = '',    
-	 @TransferOption_dec = null,    
-	 @Language = 'E',    
-	 @ErrCode = @ErrCode OUTPUT,    
-	 @ErrMsg = @ErrMsg OUTPUT    
+		@country = @Country,    
+		@suspended = @suspended,    
+
+		@matchlimit = @matchlimit,    
+		@virtualmultiplier = @virtualmultiplier,    	  	 
+	 
+		@MaxPerMatch = @MaxPerMatch,    
+		@MaxPerMatchv2 = @MaxPerMatchv2,    
+		@MaxPerMatchv3 = @MaxPerMatchv3,    
+		@MaxPerMatchv5 = @MaxPerMatchv5,    
+		@MaxPerMatchv8 = @MaxPerMatchv8,    
+		@MaxPerMatchv10 = @MaxPerMatchv10,    
+		@MaxPerMatchv11 = @MaxPerMatchv11,    	
+		@MaxPerMatchv99 = @MaxPerMatchv99,    
+		@MaxPerMatchv99MP = @MaxPerMatchv99MP,    
+		@MaxPerMatchv161 = @MaxPerMatchv161,    
+		@MaxPerBallv161 = @MaxPerBallv161,    
+	    
+		@DisableNumber = @DisableNumber,    
+		@HideKeno = @HideKeno,    
+	   
+		@IP = '',    
+		@Language = 'E',    
+		@ErrCode = @ErrCode OUTPUT,    
+		@ErrMsg = @ErrMsg OUTPUT    
+
 	IF @ErrCode <> 0    
-	 return    
+		RETURN    
 	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
