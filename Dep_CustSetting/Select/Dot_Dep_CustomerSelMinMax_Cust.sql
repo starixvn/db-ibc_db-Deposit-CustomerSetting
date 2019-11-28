@@ -23,18 +23,12 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerSelMinMax_Cust]
 	@MinBetv11 MONEY OUTPUT,
 	@MaxBetv11 MONEY OUTPUT,
 	@MaxPerMatchv11 MONEY OUTPUT,
-	@MinBetv44 MONEY OUTPUT,
-	@MaxBetv44 MONEY OUTPUT,
-	@MaxPerMatchv44 MONEY OUTPUT,
 	@MinBetv99 MONEY OUTPUT,
 	@MaxBetv99 MONEY OUTPUT,
 	@MaxPerMatchv99 MONEY OUTPUT,
 	@MinBetv99MP MONEY OUTPUT,
 	@MaxBetv99MP MONEY OUTPUT,
 	@MaxPerMatchv99MP MONEY OUTPUT,
-	@MinBetv154 MONEY OUTPUT,
-	@MaxBetv154 MONEY OUTPUT,
-	@MaxPerMatchv154 MONEY OUTPUT,
 	@MinBetv161 MONEY OUTPUT,
 	@MaxBetv161 MONEY OUTPUT,
 	@MaxPerMatchv161 MONEY OUTPUT,
@@ -56,6 +50,7 @@ Revisions:
 	- 20140305@Elodie: retrieve bet setting for Keno(202) [Redmine:#11658]
 	- 20150609@Elodie: Separate CustDB to DBCUST server (Call GameType by link server)
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
+	- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -103,10 +98,6 @@ SELECT @MinBetv11 = isnull(MinBet, 0), @MaxBetv11 = isnull(MaxBet, 0)
 FROM Dep_CustSetting WITH (NOLOCK)
 WHERE custid = @CustID AND bettype = 1 AND sporttype = 11
 
-SELECT @MinBetv44 = isnull(MinBet, 0), @MaxBetv44 = isnull(MaxBet, 0)
-FROM Dep_CustSetting WITH (NOLOCK)
-WHERE custid = @CustID AND bettype = 3 AND sporttype = 44
-
 SELECT @MinBetv99 = isnull(MinBet, 0), @MaxBetv99 = isnull(MaxBet, 0)
 FROM Dep_CustSetting WITH (NOLOCK)
 WHERE custid = @CustID AND bettype = 1 AND sporttype = 99
@@ -114,10 +105,6 @@ WHERE custid = @CustID AND bettype = 1 AND sporttype = 99
 SELECT @MinBetv99MP = isnull(MinBet, 0), @MaxBetv99MP = isnull(MaxBet, 0)
 FROM Dep_CustSetting WITH (NOLOCK)
 WHERE custid = @CustID AND bettype = 9 AND sporttype = 99
-
-SELECT @MinBetv154 = isnull(MinBet, 0), @MaxBetv154 = isnull(MaxBet, 0)
-FROM Dep_CustSetting WITH (NOLOCK)
-WHERE custid = @CustID AND bettype = 20 AND sporttype = 154
 
 SELECT @MinBetv161 = isnull(MinBet, 0), @MaxBetv161 = isnull(MaxBet, 0)
 FROM Dep_CustSetting3rd WITH (NOLOCK)
@@ -136,11 +123,11 @@ SELECT @MaxperMatch = MaxPerMatch,
 		@MaxPerMatchv8 = MaxPerMatch8,
 		@MaxPerMatchv10 = MaxPerMatch10,
 		@MaxPerMatchv11 = MaxPerMatch11,
-		@MaxPerMatchv44 = MaxPerMatch44,
 		@MaxPerMatchv99 = MaxPerMatch99,
 		@MaxPerMatchv99MP = MaxPerMatch99MP,
-		@MaxPerMatchv154 = MaxPerMatch154,
 		@MaxPerMatchv161 = MaxPerMatch161,
 		@MaxPerBallv161 = MaxPerBall161
 FROM custinfo WITH (NOLOCK)
 WHERE custid = @CustID
+
+GO
