@@ -174,13 +174,11 @@ BEGIN
 
 		UPDATE cvs
 			SET cvs.bitmapVirtual = bm.bitmap
-		FROM		CustVirtualSetting	AS cvs WITH(UPDLOCK, ROWLOCK)
-			INNER JOIN	custInfo			AS ci WITH(NOLOCK)
-					ON	ci.custid = cvs.custid
+		FROM		CustVirtualSetting	AS cvs WITH(UPDLOCK, ROWLOCK)			
 			INNER JOIN	@virtualXML			AS tmp
 					ON	cvs.seqNo = tmp.seqNo
 			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
-		WHERE	ci.custid = @custid
+		WHERE	cvs.custid = @custid
 		
 		IF @@ERROR <> 0
 		BEGIN
