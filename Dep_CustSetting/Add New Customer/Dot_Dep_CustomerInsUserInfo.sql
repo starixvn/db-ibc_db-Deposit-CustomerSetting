@@ -51,7 +51,7 @@ AS
 
 	Revisions:
 		- 20190919@Elodie: Initial SP [Redmine: #118699]
-	
+		- 20191211@Johnson: Apply Default VR setting for IBO new members [redmine:#125285]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -106,7 +106,95 @@ BEGIN
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 	    RETURN
     END	
+	
+	DECLARE @licensee NVARCHAR(50)
+	
+	SELECT @licensee = site
+	FROM customer WITH(NOLOCK)
+	WHERE custid = @recommend
+	
+	--20191211@Johnson
+	--re-set  virtual rate for all sports except soccer to -50 for IBO 
+	IF @licensee = 'IBO'
+	BEGIN
+		DECLARE	@tblVirtualrate		TABLE (
+									SportType			INT
+								,	BetType				INT
+								,	IsLive				BIT
+								,	VirtualMultiplier	SMALLMONEY	
+								);
+										
+		INSERT INTO	@tblVirtualrate (
+								SportType
+							,	BetType
+							,	IsLive
+							,	VirtualMultiplier
+						)
+		SELECT	sporttype,bettype,islive,0.5
+		from ProfileVirtualSetting 		
+		WHERE sporttype <> 1
 
+		DECLARE	@virtualXML			TABLE (
+											seqNo		TINYINT PRIMARY KEY
+										,	Pos			VARBINARY(64)
+										,	Val			VARBINARY(64)
+										);
+										
+		INSERT INTO @virtualXML
+					(	seqNo, Pos, Val                       )
+				SELECT	seqNo, p1.Pos, p2.Val
+				FROM (
+					SELECT	DISTINCT seqNo
+					FROM	ProfileVirtualSetting WITH (NOLOCK)
+				) pvs
+				CROSS APPLY (
+					SELECT CONVERT(VARBINARY(64), (
+						SELECT	CONVERT(VARCHAR, CAST(ipvs.profileID - 64 * (ipvs.seqNo - 1) AS BINARY(1)), 2)
+						FROM		@tblVirtualrate			AS tmp
+							INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
+								ON	tmp.sporttype	= ipvs.sporttype
+									AND	tmp.bettype		= ipvs.bettype
+									AND	tmp.isLive		= ipvs.islive
+						WHERE	ipvs.seqNo = pvs.seqNo
+						FOR XML PATH ('')						
+					), 2) AS Pos
+				) p1
+				CROSS APPLY (
+					SELECT CONVERT(VARBINARY(64), (
+						SELECT	CONVERT(VARCHAR, CAST(CASE WHEN CAST(VirtualMultiplier * 100 AS INT) > 200 THEN ((CAST(VirtualMultiplier * 100 AS INT) - 200) / 5 + 200) ELSE CAST(VirtualMultiplier * 100 AS INT) END AS BINARY(1)), 2)
+						FROM		@tblVirtualrate			AS tmp
+							INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
+								ON	tmp.sporttype	= ipvs.sporttype
+									AND	tmp.bettype		= ipvs.bettype
+									AND	tmp.isLive		= ipvs.islive
+						WHERE	ipvs.seqNo = pvs.seqNo
+						FOR XML PATH ('')						
+					), 2) AS Val
+				) p2;
+
+		UPDATE cvs
+			SET cvs.bitmapVirtual = bm.bitmap
+		FROM		CustVirtualSetting	AS cvs WITH(UPDLOCK, ROWLOCK)			
+			INNER JOIN	@virtualXML			AS tmp
+					ON	cvs.seqNo = tmp.seqNo
+			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
+		WHERE	cvs.custid = @custid
+		
+		IF @@ERROR <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+							   WHEN 'E' THEN 'Create customer failed. Please try again.'
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							 END
+				 , @ErrCode = 112
+
+			-- ROLLBACK MANUALLY
+			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+			RETURN
+		END	
+	END	
+	
 	INSERT INTO [dbo].[custinfo]
     (
 	    custid, currency
