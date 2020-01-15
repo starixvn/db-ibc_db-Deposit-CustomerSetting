@@ -1,1 +1,1 @@
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+Dep_DynamicCustSetting\UpdateSetting\Update\2_BetLimit\Acc_Dep_CustSetting_BetLimitFullLineUpd.sql

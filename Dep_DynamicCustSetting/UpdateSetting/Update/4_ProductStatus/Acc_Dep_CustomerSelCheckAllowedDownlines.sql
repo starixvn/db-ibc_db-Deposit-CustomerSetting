@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Acc_Dep_CustomerSelCheckAllowedDownlines]    
  @custid   INT = 0     
  ,@Language  VARCHAR(2) = 'E'    
@@ -14,6 +14,7 @@ Original SP:
   
 Revisions:         
   -20180801@Winnie: Create SP
+  - 20200114@Johnson: set threshold = 500k for normal [redmine: #126572]
 Param's Explanation:  
    
 */    
@@ -28,7 +29,7 @@ BEGIN
   @RoleID		  INT   
      
  SET @LimitDownlinesMin = 40000   
- SET @LimitDownlinesMax = 100000
+ SET @LimitDownlinesMax = 500000
 
  --GET TOTALDOWNLINE    
  SET @TotalDownlines=1    
