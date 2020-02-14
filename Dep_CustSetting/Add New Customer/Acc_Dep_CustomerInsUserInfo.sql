@@ -117,8 +117,8 @@ BEGIN
 	SET @srecommend = @custid 
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
 
-	INSERT INTO Dep_CustSuper (custid, currency, username, site)
-	VALUES (@CustID, @currency, @username, @site)
+	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier)
+	VALUES (@CustID, @currency, @username, @site, CASE WHEN @currency = 13 THEN 0.95 ELSE 1 END)
 
 	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
 	SELECT	@CustID, 
