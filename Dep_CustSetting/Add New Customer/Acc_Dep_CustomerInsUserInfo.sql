@@ -78,6 +78,8 @@ Revisions:
 	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200203@Elodie: Apply Currency Modifier [Redmine:127300]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -114,11 +116,14 @@ END
 
 IF @roleid = 4
 BEGIN
+	DECLARE @CurrencyModifier SMALLMONEY
+	EXEC @CurrencyModifier = f_GetCurrencyModifier @currency
+
 	SET @srecommend = @custid 
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
 
 	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier)
-	VALUES (@CustID, @currency, @username, @site, CASE WHEN @currency = 13 THEN 0.95 ELSE 1 END)
+	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier)
 
 	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
 	SELECT	@CustID, 
