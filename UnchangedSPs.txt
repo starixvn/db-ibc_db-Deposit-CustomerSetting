@@ -1,1 +1,2 @@
-Dep_DynamicCustSetting\UpdateSetting\Update\2_BetLimit\Acc_Dep_CustSetting_BetLimitFullLineUpd.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Com.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql
