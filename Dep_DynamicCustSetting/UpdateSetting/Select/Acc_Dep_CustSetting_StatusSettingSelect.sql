@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT = NULL
@@ -195,10 +195,4 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] TO [bodbExtAccNet]
-go
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] TO  [bodbLicenseeNet]
+
