@@ -1,5 +1,18 @@
-CREATE FUNCTION [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] (@ProductID TINYINT, @SettingType SMALLINT) 
+/*<info serverAlias="DBCust-CustDB,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,bodbLicenseeNet" viewers="" isFunction="1"></info>*/
+ALTER FUNCTION [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] (@ProductID TINYINT, @SettingType SMALLINT) 
 RETURNS TABLE 
+/*
+	Created by: 10191212
+	Task: Get setting of product 
+	DB: DBCust/CustDB, DBACC/bodb02(Replicated)
+	Original: 
+	
+	Revisions:
+		- 20191212@Eden: Add revision [Redmine: #123750]
+
+	Explanation's Param:
+		
+*/   
 AS
 RETURN
 	SELECT DISTINCT ps.ProductID ProductID, SportType,Bettype,IsLive, SettingType 
@@ -12,17 +25,3 @@ RETURN
 			THEN 1 ELSE 0 END
 
 GO
-
-SET QUOTED_IDENTIFIER OFF 
-GO
-SET ANSI_NULLS ON 
-GO
-
-
-GO 
- GRANT SELECT ON [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] TO [bodbLicenseeNet]
-GO 
- GRANT SELECT ON [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] TO [bodbDownlineNet]
-GO 
- GRANT SELECT ON [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] TO [bodbAdminNet]
-GO 

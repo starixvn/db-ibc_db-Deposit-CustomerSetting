@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
@@ -122,12 +122,5 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitSettingSelect] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitSettingSelect] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitSettingSelect] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitSettingSelect] TO [bodbLicenseeNet]
 
 
