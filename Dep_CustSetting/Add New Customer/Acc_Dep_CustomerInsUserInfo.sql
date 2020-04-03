@@ -79,6 +79,7 @@ Revisions:
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200203@Elodie: Apply Currency Modifier [Redmine:127300]
+	- 20200403@Elodie: Add Currency Modifier history [Redmine:127300]
 
 Param's Explanation:
 • @ErrCode:
@@ -87,6 +88,7 @@ Param's Explanation:
   
 • @ErrMsg: Error description.
 */
+DECLARE @CreateDate DATETIME = GETDATE()
 
 INSERT INTO Customer   			
 			(username, firstname, lastname, phone, mobilephone, fax, email, address,
@@ -95,7 +97,7 @@ INSERT INTO Customer
 			) 
  		 VALUES (@username, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 			NULL, NULL, NULL, NULL, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-			@currency, @pwdexpiry, @creator, @site, GETDATE(), @ugroup
+			@currency, @pwdexpiry, @creator, @site, @CreateDate, @ugroup
 			)
 
 SELECT @custid=@@IDENTITY
@@ -124,6 +126,12 @@ BEGIN
 
 	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier)
 	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier)
+
+	IF @CurrencyModifier <> 1
+	BEGIN
+		INSERT INTO CurrencyModifier_History(CustId, CurrencyModifier, FromDate, ToDate)
+		SELECT @CustId, @CurrencyModifier, @CreateDate, '9999-12-31 0:00:00.000'
+	END
 
 	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
 	SELECT	@CustID, 
