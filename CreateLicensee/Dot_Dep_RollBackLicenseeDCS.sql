@@ -1,7 +1,7 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Dot_Dep_RollBackLicenseeDCS] 
-		@ListCustID		VARCHAR(MAX)
-		
+		@ListCustID		VARCHAR(MAX),
+		@SiteID INT = NULL	
 AS
 /*  
  Created: 20190425@Winnie  
@@ -38,4 +38,9 @@ BEGIN
 	DELETE d
 	FROM Dep_CustStakeLevel_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
+
+	IF @SiteID IS NOT NULL
+		DELETE d
+		FROM Dep_StakeLevel d WITH(ROWLOCK)
+		WHERE d.SiteID = @SiteID
 END
