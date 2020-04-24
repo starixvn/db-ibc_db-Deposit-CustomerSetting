@@ -4,7 +4,10 @@ GO
 
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_06]
 (
-	@CustID			INT 
+	@CustID			INT
+	,@RoleId		INT
+	,@srecommend	INT
+	,@mrecommend	INT
 	,@ProductID		INT 
 	,@SportType		INT
 	,@BetType		INT
@@ -35,25 +38,12 @@ BEGIN
 	BEGIN
 		DECLARE	@SettingLevel		TINYINT
 				,@ProductSettingID	INT
-				,@RoleId			INT
-				,@srecommend		INT
-				,@recommend			INT
 
-		DECLARE @StartRow	INT, 
-				@MaxRow		INT,
-				@Threshold	INT, 
-				@StopRow	INT
 
-		SET @StartRow = 1
-		SET @Threshold = 3000
-
-		CREATE TABLE #tmpCust (ID INT IDENTITY (1,1) PRIMARY KEY, CustId INT, RoleId INT)
-		CREATE TABLE #tempMemNoGrouped(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )
-		CREATE TABLE #tempMemGrouped(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )
-
-		CREATE NONCLUSTERED INDEX IDX_tmpCust ON #tmpCust(CustID)
-		CREATE NONCLUSTERED INDEX IDX_tempMemNoGrouped ON #tempMemNoGrouped(CustID)
-		CREATE NONCLUSTERED INDEX IDX_tempMemGrouped ON #tempMemGrouped(CustID)
+		CREATE TABLE #tmpAgent (CustId INT)
+		CREATE TABLE #tmpMember(CustID INT, Grouped INT, ExistSetting INT)
+		DECLARE @BatchAgent TABLE (CustID INT)
+		DECLARE @BatchMember TABLE (CustID INT, Grouped INT, ExistSetting INT)
 
 		SELECT @SettingLevel = SettingLevel
 			,@ProductSettingID = ProductSettingID 
@@ -61,66 +51,69 @@ BEGIN
 		WHERE ProductID=@ProductID 
 			AND SettingType = 9	
 
-		SELECT @RoleID = RoleID
-			,@srecommend = srecommend
-			,@recommend = recommend 
-		FROM Customer WITH(NOLOCK) 
-		WHERE custid = @CustID
-	
-		INSERT INTO #tmpCust (CustId, RoleId)
-		SELECT custid, roleid
-		FROM dbo.Customer WITH (NOLOCK)
-		WHERE roleid IN (1,2)
-			AND 1 = CASE WHEN @RoleId = 4 AND srecommend = @srecommend THEN 1
-					WHEN @RoleId = 2 AND recommend = @recommend THEN 1
-				ELSE 0 END
+		IF @RoleId = 4
+		BEGIN
+			INSERT INTO #tmpAgent (CustId)
+			SELECT custid
+			FROM dbo.Customer WITH (NOLOCK)
+			WHERE roleid = 2
+				AND srecommend = @srecommend
+		
+			INSERT INTO #tmpMember(CustID, Grouped, ExistSetting)
+			SELECT c.CustID
+				,CASE 
+					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 1 THEN 1 --Existing in CustSettingMode and use Agent Comm Setting
+					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 0 --Existing in CustSettingMode and use Member Comm Setting 
+					WHEN m.CustID IS NULL THEN 2 END --Not exist in CustSettingMode
+				,CASE WHEN s.CustID IS NOT NULL THEN 1 ELSE 0 END
+			FROM dbo.Customer c WITH(NOLOCK)
+				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
+				LEFT JOIN Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
+			WHERE c.roleid = 1
+				AND srecommend = @srecommend
+		END
+		ELSE IF @RoleId = 2
+		BEGIN
+			INSERT INTO #tmpAgent (CustId) VALUES (@CustID)
 
-		INSERT INTO #tempMemNoGrouped(CustID)
-		SELECT c.CustID
-		FROM #tmpCust c WITH(NOLOCK)
-			INNER JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID		
-		WHERE c.roleid =1
-			AND m.IsGroupedComm = 0
+			INSERT INTO #tmpMember(CustID, Grouped, ExistSetting)
+			SELECT c.CustID
+				,CASE 
+					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 1 THEN 1 --Existing in CustSettingMode and use Agent Comm Setting
+					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 0 --Existing in CustSettingMode and use Member Comm Setting 
+					WHEN m.CustID IS NULL THEN 2 END --Not exist in CustSettingMode
+				,CASE WHEN s.CustID IS NOT NULL THEN 1 ELSE 0 END
+			FROM dbo.Customer c WITH(NOLOCK)
+				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
+				LEFT JOIN Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
+			WHERE c.roleid = 1
+				AND recommend = @CustID
+		END
 
-		INSERT INTO #tempMemGrouped (CustID)
-		SELECT CustID
-		FROM #tmpCust t
-		WHERE RoleId = 1
-			AND NOT EXISTS (SELECT 1 FROM #tempMemNoGrouped WHERE CustID = t.CustId)
 
-		--Delete member from tmpCusst
-		DELETE #tmpCust WHERE RoleId = 1
-
-		--Dep_LicenseeProductSetting
+		--Insert ProductSetting for Super: Dep_LicenseeProductSetting
 		IF NOT EXISTS (SELECT 1 FROM dbo.Dep_LicenseeProductSetting WITH (NOLOCK) WHERE CustID = @srecommend AND ProductSettingID = @ProductSettingID)
 		INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
 		VALUES(@srecommend, @ProductSettingID)
 
 		-------------------------------------
 		---------COMM SETTING----------------
-		--Dep_CustDiscountGroupSetting_Member
-		IF EXISTS (SELECT TOP 1 1 FROM #tmpCust)
+		--Setting Comm for Agent - Dep_CustDiscountGroupSetting_Member
+		IF EXISTS (SELECT TOP 1 1 FROM #tmpAgent)
 		BEGIN
-			SET @MaxRow = (SELECT MAX(ID) FROM #tmpCust)
-			
-			IF	@Threshold >= @MaxRow
-			SET	@Threshold = @MaxRow
-			
-			SET @StopRow = @Threshold
-
 			WHILE (0 = 0)
 			BEGIN
+				DELETE TOP (3000) t
+				OUTPUT deleted.custid INTO @BatchAgent
+				FROM #tmpAgent t
+
+				IF @@ROWCOUNT = 0
+				BREAK;
+
 				UPDATE d
 				SET d.PlayerDiscount = 0, d.AgentDiscount = 0, d.MasterDiscount = 0, d.SuperDiscount = 0
 				FROM dbo.Dep_CustDiscountGroupSetting_Member d WITH(ROWLOCK)
-					INNER JOIN  #tmpCust c ON c.custid = d.AgentID
-				WHERE ID >= @StartRow AND ID <= @StopRow
-
-
-				DELETE t
-				FROM #tmpCust t
-					INNER JOIN dbo.Dep_CustDiscountGroupSetting_Member s WITH(NOLOCK) ON t.CustID = s.AgentID
-				WHERE ID >= @StartRow AND ID <= @StopRow
+					INNER JOIN  @BatchAgent c ON c.custid = d.AgentID
 
 				INSERT INTO dbo.Dep_CustDiscountGroupSetting_Member(
 					AgentID
@@ -138,51 +131,34 @@ BEGIN
 					,0
 					,0
 					,0
-				FROM #tmpCust t
-				WHERE ID >= @StartRow AND ID <= @StopRow
-					AND t.RoleId = 2
-					AND NOT EXISTS (SELECT 1 FROM dbo.Dep_CustDiscountGroupSetting_Member d WITH (NOLOCK) WHERE d.AgentID = t.CustId)
+				FROM @BatchAgent t
+				WHERE NOT EXISTS (SELECT 1 FROM dbo.Dep_CustDiscountGroupSetting_Member d WITH (NOLOCK) WHERE d.AgentID = t.CustId)
 
-				IF	@StopRow = @MaxRow 
-					BREAK
-						
-				SET	@StartRow = @StopRow + 1
-						
-				SET	@StopRow = 1 + @StopRow + @Threshold
-						
-				IF	@StopRow >= @MaxRow
-					SET	@StopRow = @MaxRow
+				DELETE @BatchAgent
 			END
 
 		END
 
 		----------------------------------------------------
-		--Dep_CustDiscountSetting_Member
-		--Not Grouped
-		IF EXISTS (SELECT TOP 1 1 FROM #tempMemNoGrouped)
+		--Setting Comm for Member - Dep_CustDiscountSetting_Member
+		IF EXISTS (SELECT TOP 1 1 FROM #tmpMember)
 		BEGIN
-			SET @StartRow=1
-			SET @Threshold=3000
-
-			SET @MaxRow = (SELECT MAX(ID) FROM #tempMemNoGrouped)
-			
-			IF	@Threshold >= @MaxRow
-			SET	@Threshold = @MaxRow
-			
-			SET @StopRow = @Threshold
-	
-			WHILE (0=0)
+			WHILE (0 = 0)
 			BEGIN
+				DELETE TOP (3000) t
+				OUTPUT deleted.custid , deleted.Grouped, deleted.ExistSetting INTO @BatchMember
+				FROM #tmpMember t
+
+				IF @@ROWCOUNT = 0
+				BREAK;
+
+				--step 1: 
+					-- update Dep_CustDiscountSetting_Member: reset = 0  for member Grouped = 0 and ExistSetting = 1
+					-- insert Dep_CustDiscountSetting_Member: for member Grouped = 0 AND ExistSetting = 0
 				UPDATE d
 				SET d.PlayerDiscount = 0, d.AgentDiscount = 0, d.MasterDiscount = 0, d.SuperDiscount = 0
 				FROM dbo.Dep_CustDiscountSetting_Member d WITH(ROWLOCK)
-					INNER JOIN #tempMemNoGrouped c ON c.custid = d.CustID
-				WHERE ID >= @StartRow AND ID <= @StopRow
-
-				DELETE t
-				FROM #tempMemNoGrouped t
-					INNER JOIN dbo.Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON t.CustID=s.CustID
-				WHERE ID >= @StartRow AND ID <= @StopRow
+					INNER JOIN @BatchMember c ON c.custid = d.CustID AND Grouped = 0 AND c.ExistSetting = 1
 
 				INSERT INTO dbo.Dep_CustDiscountSetting_Member(
 					CustID
@@ -200,72 +176,24 @@ BEGIN
 					,0
 					,0
 					,0
-				FROM #tempMemNoGrouped t
-				WHERE ID >= @StartRow AND ID <= @StopRow
-					AND NOT EXISTS (SELECT 1 FROM dbo.Dep_CustDiscountSetting_Member d WITH (NOLOCK) WHERE d.CustID = t.CustId)
+				FROM @BatchMember t
+				WHERE t.Grouped = 0
+					AND t.ExistSetting = 0
 
-				IF	@StopRow = @MaxRow 
-					BREAK
-						
-				SET	@StartRow = @StopRow + 1
-						
-				SET	@StopRow = 1 + @StopRow + @Threshold
-						
-				IF	@StopRow >= @MaxRow
-					SET	@StopRow = @MaxRow
-			END
-		END
-
-		--Grouped
-		IF EXISTS (SELECT TOP 1 1 FROM #tempMemGrouped)
-		BEGIN
-			SET @StartRow=1
-			SET @Threshold=3000
-
-			SET @MaxRow = (SELECT MAX(ID) FROM #tempMemGrouped)
-			
-			IF	@Threshold >= @MaxRow
-			SET	@Threshold = @MaxRow
-			
-			SET @StopRow = @Threshold
-	
-			WHILE (0=0)
-			BEGIN
-				UPDATE d
-				SET IsGroupedComm = 1
-				FROM dbo.Dep_CustSettingMode d WITH(ROWLOCK)
-					INNER JOIN #tempMemGrouped c ON c.custid = d.CustID
-				WHERE ID >= @StartRow AND ID <= @StopRow
-
-				DELETE t
-				FROM #tempMemGrouped t
-					INNER JOIN dbo.Dep_CustSettingMode s WITH(NOLOCK) ON t.CustID=s.CustID
-				WHERE ID >= @StartRow AND ID <= @StopRow
-
-				INSERT INTO dbo.Dep_CustSettingMode(
-					CustID
-					,IsGroupedComm
-				)
+				--step 2:
+					-- insert not exists member into Dep_CustSettingMode: Grouped = 2
+				INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
 				SELECT CustId, 1			
-				FROM #tempMemGrouped t
-				WHERE ID >= @StartRow AND ID <= @StopRow
-					AND NOT EXISTS (SELECT 1 FROM dbo.Dep_CustSettingMode d WITH (NOLOCK) WHERE d.CustID = t.CustId) 
-		
-				IF	@StopRow = @MaxRow 
-					BREAK
-						
-				SET	@StartRow = @StopRow + 1
-						
-				SET	@StopRow = 1 + @StopRow + @Threshold
-						
-				IF	@StopRow >= @MaxRow
-					SET	@StopRow = @MaxRow
+				FROM @BatchMember t
+				WHERE t.Grouped = 2
+
+				DELETE @BatchMember
+
 			END
 		END
 
-		DROP TABLE #tmpCust
-		DROP TABLE #tempMemGrouped
-		DROP TABLE #tempMemNoGrouped
+		DROP TABLE #tmpAgent
+		DROP TABLE #tmpMember
 	END		
 END	
 
