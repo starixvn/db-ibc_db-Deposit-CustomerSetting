@@ -42,7 +42,6 @@ BEGIN
 
 		CREATE TABLE #tmpAgent (CustId INT, IsExist BIT)
 		CREATE TABLE #tmpMember(CustID INT, Grouped INT, ExistSetting BIT)
-		DECLARE @BatchAgent TABLE (CustID INT, IsExist BIT)
 		DECLARE @BatchMember TABLE (CustID INT, Grouped INT, ExistSetting BIT)
 
 		SELECT @ProductSettingID = ProductSettingID 
@@ -107,49 +106,36 @@ BEGIN
 		--Setting GroupComm for Agent - Dep_CustDiscountGroupSetting_Member
 		IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent)
 		BEGIN
-			WHILE (0 = 0)
+			IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent WHERE IsExist = 1)
 			BEGIN
-				DELETE TOP (3000) t
-				OUTPUT deleted.custid, deleted.IsExist INTO @BatchAgent
-				FROM #tmpAgent t
-
-				IF @@ROWCOUNT = 0
-				BREAK;
-
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchAgent WHERE IsExist = 1)
-				BEGIN
-					UPDATE d
-					SET d.PlayerDiscount = 0, d.AgentDiscount = 0, d.MasterDiscount = 0, d.SuperDiscount = 0
-					FROM dbo.Dep_CustDiscountGroupSetting_Member d WITH(ROWLOCK)
-						INNER JOIN  @BatchAgent c ON c.custid = d.AgentID AND c.IsExist = 1
-					WHERE d.SportType = @SportType AND d.BetType = @BetType
-				END
-
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchAgent WHERE IsExist = 0)
-				BEGIN
-					INSERT INTO dbo.Dep_CustDiscountGroupSetting_Member(
-						AgentID
-						,SportType
-						,BetType
-						,PlayerDiscount
-						,AgentDiscount
-						,MasterDiscount
-						,SuperDiscount
-					)
-					SELECT CustId
-						,@SportType
-						,@BetType
-						,0
-						,0
-						,0
-						,0
-					FROM @BatchAgent t
-					WHERE t.IsExist= 0
-				END
-
-				DELETE @BatchAgent
+				UPDATE d
+				SET d.PlayerDiscount = 0, d.AgentDiscount = 0, d.MasterDiscount = 0, d.SuperDiscount = 0
+				FROM dbo.Dep_CustDiscountGroupSetting_Member d WITH(ROWLOCK)
+					INNER JOIN  #tmpAgent c ON c.custid = d.AgentID AND c.IsExist = 1
+				WHERE d.SportType = @SportType AND d.BetType = @BetType
 			END
 
+			IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent WHERE IsExist = 0)
+			BEGIN
+				INSERT INTO dbo.Dep_CustDiscountGroupSetting_Member(
+					AgentID
+					,SportType
+					,BetType
+					,PlayerDiscount
+					,AgentDiscount
+					,MasterDiscount
+					,SuperDiscount
+				)
+				SELECT CustId
+					,@SportType
+					,@BetType
+					,0
+					,0
+					,0
+					,0
+				FROM #tmpAgent t
+				WHERE t.IsExist= 0
+			END
 		END
 
 		----------------------------------------------------
