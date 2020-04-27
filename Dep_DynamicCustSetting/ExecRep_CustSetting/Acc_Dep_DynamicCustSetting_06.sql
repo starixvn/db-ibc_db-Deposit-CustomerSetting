@@ -110,7 +110,7 @@ BEGIN
 			WHILE (0 = 0)
 			BEGIN
 				DELETE TOP (3000) t
-				OUTPUT deleted.custid INTO @BatchAgent
+				OUTPUT deleted.custid, deleted.IsExist INTO @BatchAgent
 				FROM #tmpAgent t
 
 				IF @@ROWCOUNT = 0
