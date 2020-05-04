@@ -127,7 +127,7 @@ BEGIN
 				SELECT t.CustID
 					,grp.SportType
 					,grp.BetType
-					,CASE WHEN grp.SportType = 211 AND grp.BetType = 2401 THEN @MacauComm ELSE grp.PlayerDiscount END
+					,CASE WHEN grp.SportType = 211 AND grp.BetType = 2401 THEN @AllbetComm ELSE grp.PlayerDiscount END
 					,grp.AgentDiscount
 					,grp.MasterDiscount
 					,grp.SuperDiscount
@@ -240,7 +240,7 @@ BEGIN
 				SELECT t.CustID
 					,grp.SportType
 					,grp.BetType
-					,CASE WHEN grp.SportType = 248 AND grp.BetType = 4101 THEN @MacauComm ELSE grp.PlayerDiscount END
+					,CASE WHEN grp.SportType = 248 AND grp.BetType = 4101 THEN @PPComm ELSE grp.PlayerDiscount END
 					,grp.AgentDiscount
 					,grp.MasterDiscount
 					,grp.SuperDiscount
