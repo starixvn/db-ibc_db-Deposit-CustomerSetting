@@ -38,8 +38,8 @@ BEGIN
 
 
 		CREATE TABLE #tmpAgent (CustId INT)
-		CREATE TABLE #tmpMember (CustID INT, IsExistSettingComm BIT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
-		DECLARE @BatchMember TABLE (CustID INT, IsExistSettingComm BIT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
+		CREATE TABLE #tmpMember (CustID INT, IsCustSettingMode BIT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
+		DECLARE @BatchMember TABLE (CustID INT, IsCustSettingMode BIT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
 
 		SELECT @ProductSettingID = ProductSettingID 
 		FROM Dep_ProductSetting WITH(NOLOCK) 
@@ -57,7 +57,7 @@ BEGIN
 				AND srecommend = @srecommend
 				AND d.AgentID IS NULL
 		
-			INSERT INTO #tmpMember(CustID, IsExistSettingComm, GroupPlayerComm, GroupAgentComm, GroupMasterComm, GroupSuperComm)
+			INSERT INTO #tmpMember(CustID, IsCustSettingMode, GroupPlayerComm, GroupAgentComm, GroupMasterComm, GroupSuperComm)
 			SELECT c.CustID
 				,CASE 
 					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 1 --Existing in CustSettingMode and use Private Comm Setting 
@@ -92,7 +92,7 @@ BEGIN
 			WHERE custid = @CustID
 				AND d.AgentID IS NULL
 
-			INSERT INTO #tmpMember(CustID, IsExistSettingComm, GroupPlayerComm, GroupAgentComm, GroupMasterComm, GroupSuperComm)
+			INSERT INTO #tmpMember(CustID, IsCustSettingMode, GroupPlayerComm, GroupAgentComm, GroupMasterComm, GroupSuperComm)
 			SELECT c.CustID
 				,CASE 
 					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 1 --Existing in CustSettingMode and use Private Comm Setting 
@@ -158,7 +158,7 @@ BEGIN
 			WHILE (0 = 0)
 			BEGIN
 				DELETE TOP (3000) t
-				OUTPUT deleted.custid , deleted.IsExistSettingComm, deleted.GroupPlayerComm, deleted.GroupAgentComm, deleted.GroupMasterComm, deleted.GroupSuperComm INTO @BatchMember
+				OUTPUT deleted.custid , deleted.IsCustSettingMode, deleted.GroupPlayerComm, deleted.GroupAgentComm, deleted.GroupMasterComm, deleted.GroupSuperComm INTO @BatchMember
 				FROM #tmpMember t
 
 				IF @@ROWCOUNT = 0
@@ -166,7 +166,7 @@ BEGIN
 
 				--step 1: 
 					-- insert Dep_CustDiscountSetting_Member: for member IsExistSettingComm = 1
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE IsExistSettingComm = 1)
+				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE IsCustSettingMode = 1)
 				BEGIN
 					INSERT INTO dbo.Dep_CustDiscountSetting_Member(
 						CustID
@@ -185,12 +185,12 @@ BEGIN
 						,0
 						,0
 					FROM @BatchMember t
-					WHERE t.IsExistSettingComm = 1
+					WHERE t.IsCustSettingMode = 1
 				END
 
 				--step 2:
 					-- insert not exists member into Dep_CustSettingMode: IsExistSettingComm = 0
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE IsExistSettingComm = 0)
+				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE IsCustSettingMode = 0)
 				BEGIN
 					--Case 1: Value Comm of Group not the same with initial value = 0
 					IF EXISTS(SELECT 1
@@ -204,7 +204,7 @@ BEGIN
 						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
 						SELECT CustId, 0			
 						FROM @BatchMember t
-						WHERE t.IsExistSettingComm = 0
+						WHERE t.IsCustSettingMode = 0
 							AND (t.GroupPlayerComm <> 0
 								OR t.GroupAgentComm <> 0
 								OR t.GroupMasterComm <> 0
@@ -227,7 +227,7 @@ BEGIN
 							,0
 							,0
 						FROM @BatchMember t
-						WHERE t.IsExistSettingComm = 0
+						WHERE t.IsCustSettingMode = 0
 							AND (t.GroupPlayerComm <> 0
 								OR t.GroupAgentComm <> 0
 								OR t.GroupMasterComm <> 0
@@ -246,7 +246,7 @@ BEGIN
 						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
 						SELECT CustId, 1			
 						FROM @BatchMember t
-						WHERE t.IsExistSettingComm = 0
+						WHERE t.IsCustSettingMode = 0
 							AND t.GroupPlayerComm = 0
 							AND t.GroupAgentComm = 0
 							AND t.GroupMasterComm = 0
