@@ -1,7 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_06]
 (
 	@CustID			INT
@@ -70,12 +67,19 @@ BEGIN
 				,ISNULL(sg.MasterDiscount, 0)
 				,ISNULL(sg.SuperDiscount, 0)
 			FROM dbo.Customer c WITH(NOLOCK)
-				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
+				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID AND m.IsGroupedComm = 0
 				LEFT JOIN dbo.Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
 				LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member sg WITH (NOLOCK) ON sg.AgentID = c.recommend AND sg.SportType = @SportType AND Sg.BetType = @BetType
 			WHERE c.roleid = 1
 				AND srecommend = @srecommend
 				AND s.CustID IS NULL
+				AND mrecommend NOT IN (SELECT custid 
+								FROM dbo.custinfo WITH(NOLOCK)
+								WHERE srecommend=@srecommend 
+									AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%' )
+									AND roleid=3
+							)
+ 
 		END
 		ELSE IF @RoleId = 2
 		BEGIN
@@ -96,12 +100,18 @@ BEGIN
 				,ISNULL(sg.MasterDiscount, 0)
 				,ISNULL(sg.SuperDiscount, 0)
 			FROM dbo.Customer c WITH(NOLOCK)
-				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
+				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID AND m.IsGroupedComm = 0
 				LEFT JOIN dbo.Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
 				LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member sg WITH (NOLOCK) ON sg.AgentID = c.recommend AND sg.SportType = @SportType AND Sg.BetType = @BetType
 			WHERE c.roleid = 1
 				AND recommend = @CustID
 				AND s.CustID IS NULL
+				AND mrecommend NOT IN (SELECT custid 
+								FROM dbo.custinfo WITH(NOLOCK)
+								WHERE srecommend=@srecommend 
+									AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%' )
+									AND roleid=3
+							)
 		END
 
 
