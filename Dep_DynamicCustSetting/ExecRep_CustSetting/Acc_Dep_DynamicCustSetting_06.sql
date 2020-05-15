@@ -40,59 +40,68 @@ BEGIN
 				,@ProductSettingID	INT
 
 
-		CREATE TABLE #tmpAgent (CustId INT, IsExist BIT)
-		CREATE TABLE #tmpMember(CustID INT, Grouped INT, ExistSetting BIT)
-		DECLARE @BatchMember TABLE (CustID INT, Grouped INT, ExistSetting BIT)
+		CREATE TABLE #tmpAgent (CustId INT)
+		CREATE TABLE #tmpMember (CustID INT, IsExistSettingComm BIT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
+		DECLARE @BatchMember TABLE (CustID INT, IsExistSettingComm BIT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
 
 		SELECT @ProductSettingID = ProductSettingID 
 		FROM Dep_ProductSetting WITH(NOLOCK) 
 		WHERE ProductID=@ProductID 
 			AND SettingType = 9	
 
+		--Only RoleId = 4 or RoleId = 2
 		IF @RoleId = 4
 		BEGIN
-			INSERT INTO #tmpAgent (CustId, IsExist)
+			INSERT INTO #tmpAgent (CustId)
 			SELECT custid
-				,CASE WHEN d.AgentID IS NOT NULL THEN 1 ELSE 0 END
 			FROM dbo.Customer c WITH (NOLOCK)
 				LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member d WITH (NOLOCK) ON d.AgentID = c.custid AND d.SportType = @SportType AND d.BetType = @BetType
 			WHERE roleid = 2
 				AND srecommend = @srecommend
+				AND d.AgentID IS NULL
 		
-			INSERT INTO #tmpMember(CustID, Grouped, ExistSetting)
+			INSERT INTO #tmpMember(CustID, IsExistSettingComm, GroupPlayerComm, GroupAgentComm, GroupMasterComm, GroupSuperComm)
 			SELECT c.CustID
 				,CASE 
-					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 1 THEN 1 --Existing in CustSettingMode and use Agent Comm Setting
-					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 0 --Existing in CustSettingMode and use Member Comm Setting 
-					WHEN m.CustID IS NULL THEN 2 END --Not exist in CustSettingMode
-				,CASE WHEN s.CustID IS NOT NULL THEN 1 ELSE 0 END
+					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 1 --Existing in CustSettingMode and use Private Comm Setting 
+					WHEN m.CustID IS NULL THEN 0 END --Not exist Setting comm in CustSettingMode
+				,ISNULL(sg.PlayerDiscount, 0)
+				,ISNULL(sg.AgentDiscount, 0)
+				,ISNULL(sg.MasterDiscount, 0)
+				,ISNULL(sg.SuperDiscount, 0)
 			FROM dbo.Customer c WITH(NOLOCK)
 				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
 				LEFT JOIN dbo.Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
+				LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member sg WITH (NOLOCK) ON sg.AgentID = c.recommend AND sg.SportType = @SportType AND Sg.BetType = @BetType
 			WHERE c.roleid = 1
 				AND srecommend = @srecommend
+				AND s.CustID IS NULL
 		END
 		ELSE IF @RoleId = 2
 		BEGIN
-			INSERT INTO #tmpAgent (CustId, IsExist)
-			SELECT @CustID, 0
-			UPDATE c
-				SET c.IsExist = CASE WHEN d.AgentID IS NOT NULL THEN 1 ELSE 0 END 
-			FROM #tmpAgent c
+			INSERT INTO #tmpAgent (CustId)
+			SELECT custid
+			FROM dbo.Customer c WITH (NOLOCK)
 				LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member d WITH (NOLOCK) ON d.AgentID = c.custid AND d.SportType = @SportType AND d.BetType = @BetType
+			WHERE custid = @CustID
+				AND d.AgentID IS NULL
 
-			INSERT INTO #tmpMember(CustID, Grouped, ExistSetting)
+			INSERT INTO #tmpMember(CustID, IsExistSettingComm, GroupPlayerComm, GroupAgentComm, GroupMasterComm, GroupSuperComm)
 			SELECT c.CustID
 				,CASE 
-					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 1 THEN 1 --Existing in CustSettingMode and use Agent Comm Setting
-					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 0 --Existing in CustSettingMode and use Member Comm Setting 
-					WHEN m.CustID IS NULL THEN 2 END --Not exist in CustSettingMode
-				,CASE WHEN s.CustID IS NOT NULL THEN 1 ELSE 0 END
+					WHEN m.CustID IS NOT NULL AND m.IsGroupedComm = 0 THEN 1 --Existing in CustSettingMode and use Private Comm Setting 
+					WHEN m.CustID IS NULL THEN 0 END --Not exist Setting comm in CustSettingMode
+				,ISNULL(sg.PlayerDiscount, 0)
+				,ISNULL(sg.AgentDiscount, 0)
+				,ISNULL(sg.MasterDiscount, 0)
+				,ISNULL(sg.SuperDiscount, 0)
 			FROM dbo.Customer c WITH(NOLOCK)
 				LEFT JOIN dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
-				LEFT JOIN Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
+				LEFT JOIN dbo.Dep_CustDiscountSetting_Member s WITH(NOLOCK) ON s.CustID = c.CustId AND s.SportType = @SportType AND s.BetType = @BetType
+				LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member sg WITH (NOLOCK) ON sg.AgentID = c.recommend AND sg.SportType = @SportType AND Sg.BetType = @BetType
 			WHERE c.roleid = 1
 				AND recommend = @CustID
+				AND s.CustID IS NULL
 		END
 
 
@@ -106,16 +115,7 @@ BEGIN
 		--Setting GroupComm for Agent - Dep_CustDiscountGroupSetting_Member
 		IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent)
 		BEGIN
-			IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent WHERE IsExist = 1)
-			BEGIN
-				UPDATE d
-				SET d.PlayerDiscount = 0, d.AgentDiscount = 0, d.MasterDiscount = 0, d.SuperDiscount = 0
-				FROM dbo.Dep_CustDiscountGroupSetting_Member d WITH(ROWLOCK)
-					INNER JOIN  #tmpAgent c ON c.custid = d.AgentID AND c.IsExist = 1
-				WHERE d.SportType = @SportType AND d.BetType = @BetType
-			END
-
-			IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent WHERE IsExist = 0)
+			IF EXISTS (SELECT TOP (1) 1 FROM #tmpAgent)
 			BEGIN
 				INSERT INTO dbo.Dep_CustDiscountGroupSetting_Member(
 					AgentID
@@ -134,7 +134,6 @@ BEGIN
 					,0
 					,0
 				FROM #tmpAgent t
-				WHERE t.IsExist= 0
 			END
 		END
 
@@ -145,25 +144,15 @@ BEGIN
 			WHILE (0 = 0)
 			BEGIN
 				DELETE TOP (3000) t
-				OUTPUT deleted.custid , deleted.Grouped, deleted.ExistSetting INTO @BatchMember
+				OUTPUT deleted.custid , deleted.IsExistSettingComm, deleted.GroupPlayerComm, deleted.GroupAgentComm, deleted.GroupMasterComm, deleted.GroupSuperComm INTO @BatchMember
 				FROM #tmpMember t
 
 				IF @@ROWCOUNT = 0
 				BREAK;
 
 				--step 1: 
-					-- update Dep_CustDiscountSetting_Member: reset = 0  for member Grouped = 0 and ExistSetting = 1
-					-- insert Dep_CustDiscountSetting_Member: for member Grouped = 0 AND ExistSetting = 0
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE Grouped = 0 AND ExistSetting = 1)
-				BEGIN
-					UPDATE d
-					SET d.PlayerDiscount = 0, d.AgentDiscount = 0, d.MasterDiscount = 0, d.SuperDiscount = 0
-					FROM dbo.Dep_CustDiscountSetting_Member d WITH(ROWLOCK)
-						INNER JOIN @BatchMember c ON c.custid = d.CustID AND c.Grouped = 0 AND c.ExistSetting = 1
-					WHERE d.SportType = @SportType AND d.BetType = @BetType
-				END
-
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE Grouped = 0 AND ExistSetting = 0)
+					-- insert Dep_CustDiscountSetting_Member: for member IsExistSettingComm = 1
+				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE IsExistSettingComm = 1)
 				BEGIN
 					INSERT INTO dbo.Dep_CustDiscountSetting_Member(
 						CustID
@@ -182,18 +171,73 @@ BEGIN
 						,0
 						,0
 					FROM @BatchMember t
-					WHERE t.Grouped = 0
-						AND t.ExistSetting = 0
+					WHERE t.IsExistSettingComm = 1
 				END
 
 				--step 2:
-					-- insert not exists member into Dep_CustSettingMode: Grouped = 2
-				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE Grouped = 2)
+					-- insert not exists member into Dep_CustSettingMode: IsExistSettingComm = 0
+				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE IsExistSettingComm = 0)
 				BEGIN
-					INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
-					SELECT CustId, 1			
-					FROM @BatchMember t
-					WHERE t.Grouped = 2
+					--Case 1: Value Comm of Group not the same with initial value = 0
+					IF EXISTS(SELECT 1
+						FROM @BatchMember t
+						WHERE (t.GroupPlayerComm <> 0
+							OR t.GroupAgentComm <> 0
+							OR t.GroupMasterComm <> 0
+							OR t.GroupSuperComm <> 0)
+						)
+					BEGIN
+						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
+						SELECT CustId, 0			
+						FROM @BatchMember t
+						WHERE t.IsExistSettingComm = 0
+							AND (t.GroupPlayerComm <> 0
+								OR t.GroupAgentComm <> 0
+								OR t.GroupMasterComm <> 0
+								OR t.GroupSuperComm <> 0)
+
+						INSERT INTO dbo.Dep_CustDiscountSetting_Member(
+							CustID
+							,SportType
+							,BetType
+							,PlayerDiscount
+							,AgentDiscount
+							,MasterDiscount
+							,SuperDiscount
+						)
+						SELECT CustId
+							,@SportType
+							,@BetType
+							,0
+							,0
+							,0
+							,0
+						FROM @BatchMember t
+						WHERE t.IsExistSettingComm = 0
+							AND (t.GroupPlayerComm <> 0
+								OR t.GroupAgentComm <> 0
+								OR t.GroupMasterComm <> 0
+								OR t.GroupSuperComm <> 0)
+					END
+
+					--Case 2: Value Comm of Group the same with initial value = 0
+					IF EXISTS(SELECT 1
+						FROM @BatchMember t
+						WHERE t.GroupPlayerComm = 0
+							AND t.GroupAgentComm = 0
+							AND t.GroupMasterComm = 0
+							AND t.GroupSuperComm = 0
+						)
+					BEGIN
+						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
+						SELECT CustId, 1			
+						FROM @BatchMember t
+						WHERE t.IsExistSettingComm = 0
+							AND t.GroupPlayerComm = 0
+							AND t.GroupAgentComm = 0
+							AND t.GroupMasterComm = 0
+							AND t.GroupSuperComm = 0
+					END
 				END
 
 				DELETE @BatchMember
