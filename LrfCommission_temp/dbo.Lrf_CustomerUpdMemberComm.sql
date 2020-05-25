@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCUST-bodb_Licensee" executers="bodbLicenseeNet,bodbAdminNet,Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Lrf_CustomerUpdMemberComm]
+(
 	@LicenseeID INT,
 	@strCustID VARCHAR(MAX) = '',--member
 	@UserID INT,
@@ -30,6 +31,7 @@ ALTER PROCEDURE [dbo].[Lrf_CustomerUpdMemberComm]
 	@Langkey VARCHAR(10) = 'en-US',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg varchar(8000) = '' OUTPUT
+)
 AS
 /*
 	Created: 20120726@Henry
@@ -291,8 +293,8 @@ BEGIN
 		'ErrCode="'+ COALESCE(CAST(@ErrCode as VARCHAR(50)),SPACE(1)) + '" ' +
 		'ErrMsg="'+ COALESCE(CAST(@ErrMsg as VARCHAR(8000)),SPACE(1))+ '" />'
 	
-	DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
-				, @query NVARCHAR(MAX) = ''
+	--DECLARE  @ExecuteSQL NVARCHAR(MAX) = ''
+	--			, @query NVARCHAR(MAX) = ''
 	
 	WHILE (1=1)
 	BEGIN
@@ -315,7 +317,16 @@ BEGIN
 						FOR XML PATH('')
 						),1,1,'')
 		BEGIN TRY
-			
+		
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_UpdMemComm_RunSP
+						@UserID = @UserID,
+						@strCustID = @strCustID,
+						@ActionID = 2612,
+						@LogSPData = @LogSPData,
+						@LogSPData2 = @LogSPData2,
+						@duration = @duration
+						
+			/*
 			SELECT  @query = N''		
 			SELECT	@query = @query + N'EXEC WriteLog_UserLog_UpdMemComm_RunSP @UserID,@strCustID,@ActionID,@LogSPData,@LogSPData2,@duration'
 			SELECT	@ExecuteSQL = N'EXECUTE DBLOG.bodb_CustomerLog.dbo.sp_executesql @query, N''@UserID INT,@strCustID VARCHAR(MAX),@ActionID INT,@LogSPData nvarchar(4000),@LogSPData2 nvarchar(4000),@Duration INT ''
@@ -330,7 +341,7 @@ BEGIN
 													@Duration INT
 													
 													', @query, @UserID,@strCustID,2612,@LogSPData,@LogSPData2,@Duration
-			
+			*/
 		END TRY
 		BEGIN CATCH
 			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_UpdMemComm_RunSP
