@@ -1,2 +1,1 @@
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Com.sql
-CreateLicensee\Dot_Dep_CreateLicensee.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
