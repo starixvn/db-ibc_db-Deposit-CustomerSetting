@@ -1129,7 +1129,7 @@ BEGIN
 	END    
 	    
 	select @ErrType = ''    
-	select @ErrType = @ErrType + CASE WHEN sporttype =1 AND MP = 1 THEN 'Soccer Parlay' ELSE sportname END + ', '    
+	select @ErrType = @ErrType + CASE WHEN b.sporttype =1 AND MP = 1 THEN 'Soccer Parlay' ELSE sportname END + ', '    
 	from @tmp_Sports sports inner join    
 	(    
 		select 1 as sporttype, 0 MP, @MaxPerMatch as MaxPerMatch, @MaxMaxPerMatch as MaxMaxPerMatch    
