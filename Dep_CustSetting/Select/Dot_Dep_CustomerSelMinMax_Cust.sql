@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerSelMinMax_Cust]
 	@custid INT,
 	@MinBet MONEY OUTPUT,
@@ -28,8 +27,8 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerSelMinMax_Cust]
 	@MaxPerMatchv99 MONEY OUTPUT,
 	
 	@MinBetv1MP MONEY =0  OUTPUT,
-	@MaxBetv99MP MONEY =0 OUTPUT,
-	@MaxPerMatchv99MP MONEY =0 OUTPUT,
+	@MaxBetv1MP MONEY =0 OUTPUT,
+	@MaxPerMatchv1MP MONEY =0 OUTPUT,
 	
 	@MinBetv99MP MONEY OUTPUT,
 	@MaxBetv99MP MONEY OUTPUT,
