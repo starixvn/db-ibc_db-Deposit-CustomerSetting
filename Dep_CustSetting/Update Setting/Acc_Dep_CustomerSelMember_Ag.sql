@@ -89,7 +89,8 @@ BEGIN
 			@MaxPerMatchv11_Min  MONEY,
 		
 			@MaxPerMatchv99_Min  MONEY,
-		
+			
+			@MaxPerMatchv1MP_Min  MONEY,
 			@MaxPerMatchv99MP_Min  MONEY,
 			@MaxPerMatchv161_Min  MONEY,
 			
