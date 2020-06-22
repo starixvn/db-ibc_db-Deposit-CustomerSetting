@@ -925,7 +925,7 @@ BEGIN
 
 	-----------------------------------------------Validate Min & Max Bet-------------------------------------------------------------------
 	SELECT @ErrType = ''
-	SELECT @ErrType = @ErrType +  (CASE WHEN MP=0 THEN sports.Name ELSE CASE WHEN b.sporType = 1 THEN 'Soccer Parlay' ELSE 'Mixed Sports' END )       + ', '
+	SELECT @ErrType = @ErrType +  (CASE WHEN MP=0 THEN sports.Name ELSE CASE WHEN b.sporType = 1 THEN 'Soccer Parlay' ELSE 'Mixed Sports' END END )       + ', '
 	from #tmp_Sports sports inner join
 	(
 					SELECT 1 AS sporttype,0 AS MP, @MinBetv1 AS MinBet, @MaxBetv1 AS MaxBet, @MaxPerMatchv1 AS MaxPerMatch
