@@ -28,9 +28,10 @@ Revisions:
 	- 20170817@Elodie: Move Inspired VS to DCS structure [Redmine: #77274]
 	- 20171024@Elodie: Remove Inspired VS [Redmine: #82566]
 	- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
-
+	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:  
 */  
+BEGIN
 SET NOCOUNT ON  
 ----- Elodie @ 01 JUN 2015 -------------------  
  DECLARE @tmp_GameType TABLE (GameTypeID INT, GameTypeName NVARCHAR(50), IsDisabled BIT, IBCBettypeID INT)  
@@ -46,56 +47,61 @@ SET NOCOUNT ON
 ----- /Elodie @ 01 JUN 2015 -------------------  
   
 DECLARE   
-	 @MinBet_Min MONEY,   
-	 @MaxBet_Max MONEY,   
-	 @MaxPerMatch_Min MONEY,   
-	 @MaxPerMatch_Max MONEY,      
-	 @MinBetv2_Min MONEY,   
-	 @MaxBetv2_Max MONEY,   
-	 @MaxPerMatchv2_Min MONEY,   
-	 @MaxPerMatchv2_Max MONEY,  
-	 @MinBetv3_Min MONEY,   
-	 @MaxBetv3_Max MONEY,   
-	 @MaxPerMatchv3_Min MONEY,   
-	 @MaxPerMatchv3_Max MONEY,      
-	 @MinBetv5_Min MONEY,   
-	 @MaxBetv5_Max MONEY,   
-	 @MaxPerMatchv5_Min MONEY,   
-	 @MaxPerMatchv5_Max MONEY,      
-	 @MinBetv8_Min MONEY,   
-	 @MaxBetv8_Max MONEY,   
-	 @MaxPerMatchv8_Min MONEY,   
-	 @MaxPerMatchv8_Max MONEY,      
-	 @MinBetv10_Min MONEY,   
-	 @MaxBetv10_Max MONEY,   
-	 @MaxPerMatchv10_Min MONEY,   
-	 @MaxPerMatchv10_Max MONEY,      
-	 @MinBetv11_Min MONEY,   
-	 @MaxBetv11_Max MONEY,   
-	 @MaxPerMatchv11_Min MONEY,   
-	 @MaxPerMatchv11_Max MONEY,      
-	 @MinBetv99_Min MONEY,   
-	 @MaxBetv99_Max MONEY,   
-	 @MaxPerMatchv99_Min MONEY,   
-	 @MaxPerMatchv99_Max MONEY,  
-	   
-	 @MinBetv99MP_Min MONEY,   
-	 @MaxBetv99MP_Max MONEY,   
-	 @MaxPerMatchv99MP_Min MONEY,   
-	 @MaxPerMatchv99MP_Max MONEY,   
+	@MinBet_Min MONEY,   
+	@MaxBet_Max MONEY,   
+	@MaxPerMatch_Min MONEY,   
+	@MaxPerMatch_Max MONEY,      
+	@MinBetv2_Min MONEY,   
+	@MaxBetv2_Max MONEY,   
+	@MaxPerMatchv2_Min MONEY,   
+	@MaxPerMatchv2_Max MONEY,  
+	@MinBetv3_Min MONEY,   
+	@MaxBetv3_Max MONEY,   
+	@MaxPerMatchv3_Min MONEY,   
+	@MaxPerMatchv3_Max MONEY,      
+	@MinBetv5_Min MONEY,   
+	@MaxBetv5_Max MONEY,   
+	@MaxPerMatchv5_Min MONEY,   
+	@MaxPerMatchv5_Max MONEY,      
+	@MinBetv8_Min MONEY,   
+	@MaxBetv8_Max MONEY,   
+	@MaxPerMatchv8_Min MONEY,   
+	@MaxPerMatchv8_Max MONEY,      
+	@MinBetv10_Min MONEY,   
+	@MaxBetv10_Max MONEY,   
+	@MaxPerMatchv10_Min MONEY,   
+	@MaxPerMatchv10_Max MONEY,      
+	@MinBetv11_Min MONEY,   
+	@MaxBetv11_Max MONEY,   
+	@MaxPerMatchv11_Min MONEY,   
+	@MaxPerMatchv11_Max MONEY,      
+	@MinBetv99_Min MONEY,   
+	@MaxBetv99_Max MONEY,   
+	@MaxPerMatchv99_Min MONEY,   
+	@MaxPerMatchv99_Max MONEY,  
 
-	 --v202  
-	 @MinBetv202_1501_Min MONEY,   
-	 @MaxBetv202_1501_Max MONEY,   
-	 @MaxPerMatchv202_1501_Min MONEY,   
-	 @MaxPerMatchv202_1501_Max MONEY,      
-	  
-	 --Number game  
-	 @MinBetv161_Max MONEY,   
-	 @MaxBetv161_Min MONEY,   
-	 @MaxPerMatchv161_Min MONEY,   
-	 @MaxPerMatchv161_Max MONEY,  
-	 @MaxPerBallv161_Max MONEY  
+	@MinBetv1MP_Min MONEY,   
+	@MaxBetv1MP_Max MONEY,   
+	@MaxPerMatchv1MP_Min MONEY,   
+	@MaxPerMatchv1MP_Max MONEY, 
+
+	@MinBetv99MP_Min MONEY,   
+	@MaxBetv99MP_Max MONEY,   
+	@MaxPerMatchv99MP_Min MONEY,   
+	@MaxPerMatchv99MP_Max MONEY,   
+
+	--v202  
+	@MinBetv202_1501_Min MONEY,   
+	@MaxBetv202_1501_Max MONEY,   
+	@MaxPerMatchv202_1501_Min MONEY,   
+	@MaxPerMatchv202_1501_Max MONEY,      
+
+	--Number game  
+	@MinBetv161_Max MONEY,   
+	@MaxBetv161_Min MONEY,   
+	@MaxPerMatchv161_Min MONEY,   
+	@MaxPerMatchv161_Max MONEY,  
+	@MaxPerBallv161_Max MONEY  
 	   
 ------------------------------------------------------------------------------------------------------------------------------------------  
 SELECT      
@@ -171,6 +177,15 @@ FROM
 WHERE ci.custid = @CustID      
   
 SELECT   
+	 @MinBetv1MP_Min = MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),  
+	 @MaxBetv1MP_Max = MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END)  
+FROM   
+	 Dep_CustSetting AS cs WITH(NOLOCK)  
+	 INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.custid = ci.recommend OR cs.custid = ci.mrecommend OR cs.custid = ci.srecommend)  
+	 AND cs.bettype = 9 AND sporttype = 1  
+WHERE ci.custid = @custid
+  
+SELECT   
 	 @MinBetv99MP_Min = MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),  
 	 @MaxBetv99MP_Max = MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END)  
 FROM   
@@ -218,6 +233,10 @@ SELECT
 	 @MaxPerMatchv11_Max = MIN(CASE WHEN cs.MaxPerMatch11 = 0 THEN NULL ELSE cs.MaxPerMatch11 END),    
 	 @MaxPerMatchv99_Min = 0,      
 	 @MaxPerMatchv99_Max = MIN(CASE WHEN cs.MaxPerMatch99 = 0 THEN NULL ELSE cs.MaxPerMatch99 END),    
+	 
+	 @MaxPerMatchv1MP_Min = 0,  
+	 @MaxPerMatchv1MP_Max = MIN(CASE WHEN cs.MaxPerMatch1MP = 0 THEN NULL ELSE cs.MaxPerMatch1MP END),   
+	 
 	 @MaxPerMatchv99MP_Min = 0,  
 	 @MaxPerMatchv99MP_Max = MIN(CASE WHEN cs.MaxPerMatch99MP = 0 THEN NULL ELSE cs.MaxPerMatch99MP END),   
 	 @MaxPerMatchv161_Min = 0,  
@@ -255,6 +274,7 @@ SELECT
 	ISNULL(ci.maxpermatch11, 0) AS maxpermatchv11,      
 	ISNULL(ci.maxpermatch12, 0) AS maxpermatchv12,  
 	ISNULL(ci.maxpermatch99, 0) AS maxpermatchv99,      
+	ISNULL(ci.maxpermatch1mp,0) AS maxpermatchv1mp,
 	ISNULL(ci.maxpermatch99mp,0) AS maxpermatchv99mp,                 
     
 	ISNULL(ci.maxpermatch161,0) AS maxpermatchv161,  
@@ -286,6 +306,9 @@ SELECT
   
 	 ISNULL(MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype=99 THEN cs.minbet ELSE 0 END), 0) AS MinBetv99,      
 	 ISNULL(MAX(CASE WHEN cs.bettype = 1 AND cs.sporttype=99 THEN cs.maxbet ELSE 0 END), 0) AS MaxBetv99,      
+	
+	 ISNULL(MAX(CASE WHEN cs.bettype = 9 AND cs.sporttype = 1 THEN cs.minbet ELSE 0 END), 0) AS MinBetv1MP,  
+	 ISNULL(MAX(CASE WHEN cs.bettype = 9 AND cs.sporttype = 1 THEN cs.maxbet ELSE 0 END), 0) AS MaxBetv1MP,    
   
 	 ISNULL(MAX(CASE WHEN cs.bettype = 9 AND cs.sporttype = 99 THEN cs.minbet ELSE 0 END), 0) AS MinBetv99MP,  
 	 ISNULL(MAX(CASE WHEN cs.bettype = 9 AND cs.sporttype = 99 THEN cs.maxbet ELSE 0 END), 0) AS MaxBetv99MP,    
@@ -336,7 +359,12 @@ SELECT
 	ISNULL(@MaxBetv99_Max, 0) AS MaxBetv99_Max,       
 	ISNULL(@MaxPerMatchv99_Min, 0) AS MaxPerMatchv99_Min,       
 	ISNULL(@MaxPerMatchv99_Max, 0) AS MaxPerMatchv99_Max ,    
-  
+	
+	ISNULL(@MinBetv1MP_Min, 0) AS MinBetv1MP_Min,       
+	ISNULL(@MaxBetv1MP_Max, 0) AS MaxBetv1MP_Max,       
+	ISNULL(@MaxPerMatchv1MP_Min, 0) AS MaxPerMatchv1MP_Min,       
+	ISNULL(@MaxPerMatchv1MP_Max, 0) AS MaxPerMatchv1MP_Max , 
+	
 	ISNULL(@MinBetv99MP_Min, 0) AS MinBetv99MP_Min,       
 	ISNULL(@MaxBetv99MP_Max, 0) AS MaxBetv99MP_Max,       
 	ISNULL(@MaxPerMatchv99MP_Min, 0) AS MaxPerMatchv99MP_Min,       
@@ -366,6 +394,9 @@ GROUP BY
 	ci.maxpermatch11,    
 	ci.maxpermatch12,       
 	ci.maxpermatch99,   
+	ci.maxpermatch1mp,   
 	ci.maxpermatch99mp,    
 	ci.maxpermatch161,  
 	ci.maxperball161
+END
+GO

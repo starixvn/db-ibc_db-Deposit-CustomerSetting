@@ -38,6 +38,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 
 	--v201
 	@MaxPerMatchv99 MONEY,
+	@MaxPerMatchv1MP MONEY =0,
 	@MaxPerMatchv99MP MONEY,	
 	@MaxPerMatchv161 MONEY,	
 	@MaxPerBallv161 MONEY = 0,
@@ -80,7 +81,8 @@ Revisions:
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200203@Elodie: Apply Currency Modifier [Redmine:127300]
 	- 20200403@Elodie: Add Currency Modifier history [Redmine:127300]
-
+	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -229,12 +231,12 @@ INSERT INTO [dbo].[custinfo](
 	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch99]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
 	, DisableOutright, DisableCasino,DisableNumber
-	,maxpermatch161,MaxPerMatch99MP,MaxPerBall161,danger,danger2,danger3,HideKeno)
+	,maxpermatch161,MaxPerMatch99MP,MaxPerMatch1MP,MaxPerBall161,danger,danger2,danger3,HideKeno)
 VALUES(
 	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11, @MaxPerMatchv99
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
 	,@DisableOutright, @DisableCasino, @DisableNumber
-	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerBallv161,@danger,@danger2,@danger3,@HideKeno)
+	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerMatchv1MP,@MaxPerBallv161,@danger,@danger2,@danger3,@HideKeno)
 
 IF @@ERROR <> 0
 BEGIN 

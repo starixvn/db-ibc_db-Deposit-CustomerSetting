@@ -41,6 +41,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 	@MaxPerMatchv99 MONEY,
 	
 	--Mix Parlay mix sports
+	@MinBetv1MP MONEY =0,
+	@MaxBetv1MP MONEY =0,
+	@MaxPerMatchv1MP MONEY =0,
+	
 	@MinBetv99MP MONEY,
 	@MaxBetv99MP MONEY,
 	@MaxPerMatchv99MP MONEY,
@@ -283,6 +287,7 @@ Revisions:
 	- 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -363,6 +368,10 @@ BEGIN
 				@MaxPerMatchv99				= @MaxPerMatchv99,
 				
 				--Mix Parlay mix sports
+				@MinBetv1MP					= @MinBetv1MP,
+				@MaxBetv1MP					= @MaxBetv1MP,
+				@MaxPerMatchv1MP			= @MaxPerMatchv1MP,
+				
 				@MinBetv99MP				= @MinBetv99MP,
 				@MaxBetv99MP				= @MaxBetv99MP,
 				@MaxPerMatchv99MP			= @MaxPerMatchv99MP,
@@ -599,6 +608,7 @@ BEGIN
 		@MaxPerMatchv10 = @MaxPerMatchv10,
 		@MaxPerMatchv11 = @MaxPerMatchv11,	
 		@MaxPerMatchv99 = @MaxPerMatchv99,
+		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
 		@MaxPerMatchv99MP = @MaxPerMatchv99MP,
 		@MaxPerMatchv161 = @MaxPerMatchv161,
 		@MaxPerBallv161 = @MaxPerBallv161,
@@ -650,7 +660,7 @@ BEGIN
 
 	UNION ALL	SELECT @custid, 4, 1, @v1apositiontaking_4, @v1mpositiontaking_4, @v1spositiontaking_4, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
 	UNION ALL	SELECT @custid, 6, 1, @v1apositiontaking_6, @v1mpositiontaking_6, @v1spositiontaking_6, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
-	UNION ALL	SELECT @custid, 9, 1, @v1apositiontaking_9, @v1mpositiontaking_9, @v1spositiontaking_9, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
+	UNION ALL	SELECT @custid, 9, 1, @v1apositiontaking_9, @v1mpositiontaking_9, @v1spositiontaking_9, 0, 0, 0, 0, @MinBetv1MP, @MaxBetv1MP, 0
 	UNION ALL	SELECT @custid, 10, 1, @v1apositiontaking_10, @v1mpositiontaking_10, @v1spositiontaking_10, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
 
 	UNION ALL	SELECT @custid, 1, 2, @v2apositiontaking_1, @v2mpositiontaking_1, @v2spositiontaking_1, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0
@@ -889,7 +899,11 @@ BEGIN
 	'MinBv99="'+ COALESCE(CAST(@MinBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv99="'+ COALESCE(CAST(@MaxBetv99 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv99="'+ COALESCE(CAST(@MaxPerMatchv99 AS VARCHAR(50)),SPACE(1)) + '" ' +	
-
+	
+	'MinBv1MP="'+ COALESCE(CAST(@MinBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'MaxBv1MP="'+ COALESCE(CAST(@MaxBetv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'MPMv1MP="'+ COALESCE(CAST(@MaxPerMatchv1MP AS VARCHAR(50)),SPACE(1)) + '" ' +
+	
 	'MinBv99MP="'+ COALESCE(CAST(@MinBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MaxBv99MP="'+ COALESCE(CAST(@MaxBetv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'MPMv99MP="'+ COALESCE(CAST(@MaxPerMatchv99MP AS VARCHAR(50)),SPACE(1)) + '" ' +
