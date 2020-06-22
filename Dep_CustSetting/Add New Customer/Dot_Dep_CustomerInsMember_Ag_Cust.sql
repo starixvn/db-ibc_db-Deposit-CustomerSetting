@@ -166,6 +166,7 @@ AS
 	 - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
 	 - 20190805@Winnie: Remove MuyaThai [Redmine:#117501]
 	 - 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	 - 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -266,7 +267,11 @@ BEGIN
 			 @maxbetv99 MONEY,     
 			 @maxpermatchv99 MONEY,    
 	     
-			 --Mix Parlay Mixed sports    
+			 --Mix Parlay Mixed sports
+			 @minbetv1MP MONEY,    
+			 @maxbetv1MP MONEY,    
+			 @maxpermatchv1MP MONEY, 
+			 
 			 @minbetv99MP MONEY,    
 			 @maxbetv99MP MONEY,    
 			 @maxpermatchv99MP MONEY,    
@@ -356,6 +361,7 @@ BEGIN
 			 @MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,     
 	     
 			 --Mix parlay mix sport    
+			 @MinMinBetv1MP money, @MaxMaxBetv1MP money, @MaxMaxPerMatchv1MP money,    
 			 @MinMinBetv99MP money, @MaxMaxBetv99MP money, @MaxMaxPerMatchv99MP money,    
 	
 			 --Number game    
@@ -560,7 +566,8 @@ BEGIN
 		 @maxpermatchv11 = maxpermatch11,    
 	
 		 @maxpermatchv161 = maxpermatch161,--number game    
-		 @maxperballv161 = maxperball161,    
+		 @maxperballv161 = maxperball161,  
+		 @maxpermatchv1MP = maxpermatch1mp,	
 		 @maxpermatchv99MP = maxpermatch99mp, -- mix parlay mix sports    
 		 @maxpermatchv99 = maxpermatch99,    
 
@@ -629,6 +636,10 @@ BEGIN
 		
 		  ,@minbetv99	= MAX(CASE WHEN sporttype = 99 AND bettype =1 THEN minbet ELSE 0 END)    
 		  ,@maxbetv99	= MAX(CASE WHEN sporttype = 99 AND bettype =1 THEN maxbet ELSE 0 END)    
+	
+		  ,@minbetv1MP = MAX(CASE WHEN sporttype = 1 AND bettype =9 THEN minbet ELSE 0 END)    
+		  ,@maxbetv1MP = MAX(CASE WHEN sporttype = 1 AND bettype =9 THEN maxbet ELSE 0 END)    
+	
 		  ,@minbetv99MP = MAX(CASE WHEN sporttype = 99 AND bettype =9 THEN minbet ELSE 0 END)    
 		  ,@maxbetv99MP = MAX(CASE WHEN sporttype = 99 AND bettype =9 THEN maxbet ELSE 0 END)    
 	
@@ -683,6 +694,10 @@ BEGIN
 				@maxpermatchv11		= ISNULL(MAX(CASE WHEN SportType = 11 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv11),  
 				@maxbetv99			= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN MaxBet ELSE NULL END),@maxbetv99),     
 				@maxpermatchv99		= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv99),    
+				
+				@maxbetv1MP		= ISNULL(MAX(CASE WHEN SportType = 1 AND Bettype = 9 THEN MaxBet ELSE NULL END),@maxbetv1MP),     
+				@maxpermatchv1MP	= ISNULL(MAX(CASE WHEN SportType = 1 AND Bettype = 9 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv1MP),    
+	  
 				@maxbetv99MP		= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 9 THEN MaxBet ELSE NULL END),@maxbetv99MP),     
 				@maxpermatchv99MP	= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 9 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv99MP),    
 	  
@@ -710,6 +725,10 @@ BEGIN
 				@maxpermatchv11		= ISNULL(MAX(CASE WHEN SportType = 11 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv11),  		
 				@maxbetv99			= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN MaxBet ELSE NULL END),@maxbetv99),     
 				@maxpermatchv99		= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 1 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv99),    
+				
+				@maxbetv1MP		= ISNULL(MAX(CASE WHEN SportType = 1 AND Bettype = 9 THEN MaxBet ELSE NULL END),@maxbetv1MP),     
+				@maxpermatchv1MP   = ISNULL(MAX(CASE WHEN SportType = 1 AND Bettype = 9 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv1MP),    
+	   
 				@maxbetv99MP		= ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 9 THEN MaxBet ELSE NULL END),@maxbetv99MP),     
 				@maxpermatchv99MP   = ISNULL(MAX(CASE WHEN SportType = 99 AND Bettype = 9 THEN  MaxPerMatch ELSE NULL END),@maxpermatchv99MP),    
 	   
@@ -1012,6 +1031,10 @@ BEGIN
 		  ,@MaxMaxBetv11	= ISNULL(MIN(CASE WHEN sporttype = 11 AND bettype = 1 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    		
 		  ,@MinMinBetv99	= ISNULL(MAX(CASE WHEN sporttype = 99 AND bettype = 1 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
 		  ,@MaxMaxBetv99	= ISNULL(MIN(CASE WHEN sporttype = 99 AND bettype = 1 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    
+		  
+		  ,@MinMinBetv1MP	= ISNULL(MAX(CASE WHEN sporttype = 1 AND bettype = 9 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
+		  ,@MaxMaxBetv1MP	= ISNULL(MIN(CASE WHEN sporttype = 1 AND bettype = 9 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    	   
+		  
 		  ,@MinMinBetv99MP	= ISNULL(MAX(CASE WHEN sporttype = 99 AND bettype = 9 AND minbet <> 0 THEN minbet ELSE NULL END),0)    
 		  ,@MaxMaxBetv99MP	= ISNULL(MIN(CASE WHEN sporttype = 99 AND bettype = 9 AND maxbet <> 0 THEN maxbet ELSE NULL END),0)    	   
 	FROM Dep_Custsetting cs WITH(NOLOCK)    
@@ -1035,6 +1058,7 @@ BEGIN
 		 
 		 @MaxMaxPerMatchv99		= IsNull(Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),0),    
 		 -- parlay mixed sports    
+		 @MaxMaxPerMatchv1MP	= isnull(Min(case when cs.MaxPerMatch1MP = 0 then NULL else cs.MaxPerMatch99MP end),0),    
 		 @MaxMaxPerMatchv99MP	= isnull(Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),0),    
 		 --Number game    
 		 @MaxMaxPerMatchv161	= isnull(Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),0),    
@@ -1045,23 +1069,24 @@ BEGIN
 	SET ANSI_WARNINGS ON    
 	    
 	SELECT @ErrType = ''    
-	SELECT @ErrType = @ErrType + sportname + ', '    
+	SELECT @ErrType = @ErrType + CASE WHEN b.sporttype = 1 AND MP =1 THEN 'Soccer Parlay' ELSE sportname END + ', '    
 	FROM @tmp_Sports sports INNER JOIN    
 	(    
-		SELECT 1 as sporttype, @MinBet as MinBet, @MinMinBet as MinMinBet    
-			union all select 2 as sporttype, @MinBetv2 as MinBet, @MinMinBetv2 as MinMinBet    
-			union all select 3 as sporttype, @MinBetv3 as MinBet, @MinMinBetv3 as MinMinBet    
-			union all select 5 as sporttype, @MinBetv5 as MinBet, @MinMinBetv5 as MinMinBet    
-			union all select 8 as sporttype, @MinBetv8 as MinBet, @MinMinBetv8 as MinMinBet    
-			union all select 10 as sporttype, @MinBetv10 as MinBet, @MinMinBetv10 as MinMinBet    
-			union all select 11 as sporttype, @MinBetv11 as MinBet, @MinMinBetv11 as MinMinBet     
+		SELECT 1 as sporttype, 0 MP, @MinBet as MinBet, @MinMinBet as MinMinBet    
+			union all select 2 as sporttype, 0 MP, @MinBetv2 as MinBet, @MinMinBetv2 as MinMinBet    
+			union all select 3 as sporttype, 0 MP, @MinBetv3 as MinBet, @MinMinBetv3 as MinMinBet    
+			union all select 5 as sporttype, 0 MP, @MinBetv5 as MinBet, @MinMinBetv5 as MinMinBet    
+			union all select 8 as sporttype, 0 MP, @MinBetv8 as MinBet, @MinMinBetv8 as MinMinBet    
+			union all select 10 as sporttype, 0 MP, @MinBetv10 as MinBet, @MinMinBetv10 as MinMinBet    
+			union all select 11 as sporttype, 0 MP, @MinBetv11 as MinBet, @MinMinBetv11 as MinMinBet     
 			
-			union all select 99 as sporttype, @MinBetv99 as MinBet, @MinMinBetv99 as MinMinBet    
+			union all select 99 as sporttype, 0 MP, @MinBetv99 as MinBet, @MinMinBetv99 as MinMinBet    
 			--Parlay mixed     
-			union all  select 99 as sporttype, @MinBetv99MP as MinBet, @MinMinBetv99MP as MinMinBet    
+			union all  select 1 as sporttype, 1 MP, @MinBetv1MP as MinBet, @MinMinBetv1MP as MinMinBet    
+			union all  select 99 as sporttype, 0 MP, @MinBetv99MP as MinBet, @MinMinBetv99MP as MinMinBet    
 	     
 			--number game    
-			union all select 161 as sporttype, @MinBetv161 as MinBet, @MinMinBetv161 as MinMinBet    	        
+			union all select 161 as sporttype, 0 MP, @MinBetv161 as MinBet, @MinMinBetv161 as MinMinBet    	        
 	) as b on sports.sporttype = b.sporttype    
 	WHERE MinMinBet>0 and MinBet>0 and MinBet<MinMinBet  
 	  
@@ -1074,24 +1099,25 @@ BEGIN
 	END    
 	    
 	select @ErrType = ''    
-	select @ErrType = @ErrType + sportname + ', '    
+	select @ErrType = @ErrType + CASE WHEN b.sporttype = 1 AND MP = 1 THEN 'Soccer Parlay' ELSE sportname END + ', '    
 	from @tmp_Sports sports inner join    
 	(    
-		select 1 as sporttype, @MaxBet as MaxBet, @MaxMaxBet as MaxMaxBet    
-	 union all select 2 as sporttype, @MaxBetv2 as MaxBet, @MaxMaxBetv2 as MaxMaxBet    
-	 union all select 3 as sporttype, @MaxBetv3 as MaxBet, @MaxMaxBetv3 as MaxMaxBet    
-	 union all select 5 as sporttype, @MaxBetv5 as MaxBet, @MaxMaxBetv5 as MaxMaxBet    
-	 union all select 8 as sporttype, @MaxBetv8 as MaxBet, @MaxMaxBetv8 as MaxMaxBet    
-	 union all select 10 as sporttype, @MaxBetv10 as MaxBet, @MaxMaxBetv10 as MaxMaxBet    
-	 union all select 11 as sporttype, @MaxBetv11 as MaxBet, @MaxMaxBetv11 as MaxMaxBet     
+		select 1 as sporttype, 0 MP, @MaxBet as MaxBet, @MaxMaxBet as MaxMaxBet    
+	 union all select 2 as sporttype, 0 MP, @MaxBetv2 as MaxBet, @MaxMaxBetv2 as MaxMaxBet    
+	 union all select 3 as sporttype, 0 MP, @MaxBetv3 as MaxBet, @MaxMaxBetv3 as MaxMaxBet    
+	 union all select 5 as sporttype, 0 MP, @MaxBetv5 as MaxBet, @MaxMaxBetv5 as MaxMaxBet    
+	 union all select 8 as sporttype, 0 MP, @MaxBetv8 as MaxBet, @MaxMaxBetv8 as MaxMaxBet    
+	 union all select 10 as sporttype, 0 MP, @MaxBetv10 as MaxBet, @MaxMaxBetv10 as MaxMaxBet    
+	 union all select 11 as sporttype, 0 MP, @MaxBetv11 as MaxBet, @MaxMaxBetv11 as MaxMaxBet     
 	 
-	 union all select 99 as sporttype, @MaxBetv99 as MaxBet, @MaxMaxBetv99 as MaxMaxBet      
+	 union all select 99 as sporttype, 0 MP, @MaxBetv99 as MaxBet, @MaxMaxBetv99 as MaxMaxBet      
 	     
 	 --parlay mixed sports    
-	 union all select 99 as sporttype, @MaxBetv99MP as MaxBet, @MaxMaxBetv99MP as MaxMaxBet    
+	 union all select 1 as sporttype, 1 MP, @MaxBetv1MP as MaxBet, @MaxMaxBetv1MP as MaxMaxBet    
+	 union all select 99 as sporttype, 0 MP, @MaxBetv99MP as MaxBet, @MaxMaxBetv99MP as MaxMaxBet    
 	     
 	 --number game     
-	 union all select 161 as sporttype, @MaxBetv161 as MaxBet, @MaxMaxBetv161 as MaxMaxBet    
+	 union all select 161 as sporttype, 0 MP, @MaxBetv161 as MaxBet, @MaxMaxBetv161 as MaxMaxBet    
 	) as b on sports.sporttype = b.sporttype    
 	where MaxMaxBet>0 and MaxBet>0 and MaxBet>MaxMaxBet    
 	if @ErrType <>''    
@@ -1103,22 +1129,23 @@ BEGIN
 	END    
 	    
 	select @ErrType = ''    
-	select @ErrType = @ErrType + sportname + ', '    
+	select @ErrType = @ErrType + CASE WHEN sporttype =1 AND MP = 1 THEN 'Soccer Parlay' ELSE sportname END + ', '    
 	from @tmp_Sports sports inner join    
 	(    
-		select 1 as sporttype, @MaxPerMatch as MaxPerMatch, @MaxMaxPerMatch as MaxMaxPerMatch    
-	 union all select 2 as sporttype, @MaxPerMatchv2 as MaxPerMatch, @MaxMaxPerMatchv2 as MaxMaxPerMatch    
-	 union all select 3 as sporttype, @MaxPerMatchv3 as MaxPerMatch, @MaxMaxPerMatchv3 as MaxMaxPerMatch    
-	 union all select 5 as sporttype, @MaxPerMatchv5 as MaxPerMatch, @MaxMaxPerMatchv5 as MaxMaxPerMatch    
-	 union all select 8 as sporttype, @MaxPerMatchv8 as MaxPerMatch, @MaxMaxPerMatchv8 as MaxMaxPerMatch    
-	 union all select 10 as sporttype, @MaxPerMatchv10 as MaxPerMatch, @MaxMaxPerMatchv10 as MaxMaxPerMatch    
-	 union all select 11 as sporttype, @MaxPerMatchv11 as MaxPerMatch, @MaxMaxPerMatchv11 as MaxMaxPerMatch    
+		select 1 as sporttype, 0 MP, @MaxPerMatch as MaxPerMatch, @MaxMaxPerMatch as MaxMaxPerMatch    
+	 union all select 2 as sporttype, 0 MP, @MaxPerMatchv2 as MaxPerMatch, @MaxMaxPerMatchv2 as MaxMaxPerMatch    
+	 union all select 3 as sporttype, 0 MP, @MaxPerMatchv3 as MaxPerMatch, @MaxMaxPerMatchv3 as MaxMaxPerMatch    
+	 union all select 5 as sporttype, 0 MP, @MaxPerMatchv5 as MaxPerMatch, @MaxMaxPerMatchv5 as MaxMaxPerMatch    
+	 union all select 8 as sporttype, 0 MP, @MaxPerMatchv8 as MaxPerMatch, @MaxMaxPerMatchv8 as MaxMaxPerMatch    
+	 union all select 10 as sporttype, 0 MP, @MaxPerMatchv10 as MaxPerMatch, @MaxMaxPerMatchv10 as MaxMaxPerMatch    
+	 union all select 11 as sporttype, 0 MP, @MaxPerMatchv11 as MaxPerMatch, @MaxMaxPerMatchv11 as MaxMaxPerMatch    
 	
-	 union all select 99 as sporttype, @MaxPerMatchv99 as MaxPerMatch, @MaxMaxPerMatchv99 as MaxMaxPerMatch    
+	 union all select 99 as sporttype, 0 MP, @MaxPerMatchv99 as MaxPerMatch, @MaxMaxPerMatchv99 as MaxMaxPerMatch    
 	 --mixed sports    
-	 union all select 99 as sporttype, @MaxPerMatchv99MP as MaxPerMatch, @MaxMaxPerMatchv99MP as MaxMaxPerMatch    
+	 union all select 1 as sporttype, 1 MP, @MaxPerMatchv1MP as MaxPerMatch, @MaxMaxPerMatchv1MP as MaxMaxPerMatch    
+	 union all select 99 as sporttype, 0 MP, @MaxPerMatchv99MP as MaxPerMatch, @MaxMaxPerMatchv99MP as MaxMaxPerMatch    
 	 --number game    
-	 union all select 161 as sporttype, @MaxPerMatchv161 as MaxPerMatch, @MaxMaxPerMatchv161 as MaxMaxPerMatch       
+	 union all select 161 as sporttype, 0 MP, @MaxPerMatchv161 as MaxPerMatch, @MaxMaxPerMatchv161 as MaxMaxPerMatch       
 	) as b on sports.sporttype = b.sporttype    
 	where MaxMaxPerMatch>0 and MaxPerMatch>0 and MaxPerMatch>MaxMaxPerMatch    
 	if @ErrType <>''    
@@ -1229,7 +1256,8 @@ BEGIN
 		@MaxPerMatchv8 = @MaxPerMatchv8,    
 		@MaxPerMatchv10 = @MaxPerMatchv10,    
 		@MaxPerMatchv11 = @MaxPerMatchv11,    	
-		@MaxPerMatchv99 = @MaxPerMatchv99,    
+		@MaxPerMatchv99 = @MaxPerMatchv99,  
+		@MaxPerMatchv1MP = @MaxPerMatchv1MP,		
 		@MaxPerMatchv99MP = @MaxPerMatchv99MP,    
 		@MaxPerMatchv161 = @MaxPerMatchv161,    
 		@MaxPerBallv161 = @MaxPerBallv161,    
@@ -1271,7 +1299,7 @@ BEGIN
 	UNION ALL    
 	select @custid, 6, 1, @apositiontaking_6, @mpositiontaking_6, @spositiontaking_6, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBet, @MaxBet, 0    
 	UNION ALL    
-	select @custid, 9, 1, @apositiontaking_9, @mpositiontaking_9, @spositiontaking_9, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBet, @MaxBet, 0    
+	select @custid, 9, 1, @apositiontaking_9, @mpositiontaking_9, @spositiontaking_9, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv1MP, @MaxBetv1MP, 0    
 	UNION ALL    
 	select @custid, 10, 1, @apositiontaking_10, @mpositiontaking_10, @spositiontaking_10,@playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs,@MinBet, @MaxBet, 0    
 	    

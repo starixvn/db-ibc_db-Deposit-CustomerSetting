@@ -35,6 +35,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
 	@MaxPerMatchv99 money,
 
 	--Mix Parlay mix sports
+	@MinBetv1MP money =0,
+	@MaxBetv1MP money =0,
+	@MaxPerMatchv1MP money =0,
+	
 	@MinBetv99MP money,
 	@MaxBetv99MP money,
 	@MaxPerMatchv99MP money,
@@ -129,6 +133,7 @@ Revisions:
    - 20180125@Winnie: Hide inactive products [RedmineID: #86086]
    - 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
    - 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
+   - 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @ErrCode:
     = 0: check valid parameters successfully.
@@ -178,6 +183,10 @@ if
 
 		
 	--Mix Parlay mix sports
+	or @MinBetv1MP <0
+	or @MaxBetv1MP <0
+	or @MaxPerMatchv1MP <0
+	
 	or @MinBetv99MP <0
 	or @MaxBetv99MP <0
 	or @MaxPerMatchv99MP <0
@@ -332,6 +341,5 @@ BEGIN
 	return
 END
 	
-return
+
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam] TO [bodbAdminNet] AS [dbo]
