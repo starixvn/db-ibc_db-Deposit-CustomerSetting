@@ -264,7 +264,14 @@ BEGIN
 						INNER JOIN #tempMemNoGrouped c	ON s.CustID=c.CustID
 						INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive
 					WHERE ID >= @StartRow AND ID <= @StopRow	
-						
+					
+					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
+					SELECT c.CustID,SportType,BetType,IsLive,0,0,@PT
+					FROM #tempMemNoGrouped c		
+						CROSS APPLY @SportBettypeFilter t	
+					WHERE ID >= @StartRow AND ID <= @StopRow	
+						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
+							
 					IF	@StopRow = @MaxRow 
 						BREAK
 						
@@ -400,7 +407,7 @@ BEGIN
 
 				WHILE (0 = 0)
 				BEGIN				
-				
+					
 					UPDATE s
 					SET s.AgentPT=@PT
 					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
@@ -408,7 +415,15 @@ BEGIN
 						INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive						
 					WHERE t.IsApplyBA=0
 						AND ID >= @StartRow AND ID <= @StopRow	
-
+					
+					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
+					SELECT c.CustID,SportType,BetType,IsLive,0,0,@PT
+					FROM #tempMemNoGrouped c		
+						CROSS APPLY @SportBettypeFilter t	
+					WHERE ID >= @StartRow AND ID <= @StopRow	
+						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
+						AND t.IsApplyBA=0
+							
 					UPDATE s
 					SET s.AgentPT=0
 					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
@@ -417,7 +432,15 @@ BEGIN
 						INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 						AND t.IsApplyBA=1						
-						
+					
+					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
+					SELECT c.CustID,SportType,BetType,IsLive,0,0,0
+					FROM #tempMemNoGrouped c		
+						CROSS APPLY @SportBettypeFilter t	
+					WHERE ID >= @StartRow AND ID <= @StopRow	
+						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
+						AND t.IsApplyBA=1
+							
 					IF	@StopRow = @MaxRow 
 						BREAK
 						
