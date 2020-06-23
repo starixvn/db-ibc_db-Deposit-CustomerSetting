@@ -1703,14 +1703,14 @@ BEGIN
 	END
 
 	Select @LogSPData ='<Acc_Dep_CustomerUpdMember_Com> ' +
-	'<SportsBook custid="'+ coalesce(cast(@custid as varchar(50)),space(1))+ '" ' +
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+ '" ' +
+	'<info custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
+	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" ' +
+	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
 
-	'MinBv1="'+ coalesce(cast(@MinBetv1 as varchar(50)),space(1))+ '" ' +
+	'<SportsBook MinBv1="'+ coalesce(cast(@MinBetv1 as varchar(50)),space(1))+ '" ' +
 	'MaxBv1="'+ coalesce(cast(@MaxBetv1 as varchar(50)),space(1))+ '" ' +
 	'MPMv1="'+ coalesce(cast(@MaxPerMatchv1 as varchar(50)),space(1))+ '" ' +
 	'MinBv2="'+ coalesce(cast(@MinBetv2 as varchar(50)),space(1))+ '" ' +
