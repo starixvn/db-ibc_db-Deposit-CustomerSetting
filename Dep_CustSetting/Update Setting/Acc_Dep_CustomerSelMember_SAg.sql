@@ -240,7 +240,7 @@ BEGIN
 	select	@MinBetv1MP_Min = Max(case when MinBet = 0 then NULL else MinBet end),
 			@MaxBetv1MP_Max = Min(case when MaxBet = 0 then NULL else MaxBet end)
 	from dep_custsetting cs WITH(NOLOCK)
-		 INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 9 and cs.sporttype = 99
+		 INNER JOIN custinfo as ci WITH(NOLOCK) ON (cs.CustID = ci.SRecommend) and cs.bettype = 9 and cs.sporttype = 1
 	where ci.custid = @Custid
 	
 	select	@MinBetv99MP_Min = Max(case when MinBet = 0 then NULL else MinBet end),
