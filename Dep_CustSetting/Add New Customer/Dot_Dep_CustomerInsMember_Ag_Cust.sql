@@ -1058,7 +1058,7 @@ BEGIN
 		 
 		 @MaxMaxPerMatchv99		= IsNull(Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),0),    
 		 -- parlay mixed sports    
-		 @MaxMaxPerMatchv1MP	= isnull(Min(case when cs.MaxPerMatch1MP = 0 then NULL else cs.MaxPerMatch99MP end),0),    
+		 @MaxMaxPerMatchv1MP	= isnull(Min(case when cs.MaxPerMatch1MP = 0 then NULL else cs.MaxPerMatch1MP end),0),    
 		 @MaxMaxPerMatchv99MP	= isnull(Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),0),    
 		 --Number game    
 		 @MaxMaxPerMatchv161	= isnull(Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),0),    
