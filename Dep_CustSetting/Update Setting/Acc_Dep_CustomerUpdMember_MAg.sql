@@ -2210,6 +2210,7 @@ BEGIN
 					CASE WHEN Sporttype=161 THEN 'MPBv161="'+ coalesce(cast(MPB as varchar(50)),space(1))+ '" ' ELSE '' END
 			FROM #data_old
 			WHERE (Sporttype <=100 OR Sporttype in (161))  AND islive=0
+				AND NOT (sporttype = 1 AND bettype = 9)
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM,MPB
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
