@@ -1162,11 +1162,11 @@ BEGIN
 
 	'MinBv1MP="'+ coalesce(cast(@minbetv1mp as varchar(50)),space(1)) + '" ' +
 	'MaxBv1MP="'+ coalesce(cast(@maxbetv1mp as varchar(50)),space(1)) + '" ' +
-	'MPM1MP="'+ coalesce(cast(@maxpermatchv1mp as varchar(50)),space(1)) + '" ' +
+	'MPMv1MP="'+ coalesce(cast(@maxpermatchv1mp as varchar(50)),space(1)) + '" ' +
 	
 	'MinBv99MP="'+ coalesce(cast(@minbetv99mp as varchar(50)),space(1)) + '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@maxbetv99mp as varchar(50)),space(1)) + '" ' +
-	'MPM99MP="'+ coalesce(cast(@maxpermatchv99mp as varchar(50)),space(1)) + '" ' +
+	'MPMv99MP="'+ coalesce(cast(@maxpermatchv99mp as varchar(50)),space(1)) + '" ' +
 	'MinBv161="' + coalesce(cast(@minbetv161 as varchar(50)),space(1)) + '" ' +
 	'MaxBv161="' + coalesce(cast(@maxbetv161 as varchar(50)),space(1)) + '" ' +
 	'MPMv161="' + coalesce(cast(@maxpermatchv161 as varchar(50)),space(1)) + '" ' +
