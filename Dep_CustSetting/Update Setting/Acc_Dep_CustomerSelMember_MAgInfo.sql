@@ -263,6 +263,7 @@ Select
 	
 	@MaxPerMatchv99_Min = 0,
 	
+	@MaxPerMatchv1MP_Min = 0,
 	@MaxPerMatchv99MP_Min = 0,
 	@MaxPerMatchv161_Min = 0,
 	

@@ -2652,12 +2652,14 @@ BEGIN
 		DECLARE @sql varchar (MAX)
 		DECLARE @TEXT varchar (4000) =''
 		SELECT @sql='<Acc_Dep_CustomerUpdMember_SAg> ' +
-			'<SportsBook custid="'+ coalesce(cast(@custid as varchar(50)),space(1))+ '" ' +
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
-						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
-						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+ '" ' +
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" ' 
+			'<info custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+			'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+			'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
+			'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
+			'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
+			'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
+			
+			'<SportsBook '
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
 					'MaxBv'+ cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MaxB as varchar(50)),space(1))+ '" ' +
@@ -2671,7 +2673,7 @@ BEGIN
 					'MaxBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MaxB as varchar(50)),space(1))+ '" ' +
 					'MPMv' + cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MPM  as varchar(50)),space(1))+ '" ' 	
 			FROM #data_old
-			WHERE (Sporttype= 99 and Bettype=9)
+			WHERE (Sporttype IN (1,99) and Bettype=9)
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM
 		select @sql=@sql+@TEXT
 		SET @TEXT=''
