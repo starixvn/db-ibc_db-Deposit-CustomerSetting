@@ -35,7 +35,11 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_SAg]
 	@minbetv99 money,
 	@maxbetv99 money,
 	@maxpermatchv99 money,
-
+	
+	@minbetv1mp money = 0,
+	@maxbetv1mp money = 0,
+	@maxpermatchv1mp money = 0,
+	
 	@minbetv99mp money = 0,
 	@maxbetv99mp money = 0,
 	@maxpermatchv99mp money = 0,
@@ -202,6 +206,7 @@ Revisions:
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501] 
 	- 20191107@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -371,6 +376,7 @@ BEGIN
 		@MinMinBetv11 money, @MaxMaxBetv11 money, @MaxMaxPerMatchv11 money,
 	
 		@MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,	
+		@MinMinBetv1MP money, @MaxMaxBetv1MP money, @MaxMaxPerMatchv1MP money,
 		@MinMinBetv99MP money, @MaxMaxBetv99MP money, @MaxMaxPerMatchv99MP money,
 		@MinMinBetv161 money, @MaxMaxBetv161 money, @MaxMaxPerMatchv161 money,
 		@MaxMaxPerBallv161 money
@@ -470,7 +476,25 @@ BEGIN
 					end, @ErrCode = 109
 		return
 	END
-
+	
+	if 
+		@minbetv1mp < 0
+		or @maxbetv1mp < 0
+		or @maxpermatchv1mp < 0
+	BEGIN
+		Select @ErrMsg = 	case @Language 
+							when 'E' then 'Wrong Min bet/ Max bet/ Max per match (for Soccer Parlay).'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+					end, @ErrCode = 200
+		return
+	END
 	
 	if 
 		@minbetv99mp < 0
@@ -628,7 +652,25 @@ BEGIN
 
 	
 	-- mix parlay of mixed sports
-
+	if (@minbetv1mp <> 0 and @maxbetv1mp <> 0 and @minbetv1mp > @maxbetv1mp) 
+	or (@maxbetv1mp <> 0 and @maxpermatchv1mp <> 0 and @maxbetv1mp > @maxpermatchv1mp)
+	or (@minbetv1mp <> 0 and @maxpermatchv1mp <> 0 and @minbetv1mp > @maxpermatchv1mp) 
+	BEGIN
+		SELECT @ErrMsg =  @UserName + ': '+
+						case @Language 
+							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end, @ErrCode = 203
+		return
+	END
+	
 	if (@minbetv99mp <> 0 and @maxbetv99mp <> 0 and @minbetv99mp > @maxbetv99mp) 
 	or (@maxbetv99mp <> 0 and @maxpermatchv99mp <> 0 and @maxbetv99mp > @maxpermatchv99mp)
 	or (@minbetv99mp <> 0 and @maxpermatchv99mp <> 0 and @minbetv99mp > @maxpermatchv99mp) 
@@ -674,6 +716,7 @@ BEGIN
 		
 			@MaxMaxPerMatchv99 = MaxPerMatch99,
 			
+			@MaxMaxPerMatchv1MP = MaxPerMatch1MP,
 			@MaxMaxPerMatchv99MP = MaxPerMatch99MP,
 			@MaxMaxPerMatchv161 = MaxPerMatch161,
 			@MaxMaxPerBallv161 = MaxPerBall161
@@ -727,6 +770,12 @@ BEGIN
 		@MaxMaxBetv99 = MaxBet
 	From dep_custsetting with (NOLOCK)
 	where CustID = @srecommend and bettype=1 and sporttype=99
+
+	select 
+		@MinMinBetv1MP = MinBet,
+		@MaxMaxBetv1MP = MaxBet
+	from dep_custsetting with(nolock)
+	where custid = @srecommend and bettype = 9 and sporttype = 1	
 
 	
 	select 
@@ -999,7 +1048,7 @@ BEGIN
 						+' (' + convert(varchar(20), @MaxMaxPerMatchv99) + ').', @ErrCode = 144	
 		return
 	END
-		
+	
 	IF (@MinMinBetv99>0 and @minbetv99>0 and @minbetv99<@MinMinBetv99)
 	BEGIN
 		SELECT @ErrMsg =	@UserName + ': '+
@@ -1010,7 +1059,61 @@ BEGIN
 						+' (' + convert(varchar(20), @MinMinBetv99) + ').', @ErrCode = 145	
 		return
 	END
-
+	
+	IF (@MaxMaxBetv1MP > 0 and @maxbetv1mp > 0 and @maxbetv1mp > @MaxMaxBetv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Max bet must be equal to or less than Super Agent max bet (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10017,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+' (' + convert(varchar(20), @MaxMaxBetv1MP) + ').', @ErrCode = 205	
+		return
+	END
+		
+	IF (@MaxMaxPerMatchv1MP > 0 and @MaxPerMatchv1MP > 0 and @MaxPerMatchv1MP > @MaxMaxPerMatchv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Max Per Match must be equal to or less than Super Agent Max Per Match (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10018,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+' (' + convert(varchar(20), @MaxMaxPerMatchv1MP) + ').', @ErrCode = 206	
+		return
+	END
+		
+	IF (@MinMinBetv1MP > 0 and @minbetv1mp > 0 and @minbetv1mp < @MinMinBetv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Min bet must be equal to or greater than Super Agent min bet (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10016,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(สfor Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+' (' + convert(varchar(20), @MinMinBetv1MP) + ').', @ErrCode = 207	
+		return
+	END
+	
 	IF (@MaxMaxBetv99MP > 0 and @maxbetv99mp > 0 and @maxbetv99mp > @MaxMaxBetv99MP)
 	BEGIN
 		SELECT @ErrMsg =	@UserName + ': '+
@@ -2164,7 +2267,8 @@ BEGIN
 		MaxPerMatch11		= @MaxPerMatchv11,
 		
 		MaxPerMatch99		= @MaxPerMatchv99,
-	
+		
+		MaxPerMatch1MP		= @MaxPerMatchv1MP,
 		MaxPerMatch99MP		= @MaxPerMatchv99MP,
 		MaxPerMatch161		= @MaxPerMatchv161,
 		MaxPerBall161       = @maxperballv161
@@ -2181,8 +2285,8 @@ BEGIN
 
 	UPDATE Dep_CustSetting WITH (ROWLOCK, UPDLOCK)
 	SET
-		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
-		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
+		MinBet = case sporttype when 1 then CASE WHEN betType = 9 THEN @MinBetv1MP ELSE @MinBetv1 END when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end) else MinBet end,
+		MaxBet = case sporttype when 1 then CASE WHEN betType = 9 THEN @MaxBetv1MP ELSE @MaxBetv1 END when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end) else MaxBet end,
 		mpositiontaking = CASE
 							WHEN sporttype = 1 and bettype = 1 and islive = 0 THEN @v1mpositiontaking_1
 							WHEN sporttype = 1 and bettype = 2 and islive = 0 THEN @v1mpositiontaking_2
@@ -2495,14 +2599,14 @@ BEGIN
 		set @i=@i+1
 	END
 	Select @LogSPData ='<Acc_Dep_CustomerUpdMember_SAg>' +
-	'<SportsBook custid="'+ coalesce(cast(@custid as varchar(50)),space(1))+ '" ' +
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+ '" ' +
+	'<info custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
+	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" ' +
-	 
-	'MinBv1="'+ coalesce(cast(@MinBetv1 as varchar(50)),space(1))+ '" ' +
+	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
+	
+	'<SportsBook MinBv1="'+ coalesce(cast(@MinBetv1 as varchar(50)),space(1))+ '" ' +
 	'MaxBv1="'+ coalesce(cast(@MaxBetv1 as varchar(50)),space(1))+ '" ' +
 	'MPMv1="'+ coalesce(cast(@MaxPerMatchv1 as varchar(50)),space(1))+ '" ' +
 	'MinBv2="'+ coalesce(cast(@MinBetv2 as varchar(50)),space(1))+ '" ' +
@@ -2533,6 +2637,11 @@ BEGIN
 	'MaxBv161="'+ coalesce(cast(@MaxBetv161 as varchar(50)),space(1))+ '" ' +
 	'MPMv161="'+ coalesce(cast(@MaxPerMatchv161 as varchar(50)),space(1))+ '" ' +
 	'MPBv161="' + coalesce(cast(@MaxPerBallv161 as varchar(50)),space(1)) + '" ' +
+	
+	'MinBv1MP="'+ coalesce(cast(@MinBetv1MP as varchar(50)),space(1))+ '" ' +
+	'MaxBv1MP="'+ coalesce(cast(@MaxBetv1MP as varchar(50)),space(1))+ '" ' +
+	'MPMv1MP="'+ coalesce(cast(@MaxPerMatchv1MP as varchar(50)),space(1))+ '" ' +
+	
 	'MinBv99MP="'+ coalesce(cast(@MinBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@MaxBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MPMv99MP="'+ coalesce(cast(@MaxPerMatchv99MP as varchar(50)),space(1))+ '" ' +
@@ -2543,12 +2652,14 @@ BEGIN
 		DECLARE @sql varchar (MAX)
 		DECLARE @TEXT varchar (4000) =''
 		SELECT @sql='<Acc_Dep_CustomerUpdMember_SAg> ' +
-			'<SportsBook custid="'+ coalesce(cast(@custid as varchar(50)),space(1))+ '" ' +
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
-						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
-						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+ '" ' +
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" ' 
+			'<info custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+			'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+			'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
+			'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
+			'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
+			'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
+			
+			'<SportsBook '
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
 					'MaxBv'+ cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MaxB as varchar(50)),space(1))+ '" ' +
@@ -2556,13 +2667,14 @@ BEGIN
 					CASE WHEN Sporttype=161 THEN 'MPBv161="'+ coalesce(cast(MPB as varchar(50)),space(1))+ '" ' ELSE '' END
 			FROM #data_old
 			WHERE (Sporttype <=100 OR Sporttype in (161))  AND islive=0
+				AND NOT (sporttype = 1 AND bettype = 9)
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM,MPB
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
 					'MaxBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MaxB as varchar(50)),space(1))+ '" ' +
 					'MPMv' + cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MPM  as varchar(50)),space(1))+ '" ' 	
 			FROM #data_old
-			WHERE (Sporttype= 99 and Bettype=9)
+			WHERE (Sporttype IN (1,99) and Bettype=9)
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM
 		select @sql=@sql+@TEXT
 		SET @TEXT=''

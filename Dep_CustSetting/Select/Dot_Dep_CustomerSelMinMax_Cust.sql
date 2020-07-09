@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerSelMinMax_Cust]
 	@custid INT,
 	@MinBet MONEY OUTPUT,
@@ -26,6 +25,11 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerSelMinMax_Cust]
 	@MinBetv99 MONEY OUTPUT,
 	@MaxBetv99 MONEY OUTPUT,
 	@MaxPerMatchv99 MONEY OUTPUT,
+	
+	@MinBetv1MP MONEY =0  OUTPUT,
+	@MaxBetv1MP MONEY =0 OUTPUT,
+	@MaxPerMatchv1MP MONEY =0 OUTPUT,
+	
 	@MinBetv99MP MONEY OUTPUT,
 	@MaxBetv99MP MONEY OUTPUT,
 	@MaxPerMatchv99MP MONEY OUTPUT,
@@ -51,6 +55,7 @@ Revisions:
 	- 20150609@Elodie: Separate CustDB to DBCUST server (Call GameType by link server)
 	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
 	- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @custid: custid that need to be viewed.   
 */
@@ -102,6 +107,10 @@ SELECT @MinBetv99 = isnull(MinBet, 0), @MaxBetv99 = isnull(MaxBet, 0)
 FROM Dep_CustSetting WITH (NOLOCK)
 WHERE custid = @CustID AND bettype = 1 AND sporttype = 99
 
+SELECT @MinBetv1MP = isnull(MinBet, 0), @MaxBetv1MP = isnull(MaxBet, 0)
+FROM Dep_CustSetting WITH (NOLOCK)
+WHERE custid = @CustID AND bettype = 9 AND sporttype = 1
+
 SELECT @MinBetv99MP = isnull(MinBet, 0), @MaxBetv99MP = isnull(MaxBet, 0)
 FROM Dep_CustSetting WITH (NOLOCK)
 WHERE custid = @CustID AND bettype = 9 AND sporttype = 99
@@ -124,6 +133,7 @@ SELECT @MaxperMatch = MaxPerMatch,
 		@MaxPerMatchv10 = MaxPerMatch10,
 		@MaxPerMatchv11 = MaxPerMatch11,
 		@MaxPerMatchv99 = MaxPerMatch99,
+		@MaxPerMatchv1MP = MaxPerMatch1MP,
 		@MaxPerMatchv99MP = MaxPerMatch99MP,
 		@MaxPerMatchv161 = MaxPerMatch161,
 		@MaxPerBallv161 = MaxPerBall161

@@ -30,7 +30,7 @@ BEGIN
 	--Sport book
 	SELECT dc.custid,dc.sporttype,dc.bettype,dc.islive, 
 	   dc.minbet,dc.maxbet,CASE dc.sporttype 
-	   WHEN 1 THEN  ci.maxpermatch
+	   WHEN 1 THEN CASE WHEN bettype = 9 THEN ci.maxpermatch1MP ELSE ci.maxpermatch END 
 	   WHEN 2 THEN  ci.maxpermatch2
 	   WHEN 3 THEN  ci.maxpermatch3
 	   WHEN 5 THEN  ci.maxpermatch5

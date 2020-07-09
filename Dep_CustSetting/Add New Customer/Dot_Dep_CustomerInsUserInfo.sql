@@ -31,6 +31,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@MaxPerMatchv10 MONEY,
 	@MaxPerMatchv11 MONEY,
 	@MaxPerMatchv99 MONEY,
+	@MaxPerMatchv1MP MONEY =0,
 	@MaxPerMatchv99MP MONEY,		
 	@MaxPerMatchv161 MONEY,	
 	@MaxPerBallv161 MONEY = 0,	
@@ -52,6 +53,7 @@ AS
 	Revisions:
 		- 20190919@Elodie: Initial SP [Redmine: #118699]
 		- 20191211@Johnson: Apply Default VR setting for IBO new members [redmine:#125285]
+		- 20200624@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -216,7 +218,7 @@ BEGIN
 	  , 0, 0, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
 	  , 0, 0, 0, 0, 0	
 	  , @HideKeno, 0, 0, 0, 0,1,1
-	  , 0, 0
+	  , @MaxPerMatchv1MP, 0
     )
 	
     IF @@ERROR <> 0

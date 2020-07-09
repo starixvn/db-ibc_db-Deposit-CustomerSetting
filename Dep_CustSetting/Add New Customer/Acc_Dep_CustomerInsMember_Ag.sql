@@ -43,6 +43,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@MaxPerMatchv99 money,	
 
 	-- mix parlay of mixed sports
+	@MinBetv1mp money =0,
+	@MaxBetv1mp money =0,
+	@MaxPerMatchv1mp money =0,
+	
 	@MinBetv99mp money,
 	@MaxBetv99mp money,
 	@MaxPerMatchv99mp money,
@@ -165,6 +169,7 @@ Revisions:
 	- 20190429@Elodie: Insert VR setting get from Upline for new customer [RedmineID: #112657]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -557,6 +562,10 @@ BEGIN
 		@MaxPerMatchv99			=@MaxPerMatchv99,	
 	
 		--Mix Parlay mix sports
+		@MinBetv1MP				= @MinBetv1MP,
+		@MaxBetv1MP				= @MaxBetv1MP,
+		@MaxPerMatchv1MP		= @MaxPerMatchv1MP,
+		
 		@MinBetv99MP			= @MinBetv99MP,
 		@MaxBetv99MP			= @MaxBetv99MP,
 		@MaxPerMatchv99MP		= @MaxPerMatchv99MP,
@@ -690,7 +699,7 @@ BEGIN
 		@MaxPerMatchv99 = @MaxPerMatchv99,
 		
 	
-
+		@MaxPerMatchv1MP = @MaxPerMatchv1MP,
 		@MaxPerMatchv99MP = @MaxPerMatchv99MP,
 		@MaxPerMatchv161 = @MaxPerMatchv161,	
 		@MaxPerBallv161 = @MaxPerBallv161,
@@ -743,7 +752,7 @@ BEGIN
 
 	UNION ALL	SELECT @custid, 4, 1, @v1apositiontaking_4, @v1mpositiontaking_4, @v1spositiontaking_4, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
 	UNION ALL	SELECT @custid, 6, 1, @v1apositiontaking_6, @v1mpositiontaking_6, @v1spositiontaking_6, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
-	UNION ALL	SELECT @custid, 9, 1, @v1apositiontaking_9, @v1mpositiontaking_9, @v1spositiontaking_9, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
+	UNION ALL	SELECT @custid, 9, 1, @v1apositiontaking_9, @v1mpositiontaking_9, @v1spositiontaking_9, 0, 0, 0, 0, @MinBetv1MP, @MaxBetv1MP, 0
 	UNION ALL	SELECT @custid, 10, 1, @v1apositiontaking_10, @v1mpositiontaking_10, @v1spositiontaking_10, 0, 0, 0, 0, @MinBetv1, @MaxBetv1, 0
 
 	UNION ALL	SELECT @custid, 1, 2, @v2apositiontaking_1, @v2mpositiontaking_1, @v2spositiontaking_1, 0, 0, 0, 0, @MinBetv2, @MaxBetv2, 0
@@ -1151,10 +1160,13 @@ BEGIN
 	'MaxBv99="'+ coalesce(cast(@maxbetv99 as varchar(50)),space(1)) + '" ' +
 	'MPMv99="'+ coalesce(cast(@maxpermatchv99 as varchar(50)),space(1)) + '" ' +
 
-
+	'MinBv1MP="'+ coalesce(cast(@minbetv1mp as varchar(50)),space(1)) + '" ' +
+	'MaxBv1MP="'+ coalesce(cast(@maxbetv1mp as varchar(50)),space(1)) + '" ' +
+	'MPMv1MP="'+ coalesce(cast(@maxpermatchv1mp as varchar(50)),space(1)) + '" ' +
+	
 	'MinBv99MP="'+ coalesce(cast(@minbetv99mp as varchar(50)),space(1)) + '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@maxbetv99mp as varchar(50)),space(1)) + '" ' +
-	'MPM99MP="'+ coalesce(cast(@maxpermatchv99mp as varchar(50)),space(1)) + '" ' +
+	'MPMv99MP="'+ coalesce(cast(@maxpermatchv99mp as varchar(50)),space(1)) + '" ' +
 	'MinBv161="' + coalesce(cast(@minbetv161 as varchar(50)),space(1)) + '" ' +
 	'MaxBv161="' + coalesce(cast(@maxbetv161 as varchar(50)),space(1)) + '" ' +
 	'MPMv161="' + coalesce(cast(@maxpermatchv161 as varchar(50)),space(1)) + '" ' +

@@ -19,6 +19,7 @@ Revisions:
 - 20180125@Winnie: Hide inactive products [RedmineID: #86086]   
 - 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 - 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
+- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
@@ -46,6 +47,9 @@ BEGIN
 			@MaxBetv11			MONEY,
 			
 			@MaxBetv99			MONEY,
+			
+			@MinBetv1MP			MONEY,
+			@MaxBetv1MP			MONEY,
 			
 			@MinBetv99MP		MONEY,
 			@MaxBetv99MP		MONEY,
@@ -85,6 +89,7 @@ BEGIN
 	SELECT @MinBetv99 = MinBet, @MaxBetv99 = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 1 and cs.sporttype=99
 	
 	--Mix parlay mixed sports 
+	SELECT @MinBetv1MP = MinBet, @MaxBetv1MP = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 9 and cs.sporttype=1
 	SELECT @MinBetv99MP = MinBet, @MaxBetv99MP = MaxBet FROM Dep_CustSetting AS cs WITH (NOLOCK) WHERE cs.custid = @CustID and cs.bettype = 9 and cs.sporttype=99
 
 	--Number Game 
@@ -154,7 +159,8 @@ BEGIN
 			@MinBetv10 AS MinBetv10,
 			@MinBetv11 AS MinBetv11,	
 			
-			@MinBetv99 AS MinBetv99,		
+			@MinBetv99 AS MinBetv99,	
+			@MinBetv1MP AS MinBetv1MP,			
 			@MinBetv99MP AS MinBetv99MP,
 			@MinBetv161 AS MinBetv161,	
 
@@ -167,6 +173,7 @@ BEGIN
 			@MaxBetv11 AS MaxBetv11,	
 			
 			@MaxBetv99 AS MaxBetv99,		
+			@MaxBetv1MP AS MaxBetv1MP,
 			@MaxBetv99MP AS MaxBetv99MP,
 			@MaxBetv161 AS MaxBetv161,
 
@@ -183,6 +190,7 @@ BEGIN
 		
 			ci.MaxPerMatch99				AS MaxPerMatchv99,			
 			
+			ci.MaxPerMatch1MP				AS MaxPerMatchv1MP,		
 			ci.MaxPerMatch99MP				AS MaxPerMatchv99MP,		
 			ci.MaxPerMatch161				AS MaxPerMatchv161,		
 			ci.MaxPerBall161				AS MaxPerBallv161,
@@ -197,4 +205,3 @@ BEGIN
 
 END
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMember_Com] TO [bodbAdminNet] AS [dbo]

@@ -11,6 +11,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_SetMinMaxBet_CustInfo_Cust]
 	@maxpermatch12 [money],
 	@maxpermatch99 [money],
 	@maxpermatch161 [money],
+	@maxpermatch1MP [money] = 0,
 	@maxpermatch99MP [money]
 WITH EXECUTE AS CALLER
 AS
@@ -23,6 +24,7 @@ Original:
 Revisions:
     - 20110301@Henry: set maxpermatch for new bettype (AU Horse, Harness, Greyhound)
 	- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 */
 
 BEGIN
@@ -38,6 +40,7 @@ SET NOCOUNT ON
 		maxpermatch12 = @maxpermatch12,
 		maxpermatch99 = @maxpermatch99,
 		maxpermatch161 = @maxpermatch161,
+		maxpermatch1MP	= @maxpermatch1MP,
 		maxpermatch99MP	= @maxpermatch99MP
 	where custid = @custid 
 END

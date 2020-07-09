@@ -36,6 +36,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerUpdMember_MAg]
 	@MaxPerMatchv99 money,	
 	
 	-- mix parlay of mixed sports
+	@MinBetv1mp money = 0,
+	@MaxBetv1mp money = 0,
+	@MaxPerMatchv1mp money =0,
+	
 	@MinBetv99mp money,
 	@MaxBetv99mp money,
 	@MaxPerMatchv99mp money,
@@ -208,6 +212,7 @@ Revisions:
 	- 20180326@Winnie: Customer Setting - urgent fix to support for long bettype name. [RedmineID: #91216]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501] 
 	- 20191107@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -378,6 +383,7 @@ BEGIN
 		@MinMinBetv11 money, @MaxMaxBetv11 money, @MaxMaxPerMatchv11 money,
 		
 		@MinMinBetv99 money, @MaxMaxBetv99 money, @MaxMaxPerMatchv99 money,	
+		@MinMinBetv1MP money, @MaxMaxBetv1MP money, @MaxMaxPerMatchv1MP money,
 		@MinMinBetv99MP money, @MaxMaxBetv99MP money, @MaxMaxPerMatchv99MP money,
 		@MinMinBetv161 money, @MaxMaxBetv161 money, @MaxMaxPerMatchv161 money,
 		@MaxMaxPerBallv161 money
@@ -399,6 +405,7 @@ BEGIN
 		
 		@MinMinBetv99 = 0, @MaxMaxBetv99 = 0,
 		
+		@MinMinBetv1MP = 0, @MaxMaxBetv1MP = 0,
 		@MinMinBetv99MP = 0, @MaxMaxBetv99MP = 0,
 		@MinMinBetv161 = 0, @MaxMaxBetv161 = 0
 
@@ -470,6 +477,14 @@ BEGIN
 	
 	-- mixed sports
 	Select 
+		@MinMinBetv1MP = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
+		@MaxMaxBetv1MP = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
+	from 
+		dep_custsetting as cs WITH (NOLOCK)
+		INNER JOIN custinfo as ci WITH (NOLOCK) on (cs.CustID = ci.MRecommend or cs.CustID = ci.SRecommend) and cs.bettype = 9 and cs.sporttype=1
+	where ci.custid = @MRecommend
+	
+	Select 
 		@MinMinBetv99MP = isnull(Max(case when MinBet = 0 then NULL else MinBet end),0), 
 		@MaxMaxBetv99MP = isnull(Min(case when MaxBet = 0 then NULL else MaxBet end),0)
 	from 
@@ -497,6 +512,7 @@ BEGIN
 		
 		@MaxMaxPerMatchv99 = isnull(Min(case when cs.MaxPerMatch99 = 0 then NULL else cs.MaxPerMatch99 end),0),
 		
+		@MaxMaxPerMatchv1MP = isnull(Min(case when cs.MaxPerMatch1MP = 0 then NULL else cs.MaxPerMatch1MP end),0),	
 		@MaxMaxPerMatchv99MP = isnull(Min(case when cs.MaxPerMatch99MP = 0 then NULL else cs.MaxPerMatch99MP end),0),	
 		@MaxMaxPerMatchv161 = isnull(Min(case when cs.MaxPerMatch161 = 0 then NULL else cs.MaxPerMatch161 end),0),
 		@MaxMaxPerBallv161 = isnull(Min(case when cs.MaxPerBall161 = 0 then NULL else cs.MaxPerBall161 end),0)
@@ -598,8 +614,24 @@ BEGIN
 		return
 	END
 
-
-
+	if 
+		@minbetv1mp < 0
+		or @maxbetv1mp < 0
+		or @maxpermatchv1mp < 0
+	BEGIN
+		Select @ErrMsg = 	case @Language 
+							when 'E' then 'Wrong Min bet/ Max bet/ Max per match (for Soccer Parlay).'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10003,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+					end, @ErrCode = 200
+		return
+	END
 
 	if 
 		@minbetv99mp < 0
@@ -1020,7 +1052,80 @@ BEGIN
 		return
 	END
 
+	if (@MinBetv1MP <> 0 and @MaxBetv1MP <> 0 and @MinBetv1MP > @MaxBetv1MP) or (@MaxBetv1MP <> 0 and @MaxPerMatchv1MP <> 0 and @MaxBetv1MP>@MaxPerMatchv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Min bet must be less than max bet and max bet must be less than max bet per match (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10005,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+ char(13) + char(10) + convert(varchar(20), @MinBetv1MP) + '-' + convert(varchar(20), @MaxBetv1MP) + '-' + convert(varchar(20), @MaxPerMatchv1MP), @ErrCode = 112					 		
+		return
+	END
 
+	if (@MinMinBetv1MP>0 and @MinBetv1MP>0 and @MinBetv1MP<@MinMinBetv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Min bet must be equal to or greater than Master Agent min bet (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10019,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+' (' + convert(varchar(20), @MinMinBetv1MP) + ').', @ErrCode = 113					 
+			
+		return
+	END
+
+	if (@MaxMaxBetv1MP>0 and @MaxBetv1MP>0 and @MaxBetv1MP>@MaxMaxBetv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Max bet must be equal to or less than Master Agent max bet (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10020,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+' (' + convert(varchar(20), @MaxMaxBetv1MP) + ').', @ErrCode = 114					 
+			
+		return
+	END
+	if (@MaxMaxPerMatchv1MP>0 and @MaxPerMatchv1MP>0 and @MaxPerMatchv1MP>@MaxMaxPerMatchv1MP)
+	BEGIN
+		SELECT @ErrMsg =	@UserName + ': '+
+						case @Language 
+							when 'E' then 'Max Per Match must be equal to or less than Master Agent Max Per Match (for Soccer Parlay)'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](10021,@Language) + case @Language 
+																								when 'CS' then N'(供足球串关)'
+																								when 'CT' then N'(for Soccer Parlay)'
+																								when 'TH' then N'(for Soccer Parlay)'
+																								when 'J' then N'(for Soccer Parlay)'
+																								when 'KO' then N'(for Soccer Parlay)'
+																								when 'VI' then N'(for Soccer Parlay)'
+																								else N'(for Soccer Parlay)' END
+						end						
+						+' (' + convert(varchar(20), @MaxMaxPerMatchv1MP) + ').', @ErrCode = 114					 
+			
+		return
+	END
+	
 	if (@MinBetv99MP <> 0 and @MaxBetv99MP <> 0 and @MinBetv99MP > @MaxBetv99MP) or (@MaxBetv99MP <> 0 and @MaxPerMatchv99MP <> 0 and @MaxBetv99MP>@MaxPerMatchv99MP)
 	BEGIN
 		SELECT @ErrMsg =	@UserName + ': '+
@@ -1704,7 +1809,8 @@ BEGIN
 		MaxPerMatch11 = @MaxPerMatchv11,
 		
 		MaxPerMatch99 = @MaxPerMatchv99,
-	
+		
+		MaxPerMatch1MP = @MaxPerMatchv1MP,
 		MaxPerMatch99MP = @MaxPerMatchv99MP,
 		MaxPerMatch161 = @MaxPerMatchv161,
 		MaxPerBall161 = @MaxPerBallv161
@@ -1725,8 +1831,8 @@ BEGIN
 
 	UPDATE Dep_CustSetting WITH (ROWLOCK, UPDLOCK)
 	SET	
-		MinBet = case sporttype when 1 then @MinBetv1 when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end)   else MinBet end,
-		MaxBet = case sporttype when 1 then @MaxBetv1 when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end)   else MaxBet end,
+		MinBet = case sporttype when 1 then CASE WHEN betType = 9 THEN @MinBetv1MP ELSE @MinBetv1 END when 2 then @MinBetv2 when 3 then @MinBetv3 when 5 then @MinBetv5 when 8 then @MinBetv8 when 10 then @MinBetv10 when 11 then @MinBetv11  when 99 then (case bettype when 9 then @MinBetv99MP else @MinBetv99 end)   else MinBet end,
+		MaxBet = case sporttype when 1 then CASE WHEN betType = 9 THEN @MaxBetv1MP ELSE @MaxBetv1 END when 2 then @MaxBetv2 when 3 then @MaxBetv3 when 5 then @MaxBetv5 when 8 then @MaxBetv8 when 10 then @MaxBetv10 when 11 then @MaxBetv11  when 99 then (case bettype when 9 then @MaxBetv99MP else @MaxBetv99 end)   else MaxBet end,
 		apositiontaking = CASE
 							WHEN sporttype = 1 and bettype = 1 and islive = 0 THEN @v1apositiontaking_1
 							WHEN sporttype = 1 and bettype = 2 and islive = 0 THEN @v1apositiontaking_2
@@ -2036,16 +2142,14 @@ BEGIN
 		set @i=@i+1
 	END
 
-	Select @LogSPData ='<Acc_Dep_CustomerUpdMember_MAg>' + 
-	'<SportsBook custid="'+ coalesce(cast(@custid as varchar(50)),space(1))+ '" ' +
-
-	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
-	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
-	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+ '" ' +
+	Select @LogSPData ='<Acc_Dep_CustomerUpdMember_MAg><info custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+	'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
+	'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" ' +
-
-	'MinBv1="'+ coalesce(cast(@MinBetv1 as varchar(50)),space(1))+ '" ' +
+	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
+	
+	'<SportsBook MinBv1="'+ coalesce(cast(@MinBetv1 as varchar(50)),space(1))+ '" ' +
 	'MaxBv1="'+ coalesce(cast(@MaxBetv1 as varchar(50)),space(1))+ '" ' +
 	'MPMv1="'+ coalesce(cast(@MaxPerMatchv1 as varchar(50)),space(1))+ '" ' +
 	'MinBv2="'+ coalesce(cast(@MinBetv2 as varchar(50)),space(1))+ '" ' +
@@ -2077,6 +2181,10 @@ BEGIN
 	'MaxBv161="'+ coalesce(cast(@MaxBetv161 as varchar(50)),space(1))+ '" ' +
 	'MPMv161="'+ coalesce(cast(@MaxPerMatchv161 as varchar(50)),space(1))+ '" ' +
 	'MPBv161="' + coalesce(cast(@MaxPerBallv161 as varchar(50)),space(1)) + '" ' +
+	'MinBv1MP="'+ coalesce(cast(@MinBetv1MP as varchar(50)),space(1))+ '" ' +
+	'MaxBv1MP="'+ coalesce(cast(@MaxBetv1MP as varchar(50)),space(1))+ '" ' +
+	'MPMv1MP="'+ coalesce(cast(@MaxPerMatchv1MP as varchar(50)),space(1))+ '" ' +
+	
 	'MinBv99MP="'+ coalesce(cast(@MinBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MaxBv99MP="'+ coalesce(cast(@MaxBetv99MP as varchar(50)),space(1))+ '" ' +
 	'MPMv99MP="'+ coalesce(cast(@MaxPerMatchv99MP as varchar(50)),space(1))+ '" ' +
@@ -2087,12 +2195,14 @@ BEGIN
 		DECLARE @sql varchar (MAX)
 		DECLARE @TEXT varchar (4000) =''
 		SELECT @sql='<Acc_Dep_CustomerUpdMember_MAg> ' +
-			'<SportsBook custid="'+ coalesce(cast(@custid as varchar(50)),space(1))+ '" ' +
-						'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1))+ '" ' +
-						'Language="'+ coalesce(cast(@Language as varchar(2)),space(1))+ '" ' +
-						'IP="'+ coalesce(cast(@IP as varchar(15)),space(1))+ '" ' +
-						'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
-						'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" ' 
+			'<info custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+			'UserID="'+ coalesce(cast(@UserID as varchar(50)),space(1)) + '" ' +
+			'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +
+			'IP="'+ coalesce(cast(@IP as varchar(15)),space(1)) + '" ' +
+			'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
+			'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
+	
+			'<SportsBook '
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
 					'MaxBv'+ cast(Sporttype as varchar(10))+'="'+ coalesce(cast(MaxB as varchar(50)),space(1))+ '" ' +
@@ -2100,13 +2210,14 @@ BEGIN
 					CASE WHEN Sporttype=161 THEN 'MPBv161="'+ coalesce(cast(MPB as varchar(50)),space(1))+ '" ' ELSE '' END
 			FROM #data_old
 			WHERE (Sporttype <=100 OR Sporttype in (161))  AND islive=0
+				AND NOT (sporttype = 1 AND bettype = 9)
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM,MPB
 		Select @TEXT= @TEXT +
 					'MinBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MinB as varchar(50)),space(1))+ '" ' +
 					'MaxBv'+ cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MaxB as varchar(50)),space(1))+ '" ' +
 					'MPMv' + cast(Sporttype as varchar(10))+'MP="'+ coalesce(cast(MPM  as varchar(50)),space(1))+ '" ' 	
 			FROM #data_old
-			WHERE (Sporttype= 99 and Bettype=9)
+			WHERE (Sporttype IN (1,99) and Bettype=9)
 			GROUP BY Custid,Sporttype,MinB,MaxB,MPM
 		select @sql=@sql+@TEXT
 		SET @TEXT=''
@@ -2148,20 +2259,20 @@ BEGIN
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
 
-	'<m v1mpt_1="'+ COALESCE(CAST(@v1mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_2="'+ COALESCE(CAST(@v1mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_3="'+ COALESCE(CAST(@v1mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_4="'+ COALESCE(CAST(@v1mpositiontaking_4 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_5="'+ COALESCE(CAST(@v1mpositiontaking_5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_6="'+ COALESCE(CAST(@v1mpositiontaking_6 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_7="'+ COALESCE(CAST(@v1mpositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_8="'+ COALESCE(CAST(@v1mpositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_9="'+ COALESCE(CAST(@v1mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_10="'+ COALESCE(CAST(@v1mpositiontaking_10 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_1="'+ COALESCE(CAST(@v1mlivepositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_3="'+ COALESCE(CAST(@v1mlivepositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_7="'+ COALESCE(CAST(@v1mlivepositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_8="'+ COALESCE(CAST(@v1mlivepositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'<m mpt_1="'+ COALESCE(CAST(@v1mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_2="'+ COALESCE(CAST(@v1mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_3="'+ COALESCE(CAST(@v1mpositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_4="'+ COALESCE(CAST(@v1mpositiontaking_4 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_5="'+ COALESCE(CAST(@v1mpositiontaking_5 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_6="'+ COALESCE(CAST(@v1mpositiontaking_6 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_7="'+ COALESCE(CAST(@v1mpositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_8="'+ COALESCE(CAST(@v1mpositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_9="'+ COALESCE(CAST(@v1mpositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_10="'+ COALESCE(CAST(@v1mpositiontaking_10 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_1="'+ COALESCE(CAST(@v1mlivepositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_3="'+ COALESCE(CAST(@v1mlivepositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_7="'+ COALESCE(CAST(@v1mlivepositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_8="'+ COALESCE(CAST(@v1mlivepositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v2mpt_1="'+ COALESCE(CAST(@v2mpositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2mpt_2="'+ COALESCE(CAST(@v2mpositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2210,20 +2321,20 @@ BEGIN
 	'v161mlivept_90="'+ COALESCE(CONVERT(VARCHAR(50),@v161mlivepositiontaking_90,2),SPACE(1)) + '" ' +
 	@str_mpt+ ' />' +
 
-	'<ag v1apt_1="'+ COALESCE(CAST(@v1apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_2="'+ COALESCE(CAST(@v1apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_3="'+ COALESCE(CAST(@v1apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_4="'+ COALESCE(CAST(@v1apositiontaking_4 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_5="'+ COALESCE(CAST(@v1apositiontaking_5 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_6="'+ COALESCE(CAST(@v1apositiontaking_6 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_7="'+ COALESCE(CAST(@v1apositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_8="'+ COALESCE(CAST(@v1apositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_9="'+ COALESCE(CAST(@v1apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_10="'+ COALESCE(CAST(@v1apositiontaking_10 AS VARCHAR(50)),SPACE(1)) + '" ' + 
-	'v1alivept_1="'+ COALESCE(CAST(@v1alivepositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1alivept_3="'+ COALESCE(CAST(@v1alivepositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1alivept_7="'+ COALESCE(CAST(@v1alivepositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1alivept_8="'+ COALESCE(CAST(@v1alivepositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'<ag apt_1="'+ COALESCE(CAST(@v1apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_2="'+ COALESCE(CAST(@v1apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_3="'+ COALESCE(CAST(@v1apositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_4="'+ COALESCE(CAST(@v1apositiontaking_4 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_5="'+ COALESCE(CAST(@v1apositiontaking_5 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_6="'+ COALESCE(CAST(@v1apositiontaking_6 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_7="'+ COALESCE(CAST(@v1apositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_8="'+ COALESCE(CAST(@v1apositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_9="'+ COALESCE(CAST(@v1apositiontaking_9 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_10="'+ COALESCE(CAST(@v1apositiontaking_10 AS VARCHAR(50)),SPACE(1)) + '" ' + 
+	'alivept_1="'+ COALESCE(CAST(@v1alivepositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'alivept_3="'+ COALESCE(CAST(@v1alivepositiontaking_3 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'alivept_7="'+ COALESCE(CAST(@v1alivepositiontaking_7 AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'alivept_8="'+ COALESCE(CAST(@v1alivepositiontaking_8 AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v2apt_1="'+ COALESCE(CAST(@v2apositiontaking_1 AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2apt_2="'+ COALESCE(CAST(@v2apositiontaking_2 AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2299,20 +2410,20 @@ BEGIN
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(5000)),space(1)) + '" />' +
 
-	'<m v1mpt_1="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_2="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_3="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_4="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_5="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_6="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_7="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_8="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_9="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mpt_10="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_1="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_3="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_7="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1mlivept_8="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'<m mpt_1="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_2="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_3="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_4="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_5="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_6="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_7="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_8="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_9="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mpt_10="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_1="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_3="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_7="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'mlivept_8="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v2mpt_1="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2mpt_2="'+ COALESCE(CAST(CONVERT(smallmoney,0) AS VARCHAR(50)),SPACE(1)) + '" ' +
@@ -2362,20 +2473,20 @@ BEGIN
 	'v161mlivept_90="'+ COALESCE(CONVERT(VARCHAR(50),@v161mlivepositiontaking_90,2),SPACE(1)) + '" ' +
 	@str_mpt_+	' />' +
 
-	'<ag v1apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_4="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_5="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_6="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_7="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_8="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_9="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1apt_10="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' + 
-	'v1alivept_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1alivept_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1alivept_7="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
-	'v1alivept_8="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'<ag apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_4="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_5="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_6="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_7="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_8="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_9="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'apt_10="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' + 
+	'alivept_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'alivept_3="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'alivept_7="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
+	'alivept_8="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 
 	'v2apt_1="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
 	'v2apt_2="'+ COALESCE(CAST(@pt_SB AS VARCHAR(50)),SPACE(1)) + '" ' +
