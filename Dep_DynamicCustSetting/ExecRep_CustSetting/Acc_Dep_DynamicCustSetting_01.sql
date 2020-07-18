@@ -1,10 +1,8 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_01]
- @CustID				INT
-,@ProductID				INT
-,@PT					SMALLMONEY =0
+	 @CustID				INT
+	,@ProductID				INT
+	,@PT					VARCHAR(MAX) = ''
 AS
 /*
 	Created: 20170928@Winnie
@@ -17,8 +15,17 @@ AS
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 		- 20181112@Winnie: Esports - Redmine: #100721
 		- 20200618@Helen: LAP - Support commission for 3rd party products [Redmine: #131774]
-	*/
-
+		- 20200718@Elodie: Support level sporttype/bettype [RedmineID:#135872]
+	Param's Explanation:
+		@PT:
+		<ROOT>
+				<PT
+						SportType="211"
+						BetType="2401" 
+						PT="90"
+				/>
+		</ROOT>
+*/
 BEGIN
 	IF(dbo.f_CheckRepTable('Dep_CustPTGroupSetting_Member') = 0
 		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0	
@@ -35,11 +42,15 @@ BEGIN
 				@Currency	INT,
 				@Site		VARCHAR(10),
 				@Threshold	INT, 
-				@StopRow	INT			
+				@StopRow	INT,
+				@xml		XML, 
+				@iDoc INT		
+
 		SET @StartRow=1
 		SET @Threshold=3000
 
 		DECLARE @SportBettypeFilter TABLE(SportType INT,Bettype INT,IsLive BIT,IsApplyBA BIT)		
+		CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT TINYINT)
 
 		CREATE TABLE #tempMemBA(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )	
 		CREATE TABLE #tempMemNonBA(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )		
@@ -90,6 +101,21 @@ BEGIN
 		WHERE c.recommend=@CustID AND c.roleid =1
 			AND m.IsGroupedPT=0
 
+		--Parse XML
+		EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @PT
+
+		INSERT INTO #ValuePT (SportType, BetType, Islive, PT)
+		SELECT	ox.SportType, ox.BetType, ox.Islive, ox.PT
+		FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
+		WITH (
+			SportType		SMALLINT
+		,	BetType			SMALLINT
+		,	IsLive			BIT
+		,	PT				TINYINT	
+		) AS ox;
+
+		EXECUTE sp_xml_removedocument @iDoc;
+
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
 		BEGIN
 			IF EXISTS (SELECT 1 FROM 	@SportBettypeFilter ft 
@@ -99,14 +125,16 @@ BEGIN
 					SET
 						 SuperPT  = 0
 						,MasterPT = 0
-						,AgentPT  = @PT
+						,AgentPT  = v.PT
 				FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType
+					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive
 				WHERE t.IsApplyBA=0
 			ELSE
 				INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-				SELECT @CustID,SportType,BetType,IsLive,0,0,@PT
+				SELECT @CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 				FROM @SportBettypeFilter t
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive
 				WHERE t.IsApplyBA=0
 
 			IF EXISTS (SELECT 1 FROM 	@SportBettypeFilter ft 
@@ -135,13 +163,15 @@ BEGIN
 					SET
 						 SuperPT  = 0
 						,MasterPT = 0
-						,AgentPT  = @PT
+						,AgentPT  = v.PT
 				FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType				
+					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive			
 			ELSE
 				INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-				SELECT @CustID,SportType,BetType,IsLive,0,0,@PT
+				SELECT @CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 				FROM @SportBettypeFilter t				
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
 		END
 
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
@@ -223,9 +253,10 @@ BEGIN
 						AND NOT EXISTS (SELECT 1 FROM  Dep_CustSettingMode m WITH(NOLOCK) WHERE m.CustID=c.CustID)	
 
 					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,SportType,BetType,IsLive,0,0,@PT
+					SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 					FROM #tempMemNonBA c		
 						CROSS APPLY @SportBettypeFilter t	
+						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
 						
@@ -259,10 +290,11 @@ BEGIN
 				BEGIN				
 				
 					UPDATE s
-					SET s.AgentPT=@PT
+					SET s.AgentPT=v.PT
 					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
 						INNER JOIN #tempMemNoGrouped c	ON s.CustID=c.CustID
 						INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive
+						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 					
 					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
@@ -372,9 +404,10 @@ BEGIN
 						AND t.IsApplyBA=1
 
 					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,SportType,BetType,IsLive,0,0,@PT
+					SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 					FROM #tempMemBA c		
-						CROSS APPLY @SportBettypeFilter t	
+						CROSS APPLY @SportBettypeFilter t
+						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive			
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
 						AND t.IsApplyBA=0
@@ -409,10 +442,11 @@ BEGIN
 				BEGIN				
 					
 					UPDATE s
-					SET s.AgentPT=@PT
+					SET s.AgentPT=v.PT
 					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
 						INNER JOIN #tempMemNoGrouped c	ON s.CustID=c.CustID
-						INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive						
+						INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive	
+						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive							
 					WHERE t.IsApplyBA=0
 						AND ID >= @StartRow AND ID <= @StopRow	
 					
