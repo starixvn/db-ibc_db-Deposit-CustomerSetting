@@ -288,6 +288,7 @@ Revisions:
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	- 20200617@Eden: Virtual Rate for Basketball - New IBO dummy super must have VR setting = 0%  [Redmine: #134978] 
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -821,6 +822,45 @@ BEGIN
 		DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
  		RETURN 
 	 END  
+
+	 --New IBO dummy super must have VR setting = 0% (Basketball level)
+	 IF @site = 'IBO'
+	 BEGIN
+		DECLARE @VirtualMultiplier VARCHAR(MAX) = ''
+
+		SELECT @VirtualMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
+															FROM VRSettingHierarchy b WITH(NOLOCK) 
+																CROSS APPLY VRValueMapping vr (NOLOCK)
+															WHERE b.SportType = 2 
+																AND b.VRLeagueGroupID = -1 
+																AND b.BetType = -1 
+																AND vr.Value = 1
+															FOR XML RAW('Row'), ROOT ('Root'))
+											)
+
+		EXEC [Acc_CustVirtualMultiplier_Upd]
+			  @CustID = @CustID
+			, @SportType = 2
+			, @VirtualMultiplier = @VirtualMultiplier
+			, @UserID  = @creator
+			, @IP  = @IP
+			, @ErrCode = @ErrCode OUTPUT 
+			, @ErrMsg = @ErrMsg OUTPUT
+		
+		IF @ErrCode <> 0 
+		BEGIN
+			DELETE VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
+			DELETE Dep_CustSetting WITH (ROWLOCK) WHERE custId  =@custid
+			DELETE Dep_CustSetting3rd WITH (ROWLOCK) WHERE custId  =@custid
+			DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+		
+			DELETE CustSettingGame WITH(ROWLOCK) WHERE custid = @custid
+			DELETE CustOverrideGame WITH(ROWLOCK) WHERE custid = @custid	
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+			DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
+			RETURN 
+		END  
+	 END
 	----------------------------END INSERT------------------------------------
 		
 	SET @endRun = GETDATE()

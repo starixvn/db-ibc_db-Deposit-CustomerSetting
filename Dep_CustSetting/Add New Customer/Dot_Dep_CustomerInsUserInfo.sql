@@ -54,6 +54,7 @@ AS
 		- 20190919@Elodie: Initial SP [Redmine: #118699]
 		- 20191211@Johnson: Apply Default VR setting for IBO new members [redmine:#125285]
 		- 20200624@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+		- 20200617@Eden: Virtual Rate for Basketball - Remove Apply Default VR setting for IBO new members [Redmine: #134978]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -134,7 +135,7 @@ BEGIN
 						)
 		SELECT	sporttype,bettype,islive,0.5
 		from ProfileVirtualSetting 		
-		WHERE sporttype <> 1
+		WHERE sporttype NOT IN (1,2)
 
 		DECLARE	@virtualXML			TABLE (
 											seqNo		TINYINT PRIMARY KEY
