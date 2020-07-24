@@ -22,6 +22,7 @@ AS
 				<PT
 						SportType="211"
 						BetType="2401" 
+						IsLive="0"  
 						PT="90"
 				/>
 		</ROOT>
@@ -50,7 +51,7 @@ BEGIN
 		SET @Threshold=3000
 
 		DECLARE @SportBettypeFilter TABLE(SportType INT,Bettype INT,IsLive BIT,IsApplyBA BIT)		
-		CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT TINYINT)
+		CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
 
 		CREATE TABLE #tempMemBA(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )	
 		CREATE TABLE #tempMemNonBA(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )		

@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
+CREATE PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
 	  @SuperID		INT
 	, @AgentID		INT
 	, @IsAgentOnly	BIT
@@ -35,8 +35,8 @@ BEGIN
 	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend	INT
 	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductSettingID	INT
-	CREATE TABLE #tmpPT (SportType INT,Bettype INT,IsLive BIT, PT TINYINT)
-	CREATE TABLE #tmpPT_Old (SportType INT,Bettype INT,IsLive BIT, PT TINYINT)
+	CREATE TABLE #tmpPT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
+	CREATE TABLE #tmpPT_Old (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
 
 	SET @startRun = GETDATE()
 
@@ -69,7 +69,7 @@ BEGIN
 		SportType		SMALLINT
 	,	BetType			SMALLINT
 	,	IsLive			BIT
-	,	PT				TINYINT	
+	,	PT				SMALLMONEY	
 	) AS ox;
 
 	EXECUTE sp_xml_removedocument @iDoc;

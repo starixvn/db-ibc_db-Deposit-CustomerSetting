@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingSelect 
+CREATE PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingSelect 
 	  @CustID		INT
 	, @ProductID	TINYINT
 AS
@@ -18,9 +18,7 @@ BEGIN
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT ProductID, SportType,Bettype,IsLive 
-	FROM Dep_ProductSetting ps WITH(NOLOCK) 
-		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-	WHERE ProductID = @ProductID AND SettingType=1	
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
 	
 	IF EXISTS (SELECT 1 
 			FROM 	#SportBettypeFilter ft 
@@ -34,7 +32,8 @@ BEGIN
 			WHERE CustID=@CustID  
 	END
 	ELSE
-			SELECT 0 AS AgentPT 
+			SELECT  ft.Sporttype, ft.bettype, ft.IsLive,  0 as AgentPT 
+			FROM 	#SportBettypeFilter ft 
 END
 GO
 
