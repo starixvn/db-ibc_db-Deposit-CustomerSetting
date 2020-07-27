@@ -112,7 +112,7 @@ BEGIN
 			SportType		SMALLINT
 		,	BetType			SMALLINT
 		,	IsLive			BIT
-		,	PT				TINYINT	
+		,	PT				SMALLMONEY	
 		) AS ox;
 
 		EXECUTE sp_xml_removedocument @iDoc;
