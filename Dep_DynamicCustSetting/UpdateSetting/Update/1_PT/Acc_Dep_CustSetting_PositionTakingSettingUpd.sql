@@ -23,7 +23,8 @@ AS
 		<ROOT>
 				<PT
 						SportType="211"
-						BetType="2401" 
+						BetType="2401"
+						IsLive = "0" 
 						PT="90"
 				/>
 		</ROOT>
