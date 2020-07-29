@@ -299,9 +299,10 @@ BEGIN
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 					
 					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,SportType,BetType,IsLive,0,0,@PT
+					SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 					FROM #tempMemNoGrouped c		
-						CROSS APPLY @SportBettypeFilter t	
+						CROSS APPLY @SportBettypeFilter t
+						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
 							
@@ -452,9 +453,10 @@ BEGIN
 						AND ID >= @StartRow AND ID <= @StopRow	
 					
 					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,SportType,BetType,IsLive,0,0,@PT
+					SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 					FROM #tempMemNoGrouped c		
-						CROSS APPLY @SportBettypeFilter t	
+						CROSS APPLY @SportBettypeFilter t
+						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive				
 					WHERE ID >= @StartRow AND ID <= @StopRow	
 						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
 						AND t.IsApplyBA=0
