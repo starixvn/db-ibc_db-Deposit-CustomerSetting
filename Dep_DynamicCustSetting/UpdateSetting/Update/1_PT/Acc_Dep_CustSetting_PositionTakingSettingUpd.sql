@@ -1,9 +1,9 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
+CREATE PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
 	  @SuperID		INT
 	, @AgentID		INT
 	, @IsAgentOnly	BIT
-	, @PT			SMALLMONEY
+	, @PT			VARCHAR(MAX)
 	, @ProductID	INT
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
@@ -17,121 +17,134 @@ AS
 	Revision:		
 		- 20171009@Winnie: Update PT of DCS product RedmineID:#82346
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
+		- 20200718@Elodie: Support level sporttype/bettype [RedmineID:#135872]
 	Param's Explanation:
-
+		@PT:
+		<ROOT>
+				<PT
+						SportType="211"
+						BetType="2401"
+						IsLive = "0" 
+						PT="90"
+				/>
+		</ROOT>
 	*/
 
 BEGIN
 	SET NOCOUNT ON
 
-	DECLARE @startRun	DATETIME
-		, @endRun		DATETIME
-		, @duration		INT
-	DECLARE @mrecommend	INT
-	DECLARE @logSpData		NVARCHAR(MAX)
-		, @logSpData_Old	NVARCHAR(MAX)
-		, @xml				XML	
-		, @OldPT			TINYINT
-
-	DECLARE	@ProductName		VARCHAR(50),
-			@SettingLevel		TINYINT,
-			@ProductSettingID	INT
-
+	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend	INT
+	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT
+	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductSettingID	INT
+	CREATE TABLE #tmpPT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
+	CREATE TABLE #tmpPT_Old (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
 
 	SET @startRun = GETDATE()
 
-	SELECT	@ErrCode	= 0
-		,	@ErrMsg			= ''
+	SELECT	@ErrCode = 0, @ErrMsg = ''
 	
 	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
-	 @custid = @AgentID
-	,@Language = 'E'
-	,@ErrMsg = @ErrMsg OUTPUT
-	,@ErrCode= @ErrCode OUTPUT
+		 @custid = @AgentID
+		,@Language = 'E'
+		,@ErrMsg = @ErrMsg OUTPUT
+		,@ErrCode= @ErrCode OUTPUT
 
 	IF @ErrCode <> 0 
 		RETURN 
 			
-	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType=1
+	SELECT  @SettingLevel=SettingLevel, @ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType=1
 
 	-- Select ProductName
 	SELECT @ProductName = p.ProductName
 	FROM DBPRO.bodb02.dbo.Products AS p WITH(NOLOCK)
 	WHERE p.ProductID = @ProductID
-	SELECT @mrecommend=mrecommend FROM Customer WITH(NOLOCK) WHERE custid=@AgentID
-		
-	CREATE TABLE #SportBettypeFilter (SportType INT,Bettype INT,IsLive BIT)
-	
-	INSERT INTO #SportBettypeFilter (SportType,Bettype,IsLive)
-	SELECT DISTINCT  SportType,Bettype,IsLive 	
-	FROM Dep_ProductSetting ps WITH(NOLOCK) 
-		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-	WHERE ProductID = @ProductID AND SettingType=1	
 
-	SELECT @OldPT= AgentPT 
-			FROM 	#SportBettypeFilter ft 
-			INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-			WHERE CustID=@AgentID  
+	SELECT @mrecommend=mrecommend FROM Customer WITH(NOLOCK) WHERE custid=@AgentID
+	--Parse XML
+	EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @PT
+
+	INSERT INTO #tmpPT (SportType, BetType, Islive, PT)
+	SELECT	ox.SportType, ox.BetType, ox.Islive, ox.PT
+	FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
+	WITH (
+		SportType		SMALLINT
+	,	BetType			SMALLINT
+	,	IsLive			BIT
+	,	PT				SMALLMONEY	
+	) AS ox;
+
+	EXECUTE sp_xml_removedocument @iDoc;
+	
+	INSERT INTO	#tmpPT_Old (SportType, BetType, Islive, PT)
+	SELECT	cslm.SportType
+		,	cslm.BetType
+		,	cslm.IsLive
+		,	cslm.SuperPT			
+	FROM	dbo.Dep_CustPTSetting_Agent AS cslm WITH (NOLOCK)
+		INNER JOIN	#tmpPT AS ts ON	ts.SportType=cslm.SportType AND ts.BetType = cslm.BetType AND ts.IsLive = cslm.IsLive
+	WHERE	cslm.CustID = @SuperID
 
 	IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
 		SELECT @IsAgentOnly=0
 
 	IF(@IsAgentOnly=0)
 	BEGIN
-		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
-									INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-										WHERE CustID=@SuperID)
+		IF EXISTS (	SELECT 1 
+					FROM #tmpPT ft 
+						INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+					WHERE CustID=@SuperID)
 			UPDATE a
 			 SET
-				   SuperPT  = @PT
-				  ,MasterPT = @PT
-				  ,AgentPT  = @PT
+				   SuperPT  = t.PT
+				  ,MasterPT = t.PT
+				  ,AgentPT  = t.PT
 			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #SportBettypeFilter t ON a.CustID=@SuperID AND a.SportType=t.SportType AND a.BetType=t.BetType
+				INNER JOIN #tmpPT t ON a.CustID=@SuperID AND a.SportType=t.SportType AND a.BetType=t.BetType
 		 ELSE
 			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-			SELECT @SuperID,SportType,BetType,IsLive,@PT,@PT,@PT
-			FROM #SportBettypeFilter t
+			SELECT @SuperID,SportType,BetType,IsLive,PT,PT,PT
+			FROM #tmpPT t
 
-		IF EXISTS (SELECT 1 FROM 	#SportBettypeFilter ft 
-								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-									WHERE CustID=@mrecommend)
+		IF EXISTS (SELECT 1 
+					FROM #tmpPT ft 
+						INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+					WHERE CustID=@mrecommend)
 			UPDATE a
 				SET
 					 SuperPT  = 0
-					,MasterPT = @PT
+					,MasterPT = PT
 					,AgentPT  = 0
 			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #SportBettypeFilter t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType
+				INNER JOIN #tmpPT t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType
 		 ELSE
 			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-			SELECT @mrecommend,SportType,BetType,IsLive,0,@PT,0
-			FROM #SportBettypeFilter t
+			SELECT @mrecommend,SportType,BetType,IsLive,0,PT,0
+			FROM #tmpPT t
 
 		IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
 			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 			VALUES( @SuperID,@ProductSettingID)	
 	END
 
-	IF EXISTS (SELECT  1 FROM 	#SportBettypeFilter ft 
-								INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-									WHERE CustID=@AgentID)
+	IF EXISTS (	SELECT  1 
+				FROM #tmpPT ft 
+					INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+				WHERE CustID=@AgentID)
 		UPDATE a
-			SET
-				 SuperPT  = 0
-				,MasterPT = 0
-				,AgentPT  = @PT
+		SET SuperPT   = 0
+			,MasterPT = 0
+			,AgentPT  = PT
 		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #SportBettypeFilter t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType
+			INNER JOIN #tmpPT t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType
 	ELSE
 		INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-		SELECT @AgentID,SportType,BetType,IsLive,0,0,@PT
-		FROM #SportBettypeFilter t
+		SELECT @AgentID,SportType,BetType,IsLive,0,0,PT
+		FROM #tmpPT t
 	
 	EXEC Acc_Dep_DynamicCustSetting_01	
-	@CustID=@AgentID,
-	@PT=@PT,					
-	@ProductID=@ProductID	
+		@CustID=@AgentID,
+		@PT=@PT,					
+		@ProductID=@ProductID	
 
 	SELECT @ErrMsg='Update Position Taking successfully'
 	
@@ -148,8 +161,9 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	@ProductID							AS '@ProductID',
-							@OldPT								AS '@PositionTaking'	
+					SELECT	@ProductID			AS '@ProductID',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT_Old AS cs	
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -168,9 +182,9 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	SportType							AS '@SportType',
-							@OldPT								AS '@PositionTaking'							
-					FROM #SportBettypeFilter
+					SELECT	SportType			AS '@SportType',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT_Old AS cs
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -189,9 +203,9 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	BetType								AS '@BetType',
-							@OldPT								AS '@PositionTaking'			
-					FROM #SportBettypeFilter
+					SELECT	BetType				AS '@BetType',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT_Old AS cs
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -210,10 +224,10 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	SportType							AS '@SportType',
-							BetType								AS '@BetType',
-							@OldPT								AS '@PositionTaking'			
-					FROM #SportBettypeFilter
+					SELECT	SportType			AS '@SportType',
+							BetType				AS '@BetType',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT_Old AS cs
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -235,8 +249,9 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	@ProductID							AS '@ProductID',
-							@PT									AS '@PositionTaking'				
+					SELECT	@ProductID			AS '@ProductID',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT AS cs			
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -255,9 +270,9 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	SportType							AS '@SportType',
-							@PT									AS '@PositionTaking'							
-					FROM #SportBettypeFilter
+					SELECT	SportType			AS '@SportType',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT AS cs	
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -276,9 +291,9 @@ BEGIN
 				@UserID							AS '@UserID',				
 				@IP								AS '@IP',
 				(
-					SELECT	BetType								AS '@BetType',
-							@PT									AS '@PositionTaking'
-					FROM #SportBettypeFilter
+					SELECT	BetType				AS '@BetType',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT AS cs	
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -297,10 +312,10 @@ BEGIN
 				@UserID							AS '@UserID',			
 				@IP								AS '@IP',
 				(
-					SELECT	SportType							AS '@SportType',
-							BetType								AS '@BetType',
-							@PT									AS '@PositionTaking'
-					FROM #SportBettypeFilter
+					SELECT	SportType			AS '@SportType',
+							BetType				AS '@BetType',
+							cs.PT				AS '@PositionTaking'	
+					FROM	#tmpPT AS cs	
 					FOR XML PATH('PT'),
 					TYPE
 				)
@@ -313,30 +328,12 @@ BEGIN
 	SELECT @endRun = GETDATE()
 		, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
 
-	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @AgentID
-						, @ActionID			= 469
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
-	END TRY
-	BEGIN CATCH
-		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP @UserID = @UserID
-						, @CustID			= @AgentID
-						, @ActionID			= 469
-						, @TrackingValue	= @logSpData
-						, @TrackingValue2	= @logSpData_Old
-						, @duration			= @duration
-	END CATCH
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper 
+		@UserID = @UserID
+		, @CustID			= @AgentID
+		, @ActionID			= 469
+		, @TrackingValue	= @logSpData
+		, @TrackingValue2	= @logSpData_Old
+		, @duration			= @duration
 END
-
-
 GO
-GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbadminNet
-GO
-GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbDownlineNet
-GO
-GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbExtAccNet
-GO
-GRANT EXECUTE ON dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd TO bodbLicenseeNet
