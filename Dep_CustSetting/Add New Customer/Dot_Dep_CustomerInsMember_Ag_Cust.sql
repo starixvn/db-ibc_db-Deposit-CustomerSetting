@@ -16,7 +16,8 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust]
 	@CustID INT = 0 OUTPUT,    
 	@Username VARCHAR(50) ='' OUTPUT,    
 	@ErrCode INT = 0 OUTPUT,    
-	@ErrMsg NVARCHAR(2000) = '' OUTPUT     
+	@ErrMsg NVARCHAR(2000) = '' OUTPUT,
+	@BetFrom NVARCHAR(1) = ''
 AS    
 /*    
 	Created:     
@@ -167,6 +168,7 @@ AS
 	 - 20190805@Winnie: Remove MuyaThai [Redmine:#117501]
 	 - 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	 - 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	 - 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -1264,7 +1266,7 @@ BEGIN
 	    
 		@DisableNumber = @DisableNumber,    
 		@HideKeno = @HideKeno,    
-	   
+	    @BetFrom = @BetFrom,
 		@IP = '',    
 		@Language = 'E',    
 		@ErrCode = @ErrCode OUTPUT,    
