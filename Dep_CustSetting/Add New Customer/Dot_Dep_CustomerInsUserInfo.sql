@@ -235,7 +235,24 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID 
+			RETURN
+		END
+
+		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID) VALUES(2, @custid)
+		IF @@ERROR <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+							   WHEN 'E' THEN 'Create customer failed. Please try again.'
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							 END
+				 , @ErrCode = 112
+
+			-- ROLLBACK MANUALLY
+			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 			RETURN
 		END
 	END
@@ -277,6 +294,7 @@ BEGIN
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 	    RETURN
     END  
 
@@ -297,6 +315,7 @@ BEGIN
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 			RETURN
 		END
 	END
