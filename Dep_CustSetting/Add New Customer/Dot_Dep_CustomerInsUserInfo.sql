@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -38,7 +37,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	
 	@DisableNumber BIT = 0,
 	@HideKeno BIT = 0,		
-	@BetFrom NVARCHAR(1) = '',
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
@@ -201,44 +199,7 @@ BEGIN
 
 	IF @licensee IN('haifa','IBO','mansion88') 
 		AND @currency = 13 --RMB
-		AND @BetFrom IN ('a','x') --from Desktop/China View
 	BEGIN
-		DECLARE @NewVirtualMultiplier VARCHAR(MAX) = ''
-
-		SELECT @NewVirtualMultiplier = CONVERT(VARCHAR(MAX),(   SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-																FROM VRSettingHierarchy b WITH(NOLOCK) 
-																	CROSS APPLY VRValueMapping vr (NOLOCK)
-																WHERE b.SportType = 2 
-																	AND b.VRLeagueGroupID = -1 
-																	AND b.BetType = -1 
-																	AND vr.Value = 1
-																FOR XML RAW('Row'), ROOT ('Root'))
-											)
-
-		EXEC [Acc_CustVirtualMultiplier_Upd]
-			  @CustID = @CustID
-			, @SportType = 2
-			, @VirtualMultiplier = @NewVirtualMultiplier
-			, @UserID  = @creator
-			, @IP  = @IP
-			, @ErrCode = @ErrCode OUTPUT 
-			, @ErrMsg = @ErrMsg OUTPUT
-
-		IF @@ERROR <> 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-							   WHEN 'E' THEN 'Create customer failed. Please try again.'
-							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							 END
-				 , @ErrCode = 112
-
-			-- ROLLBACK MANUALLY
-			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID 
-			RETURN
-		END
-
 		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID) VALUES(2, @custid)
 		IF @@ERROR <> 0
 		BEGIN
@@ -251,7 +212,6 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 			RETURN
 		END
@@ -293,7 +253,6 @@ BEGIN
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 	    RETURN
     END  
@@ -314,7 +273,6 @@ BEGIN
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM VRCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 			RETURN
 		END
