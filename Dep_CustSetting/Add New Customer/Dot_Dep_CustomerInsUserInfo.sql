@@ -200,7 +200,7 @@ BEGIN
 	IF @licensee IN('haifa','IBO','mansion88') 
 		AND @currency = 13 --RMB
 	BEGIN
-		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID) VALUES(2, @custid)
+		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(2, @custid, 1)
 		IF @@ERROR <> 0
 		BEGIN
 			SELECT @ErrMsg = CASE @Language 
