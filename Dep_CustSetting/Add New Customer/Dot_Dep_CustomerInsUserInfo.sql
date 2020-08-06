@@ -197,7 +197,7 @@ BEGIN
 		END	
 	END	
 
-	IF @licensee IN('haifa','IBO','mansion88') 
+	IF @licensee IN('haifa','IBO','mansion88','Athena000') 
 		AND @currency IN (13,20) --RMB
 	BEGIN
 		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(2, @custid, 1)
