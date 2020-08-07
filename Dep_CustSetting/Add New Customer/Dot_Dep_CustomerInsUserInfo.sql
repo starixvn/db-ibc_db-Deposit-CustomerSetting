@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -38,7 +37,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	
 	@DisableNumber BIT = 0,
 	@HideKeno BIT = 0,		
-	
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
@@ -55,6 +53,7 @@ AS
 		- 20191211@Johnson: Apply Default VR setting for IBO new members [redmine:#125285]
 		- 20200624@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 		- 20200617@Eden: Virtual Rate for Basketball - Remove Apply Default VR setting for IBO new members [Redmine: #134978]
+		- 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -115,7 +114,7 @@ BEGIN
 	SELECT @licensee = site
 	FROM customer WITH(NOLOCK)
 	WHERE custid = @recommend
-	
+
 	--20191211@Johnson
 	--re-set  virtual rate for all sports except soccer to -50 for IBO 
 	IF @licensee = 'IBO'
@@ -197,6 +196,26 @@ BEGIN
 			RETURN
 		END	
 	END	
+
+	IF @licensee IN('haifa','IBO','mansion88','Athena000') 
+		AND @currency IN (13,20) --RMB
+	BEGIN
+		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(2, @custid, 1)
+		IF @@ERROR <> 0
+		BEGIN
+			SELECT @ErrMsg = CASE @Language 
+							   WHEN 'E' THEN 'Create customer failed. Please try again.'
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							 END
+				 , @ErrCode = 112
+
+			-- ROLLBACK MANUALLY
+			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
+			RETURN
+		END
+	END
 	
 	INSERT INTO [dbo].[custinfo]
     (
@@ -234,6 +253,7 @@ BEGIN
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 	    RETURN
     END  
 
@@ -253,6 +273,7 @@ BEGIN
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
 			RETURN
 		END
 	END
