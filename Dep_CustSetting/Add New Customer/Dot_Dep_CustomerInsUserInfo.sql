@@ -54,6 +54,7 @@ AS
 		- 20200624@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 		- 20200617@Eden: Virtual Rate for Basketball - Remove Apply Default VR setting for IBO new members [Redmine: #134978]
 		- 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
+		- 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View - add Happy8 licensee [redmine: #139229]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -197,7 +198,7 @@ BEGIN
 		END	
 	END	
 
-	IF @licensee IN('haifa','IBO','mansion88','Athena000') 
+	IF @licensee IN('haifa','IBO','mansion88','Athena000','Happy8') 
 		AND @currency IN (13,20) --RMB
 	BEGIN
 		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(2, @custid, 1)
