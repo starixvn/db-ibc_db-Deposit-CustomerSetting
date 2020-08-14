@@ -54,7 +54,8 @@ AS
 		- 20200624@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 		- 20200617@Eden: Virtual Rate for Basketball - Remove Apply Default VR setting for IBO new members [Redmine: #134978]
 		- 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
-		- 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View - add Happy8 licensee [redmine: #139229]
+		- 20200810@Eden: VR setting for Basketball on some licensees from Desktop/China View - add Happy8 licensee [redmine: #139229]
+		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -201,7 +202,7 @@ BEGIN
 	IF @licensee IN('haifa','IBO','mansion88','Athena000','Happy8') 
 		AND @currency IN (13,20) --RMB
 	BEGIN
-		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(2, @custid, 1)
+		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(99, @custid, 1)
 		IF @@ERROR <> 0
 		BEGIN
 			SELECT @ErrMsg = CASE @Language 
@@ -213,7 +214,7 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
 			RETURN
 		END
 	END
@@ -254,7 +255,7 @@ BEGIN
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
+		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
 	    RETURN
     END  
 
@@ -274,7 +275,7 @@ BEGIN
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 2
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
 			RETURN
 		END
 	END
