@@ -1,1 +1,2 @@
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql
