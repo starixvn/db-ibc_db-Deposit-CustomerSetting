@@ -56,6 +56,7 @@ AS
 		- 20200804@Eden: VR setting for Basketball on some licensees from Desktop/China View [redmine: #138168]
 		- 20200810@Eden: VR setting for Basketball on some licensees from Desktop/China View - add Happy8 licensee [redmine: #139229]
 		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
+		- 20200818@Eden: Auto Update Bet Limit Control [redmine: #139701]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -219,6 +220,29 @@ BEGIN
 		END
 	END
 	
+	--#139701
+	INSERT INTO [BetLimitControlCustSetting]([CustID],[BetLimitTypeID],[MaxBet],[MaxPerMatch])
+	SELECT @custid, BetLimitTypeID, MIN(MaxBet), MIN(MaxPerMatch)
+	FROM BetLimitControlDefaultSetting WITH(NOLOCK,FORCESEEK) 
+	WHERE CustID IN (@srecommend,@mrecommend,@recommend)
+	GROUP BY BetLimitTypeID
+
+	IF @@ERROR <> 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Create customer failed. Please try again.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+				, @ErrCode = 112
+
+		-- ROLLBACK MANUALLY
+		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
+		DELETE FROM BetLimitControlDefaultSetting WITH(ROWLOCK) WHERE custid = @CustID
+		RETURN
+	END
+
 	INSERT INTO [dbo].[custinfo]
     (
 	    custid, currency
@@ -256,6 +280,7 @@ BEGIN
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
+		DELETE FROM BetLimitControlDefaultSetting WITH(ROWLOCK) WHERE custid = @CustID
 	    RETURN
     END  
 
@@ -276,6 +301,7 @@ BEGIN
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
+			DELETE FROM BetLimitControlDefaultSetting WITH(ROWLOCK) WHERE custid = @CustID
 			RETURN
 		END
 	END
