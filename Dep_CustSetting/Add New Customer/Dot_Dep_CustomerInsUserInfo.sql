@@ -57,6 +57,7 @@ AS
 		- 20200810@Eden: VR setting for Basketball on some licensees from Desktop/China View - add Happy8 licensee [redmine: #139229]
 		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 		- 20200818@Eden: Auto Update Bet Limit Control [redmine: #139701]
+		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -200,23 +201,44 @@ BEGIN
 		END	
 	END	
 
-	IF @licensee IN('haifa','IBO','mansion88','Athena000','Happy8') 
+	IF @licensee IN('haifa','IBO','mansion88','Athena000','Happy8','ManBetX') 
 		AND @currency IN (13,20) --RMB
 	BEGIN
-		INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(99, @custid, 1)
-		IF @@ERROR <> 0
+		IF  @licensee IN('haifa','IBO','ManBetX','Athena000') -- for soccer + Other sport
 		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-							   WHEN 'E' THEN 'Create customer failed. Please try again.'
-							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							 END
-				 , @ErrCode = 112
+			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(100, @custid, 1)
+			IF @@ERROR <> 0
+			BEGIN
+				SELECT @ErrMsg = CASE @Language 
+								   WHEN 'E' THEN 'Create customer failed. Please try again.'
+								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+								 END
+					 , @ErrCode = 112
 
-			-- ROLLBACK MANUALLY
-			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
-			RETURN
+				-- ROLLBACK MANUALLY
+				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+				DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+				RETURN
+			END
+		END
+		ELSE -- for Other sport
+		BEGIN
+			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(99, @custid, 1)
+			IF @@ERROR <> 0
+			BEGIN
+				SELECT @ErrMsg = CASE @Language 
+								   WHEN 'E' THEN 'Create customer failed. Please try again.'
+								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+								 END
+					 , @ErrCode = 112
+
+				-- ROLLBACK MANUALLY
+				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+				DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+				RETURN
+			END
 		END
 	END
 	
@@ -238,8 +260,8 @@ BEGIN
 		-- ROLLBACK MANUALLY
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
-		DELETE FROM BetLimitControlDefaultSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 		RETURN
 	END
 
@@ -279,8 +301,8 @@ BEGIN
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
-		DELETE FROM BetLimitControlDefaultSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 	    RETURN
     END  
 
@@ -300,8 +322,8 @@ BEGIN
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype = 99
-			DELETE FROM BetLimitControlDefaultSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+			DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 			RETURN
 		END
 	END
