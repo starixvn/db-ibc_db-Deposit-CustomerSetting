@@ -42,6 +42,7 @@ AS
 
 	Revisions:    
 		- 20181228@Dominic: First commit
+		- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	
 	Param's Explanation:
 	• @ErrCode:
@@ -52,6 +53,13 @@ AS
 */
 BEGIN
     SET NOCOUNT ON 
+
+	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
+	BEGIN
+		SELECT @site = cus.[site]
+		FROM Customer cus WITH (NOLOCK)
+		WHERE cus.custid = @recommend
+	END
 	
 	SET IDENTITY_INSERT dbo.Customer ON
 		

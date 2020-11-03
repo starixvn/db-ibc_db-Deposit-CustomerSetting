@@ -58,6 +58,7 @@ AS
 		- 20200811@Eden: Adjust VR setting for Other Sports of Haifa, IBO, Mansion88 & Happy8 [redmine: #139229]
 		- 20200818@Eden: Auto Update Bet Limit Control [redmine: #139701]
 		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
+		- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -67,6 +68,13 @@ AS
 */
 BEGIN
     SET NOCOUNT ON 
+
+	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
+	BEGIN
+		SELECT @site = cus.[site]
+		FROM Customer cus WITH (NOLOCK)
+		WHERE cus.custid = @recommend
+	END
 	
     INSERT INTO Customer   			
 	(username, firstname, lastname, phone, mobilephone, fax, email, address,
