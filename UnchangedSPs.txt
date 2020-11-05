@@ -3,5 +3,5 @@ CreateLicensee\Dot_Dep_CreateLicensee.sql
 Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_InsertCustomerInfo.sql
 Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sqlDeposit-Customer-Archive\3.SP\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sqlDeposit-Customer-Archive\3.SP\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
+Deposit-Customer-Archive\3.SP\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
+Deposit-Customer-Archive\3.SP\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
