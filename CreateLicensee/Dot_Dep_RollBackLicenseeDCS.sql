@@ -9,8 +9,9 @@ AS
  DB: DBCUST/CustDB  
  Original:  
  Revisions:  	
-	20190425@Winnie:  Onebook SiteBuilder RedmineID: #111321
-	20200415@Eden: OnebookSiteBuilder - Add Virtual Games And Table Games [RedmineID:#132393] 
+	- 20190425@Winnie:  Onebook SiteBuilder RedmineID: #111321
+	- 20200415@Eden: OnebookSiteBuilder - Add Virtual Games And Table Games [RedmineID:#132393] 
+	- 20200903@Johnson: offer comm for DCS products [redmine:#140388]
  Param's Explanation: 
  */
 BEGIN
@@ -38,7 +39,15 @@ BEGIN
 	DELETE d
 	FROM Dep_CustStakeLevel_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
-
+	
+	DELETE d
+	FROM Dep_CustDiscountGroupSetting_Member d WITH(ROWLOCK)
+		INNER JOIN #tblCustomer t ON d.AgentID=t.CustID	
+	
+	DELETE d
+	FROM Dep_CustDiscountSetting_Member d WITH(ROWLOCK)
+		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
+		
 	IF @SiteID IS NOT NULL
 		DELETE d
 		FROM Dep_StakeLevel d WITH(ROWLOCK)
