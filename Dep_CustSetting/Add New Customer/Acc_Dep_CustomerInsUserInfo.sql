@@ -82,6 +82,7 @@ Revisions:
 	- 20200203@Elodie: Apply Currency Modifier [Redmine:127300]
 	- 20200403@Elodie: Add Currency Modifier history [Redmine:127300]
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	
 Param's Explanation:
 • @ErrCode:
@@ -91,6 +92,13 @@ Param's Explanation:
 • @ErrMsg: Error description.
 */
 DECLARE @CreateDate DATETIME = GETDATE()
+
+IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
+BEGIN
+	SELECT @site = cus.[site]
+	FROM Customer cus WITH (NOLOCK)
+	WHERE cus.custid = @recommend
+END
 
 INSERT INTO Customer   			
 			(username, firstname, lastname, phone, mobilephone, fax, email, address,
