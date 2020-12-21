@@ -18,7 +18,8 @@ AS
   - 20170304@Winnie:  Change for exclude CashOut ACC [Redmine: #72107]
   - 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
   - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
-
+  - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
+  
  Parameters Explanation:  
 */  
   
@@ -28,13 +29,17 @@ BEGIN
 		RETURN ''  
 	END  
   
-	DECLARE @LimitLoop INT, @Index INT, @Username VARCHAR(50), @IsExists BIT,
+	DECLARE @LimitLoop INT, @Index INT, @Username VARCHAR(50), @IsExists BIT,@Currency INT,@UsernameOddAdj VARCHAR(30),
 			@NumTmp VARCHAR(10), @NumOfMem INT, @NumOfMem2 INT, @recommendUsername VARCHAR(50)  
 	SELECT @LimitLoop = 1000, @Index = 0, @Username = ''  
   
-	SELECT @recommendUsername = username  
+	SELECT @recommendUsername = username , @Currency = currency
 	FROM dbo.custInfo WITH(NOLOCK)  
 	WHERE custid = @recommend AND roleid = 2  
+  
+		SET @UsernameOddAdj = isnull((SELECT  currency
+		FROM exchange with(nolock)
+		WHERE ExchangeId = @Currency),'') + '01OddsAdj'  
   
 	SELECT @NumOfMem = ISNULL(CAST(REPLACE(username, @recommendUsername, '') AS INT), 0)  
 	FROM dbo.customer WITH(NOLOCK)  
@@ -44,6 +49,7 @@ BEGIN
 		AND username NOT LIKE @recommendUsername+'%'+'BetTrade'  
 		AND username NOT LIKE @recommendUsername+'%'+'CashOut'
 		AND username NOT LIKE @recommendUsername+'%'+'ClearBal'  
+		AND username NOT LIKE Isnull(site,'') + Isnull(@UsernameOddAdj,'')  
 		AND recommend = @recommend
 		AND RoleId = 1)  
 
