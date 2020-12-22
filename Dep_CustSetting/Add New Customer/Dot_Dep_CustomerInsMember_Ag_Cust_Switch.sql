@@ -25,7 +25,8 @@ AS
 	    
 	Revisions:    
 	 - 20200907@Eden: Minimize UM Time - 1st Deposit [Redmine: #136741]
-
+	 - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
+	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -1057,12 +1058,12 @@ BEGIN
 	END    
 	    	
 	--20140812: Change rule generate username    
-	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%') OR @UserName IS NULL
+	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%' AND  @UserName NOT LIKE '%01OddsAdj%') OR @UserName IS NULL
 	BEGIN  
 	SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
 	IF @UserName = ''    
 	BEGIN    
-	 SELECT @ErrMsg = 'The username is not available.'    
+	 SELECT @ErrMsg = 'Can not generate username.'    
 	  ,@ErrCode = 11    
 	    
 	 RETURN    
