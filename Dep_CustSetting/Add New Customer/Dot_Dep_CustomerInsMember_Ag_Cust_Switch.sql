@@ -26,6 +26,7 @@ AS
 	Revisions:    
 	 - 20200907@Eden: Minimize UM Time - 1st Deposit [Redmine: #136741]
 	 - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
+	 - 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -1534,7 +1535,7 @@ BEGIN
 	     
 	--Write PT log    
 	Select @LogSPData = '<Dot_Dep_CustomerInsMember_Ag_Cust custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +    
-	'AgentPT="'+ coalesce(cast(@apositiontaking_1 as varchar(50)),space(1)) + '" />'    
+	'AgentPT="'+ coalesce(dbo.f_FomatNumericToChar(@apositiontaking_1),space(1)) + '" />'    
 	
 	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper     
 	  @UserID = @CustID,    
