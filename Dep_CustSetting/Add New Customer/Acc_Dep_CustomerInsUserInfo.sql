@@ -83,6 +83,7 @@ Revisions:
 	- 20200403@Elodie: Add Currency Modifier history [Redmine:127300]
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
+	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	
 Param's Explanation:
 • @ErrCode:
@@ -235,6 +236,46 @@ BEGIN
 	RETURN
 END
 
+DECLARE @UplineID INT
+
+SELECT @UplineID = CASE WHEN @roleid = 3 THEN @srecommend 
+						WHEN @roleid = 2 THEN @mrecommend
+						WHEN @roleid = 1 THEN @recommend
+					END
+
+--VR lock status
+INSERT INTO VRCustLockStatus(CustID,Type)
+SELECT @custid,Type
+FROM VRCustLockStatus v (NOLOCK) 
+WHERE CustID = @UplineID
+	AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+
+IF @@ERROR <> 0
+BEGIN
+	SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Create customer failed. Please try again.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						END,
+		@ErrCode = 112
+		
+	-- ROLLBACK MANUALLY
+	IF @RoleID = 4
+	BEGIN
+		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+	END
+	ELSE IF @RoleID = 3
+		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
+	ELSE IF @RoleID = 2
+		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
+		
+	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+	DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+			
+	RETURN
+END
+
 INSERT INTO [dbo].[custinfo](
 	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch99]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
@@ -268,6 +309,7 @@ BEGIN
 		
 	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+	DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 	
 	RETURN
 END

@@ -59,6 +59,7 @@ AS
 		- 20200818@Eden: Auto Update Bet Limit Control [redmine: #139701]
 		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 		- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
+		- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -118,6 +119,28 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+	    RETURN
+    END	
+
+	--Virtual rate lock status
+	INSERT INTO VRCustLockStatus(CustID,Type)
+	SELECT @custid,Type
+	FROM VRCustLockStatus v (NOLOCK) 
+	WHERE CustID = @recommend
+		AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+
+	IF @@ERROR <> 0
+    BEGIN
+	    SELECT @ErrMsg = CASE @Language 
+					       WHEN 'E' THEN 'Create customer failed. Please try again.'
+					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+					     END
+		     , @ErrCode = 112
+
+	    -- ROLLBACK MANUALLY
+	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 	    RETURN
     END	
 	
@@ -205,6 +228,7 @@ BEGIN
 			-- ROLLBACK MANUALLY
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 			RETURN
 		END	
 	END	
@@ -226,6 +250,7 @@ BEGIN
 				-- ROLLBACK MANUALLY
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 				DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 				RETURN
 			END
@@ -244,6 +269,7 @@ BEGIN
 				-- ROLLBACK MANUALLY
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 				DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 				RETURN
 			END
@@ -268,6 +294,7 @@ BEGIN
 		-- ROLLBACK MANUALLY
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
 		RETURN
@@ -308,6 +335,7 @@ BEGIN
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
@@ -329,6 +357,7 @@ BEGIN
 
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
 			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 			DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
