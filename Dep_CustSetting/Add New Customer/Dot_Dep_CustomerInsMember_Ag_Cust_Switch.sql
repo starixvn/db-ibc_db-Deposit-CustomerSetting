@@ -27,6 +27,7 @@ AS
 	 - 20200907@Eden: Minimize UM Time - 1st Deposit [Redmine: #136741]
 	 - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
 	 - 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
+	 - 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
 	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -1175,7 +1176,7 @@ BEGIN
 	UNION ALL    
 	select @custid, 8, 2, @v2apositiontaking_8, @v2mpositiontaking_8, @v2spositiontaking_8, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv2, @MaxBetv2, 0    
 	UNION ALL    
-	select @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv2, @MaxBetv2, 0    
+	select @custid, 20, 2, @v2apositiontaking_20, @v2mpositiontaking_20, @v2spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, @MinBetv2, @MaxBetv2, 0    
 	    
 	UNION ALL    
 	select @custid, 1, 3, @v3apositiontaking_1, @v3mpositiontaking_1, @v3spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv3, @MaxBetv3, 0    
@@ -1184,7 +1185,7 @@ BEGIN
 	UNION ALL    
 	select @custid, 3, 3, @v3apositiontaking_3, @v3mpositiontaking_3, @v3spositiontaking_3, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv3, @MaxBetv3, 0    
 	UNION ALL    
-	select @custid, 20, 3, @v3apositiontaking_20, @v3mpositiontaking_20, @v3spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv3, @MaxBetv3, 0    
+	select @custid, 20, 3, @v3apositiontaking_20, @v3mpositiontaking_20, @v3spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, @MinBetv3, @MaxBetv3, 0    
 	    
 	UNION ALL    
 	select @custid, 1, 5, @v5apositiontaking_1, @v5mpositiontaking_1, @v5spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv5, @MaxBetv5, 0    
@@ -1193,14 +1194,14 @@ BEGIN
 	UNION ALL    
 	select @custid, 3, 5, @v5apositiontaking_3, @v5mpositiontaking_3, @v5spositiontaking_3, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv5, @MaxBetv5, 0    
 	UNION ALL    
-	select @custid, 20, 5, @v5apositiontaking_20, @v5mpositiontaking_20, @v5spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv5, @MaxBetv5, 0    
+	select @custid, 20, 5, @v5apositiontaking_20, @v5mpositiontaking_20, @v5spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, @MinBetv5, @MaxBetv5, 0    
 	    
 	UNION ALL    
 	select @custid, 1, 8, @v8apositiontaking_1, @v8mpositiontaking_1, @v8spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount,@MinBetv8, @MaxBetv8, 0    
 	UNION ALL    
 	select @custid, 3, 8, @v8apositiontaking_3, @v8mpositiontaking_3, @v8spositiontaking_3, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv8, @MaxBetv8, 0    
 	UNION ALL    
-	select @custid, 20, 8, @v8apositiontaking_20, @v8mpositiontaking_20, @v8spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv8, @MaxBetv8, 0    
+	select @custid, 20, 8, @v8apositiontaking_20, @v8mpositiontaking_20, @v8spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, @MinBetv8, @MaxBetv8, 0    
 	    
 	UNION ALL    
 	select @custid, 1, 10, @v10apositiontaking_1, @v10mpositiontaking_1, @v10spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv10, @MaxBetv10, 0    
@@ -1209,12 +1210,12 @@ BEGIN
 	UNION ALL    
 	select @custid, 3, 10, @v10apositiontaking_3, @v10mpositiontaking_3, @v10spositiontaking_3, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv10, @MaxBetv10, 0    
 	UNION ALL    
-	select @custid, 20, 10, @v10apositiontaking_20, @v10mpositiontaking_20, @v10spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv10, @MaxBetv10, 0    
+	select @custid, 20, 10, @v10apositiontaking_20, @v10mpositiontaking_20, @v10spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, @MinBetv10, @MaxBetv10, 0    
 	    
 	UNION ALL    
 	select @custid, 1, 11, @v11apositiontaking_1, @v11mpositiontaking_1, @v11spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount, @MinBetv11, @MaxBetv11, 0    
 	UNION ALL    
-	select @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv11, @MaxBetv11, 0    
+	select @custid, 20, 11, @v11apositiontaking_20, @v11mpositiontaking_20, @v11spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2, @MinBetv11, @MaxBetv11, 0    
 	 
 	    
 	UNION ALL    
@@ -1226,7 +1227,7 @@ BEGIN
 	UNION ALL     
 	select @custid, 9, 99, @v99apositiontaking_9, @v99mpositiontaking_9, @v99spositiontaking_9, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs, @MinBetv99MP, @MaxBetv99MP, 0    
 	UNION ALL    
-	select @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, @playerdiscountcs, @discountcs, @adiscountcs, @sdiscountcs,  @MinBetv99, @MaxBetv99, 0    
+	select @custid, 20, 99, @v99apositiontaking_20, @v99mpositiontaking_20, @v99spositiontaking_20, @playerdiscount1x2, @discount1x2, @adiscount1x2, @sdiscount1x2,  @MinBetv99, @MaxBetv99, 0    
 	 
 	--Insert into custsetting3rd    	    
 	INSERT INTO [Dep_CustSetting3rd]    
