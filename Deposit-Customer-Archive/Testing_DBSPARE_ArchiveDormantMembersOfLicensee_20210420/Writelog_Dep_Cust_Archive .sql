@@ -1,4 +1,4 @@
-/*<info serverAlias="DBLOG-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSPARE-bodb_CustomerLog" executers="" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE Writelog_Dep_Cust_Archive 
 	@CustID INT = 0
 	,@Action VARCHAR(100)
