@@ -32,7 +32,7 @@ BEGIN
 	SET NOCOUNT ON  
 
 	BEGIN TRY
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
+		EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
 			@UserID = @UserID,
 			@CustID = @CustID,
 			@ActionID = @ActionID,

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBSPARE-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE Acc_CustomerInfo_Execrep_10
 	@CustID INT = -1
 	,@ActionID SMALLINT = -1
@@ -68,7 +68,7 @@ BEGIN
 			IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 1 DELETE Dep_CustStakeLevel_Member WHERE CustID = @CustID
 			IF dbo.f_CheckRepTable('CustGameType') = 1 DELETE CustGameType WHERE CustID = @CustID
 		END
-		ELSE IF @ActionID = 8 AND @@SERVERNAME = 'DBTRANS'
+		ELSE IF @ActionID = 8 AND @@SERVERNAME = 'DBSPARE'
 		BEGIN
 		
 			DELETE bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
@@ -136,7 +136,7 @@ BEGIN
 			IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 1 DELETE Dep_CustStakeLevel_Member WHERE CustID IN (SELECT CustID FROM #LstCustID)
 			IF dbo.f_CheckRepTable('CustGameType') = 1 DELETE CustGameType WHERE CustID IN (SELECT CustID FROM #LstCustID)
 		END
-		ELSE IF @ActionID = 8 AND @@SERVERNAME = 'DBTRANS'
+		ELSE IF @ActionID = 8 AND @@SERVERNAME = 'DBSPARE'
 		BEGIN
 		
 			DELETE bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)

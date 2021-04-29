@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSPARE-custDB" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/  
 ALTER PROCEDURE [Task_Dep_Customer_Archive_ScanCustomer]
 	 @agentID INT, 
 	 @minBalance MONEY, 
@@ -25,12 +25,17 @@ AS
 		- @CheckBettrans_CustPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in bettrans/translog..
 */
 BEGIN
+	-- simulate run date based on test data version
+	declare @currentDate smalldatetime 
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
+
+
 	TRUNCATE TABLE bodb_Report.dbo.Tmp_Dep_Customer_Archived
 
 	SET NOCOUNT ON
 	DECLARE @MinBettingDate DATETIME
 
-	SET @MinBettingDate = DATEADD(dd, -@minDays, CAST(GETDATE() AS DATE))
+	SET @MinBettingDate = DATEADD(dd, -@minDays, CAST(@currentDate AS DATE))
 	CREATE TABLE #Member 
 	(
 		custid int PRIMARY KEY, username varchar(50), username2 varchar(50), memberBalance MONEY default 0, isProcessed INT default 0
@@ -58,10 +63,10 @@ BEGIN
 		AND ISNULL(BonusWalletFlag,0) = 0
 		
 	DELETE FROM #Member
-	WHERE custid IN (SELECT custid FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH (NOLOCK))
+	WHERE custid IN (SELECT custid FROM CustDB.dbo.Dep_Customer_Archived_Exception WITH (NOLOCK))
 
 	DELETE FROM #Member
-	WHERE custid IN (SELECT custid FROM bodb02.dbo.Dep_Customer_Archived WITH (NOLOCK))
+	WHERE custid IN (SELECT custid FROM dbo.Dep_Customer_Archived WITH (NOLOCK))
 
 	-- Remove CustIDBalanceDummy out of the list betting member if exist
 	DELETE FROM #Member
@@ -127,7 +132,7 @@ BEGIN
 			FROM #tmpMember m
 			where EXISTS (
 				SELECT custid
-				FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
+				FROM bodb02.dbo.bettrans_GoldDeluxe b with (NOLOCK)
 				WHERE b.custid = m.custid
 				)
 			
@@ -136,7 +141,7 @@ BEGIN
 			FROM #tmpMember m
 			WHERE EXISTS (
 					SELECT custid
-					FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+					FROM bodb02.dbo.bettrans_AGCasino b with (NOLOCK)
 					WHERE b.custid = m.custid
 				)
 
@@ -179,7 +184,7 @@ BEGIN
 
 	-- 4. Get member in #Member table and exclude Bettrade, CashOut, 01OddsAdj, ClearBal account
 	INSERT INTO bodb_Report.dbo.Tmp_Dep_Customer_Archived(ArchivedDate, CustID, username, username2, recommend, ClosingBalance, CustIDBalanceDummy, status)
-	SELECT GetDate() ArchivedDate, m.custid, m.username, m.username2, c.recommend,memberBalance, @custIDBalanceDummy CustIDBalanceDummy, 'waiting' Status
+	SELECT @currentDate ArchivedDate, m.custid, m.username, m.username2, c.recommend,memberBalance, @custIDBalanceDummy CustIDBalanceDummy, 'waiting' Status
 	FROM #Member m
 	INNER JOIN Customer c (NOLOCK)
 		ON m.custid = c.custid

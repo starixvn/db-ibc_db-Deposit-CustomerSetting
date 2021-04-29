@@ -1,4 +1,4 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSPARE-bodb02" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [Task_Dep_Customer_Update_TrackingLastBetDate]
 AS
 /*
@@ -12,8 +12,13 @@ AS
 	Param's Explanation:
 */
 BEGIN
+
+	-- simulate run date based on test data version
+	declare @currentDate smalldatetime 
+	select @currentDate = VValue from bodb02.dbo.Systemsettings with (nolock) where VName = 'aa_TestDate'
+
 	DECLARE @CheckBettrans_CustPerBatch  INT = 5000
-	DECLARE @ScanDate DATE = GETDATE() - 1
+	DECLARE @ScanDate DATE = @currentDate - 1
 
 	CREATE TABLE #Cust (custid int primary key)
 	CREATE TABLE #Agent (AgentID int PRIMARY KEY)
@@ -58,11 +63,11 @@ BEGIN
 
 	DELETE 
 	FROM #Cust 
-	WHERE custid IN ( SELECT CustID FROM bodb02.dbo.Dep_Customer_Archived WITH (NOLOCK) WHERE status IN ('archived','completed') )
+	WHERE custid IN ( SELECT CustID FROM custdb.dbo.Dep_Customer_Archived WITH (NOLOCK) WHERE status IN ('archived','completed') )
 	
 	DELETE 
 	FROM #Cust 
-	WHERE custid IN ( SELECT custid FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH (NOLOCK))
+	WHERE custid IN ( SELECT custid FROM CustDB.dbo.Dep_Customer_Archived_Exception WITH (NOLOCK))
 
 	INSERT INTO Cust_TrackingLastBetDate(CustID)
 	SELECT CustID 
@@ -93,12 +98,12 @@ BEGIN
 	--UNION
 	--SELECT b.custid
 	--FROM #Agent c
-	--	INNER JOIN DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK) ON c.AgentID = b.recommend
+	--	INNER JOIN DBPTCS.bodb02.dbo.bettrans_AGCasino b with (NOLOCK) ON c.AgentID = b.recommend
 	--WHERE b.transdate >= @ScanDate
 	--UNION
 	--SELECT b.custid
 	--FROM #Agent c
-	--	INNER JOIN DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK) ON c.AgentID = b.recommend
+	--	INNER JOIN DBPTCS.bodb02.dbo.bettrans_GoldDeluxe b with (NOLOCK) ON c.AgentID = b.recommend
 	--WHERE b.transdate >= @ScanDate
 
 	INSERT INTO #Cust_TrackingLastBetDate(custid, LastBetDate)
@@ -182,11 +187,11 @@ BEGIN
 		FROM #tmpMember a
 			INNER JOIN #BettingMember b ON a.custID = b.custid
 
-		------> scan ticket from DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino
+		------> scan ticket from DBPTCS.bodb02.dbo.bettrans_AGCasino
 		--TRUNCATE TABLE #BettingMember
 		--INSERT INTO #BettingMember(custid,LastBetDate)
 		--SELECT b.custid, MAX(b.transdate) AS transdate
-		--FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+		--FROM DBPTCS.bodb02.dbo.bettrans_AGCasino b with (NOLOCK)
 		--	INNER JOIN #tmpMember t ON t.custid = b.custid
 		--WHERE b.transdate > t.LastBetDate 
 		--	AND b.transdate >= @ScanDate
@@ -198,11 +203,11 @@ BEGIN
 		--FROM #tmpMember a
 		--	INNER JOIN #BettingMember b ON a.custID = b.custid
 
-		------> scan ticket from DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe
+		------> scan ticket from DBPTCS.bodb02.dbo.bettrans_GoldDeluxe
 		--TRUNCATE TABLE #BettingMember
 		--INSERT INTO #BettingMember(custid,LastBetDate)
 		--SELECT b.custid, MAX(b.transdate) AS transdate
-		--FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
+		--FROM DBPTCS.bodb02.dbo.bettrans_GoldDeluxe b with (NOLOCK)
 		--	INNER JOIN #tmpMember t ON t.custid = b.custid
 		--WHERE b.transdate > t.LastBetDate 
 		--	AND b.transdate >= @ScanDate
@@ -222,18 +227,18 @@ BEGIN
 
 	END
 
-	--> Process scan DBPTCS.bodb_PlaytechCS tables
+	--> Process scan DBPTCS.bodb02 tables
 	TRUNCATE TABLE #BettingMember
 	INSERT INTO #BettingMember(custid,LastBetDate)
 	SELECT custid, transdate
-	FROM OPENQUERY (DBPTCS, ';WITH TMP AS(
+	FROM OPENQUERY (DBSPARE, ';WITH TMP AS(
 								SELECT b.custid, b.transdate
-								FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
+								FROM bodb02.dbo.bettrans_AGCasino b with (NOLOCK)
+								WHERE transdate >= CONVERT(DATE,@currentDate - 1)
 								UNION ALL
 								SELECT b.custid, b.transdate
-								FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
+								FROM bodb02.dbo.bettrans_GoldDeluxe b with (NOLOCK)
+								WHERE transdate >= CONVERT(DATE,@currentDate - 1)
 							)
 							SELECT CustID, MAX(transdate) AS transdate 
 							FROM tmp
@@ -262,7 +267,7 @@ BEGIN
 
 	DELETE a
 	FROM Cust_TrackingLastBetDate a WITH(ROWLOCK)
-	WHERE a.CustID IN (SELECT CustID FROM bodb02.dbo.Dep_Customer_Archived WITH (NOLOCK) WHERE status IN ('archived','completed'))
+	WHERE a.CustID IN (SELECT CustID FROM custdb.dbo.Dep_Customer_Archived WITH (NOLOCK) WHERE status IN ('archived','completed'))
 
 	DROP TABLE #BettingMember
 	DROP TABLE #Cust

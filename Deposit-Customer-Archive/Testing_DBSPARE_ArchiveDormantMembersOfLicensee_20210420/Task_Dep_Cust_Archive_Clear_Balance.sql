@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSPARE-bodb02" executers="" selecters="" viewers="" isFunction="0" isNested="0"></info>*/
 ALTER PROCEDURE [dbo].[Task_Dep_Cust_Archive_Clear_Balance] 
 	@BatchSize INT = 100
 AS
@@ -49,7 +49,7 @@ BEGIN
 			, NULL
 			, 0
 			, 0
-	FROM DBCUST.CustDB.dbo.Dep_Customer_Archived WITH(NOLOCK)
+	FROM CustDB.dbo.Dep_Customer_Archived WITH(NOLOCK)
 	WHERE Status = 'waiting'
 	ORDER BY ArchivedDate, CustID
 
@@ -57,7 +57,7 @@ BEGIN
 
 	IF NOT EXISTS(SELECT 1 FROM #Dep_Customer_Archived)
 	BEGIN
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive 
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive 
 				@Action='CLEAR-BALANCE'
 				, @Status='Done'
 				, @Message='There are not any dormant members in the waiting list'
@@ -79,7 +79,7 @@ BEGIN
 
 	SELECT @Message='Start clearing balance: ' + @LogLstCustID
 
-	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+	EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 			, @Action='CLEAR-BALANCE'
 			, @Status='OnProgress'
 			, @Message=@Message
@@ -96,13 +96,13 @@ BEGIN
 
 		SELECT @Message = 'Dummy account must be different from dormant member: ' + @LstCustID
 		
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3 
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3 
 
 		DELETE #Dep_Customer_Archived WHERE CustID = CustIDBalanceDummy
 	END
@@ -140,13 +140,13 @@ BEGIN
 
 		SELECT @Message = 'Dormant members do not exist in Customer/Custinfo: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3 
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3 
 
 		DELETE #Dep_Customer_Archived
 		WHERE CustID IN (
@@ -193,13 +193,13 @@ BEGIN
 
 		SELECT @Message = 'Dummy accounts for those dormant members do not exist in Customer/Custinfo: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
 
 		DELETE #Dep_Customer_Archived
 		WHERE CustID IN (
@@ -215,27 +215,27 @@ BEGIN
 		)
 	END
 
-	IF EXISTS (SELECT 1 FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH(NOLOCK)))
+	IF EXISTS (SELECT 1 FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM CustDB.dbo.Dep_Customer_Archived_Exception WITH(NOLOCK)))
 	BEGIN
 		SELECT @LstCustID = STUFF((
 		SELECT ',' + CAST(CustID as VARCHAR(15))
 		FROM #Dep_Customer_Archived
-		WHERE CustID IN (SELECT CustID FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH(NOLOCK))
+		WHERE CustID IN (SELECT CustID FROM CustDB.dbo.Dep_Customer_Archived_Exception WITH(NOLOCK))
 		FOR XML PATH('')
 		), 1, 1, '');
 
 		SELECT @Message = 'Dormant members are in exception list: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
 
 		DELETE #Dep_Customer_Archived
-		WHERE CustID IN (SELECT CustID FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH(NOLOCK))
+		WHERE CustID IN (SELECT CustID FROM CustDB.dbo.Dep_Customer_Archived_Exception WITH(NOLOCK))
 	END
 
 	IF EXISTS (
@@ -257,13 +257,13 @@ BEGIN
 
 		SELECT @Message = 'Dormant member and dummy account must be under the same line: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3 
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3 
 
 		DELETE t
 		FROM #Dep_Customer_Archived t
@@ -273,18 +273,18 @@ BEGIN
 
 	END
 
-	IF EXISTS (SELECT 1 FROM  DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) WHERE CustID IN  (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS (SELECT 1 FROM  DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Custinfo WITH(NOLOCK) WHERE  CustID IN  (SELECT CustID FROM #Dep_Customer_Archived))
+	IF EXISTS (SELECT 1 FROM  [Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) WHERE CustID IN  (SELECT CustID FROM #Dep_Customer_Archived))
+		OR EXISTS (SELECT 1 FROM  [Bodb_Archive_Customer_Licensee].[dbo].Custinfo WITH(NOLOCK) WHERE  CustID IN  (SELECT CustID FROM #Dep_Customer_Archived))
 	BEGIN
 		SELECT @LstCustID = STUFF((
 		SELECT ',' + CAST(CusTID as VARCHAR(15))
 		FROM (
 			SELECT CustID 
-			FROM  DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) 
+			FROM  [Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) 
 			WHERE CustID IN  (SELECT CustID FROM #Dep_Customer_Archived)
 			UNION
 			SELECT CustID 
-			FROM  DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Custinfo WITH(NOLOCK) 
+			FROM  [Bodb_Archive_Customer_Licensee].[dbo].Custinfo WITH(NOLOCK) 
 			WHERE CustID IN  (SELECT CustID FROM #Dep_Customer_Archived)
 		) tmp
 		FOR XML PATH('')
@@ -292,22 +292,22 @@ BEGIN
 
 		SELECT @Message = 'There is already customer information of dormant members in Archive DB: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
 
 		DELETE #Dep_Customer_Archived
 		WHERE CustID IN (
 			SELECT CustID 
-			FROM  DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) 
+			FROM  [Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) 
 			WHERE CustID IN  (SELECT CustID FROM #Dep_Customer_Archived)
 			UNION ALL
 			SELECT CustID 
-			FROM  DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) 
+			FROM  [Bodb_Archive_Customer_Licensee].[dbo].[Customer] WITH(NOLOCK) 
 			WHERE CustID IN  (SELECT CustID FROM #Dep_Customer_Archived)
 		)
 	END
@@ -316,7 +316,7 @@ BEGIN
 	UPDATE t
 	SET t.LicenseeID = lc.LicenseeID
 	FROM #Dep_Customer_Archived t
-	INNER JOIN DBCUST.bodb_Licensee.dbo.LicenseeCust lc WITH(NOLOCK) ON lc.CustID = t.Recommend
+	INNER JOIN bodb_Licensee.dbo.LicenseeCust lc WITH(NOLOCK) ON lc.CustID = t.Recommend
 
 
 	IF EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE LicenseeID IS NULL)
@@ -330,13 +330,13 @@ BEGIN
 
 		SELECT @Message = 'Members do not belong to any licensees: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Update Dep_Customer_Archived.status = failed
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=3
 
 		DELETE #Dep_Customer_Archived WHERE LicenseeID IS NULL
 	END
@@ -349,8 +349,8 @@ BEGIN
 		OR EXISTS(SELECT 1 FROM bodb02..bettransRNG14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..translog (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..translog14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
+		OR EXISTS(SELECT 1 FROM dbo.bettrans_GoldDeluxe WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
+		OR EXISTS(SELECT 1 FROM dbo.bettrans_AGCasino WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 	BEGIN
 		SELECT @LstCustID = STUFF((
 		SELECT ',' + CAST(CusTID as VARCHAR(15))
@@ -380,23 +380,23 @@ BEGIN
 			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
 			UNION
 			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK))
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM dbo.bettrans_GoldDeluxe WITH(NOLOCK))
 			UNION
 			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK))
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM dbo.bettrans_AGCasino WITH(NOLOCK))
 		) tmp
 		FOR XML PATH('')
 		), 1, 1, '');
 
 		SELECT @Message = 'Dormant members have active bet or transfer tickets and will be removed from the waiting list: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Delete Dep_Customer_Archived
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5
 		
 		DELETE #Dep_Customer_Archived
 		WHERE CustID IN (
@@ -425,16 +425,16 @@ BEGIN
 			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
 			UNION
 			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK))
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM dbo.bettrans_GoldDeluxe WITH(NOLOCK))
 			UNION
 			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK))
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM dbo.bettrans_AGCasino WITH(NOLOCK))
 		)
 	END
 	--Check data in Cust_TrackingLastBetDate
 	ELSE IF EXISTS(	SELECT 1 
 					FROM #Dep_Customer_Archived t  
-							INNER JOIN DBACC.bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
+							INNER JOIN bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
 					)
 	BEGIN
 		SELECT @LstCustID = STUFF((
@@ -442,31 +442,31 @@ BEGIN
 		FROM (
 			SELECT t.CustID 
 			FROM #Dep_Customer_Archived t  
-					INNER JOIN DBACC.bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
+					INNER JOIN bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
 		) tmp
 		FOR XML PATH('')
 		), 1, 1, '');
 
 		SELECT @Message = 'Dormant members have active bet or transfer tickets and will be removed from the waiting list: ' + @LstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
 		
 		--Delete Dep_Customer_Archived
-		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5
+		EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5
 		
 		DELETE t
 		FROM #Dep_Customer_Archived t  
-				INNER JOIN DBACC.bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
+				INNER JOIN bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
 	END
 
 	IF NOT EXISTS (SELECT 1 FROM #Dep_Customer_Archived)
 	BEGIN
 		SELECT @Message = 'All members in the batch are failed'
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 					, @Action='CLEAR-BALANCE'
 					, @Status='Failed'
 					, @Message=@Message
@@ -486,7 +486,7 @@ BEGIN
 	--If members' BA flags are turned on and they do not belong to DELA, we turn off BA flag
 	IF EXISTS(
 				SELECT 1
-				FROM DBCUST.bodb_licensee.dbo.[LicenseeBAHistory] ba WITH (NOLOCK)
+				FROM bodb_licensee.dbo.[LicenseeBAHistory] ba WITH (NOLOCK)
 				INNER JOIN #Dep_Customer_Archived t ON ba.LicenseeID = t.LicenseeID AND ba.CustID = t.CustID
 				WHERE ba.[Status] = 'Running' AND t.LicenseeID <> 7
 			)
@@ -499,7 +499,7 @@ BEGIN
 			FROM #Dep_Customer_Archived t
 			WHERE t.LicenseeID <> 7 AND 
 				EXISTS(SELECT 1
-				FROM DBCUST.bodb_licensee.dbo.[LicenseeBAHistory] ba WITH (NOLOCK)
+				FROM bodb_licensee.dbo.[LicenseeBAHistory] ba WITH (NOLOCK)
 				WHERE ba.LicenseeID = t.LicenseeID AND ba.CustID = t.CustID AND ba.[Status] = 'Running')
 			
 			--Start a loop to turn off BA flags
@@ -514,7 +514,7 @@ BEGIN
 
 				SELECT @ErrCode = 0
 
-				EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
+				EXEC CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
 						,@CustID=@CustID
 						,@IsAdmin=1
 						,@ModifyBy=10278938 --starixit
@@ -526,13 +526,13 @@ BEGIN
 				BEGIN
 					SELECT @Message = 'Failed to turn off BA flag (' + CAST(@CustID AS VARCHAR(15)) + '): ' + @ErrMsg 
 
-					EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+					EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 							, @Action='CLEAR-BALANCE'
 							, @Status='Failed'
 							, @Message= @Message
 
 					--Update Dep_Customer_Archived.status = failed
-					EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=3
+					EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=3
 
 					UPDATE #Dep_Customer_Archived
 					SET BAStastus=3 --failed
@@ -565,7 +565,7 @@ BEGIN
 				FROM #Dep_Customer_Archived t
 				WHERE t.BAStastus=4
 
-				EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
+				EXEC CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
 				,@CustID=@CustID
 				,@IsAdmin=1
 				,@ModifyBy=10278938 --starixit
@@ -577,7 +577,7 @@ BEGIN
 
 			SELECT @Message='Exception error occurs while turning off BA flag: ' + @LogLstCustID
 
-			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+			EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 					, @Action='CLEAR-BALANCE'
 					, @Status='Failed'
 					, @Message=@Message
@@ -588,7 +588,7 @@ BEGIN
 
 		SELECT @Message='Finish turning off BA flag: ' + @LogLstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='OnProgress'
 				, @Message=@Message
@@ -609,7 +609,7 @@ BEGIN
 			), 1, 1, '');
 
 	BEGIN TRY
-		INSERT INTO [DBARCCUST].[Bodb_Archive_Customer_Licensee].[dbo].[Customer]
+		INSERT INTO [Bodb_Archive_Customer_Licensee].[dbo].[Customer]
 			   ([custid],[firstname],[lastname],[address],[postal],[city],[state],[country]
 				,[phone],[mobilephone],[fax],[email],[birthday],[refcode1],[refcode2],[remark]
 				,[creatdate],[creator],[username],[currency],[userpwd],[lastlogged],[pwdexpiry]
@@ -621,11 +621,11 @@ BEGIN
 				,[creatdate],[creator],[username],[currency],[userpwd],[lastlogged],[pwdexpiry]
 				,[roleid],[mrecommend],[recommend],[ugroup],[logincount],[on_sessionid],[site]
 				,[iplogin],[important],[srecommend],[username2]
-		FROM DBCUST.CustDB.dbo.Customer WITH(NOLOCK)
+		FROM CustDB.dbo.Customer WITH(NOLOCK)
 		WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 
 
-		INSERT INTO DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo]
+		INSERT INTO [Bodb_Archive_Customer_Licensee].[dbo].[custInfo]
 			   ([username],[custid],[currency],[roleid],[srecommend],[mrecommend]
 				,[recommend],[dangercust],[autosuspend],[reject],[credit],[closed]
 				,[MatchLimit],[VirtualMultiplier],[maxpermatch],[maxpermatch2]
@@ -659,15 +659,15 @@ BEGIN
 				,[DisableColossusBet],[HideColossusBet]
 				,[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
 				,[maxpermatch164]
-		FROM DBCUST.CustDB.dbo.custInfo WITH(NOLOCK)
+		FROM CustDB.dbo.custInfo WITH(NOLOCK)
 		WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 	END TRY
 	BEGIN CATCH
 		SELECT @Message = 'Exception error occurs while copying Customer/CustomerInfo to Archive DB: ' + ERROR_MESSAGE()
 
 		--Roll back data
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
+		DELETE [Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
+		DELETE [Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 
 		--Roll back for those whoes BA flags have been turned off sucessfully
 		WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE BAStastus=4)
@@ -679,7 +679,7 @@ BEGIN
 			FROM #Dep_Customer_Archived t
 			WHERE t.BAStastus=4
 
-			EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
+			EXEC CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
 			,@CustID=@CustID
 			,@IsAdmin=1
 			,@ModifyBy=10278938 --starixit
@@ -693,7 +693,7 @@ BEGIN
 
 		SELECT @Message = 'Exception error occurs while copying Customer/CustomerInfo to Archive DB: ' + @LogLstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
@@ -704,7 +704,7 @@ BEGIN
 
 	SELECT @Message = 'Finish copying customer/CustomerInfo to Archive DB: ' + @LogLstCustID
 
-	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+	EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='OnProgress'
 				, @Message=@Message
@@ -753,13 +753,13 @@ BEGIN
 				BEGIN
 					SELECT @Message = 'Transfer remaining balance to dummy account is failed (' + CAST(@CustID AS VARCHAR(15)) + '): ' + @Message 
 
-					EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+					EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 							, @Action='CLEAR-BALANCE'
 							, @Status='Failed'
 							, @Message= @Message
 
 					--Update Dep_Customer_Archived.status = failed
-					EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=3
+					EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=3
 
 					UPDATE #Dep_Customer_Archived
 					SET TransBalStastus=3 --failed
@@ -776,10 +776,10 @@ BEGIN
 			END
 
 			--Roll back data for members who can not transfer closing balance
-			DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] 
+			DELETE [Bodb_Archive_Customer_Licensee].[dbo].[custInfo] 
 			WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
 			
-			DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer 
+			DELETE [Bodb_Archive_Customer_Licensee].[dbo].Customer 
 			WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
 
 			--Turn on BA flags for members who can not transfer closing balance, but have been turned off BA flags sucessfully
@@ -793,7 +793,7 @@ BEGIN
 				FROM #Dep_Customer_Archived t
 				WHERE t.TransBalStastus=3 AND t.BAStastus=4
 
-				EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
+				EXEC CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
 				,@CustID=@CustID
 				,@IsAdmin=1
 				,@ModifyBy=10278938 --starixit
@@ -810,8 +810,8 @@ BEGIN
 		SELECT @Message = 'Exception error occurs while transfering remaining balance: ' + ERROR_MESSAGE()
 
 		--Roll back data
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
+		DELETE [Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
+		DELETE [Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 
 		--Turn on BA
 		WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE BAStastus=4)
@@ -823,7 +823,7 @@ BEGIN
 			FROM #Dep_Customer_Archived t
 			WHERE t.BAStastus=4
 
-			EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
+			EXEC CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
 			,@CustID=@CustID
 			,@IsAdmin=1
 			,@ModifyBy=10278938 --starixit
@@ -859,7 +859,7 @@ BEGIN
 
 		SELECT @Message = 'Exception error occurs while transfering remaining balance: ' + @LogLstCustID
 
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
+		EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Failed'
 				, @Message=@Message
@@ -871,7 +871,7 @@ BEGIN
 
 	SELECT @Message = 'Finish transfering remaining balance to dummy account: ' + @LogLstCustID
 
-	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+	EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='OnProgress'
 				, @Message=@Message
@@ -898,7 +898,7 @@ BEGIN
 	/******************************Step 5: Delete Customer/CustInfo in main database******************************/
 		IF ((
 				SELECT COUNT(1)
-				FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.customer WITH (NOLOCK)
+				FROM [Bodb_Archive_Customer_Licensee].dbo.customer WITH (NOLOCK)
 				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived)
 			) 
 			=
@@ -909,7 +909,7 @@ BEGIN
 			AND
 			((
 				SELECT COUNT(1)
-				FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.custinfo WITH (NOLOCK)
+				FROM [Bodb_Archive_Customer_Licensee].dbo.custinfo WITH (NOLOCK)
 				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived)
 			) 
 			=
@@ -920,11 +920,11 @@ BEGIN
 		BEGIN
 			BEGIN TRY
 				--Delete CustInfo/Customer
-				EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=6
+				EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=6
 
 				SELECT @Message = 'Finish deleting Customer/CustInfo in main DB: ' + @LogLstCustID
 
-				EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+				EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 						, @Action='CLEAR-BALANCE'
 						, @Status='OnProgress'
 						, @Message=@Message
@@ -936,7 +936,7 @@ BEGIN
 
 				SELECT @Message = 'Exception error occurs while deleting customer/custinfo in main DB: ' + @LogLstCustID
 
-				EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+				EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 							, @Action='CLEAR-BALANCE'
 							, @Status='Failed'
 							, @Message=@Message
@@ -950,7 +950,7 @@ BEGIN
 
 			SELECT @Message = 'Can not delete Customer/CustInfo in main DB because there is not data in archive DB: ' + @LogLstCustID
 
-			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+			EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 						, @Action='CLEAR-BALANCE'
 						, @Status='Failed'
 						, @Message=@Message
@@ -962,11 +962,11 @@ BEGIN
 	/******************************Step 6: Delete balance tables******************************/
 	BEGIN TRY
 			--Delete CustInfo/Customer
-			EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=8
+			EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=8
 
 			SELECT @Message = 'Finish deleting balance tables in main DB: ' + @LogLstCustID
 
-			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+			EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 					, @Action='CLEAR-BALANCE'
 					, @Status='OnProgress'
 					, @Message=@Message
@@ -978,7 +978,7 @@ BEGIN
 
 			SELECT @Message = 'Exception error occurs while deleting balance tables in main DB: ' + @LogLstCustID
 
-			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+			EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 						, @Action='CLEAR-BALANCE'
 						, @Status='Failed'
 						, @Message=@Message
@@ -988,11 +988,11 @@ BEGIN
 	
 	/******************************Step 7: Update member status******************************/
 	--Update Dep_Customer_Archived.status = archived
-	EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=1
+	EXEC CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=1
 
 	SELECT @Message = 'Finish clearing balance and Custinfo: ' + @LogLstCustID
 
-	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
+	EXEC bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Done'
 				, @Message=@Message
