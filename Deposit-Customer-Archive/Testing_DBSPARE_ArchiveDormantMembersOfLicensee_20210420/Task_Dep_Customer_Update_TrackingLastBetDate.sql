@@ -231,7 +231,7 @@ BEGIN
 	TRUNCATE TABLE #BettingMember
 	INSERT INTO #BettingMember(custid,LastBetDate)
 	SELECT custid, transdate
-	FROM OPENQUERY (DBSPARE, ';WITH TMP AS(
+	FROM OPENQUERY (DBNOTI, ';WITH TMP AS(
 								SELECT b.custid, b.transdate
 								FROM bodb02.dbo.bettrans_AGCasino b with (NOLOCK)
 								WHERE transdate >= CONVERT(DATE,@currentDate - 1)
