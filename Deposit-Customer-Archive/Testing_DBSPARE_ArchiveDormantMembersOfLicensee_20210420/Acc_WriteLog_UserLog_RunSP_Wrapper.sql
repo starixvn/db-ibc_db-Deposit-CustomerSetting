@@ -1,6 +1,4 @@
 /*<info serverAlias="DBSPARE-CustDB" isFunction="1" isNested="0"></info>*/
-USE [CustDB]
-GO
 ALTER PROCEDURE [dbo].[Acc_WriteLog_UserLog_RunSP_Wrapper]
 	@UserID INT,
 	@CustID INT = 0,
