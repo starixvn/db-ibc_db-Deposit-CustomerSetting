@@ -234,11 +234,11 @@ BEGIN
 	FROM OPENQUERY (DBNOTI, ';WITH TMP AS(
 								SELECT b.custid, b.transdate
 								FROM bodb02.dbo.bettrans_AGCasino b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,getdate() - 1)
+								WHERE transdate >= CONVERT(DATE, getdate() - 1)
 								UNION ALL
 								SELECT b.custid, b.transdate
 								FROM bodb02.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,@getdate() - 1)
+								WHERE transdate >= CONVERT(DATE, getdate() - 1)
 							)
 							SELECT CustID, MAX(transdate) AS transdate 
 							FROM tmp
