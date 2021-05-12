@@ -96,7 +96,7 @@ BEGIN
 			FROM #tmpMember m
 			WHERE EXISTS (
 					SELECT custid
-					FROM bettrans b with (NOLOCK)
+					FROM bodb02.dbo.bettrans b with (NOLOCK)
 					WHERE bettype <> 20000 AND b.custid = m.custid
 				)
 
@@ -105,7 +105,7 @@ BEGIN
 			FROM #tmpMember m
 			WHERE EXISTS (
 				SELECT custid
-				FROM translog b with (NOLOCK)
+				FROM bodb02.dbo.translog b with (NOLOCK)
 				WHERE b.custid = m.custid
 				)
 
@@ -114,7 +114,7 @@ BEGIN
 			FROM #tmpMember m
 			where EXISTS (
 				SELECT custid
-				FROM bettransRNG b with (NOLOCK)
+				FROM bodb02.dbo.bettransRNG b with (NOLOCK)
 				WHERE b.custid = m.custid
 				)
 			
@@ -123,7 +123,7 @@ BEGIN
 			FROM #tmpMember m
 			WHERE EXISTS (
 					SELECT custid
-					FROM bettransLC b with (NOLOCK)
+					FROM bodb02.dbo.bettransLC b with (NOLOCK)
 					WHERE b.custid = m.custid
 				)
 
@@ -168,7 +168,7 @@ BEGIN
 			FROM #Member
 			INNER JOIN (
 				SELECT custid, ISNULL(SUM(winlost-actual_stake+playercomm),0) as MemberBalance
-				FROM bettrans WITH (NOLOCK)
+				FROM bodb02.dbo.bettrans WITH (NOLOCK)
 				WHERE custid IN (SELECT custid FROM #tmpMember)
 				GROUP BY custid
 				) b ON #Member.custid = b.custid
