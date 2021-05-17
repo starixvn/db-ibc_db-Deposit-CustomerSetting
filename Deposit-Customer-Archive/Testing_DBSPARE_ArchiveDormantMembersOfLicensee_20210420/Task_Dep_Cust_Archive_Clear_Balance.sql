@@ -1,3 +1,7 @@
+/*<info serverAlias="DBSPARE-bodb02" executers="" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Task_Dep_Cust_Archive_Clear_Balance] 
+	@BatchSize INT = 100
+AS
 /*
 	Creator : Dominic
 	Date : 2018-09-12
