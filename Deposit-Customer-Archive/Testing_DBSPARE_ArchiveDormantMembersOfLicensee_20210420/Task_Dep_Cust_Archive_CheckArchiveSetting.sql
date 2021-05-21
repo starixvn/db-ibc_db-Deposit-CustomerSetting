@@ -70,7 +70,7 @@ BEGIN
 	SELECT @SQL = @SQL + CHAR(13)+CHAR(10) + 'SELECT CustID, 16 TableID, COUNT(1) RowCnt FROM CustDB.dbo.[CustGameType] (NOLOCK) WHERE CustID IN (' + @LstCustID + ') GROUP BY CustID'
 
 	INSERT INTO #CheckCustRowCnt(CustID,TableID,RowCnt)
-	EXEC (@SQL) AT DBCUST
+	EXEC (@SQL) AT DBNOTI
 
 	--Check No. Of rows in Archive DB
 	INSERT INTO #CheckCustRowCnt(CustID,TableID,RowCnt)
