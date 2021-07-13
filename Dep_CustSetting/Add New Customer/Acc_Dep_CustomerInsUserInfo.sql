@@ -84,6 +84,7 @@ Revisions:
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
+	- 20210520@Eden: Apply default VR Setting which is -90% whenever there is new LICENSEE Supers creation [Redmine:#153411]
 	
 Param's Explanation:
 • @ErrCode:
@@ -162,7 +163,7 @@ BEGIN
 								vr.virtualMultiplier	AS '@v'
 						FROM	ProfileVirtualSetting	AS ipvs WITH(NOLOCK)
 						CROSS APPLY (
-							SELECT CAST(1.00 AS SMALLMONEY) AS virtualMultiplier
+							SELECT CAST(0.10 AS SMALLMONEY) AS virtualMultiplier
 						) vr
 						WHERE	ipvs.seqNo = pvs.seqNo
 						FOR XML PATH ('r'), 

@@ -1,1 +1,8 @@
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Com.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Ag.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_SAg.sql
+CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsLicenseeSubsidiary.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_OddAdj.sql
