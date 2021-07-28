@@ -16,6 +16,13 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateCurrencyLicensee]
 	,	@PT_Loterry			SMALLMONEY=0
 	,   @PT_VirtualGames	SMALLMONEY=0
 	,   @PT_TableGame		SMALLMONEY=0
+	,   @PT_ArcadiaGaming	SMALLMONEY=0
+	,   @PT_Saba			SMALLMONEY=0
+	,   @PT_Vgaming			SMALLMONEY=0
+	,   @PT_SoccerLoterry	SMALLMONEY=0
+	,   @PT_PGSoft			SMALLMONEY=0
+	,   @PT_SAGaming		SMALLMONEY=0
+	,   @PT_SpadeGaming		SMALLMONEY=0
 	,	@StakeLevel			VARCHAR(MAX)	= '<ROOT></ROOT>'
 AS  
 /*  
@@ -25,7 +32,7 @@ AS
  Original: Dot_Dep_CreateLicensee 
  Revisions:  	
 	- 20201118@Winfred: Create currency for existing licensee [RedmineID:#143761]
-	
+	- 20210623@Winfred: Integrate 7 products [RedmineID:#156877]
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @Product:<ROOT>
@@ -54,6 +61,13 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 	,	@PT_Loterry			=0.88
 	,	@PT_VirtualGames	=0.85
 	,	@PT_TableGame		=0.80
+	,	@PT_ArcadiaGaming 	=0.81
+	,	@PT_Saba  			=0.82
+	,	@PT_Vgaming  		=0.83
+	,	@PT_SoccerLoterry  	=0.84
+	,	@PT_PGSoft  		=0.85
+	,	@PT_SAGaming  		=0.8
+	,	@PT_SpadeGaming  	=0.8
 ,@Product='<ROOT>
 															<Product 
 																	ProductID="1" 
@@ -236,7 +250,62 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 																	MaxBet="0" 
 																	MaxPerMatch="0"
 																	MaxPerBall="0" 
-															/>
+															/><Product 	
+																	ProductID="63"
+																	Currency="4"	
+																	MinBet="1" 
+																	MaxBet="500000"	
+																	MaxPerMatch="600000"	
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="34"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="42"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="66"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="36"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="55"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
+																<Product	
+																ProductID="39"	
+																Currency="4"
+																MinBet="0"	
+																MaxBet="0"	
+																MaxPerMatch="0"	
+																MaxPerBall="0"	
+																/>	
 														</ROOT>' ,
 @StakeLevel =  '<ROOT>
 							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="100"/>	
@@ -245,6 +314,10 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 							<StakeLevel Currency="4" GameTypeID="4602"  MinStake="20" MaxStake="100"/>	
 							<StakeLevel Currency="4" GameTypeID="4602"  MinStake="20" MaxStake="2000" />
 							<StakeLevel Currency="4" GameTypeID="4602"  MinStake="20" MaxStake="3000000" />
+							
+							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="10" MaxStake="100"/>	
+							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="20" MaxStake="200" />
+							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="30" MaxStake="500" />
 					</ROOT>',
 @Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
 SELECT @ErrorCode,@Errmsg
@@ -257,9 +330,18 @@ BEGIN
 	SELECT @PT_Loterry=@PT_Loterry*100
 	SELECT @PT_VirtualGames=@PT_VirtualGames*100
 	SELECT @PT_TableGame=@PT_TableGame*100
+	
+	SELECT @PT_ArcadiaGaming=@PT_ArcadiaGaming*100
+	SELECT @PT_Saba=@PT_Saba*100
+	SELECT @PT_Vgaming=@PT_Vgaming*100
+	SELECT @PT_SoccerLoterry=@PT_SoccerLoterry*100
+	SELECT @PT_PGSoft=@PT_PGSoft*100
+	SELECT @PT_SAGaming=@PT_SAGaming*100
+	SELECT @PT_SpadeGaming=@PT_SpadeGaming*100
+	
 	DECLARE @PT_Esports SMALLMONEY
 	SELECT @PT_Esports=@PT_Sportsbook*100
-	DECLARE @CreatorID INT,  @IsCashOut BIT,@IsBA BIT
+	DECLARE @CreatorID INT,  @IsCashOut BIT,@IsBA BIT,@IsStakeLevelGroup BIT = 0 ,@PT_TEMP SMALLMONEY=0,@ProductName VARCHAR(100)
 	SELECT @CreatorID=10278938	
 	DECLARE @iDoc INT
 	
@@ -392,7 +474,7 @@ BEGIN
 	CREATE TABLE #BetLimit(Sporttype INT,Bettype INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY)
 	CREATE TABLE #BetLimitInput(Sporttype INT,Bettype INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,isfinished BIT DEFAULT(0),PRIMARY KEY(Sporttype,Bettype))
 	CREATE TABLE #ProductInput(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerBall MONEY,Sporttype INT,Bettype INT)
-	CREATE TABLE #Product(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerBall MONEY,Sporttype INT,Bettype INT) --, PRIMARY KEY(ProductID,Currency)
+	CREATE TABLE #Product(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerBall MONEY,Sporttype INT,Bettype INT, StakeLevelID	INT) --, PRIMARY KEY(ProductID,Currency)
 	CREATE TABLE #Username(Super VARCHAR(30),Master VARCHAR(30),Agent VARCHAR(30),AccMaster VARCHAR(30),AccAgent VARCHAR(30),Transf VARCHAR(30),Charge VARCHAR(30),
 							Bonus01 VARCHAR(30),Bonus02 VARCHAR(30),Withdraw VARCHAR(30),Dummy3rd VARCHAR(30),Currency INT,ClearBal VARCHAR(30),
 							MinBetv1 MONEY,MaxBetv1 MONEY,MaxPerMatchv1 MONEY,
@@ -410,7 +492,8 @@ BEGIN
 							MinBetKN	INT,MaxBetKN	INT,MaxPerMatchKN		INT,						
 							isfinished BIT DEFAULT(0) )
 	CREATE TABLE #StakelevelInput(ProductID INT, StakeLevelXML VARCHAR(MAX), isfinished BIT DEFAULT(0), PRIMARY KEY(ProductID))
-
+	CREATE TABLE #tempProduct (ProductID INT, PT SMALLMONEY , ProductName VARCHAR(100),isfinished BIT DEFAULT(0))
+	
 	BEGIN TRY
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @Product
@@ -444,6 +527,21 @@ BEGIN
 	FROM #Product
 
 	IF EXISTS(SELECT TOP 1 1 
+				FROM #Product a
+				INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+				WHERE b.SettingType = 8
+			)
+	BEGIN
+		UPDATE a
+		SET a.Sporttype = c.SportType , a.Bettype = c.BetType
+		FROM #Product a
+		INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+		INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+		WHERE b.SettingType = 8
+		SET @IsStakeLevelGroup = 1
+	END
+
+	IF EXISTS(SELECT TOP 1 1 
 						FROM #Product a
 						INNER JOIN exchange b WITH(NOLOCK) ON a.Currency = b.ExchangeId
 						WHERE b.IsActive = 0 OR b.OfferSite NOT IN (2,0) 
@@ -462,6 +560,18 @@ BEGIN
 			 ), 1, 1, '')
          
 		SELECT @ErrMsg = 'The '+ @CurrencyError +' currency is/are not offered for Licensee. Please check again!', @ErrCode = 10006
+		RETURN
+	END
+
+	IF EXISTS(SELECT TOP 1 1 
+				FROM #Product a
+					INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+				WHERE b.SettingType = 8 AND NOT EXISTS(SELECT TOP 1 1 
+														FROM DEP_StakeLevel WITH(NOLOCK) 
+														WHERE  GameTypeID = a.Bettype AND ExchangeID = a.Currency )
+			)
+	BEGIN
+		SELECT @ErrMsg = 'Break rule bet limit', @ErrCode = 10002
 		RETURN
 	END
 
@@ -1460,110 +1570,49 @@ BEGIN
 					END			
 				END
 			END
-			-- lottery
-			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=28 AND Currency=@Currency)
-			BEGIN		
-				INSERT INTO #BetLimit(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
-				EXEC Acc_Dep_CustSetting_BetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=28,@AgentID=0 	
-				INSERT INTO #BetLimitInput(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
-				SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet,p.MaxPerMatch
-				FROM #BetLimit b
-					CROSS JOIN #Product p		
-				WHERE p.ProductID=28 AND p.Currency=@Currency	
-				TRUNCATE TABLE #BetLimit	
+			-- lottery , Sports Lottery
+			TRUNCATE TABLE #tempProduct
+			INSERT INTO #tempProduct(ProductID, PT,ProductName)
+			SELECT DISTINCT ProductID 
+				,CASE WHEN ProductID = 28 THEN @PT_Loterry ELSE @PT_SoccerLoterry END AS PT
+				,CASE WHEN ProductID = 28 THEN 'Lottery' ELSE 'Sports Lottery' END AS ProductName
+			FROM #Product 
+			WHERE ProductID in (28,63) AND Currency=@Currency
+	
+			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
+			BEGIN	
+				WHILE(1 =1)
+				BEGIN
 					
-				INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
-				EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=28,@CustID=@SuperID
-				SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
-
-				EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=28,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
-					@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-				IF @ErrCode<>0
-				BEGIN
-					SELECT @ErrMsg = @ErrMsg + 'Status DCS Lottery.'+@Super
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-											CAST(@MasterID AS VARCHAR(20))+','+
-											CAST(@AgentID AS VARCHAR(20))+','+
-											CAST(@AccMasterID AS VARCHAR(20))+','+
-											CAST(@AccAgentID AS VARCHAR(20))+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+','	
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempSubCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-					RETURN
-				END	
-
-				TRUNCATE TABLE #SportsStatus
-				-- Insert PT
-				SELECT  @PT_XML = ('<ROOT>' + (
-							SELECT 
-								 SportType AS 'SportType'
-								,Bettype AS 'BetType'
-								,IsLive AS 'IsLive'
-								,@PT_Loterry AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(28,1)
-							FOR XML RAW('PT')) + '</ROOT>')
-				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=28,@UserID=@CreatorID,@IP=@IP,
-						@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-				IF @ErrCode<>0
-				BEGIN
-					SELECT @ErrMsg = @ErrMsg + 'PT DCS Lottery.'+@Super
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-											CAST(@MasterID AS VARCHAR(20))+','+
-											CAST(@AgentID AS VARCHAR(20))+','+
-											CAST(@AccMasterID AS VARCHAR(20))+','+
-											CAST(@AccAgentID AS VARCHAR(20))+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempSubCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-					RETURN
-				END	
-
-				IF @IsCreateSub=1  
-				BEGIN
-					UPDATE #tempSubCustID SET isfinished=0
-					WHILE (1 = 1)
-					BEGIN		
-						UPDATE TOP (1) #tempSubCustID
-						SET isfinished = 1
-							,@tmpSubCustID=CustID
-						WHERE isfinished = 0
-
-						IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
-						-- Insert PT
-						SELECT  @PT_XML = ('<ROOT>' + (
-									SELECT 
-										 SportType AS 'SportType'
-										,Bettype AS 'BetType'
-										,IsLive AS 'IsLive'
-										,@PT_Loterry AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(28,1) 
-									FOR XML RAW('PT')) + '</ROOT>')		
-						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=28,@UserID=@CreatorID,@IP=@IP,
-							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT													
-					END	
-
+					UPDATE TOP (1) c 
+					SET c.isfinished = 1
+						,@ProductID = c.ProductID
+						,@PT_TEMP = C.PT
+						,@ProductName = C.ProductName
+					FROM #tempProduct c 
+					WHERE isfinished = 0
 					
+					IF @@ROWCOUNT = 0 BREAK
+					
+					INSERT INTO #BetLimit(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
+					EXEC Acc_Dep_CustSetting_BetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=@ProductID,@AgentID=0 	
+					INSERT INTO #BetLimitInput(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
+					SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet,p.MaxPerMatch
+					FROM #BetLimit b
+						  	CROSS JOIN #Product p  	
+					WHERE p.ProductID=@ProductID AND p.Currency=@Currency	
+					TRUNCATE TABLE #BetLimit
+					
+					INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
+					EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=@ProductID,@CustID=@SuperID
+					SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
+
+					EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=@ProductID,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
+						@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+
 					IF @ErrCode<>0
 					BEGIN
-						SELECT @ErrMsg = @ErrMsg + 'PT DCS Lottery sub licensees.'
+						SELECT @ErrMsg = @ErrMsg + 'Status DCS ' + @ProductName + '.' +@Super
 						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
@@ -1574,7 +1623,7 @@ BEGIN
 							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
 							from #tempDumCustID T1
 							FOR XML PATH('')),1,1,''),'')
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+',' 	
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','	
 						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
 							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
 							from #tempSubCustID T1
@@ -1582,7 +1631,91 @@ BEGIN
 						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
 						RETURN
 					END	
-			
+
+					TRUNCATE TABLE #SportsStatus
+					-- Insert PT
+					SELECT  @PT_XML = ('<ROOT>' + (
+								SELECT 
+									 SportType AS 'SportType'
+									,Bettype AS 'BetType'
+									,IsLive AS 'IsLive'
+									,@PT_TEMP AS 'PT'
+								FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+								FOR XML RAW('PT')) + '</ROOT>')
+					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
+							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+
+					IF @ErrCode<>0
+					BEGIN
+						SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName + '.' +@Super
+						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+												CAST(@MasterID AS VARCHAR(20))+','+
+												CAST(@AgentID AS VARCHAR(20))+','+
+												CAST(@AccMasterID AS VARCHAR(20))+','+
+												CAST(@AccAgentID AS VARCHAR(20))+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempSubCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+						RETURN
+					END	
+
+					IF @IsCreateSub=1  
+					BEGIN
+						UPDATE #tempSubCustID SET isfinished=0
+						WHILE (1 = 1)
+						BEGIN		
+							UPDATE TOP (1) #tempSubCustID
+							SET isfinished = 1
+								,@tmpSubCustID=CustID
+							WHERE isfinished = 0
+
+							IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
+							-- Insert PT
+							SELECT  @PT_XML = ('<ROOT>' + (
+										SELECT 
+											 SportType AS 'SportType'
+											,Bettype AS 'BetType'
+											,IsLive AS 'IsLive'
+											,@PT_TEMP AS 'PT'
+										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1) 
+										FOR XML RAW('PT')) + '</ROOT>')		
+							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
+								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT													
+						END	
+
+						
+						IF @ErrCode<>0
+						BEGIN
+							SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName + ' sub licensees.'
+							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+													CAST(@MasterID AS VARCHAR(20))+','+
+													CAST(@AgentID AS VARCHAR(20))+','+
+													CAST(@AccMasterID AS VARCHAR(20))+','+
+													CAST(@AccAgentID AS VARCHAR(20))+','
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+								ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+								from #tempDumCustID T1
+								FOR XML PATH('')),1,1,''),'')
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+',' 	
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+								ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+								from #tempSubCustID T1
+								FOR XML PATH('')),1,1,''),'')
+							EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+							RETURN
+						END	
+				
+					END
+				
 				END
 			END
 			
@@ -1710,141 +1843,335 @@ BEGIN
 					END					
 				END					
 			END
-			--Virtual Games
-			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=38 AND Currency=@Currency)
+			--Virtual Games , SA Gaming
+			TRUNCATE TABLE #tempProduct
+			INSERT INTO #tempProduct(ProductID, PT,ProductName)
+			SELECT DISTINCT ProductID 
+				,CASE WHEN ProductID = 38 THEN @PT_VirtualGames ELSE @PT_SAGaming END AS PT
+				,CASE WHEN ProductID = 38 THEN 'Virtual Games' ELSE 'SA Gaming' END AS ProductName
+			FROM #Product 
+			WHERE ProductID in (38,39) AND Currency=@Currency
+		
+			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
 			BEGIN
-				INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
-				EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=38,@CustID=@SuperID
-				SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
-				-- Insert status
-				EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=38,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
-					@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-						
-				IF @ErrCode<>0
+				WHILE(1 =1)
 				BEGIN
-					SELECT @ErrMsg = @ErrMsg + 'Status DCS Virtual Games.'
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-													CAST(@MasterID AS VARCHAR(20))+','+
-													CAST(@AgentID AS VARCHAR(20))+','+
-													CAST(@AccMasterID AS VARCHAR(20))+','+
-													CAST(@AccAgentID AS VARCHAR(20))+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempSubCustID T1
-						FOR XML PATH('')),1,1,''),'')	
-					EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
 					
-					RETURN
-				END		
-
-				TRUNCATE TABLE #SportsStatus
-				-- Insert PT
-				SELECT  @PT_XML = ('<ROOT>' + (
-									SELECT 
-										 SportType AS 'SportType'
-										,Bettype AS 'BetType'
-										,IsLive AS 'IsLive'
-										,@PT_VirtualGames AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(38,1)
-									FOR XML RAW('PT')) + '</ROOT>')
-				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=38,@UserID=@CreatorID,@IP=@IP,
-						@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-				IF @ErrCode<>0
-				BEGIN
-					SELECT @ErrMsg = @ErrMsg + 'PT DCS Virtual Games.' +@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-													CAST(@MasterID AS VARCHAR(20))+','+
-													CAST(@AgentID AS VARCHAR(20))+','+
-													CAST(@AccMasterID AS VARCHAR(20))+','+
-													CAST(@AccAgentID AS VARCHAR(20))+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempSubCustID T1
-						FOR XML PATH('')),1,1,''),'') 	
-					EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-					RETURN
-				END		
-
-				IF @IsCreateSub=1  
-				BEGIN
-					UPDATE #tempSubCustID SET isfinished=0
-					WHILE (1 = 1)
-					BEGIN		
-						UPDATE TOP (1) #tempSubCustID
-						SET isfinished = 1
-							,@tmpSubCustID=CustID
-						WHERE isfinished = 0
-
-						IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
-						-- Insert PT
-						SELECT  @PT_XML = ('<ROOT>' + (
-											SELECT 
-												 SportType AS 'SportType'
-												,Bettype AS 'BetType'
-												,IsLive AS 'IsLive'
-												,@PT_VirtualGames AS 'PT'
-											FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(38,1)  
-											FOR XML RAW('PT')) + '</ROOT>')
-						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=38,@UserID=@CreatorID,@IP=@IP,
-							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
-					END					
+					UPDATE TOP (1) c 
+					SET c.isfinished = 1
+						,@ProductID = c.ProductID
+						,@PT_TEMP = C.PT
+						,@ProductName = C.ProductName
+					FROM #tempProduct c 
+					WHERE isfinished = 0
+					
+					IF @@ROWCOUNT = 0 BREAK
+			
+					INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
+					EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=@ProductID,@CustID=@SuperID
+					SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
+					-- Insert status
+					EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=@ProductID,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
+						@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+							
 					IF @ErrCode<>0
 					BEGIN
-						SELECT @ErrMsg = @ErrMsg + 'PT DCS Virtual Games sub licensees.'
+						SELECT @ErrMsg = @ErrMsg + 'Status DCS '+ @ProductName +'.'
 						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-													CAST(@MasterID AS VARCHAR(20))+','+
-													CAST(@AgentID AS VARCHAR(20))+','+
-													CAST(@AccMasterID AS VARCHAR(20))+','+
-													CAST(@AccAgentID AS VARCHAR(20))+','
+														CAST(@MasterID AS VARCHAR(20))+','+
+														CAST(@AgentID AS VARCHAR(20))+','+
+														CAST(@AccMasterID AS VARCHAR(20))+','+
+														CAST(@AccAgentID AS VARCHAR(20))+','
 						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')		
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
 						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
 							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
 							from #tempSubCustID T1
 							FOR XML PATH('')),1,1,''),'')	
 						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+						
 						RETURN
-					END					
-				END	
-					
-				INSERT INTO #StakelevelInput (ProductID,StakeLevelXML)
-				SELECT  ProductID = 38,
-						StakelevelXML = CONVERT(VARCHAR(MAX),
-																(SELECT dp.SportType AS SportType
-																	,dp.BetType as BetType
-																	,SUBSTRING((
-																				SELECT ',' + CONVERT(VARCHAR,StakeLevelID)
-																				FROM Dep_StakeLevel WITH(NOLOCK)
-																				
-																				WHERE GameTypeID = dp.BetType
-																					AND exchangeID = @Currency
-																					AND SiteID = @SiteID
-																				FOR XML PATH('')
-																				),2,1000) AS StakeLevelList
-																FROM Dep_ProductSettingDetail dp WITH(NOLOCK)
+					END		
+
+					TRUNCATE TABLE #SportsStatus
+					-- Insert PT
+					SELECT  @PT_XML = ('<ROOT>' + (
+										SELECT 
+											 SportType AS 'SportType'
+											,Bettype AS 'BetType'
+											,IsLive AS 'IsLive'
+											,@PT_TEMP AS 'PT'
+										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+										FOR XML RAW('PT')) + '</ROOT>')
+					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
+							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+
+					IF @ErrCode<>0
+					BEGIN
+						SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName+'.' +@Agent
+						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+														CAST(@MasterID AS VARCHAR(20))+','+
+														CAST(@AgentID AS VARCHAR(20))+','+
+														CAST(@AccMasterID AS VARCHAR(20))+','+
+														CAST(@AccAgentID AS VARCHAR(20))+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempSubCustID T1
+							FOR XML PATH('')),1,1,''),'') 	
+						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+						RETURN
+					END		
+
+					IF @IsCreateSub=1  
+					BEGIN
+						UPDATE #tempSubCustID SET isfinished=0
+						WHILE (1 = 1)
+						BEGIN		
+							UPDATE TOP (1) #tempSubCustID
+							SET isfinished = 1
+								,@tmpSubCustID=CustID
+							WHERE isfinished = 0
+
+							IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
+							-- Insert PT
+							SELECT  @PT_XML = ('<ROOT>' + (
+												SELECT 
+													 SportType AS 'SportType'
+													,Bettype AS 'BetType'
+													,IsLive AS 'IsLive'
+													,@PT_TEMP AS 'PT'
+												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)  
+												FOR XML RAW('PT')) + '</ROOT>')
+							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
+								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
+						END					
+						IF @ErrCode<>0
+						BEGIN
+							SELECT @ErrMsg = @ErrMsg + 'PT DCS '+ @ProductName +' sub licensees.'
+							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+														CAST(@MasterID AS VARCHAR(20))+','+
+														CAST(@AgentID AS VARCHAR(20))+','+
+														CAST(@AccMasterID AS VARCHAR(20))+','+
+														CAST(@AccAgentID AS VARCHAR(20))+','
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')		
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+','				
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+								ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+								from #tempSubCustID T1
+								FOR XML PATH('')),1,1,''),'')	
+							EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+							RETURN
+						END					
+					END	
+						
+					INSERT INTO #StakelevelInput (ProductID,StakeLevelXML)
+					SELECT  ProductID = @ProductID,
+							StakelevelXML = CONVERT(VARCHAR(MAX),
+																	(SELECT dp.SportType AS SportType
+																		,dp.BetType as BetType
+																		,SUBSTRING((
+																					SELECT ',' + CONVERT(VARCHAR,StakeLevelID)
+																					FROM Dep_StakeLevel WITH(NOLOCK)
+																					WHERE GameTypeID = dp.BetType
+																						AND exchangeID = @Currency
+																						AND SiteID = @SiteID
+																					FOR XML PATH('')
+																					),2,1000) AS StakeLevelList
+																	FROM Dep_ProductSettingDetail dp WITH(NOLOCK)
 																		INNER JOIN Dep_ProductSetting d  WITH(NOLOCK) ON d.ProductSettingID = dp.ProductSettingID 
-																WHERE d.ProductID = 38 AND SettingType = 7	
-																FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 	
-																))
-				
+																	WHERE d.ProductID = @ProductID AND SettingType = 7	
+																	FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 	
+																	))
+				END	
 			END
+
+			--Arcadia Gaming , Saba.club,Vgaming , SG,PG Soft
+			TRUNCATE TABLE #tempProduct
+			INSERT INTO #tempProduct(ProductID, PT,ProductName)
+			SELECT ProductID 
+				,CASE ProductID 
+						WHEN 34 THEN @PT_ArcadiaGaming  
+						WHEN 36 THEN @PT_SpadeGaming  
+						WHEN 42 THEN @PT_Saba  
+						WHEN 55 THEN @PT_PGSoft  
+						WHEN 66 THEN @PT_Vgaming  
+						END AS PT
+				,CASE ProductID 
+						WHEN 34 THEN 'Arcadia Gaming'  
+						WHEN 36 THEN 'SpadeGaming'  
+						WHEN 42 THEN 'Saba.club'  
+						WHEN 55 THEN 'PG Soft'  
+						WHEN 66 THEN 'Vgaming' 
+					END AS ProductName
+			FROM #Product 
+			WHERE ProductID in (34,42,66,36,55) AND Currency=@Currency
+			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
+			BEGIN
+				WHILE(1 =1)
+				BEGIN
+					
+					UPDATE TOP (1) c 
+					SET c.isfinished = 1
+						,@ProductID = c.ProductID
+						,@PT_TEMP = C.PT
+						,@ProductName = C.ProductName
+					FROM #tempProduct c 
+					WHERE isfinished = 0
+					
+					IF @@ROWCOUNT = 0 BREAK
+			
+					INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
+					EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=@ProductID,@CustID=@SuperID
+					SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
+					-- Insert status
+					EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=@ProductID,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
+						@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+							
+					IF @ErrCode<>0
+					BEGIN
+						SELECT @ErrMsg = @ErrMsg + 'Status DCS '+ @ProductName +'.'
+						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+														CAST(@MasterID AS VARCHAR(20))+','+
+														CAST(@AgentID AS VARCHAR(20))+','+
+														CAST(@AccMasterID AS VARCHAR(20))+','+
+														CAST(@AccAgentID AS VARCHAR(20))+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempSubCustID T1
+							FOR XML PATH('')),1,1,''),'')	
+						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+						
+						RETURN
+					END		
+
+					TRUNCATE TABLE #SportsStatus
+					-- Insert PT
+					SELECT  @PT_XML = ('<ROOT>' + (
+										SELECT 
+											 SportType AS 'SportType'
+											,Bettype AS 'BetType'
+											,IsLive AS 'IsLive'
+											,@PT_TEMP AS 'PT'
+										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+										FOR XML RAW('PT')) + '</ROOT>')
+					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
+							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+
+					IF @ErrCode<>0
+					BEGIN
+						SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName+'.' +@Agent
+						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+														CAST(@MasterID AS VARCHAR(20))+','+
+														CAST(@AgentID AS VARCHAR(20))+','+
+														CAST(@AccMasterID AS VARCHAR(20))+','+
+														CAST(@AccAgentID AS VARCHAR(20))+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempSubCustID T1
+							FOR XML PATH('')),1,1,''),'') 	
+						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+						RETURN
+					END		
+
+					IF @IsCreateSub=1  
+					BEGIN
+						UPDATE #tempSubCustID SET isfinished=0
+						WHILE (1 = 1)
+						BEGIN		
+							UPDATE TOP (1) #tempSubCustID
+							SET isfinished = 1
+								,@tmpSubCustID=CustID
+							WHERE isfinished = 0
+
+							IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
+							-- Insert PT
+							SELECT  @PT_XML = ('<ROOT>' + (
+												SELECT 
+													 SportType AS 'SportType'
+													,Bettype AS 'BetType'
+													,IsLive AS 'IsLive'
+													,@PT_TEMP AS 'PT'
+												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)  
+												FOR XML RAW('PT')) + '</ROOT>')
+							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
+								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
+						END					
+						IF @ErrCode<>0
+						BEGIN
+							SELECT @ErrMsg = @ErrMsg + 'PT DCS '+ @ProductName +' sub licensees.'
+							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+														CAST(@MasterID AS VARCHAR(20))+','+
+														CAST(@AgentID AS VARCHAR(20))+','+
+														CAST(@AccMasterID AS VARCHAR(20))+','+
+														CAST(@AccAgentID AS VARCHAR(20))+','
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')		
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+','				
+							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+								ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+								from #tempSubCustID T1
+								FOR XML PATH('')),1,1,''),'')	
+							EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+							RETURN
+						END					
+					END	
+						
+					INSERT INTO #StakelevelInput (ProductID,StakeLevelXML)
+					SELECT  ProductID = @ProductID,
+							StakelevelXML = CONVERT(VARCHAR(MAX),
+																	(SELECT dp.SportType AS SportType
+																		,dp.BetType as BetType
+																		,SUBSTRING((
+																					SELECT ','+CONVERT(VARCHAR,StakeLevelID)
+																					FROM Dep_StakeLevel WITH(NOLOCK)
+																					WHERE GameTypeID = dp.BetType
+																						AND exchangeID = @Currency
+																					FOR XML PATH('')
+																					),2,100) AS StakeLevelList
+																	FROM Dep_ProductSettingDetail dp WITH(NOLOCK)
+																			INNER JOIN Dep_ProductSetting d  WITH(NOLOCK) ON d.ProductSettingID = dp.ProductSettingID 
+																	WHERE d.ProductID = @ProductID AND SettingType = 8	
+																	FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 	
+																	))
+													
+				  
+				  	UPDATE a		
+					SET a.StakeLevelID = b.StakeLevelID
+					FROM #Product a 
+					INNER JOIN Dep_StakeLevel b WITH(NOLOCK) ON b.GameTypeID = a.Bettype AND b.ExchangeID = a.Currency
+					WHERE a.ProductID = @ProductID AND a.Currency = @Currency									
+				END	
+			END
+			
 			-- Insert betlimit
 			WHILE (1 = 1)
 			BEGIN
@@ -2056,7 +2383,28 @@ BEGIN
 		SELECT @ProductCode=@ProductCode+'VRG,'
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=40)
 		SELECT @ProductCode=@ProductCode+'TG,'
-
+	--Arcadia Gaming
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=34)
+		SELECT @ProductCode=@ProductCode+'CC,'
+	--SpadeGaming		
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=36)
+		SELECT @ProductCode=@ProductCode+'SG,'
+	--SA Gaming	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=39)
+		SELECT @ProductCode=@ProductCode+'SAG,'
+	--	Saba.club
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=42)
+		SELECT @ProductCode=@ProductCode+'SBC,'
+	--	PG Soft
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=55)
+		SELECT @ProductCode=@ProductCode+'PGS,'
+	-- 	Sports Lottery
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=63)
+		SELECT @ProductCode=@ProductCode+'SLT,'
+	-- Vgaming	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=66)
+		SELECT @ProductCode=@ProductCode+'VGA,'		
+	
 	SELECT @ProductCode=SUBSTRING(@ProductCode, 1, LEN(@ProductCode) - 1)
 	
 	-- List Currency
@@ -2125,6 +2473,14 @@ BEGIN
 	SELECT @PT_VirtualGames=@PT_VirtualGames/100
 	SELECT @PT_TableGame=@PT_TableGame/100
 
+	SELECT @PT_ArcadiaGaming=@PT_ArcadiaGaming/100
+	SELECT @PT_Saba=@PT_Saba/100
+	SELECT @PT_Vgaming=@PT_Vgaming/100
+	SELECT @PT_SoccerLoterry=@PT_SoccerLoterry/100
+	SELECT @PT_PGSoft=@PT_PGSoft/100
+	SELECT @PT_SAGaming=@PT_SAGaming/100
+	SELECT @PT_SpadeGaming=@PT_SpadeGaming/100
+
 	DECLARE @XML XML
 	CREATE TABLE #PTLog(ProductID INT,PT FLOAT)					
 	
@@ -2159,6 +2515,20 @@ BEGIN
 		SELECT  38, @PT_VirtualGames	
 		UNION 
 		SELECT  40, @PT_TableGame
+		UNION 
+		SELECT  34, @PT_ArcadiaGaming
+		UNION 
+		SELECT  36, @PT_SpadeGaming
+		UNION 
+		SELECT  39, @PT_SAGaming
+		UNION 
+		SELECT  42, @PT_Saba
+		UNION 
+		SELECT  55, @PT_PGSoft
+		UNION 
+		SELECT  63, @PT_SoccerLoterry
+		UNION 
+		SELECT  66, @PT_Vgaming
 
 		DELETE FROM #PTLog WHERE ProductID NOT IN(SELECT ProductID FROM #Product WHERE Currency=@Currency)		
 			
@@ -2207,7 +2577,7 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerBall 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38)		
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,42,66,36,55,39)			
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
 								TYPE
@@ -2234,7 +2604,18 @@ BEGIN
 								ORDER BY ds.ProductID
 								FOR XML PATH('Product'), ROOT ('SL'),
 								TYPE
-							)							
+							),
+							(
+								SELECT p.ProductID																		AS [@ID]
+									,  dbo.f_CS_FomatNumber (CAST(p.StakeLevelID		AS VARCHAR(50)))				AS [@StakeLevelID]
+								FROM #Product P 
+									INNER JOIN Dep_ProductSetting ds1 WITH(NOLOCK) ON ds1.ProductID = P.ProductID
+									INNER JOIN Dep_ProductSettingDetail dt1 WITH(NOLOCK) ON dt1.ProductSettingID = ds1.ProductSettingID
+								WHERE p.Currency = @Currency AND ds1.SettingType = 8
+								ORDER BY p.ProductID
+								FOR XML PATH('Product'), ROOT ('StakeLevelGroup'),
+								TYPE
+							)								
 					FOR XML PATH('R'), 
 					TYPE
 					)
