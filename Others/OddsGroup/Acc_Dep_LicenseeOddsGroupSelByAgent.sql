@@ -20,7 +20,7 @@ BEGIN
 	SELECT CustID
 		,username 
 		,CASE WHEN NULLIF(s.OperatorID,'') IS NOT NULL THEN s.OperatorID
-			WHEN s.OperatorID = '' THEN '(sub)'
+			WHEN ISNULL(s.OperatorID,'') = '' AND s.AgentID IS NOT NULL THEN '(sub)'
 			WHEN s.OperatorID IS NULL THEN '-' END as OperatorID
 		,d.UGroup		
 		,d.IsActive

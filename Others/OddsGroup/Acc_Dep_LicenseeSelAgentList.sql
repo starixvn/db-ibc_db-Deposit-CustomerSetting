@@ -21,8 +21,8 @@ BEGIN
 	SELECT custid FROM custinfo WITH (NOLOCK) WHERE roleid=3
 	and username LIKE '%Acc%' and srecommend=@SRecommend		
 
-	SELECT username + CASE WHEN NULLIF(s.OperatorID,'') IS NOT NULL THEN '('+s.OperatorID+')'
-							WHEN s.OperatorID= '' THEN '(Sub)'
+	SELECT username + CASE WHEN NULLIF(s.OperatorID,'') IS NOT NULL THEN ' ('+s.OperatorID+')'
+							WHEN ISNULL(s.OperatorID,'') = '' AND s.AgentID IS NOT NULL THEN ' (sub)'
 							ELSE '' END as username
 		, CustID
 	FROM customer c WITH (NOLOCK)
