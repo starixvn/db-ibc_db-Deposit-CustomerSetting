@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusUpd] @ProductID INT
 	, @CustID				INT
 	, @IsDisabled			BIT
@@ -27,6 +25,7 @@ AS
 		- 20200701@Helen: Remove Allbet - [Redmine: #131774]  
 		- 20200814@Helen: LAP - Offer commission to 3rd party products - Phase 2 - [Redmine: #139238] 
 		- 20201111@Helen: LAP - Offer commission to 3rd party products - Phase 3 - [Redmine: #145012] 
+		- 20210603@Eden: LAP - Support commission for 3rd party products - Phase 4 [Redmine: #154048]   
 
 	Param's Explanation:
 */
@@ -217,7 +216,7 @@ BEGIN
 	END
 	
 	-----------Setting Comm-------------
-	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ) AND @IsDisabled = 0 
+	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,63,61) AND @IsDisabled = 0 
 	BEGIN
 		EXEC Acc_Dep_DynamicCustSetting_06
 			@CustID			= @CustID
