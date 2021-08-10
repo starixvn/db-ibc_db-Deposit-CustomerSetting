@@ -85,6 +85,7 @@ Revisions:
 	- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 	- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 	- 20210520@Eden: Apply default VR Setting which is -90% whenever there is new LICENSEE Supers creation [Redmine:#153411]
+	- 20210802@Eden: Deposit - Support default VR based on bettypes [Redmine:#159547]
 	
 Param's Explanation:
 • @ErrCode:
@@ -159,12 +160,13 @@ BEGIN
 	CROSS APPLY (
 		SELECT (
 			SELECT	(
-						SELECT	ipvs.profileID			AS '@p',
-								vr.virtualMultiplier	AS '@v'
-						FROM	ProfileVirtualSetting	AS ipvs WITH(NOLOCK)
-						CROSS APPLY (
-							SELECT CAST(0.10 AS SMALLMONEY) AS virtualMultiplier
-						) vr
+						SELECT ipvs.profileID AS '@p',
+							CASE WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 1 THEN 0.12 
+								WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 0 THEN 0.1 
+								WHEN ipvs.bettype IN (3,8) THEN 0.08
+								ELSE 0.15
+							END AS '@v'
+						FROM ProfileVirtualSetting AS ipvs WITH(NOLOCK)
 						WHERE	ipvs.seqNo = pvs.seqNo
 						FOR XML PATH ('r'), 
 						TYPE
