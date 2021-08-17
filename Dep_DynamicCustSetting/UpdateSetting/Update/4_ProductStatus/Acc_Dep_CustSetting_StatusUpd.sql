@@ -26,7 +26,8 @@ AS
 		- 20200814@Helen: LAP - Offer commission to 3rd party products - Phase 2 - [Redmine: #139238] 
 		- 20201111@Helen: LAP - Offer commission to 3rd party products - Phase 3 - [Redmine: #145012] 
 		- 20210603@Eden: LAP - Support commission for 3rd party products - Phase 4 [Redmine: #154048]   
-
+		- 20210817@Johnson: Add VGaming [redmine:#159696]
+		
 	Param's Explanation:
 */
 BEGIN
@@ -216,7 +217,7 @@ BEGIN
 	END
 	
 	-----------Setting Comm-------------
-	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,63,61) AND @IsDisabled = 0 
+	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,63,61,66) AND @IsDisabled = 0 
 	BEGIN
 		EXEC Acc_Dep_DynamicCustSetting_06
 			@CustID			= @CustID
