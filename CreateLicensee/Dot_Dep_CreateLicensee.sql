@@ -21,6 +21,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,   @PT_PGSoft			SMALLMONEY=0
 	,   @PT_SAGaming		SMALLMONEY=0
 	,   @PT_SpadeGaming		SMALLMONEY=0
+	,   @PT_WM				SMALLMONEY=0
 	,   @PT_AP				SMALLMONEY=0
 	,   @PT_ApMini			SMALLMONEY=0
 	,   @PT_CG				SMALLMONEY=0
@@ -47,6 +48,7 @@ AS
 	- 20200820@Elodie: Change default spread group [RedmineID:#139547]
 	- 20200827@Winfred: Check Offered currency on deposit [RedmineID:#140084]
 	- 20210623@Winfred: Integrate 7 products [RedmineID:#156877]
+	- 20210921@Winfred: Integrate 2 products [RedmineID:#160130]
 	- 20211101@Winfred: Merge Sports Lottery under Sportsbook [redmine:#164129]
 	- 20220117@Winfred: Change message error for stake level group and add parameter CV [redmine:#167097]
 	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
@@ -98,6 +100,7 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 	,	@PT_PGSoft  		=0.85
 	,	@PT_SAGaming  		=0.8
 	,	@PT_SpadeGaming  	=0.8
+	,	@PT_WM  			=0.82
 	,   @PT_AP				=0.8
 	,   @PT_ApMini			=0.8
 	,   @PT_CG				=0.8
@@ -318,13 +321,13 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																/>
 																<Product	
 																	ProductID="39"	
-																	Currency="4"	
+																Currency="4"	
 																	MinBet="0"	
-																	MaxBet="0"	
+																MaxBet="0"	
 																	MaxPerMatch="0"	
 																	MaxPerBall="0"	
 																/>
-																<Product	
+																<Product 	
 																	ProductID="62"	
 																	Currency="4"	
 																	MinBet="0"	
@@ -356,6 +359,23 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																	MaxPerMatch="0"
 																	MaxPerBall="0" 
 																/>
+																
+																<Product 	
+																	ProductID="69"
+																	Currency="4"	
+																	MinBet="1" 
+																	MaxBet="300000"	
+																	MaxPerMatch="600000"	
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="51"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
 														</ROOT>' ,
 @StakeLevel =  '<ROOT>
 							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="100"/>	
@@ -371,6 +391,10 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="10" MaxStake="100"/>	
 							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="20" MaxStake="200" />
 							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="30" MaxStake="500" />
+
+							<StakeLevel Currency="4" GameTypeID="3401"  MinStake="10" MaxStake="100"/>	
+							<StakeLevel Currency="4" GameTypeID="3401"  MinStake="20" MaxStake="500" />
+							<StakeLevel Currency="4" GameTypeID="3401"  MinStake="30" MaxStake="1000" />
 					</ROOT>',
 @Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@IsChinaView=1 ,@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
 ,@InsBalCustList=@InsBalCustList OUTPUT,@InsBalExceptCustList=@InsBalExceptCustList OUTPUT  , @SiteDBGroupID = 0
@@ -398,6 +422,7 @@ BEGIN
 	SELECT @PT_PGSoft=@PT_PGSoft*100
 	SELECT @PT_SAGaming=@PT_SAGaming*100
 	SELECT @PT_SpadeGaming=@PT_SpadeGaming*100
+	SELECT @PT_WM=@PT_WM*100
 	SELECT @PT_AP=@PT_AP*100
 	SELECT @PT_ApMini=@PT_ApMini*100
 	SELECT @PT_CG=@PT_CG*100
@@ -795,7 +820,8 @@ BEGIN
 
 			RETURN
 		END
-	END   
+	END 
+		  
 	--> Get SiteID
 	DECLARE @SiteID INT 
 	SELECT @SiteID = siteid FROM dbo.Site WITH (NOLOCK) WHERE site = @Sitename
@@ -1696,6 +1722,55 @@ BEGIN
 				END
 			END
 
+			--Bitcoin			
+			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1 AND Currency=@Currency)
+			BEGIN
+					SET @ProductID = 69	
+					SET @ProductName = 'Bitcoin'
+					
+					IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=@ProductID AND Currency=@Currency)
+					BEGIN
+						INSERT INTO #BetLimit(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
+						EXEC Acc_Dep_CustSetting_BetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=@ProductID,@AgentID=0 	
+						INSERT INTO #BetLimitInput(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
+						SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet,p.MaxPerMatch
+						FROM #BetLimit b
+							CROSS JOIN #Product p  	
+						WHERE p.ProductID=@ProductID AND p.Currency=@Currency	
+						TRUNCATE TABLE #BetLimit
+					END	
+										
+					INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
+					EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=@ProductID,@CustID=@SuperID
+					SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
+
+					EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=@ProductID,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
+						@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+
+					IF @ErrCode<>0
+					BEGIN
+						SELECT @ErrMsg = @ErrMsg + 'Status DCS ' + @ProductName + '.' +@Super
+						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
+												CAST(@MasterID AS VARCHAR(20))+','+
+												CAST(@AgentID AS VARCHAR(20))+','+
+												CAST(@AccMasterID AS VARCHAR(20))+','+
+												CAST(@AccAgentID AS VARCHAR(20))+','
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempDumCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','	
+						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
+							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
+							from #tempSubCustID T1
+							FOR XML PATH('')),1,1,''),'')
+						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
+						RETURN
+					END	
+
+					TRUNCATE TABLE #SportsStatus
+			END
 			-- lottery , Sports Lottery
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
@@ -2126,10 +2201,12 @@ BEGIN
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
 			SELECT DISTINCT ProductID 
-				,CASE WHEN ProductID = 38 THEN @PT_VirtualGames ELSE @PT_SAGaming END AS PT
-				,CASE WHEN ProductID = 38 THEN 'Virtual Games' ELSE 'SA Gaming' END AS ProductName
+				,CASE WHEN ProductID = 38 THEN @PT_VirtualGames
+					  WHEN ProductID = 51 THEN @PT_WM ELSE @PT_SAGaming END AS PT
+				,CASE WHEN ProductID = 38 THEN 'Virtual Games'
+					  WHEN ProductID = 51 THEN 'WM' ELSE 'SA Gaming' END AS ProductName
 			FROM #Product 
-			WHERE ProductID in (38,39) AND Currency=@Currency
+			WHERE ProductID in (38,39,51) AND Currency=@Currency
 		
 			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
 			BEGIN
@@ -2284,7 +2361,7 @@ BEGIN
 			SELECT ProductID 
 				,CASE ProductID 
 						WHEN 34 THEN @PT_ArcadiaGaming  
-						WHEN 36 THEN @PT_SpadeGaming  
+						WHEN 36 THEN @PT_SpadeGaming   
 						WHEN 55 THEN @PT_PGSoft  
 						WHEN 66 THEN @PT_Vgaming  
 						WHEN 67 THEN @PT_AP  
@@ -2454,7 +2531,7 @@ BEGIN
 					WHERE a.ProductID = @ProductID AND a.Currency = @Currency									
 				END	
 			END
-			
+						
 			-- Insert betlimit - type 2 (Dep_CustBetSettingGame_xxx tables: SportBooks, NumberGames...)
 			--Update value null if not used (to correct dynamic XML)
 			UPDATE t
@@ -2873,6 +2950,12 @@ BEGIN
 	-- Vgaming	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=66)
 		SELECT @ProductCode=@ProductCode+'VGA,'	
+	-- WM	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=51)
+		SELECT @ProductCode=@ProductCode+'WM,'	
+	-- Bitcoin	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
+		SELECT @ProductCode=@ProductCode+'BTC,'							
 	-- CG	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=62)
 		SELECT @ProductCode=@ProductCode+'CG,'
@@ -2950,6 +3033,7 @@ BEGIN
 	SELECT @PT_PGSoft=@PT_PGSoft/100
 	SELECT @PT_SAGaming=@PT_SAGaming/100
 	SELECT @PT_SpadeGaming=@PT_SpadeGaming/100
+	SELECT @PT_WM=@PT_WM/100
 	SELECT @PT_AP=@PT_AP/100
 	SELECT @PT_ApMini=@PT_ApMini/100
 	SELECT @PT_CG=@PT_CG/100
@@ -3004,6 +3088,8 @@ BEGIN
 		UNION 
 		SELECT  66, @PT_Vgaming
 		UNION 
+		SELECT  51, @PT_WM
+		UNION
 		SELECT  62, @PT_CG
 		UNION 
 		SELECT  67, @PT_AP
@@ -3060,7 +3146,7 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerNumber 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68)		
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68,51,69)		
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
 								TYPE
