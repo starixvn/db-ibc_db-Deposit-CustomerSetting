@@ -11,6 +11,7 @@ AS
  Original:  
  Revisions:  	
 	- 20210623@Winfred: Get Product list which offered for selected licensees [RedmineID:#160130]
+	- 20211015@Winfred: Enhance SP to get product list following UUS currency [RedmineID:#163260]
 	
  Param's Explanation: 
  Sample exec:
@@ -31,7 +32,6 @@ BEGIN
 	WHERE ci.roleid =4	
 		AND ci.Enabled=1
 		AND cs.site in (@sitename)
-		AND ci.currency NOT IN (20)
 		AND cg.GameTypeID = 1
 	
 	-- Default Sportbook	
