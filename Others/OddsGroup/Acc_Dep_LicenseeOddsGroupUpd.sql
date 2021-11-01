@@ -19,6 +19,7 @@ AS
 
 	Revisions:
 		- 20210709@Johnson: initial sp [redmine:#157702]
+		- 20211101@Johnson: exclude BA members when update odds group[redmine:#163957]
 	Param's Explanation:
 */
 BEGIN	
@@ -72,6 +73,7 @@ BEGIN
 		WHERE recommend = @custid
 			AND roleid = 1
 			AND custid NOT IN (SELECT custid FROM [bodb_licensee].dbo.[LicenseeSpecialCust] WITH(NOLOCK))
+			AND custid NOT IN (SELECT custid FROM dbo.[Dep_CustBAActive] WITH(NOLOCK))
 			AND ugroup <> @oddsGroup
 			
 		BEGIN TRY
