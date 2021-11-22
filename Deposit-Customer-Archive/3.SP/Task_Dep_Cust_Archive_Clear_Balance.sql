@@ -1,8 +1,4 @@
 /*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[Task_Dep_Cust_Archive_Clear_Balance] 
 	@BatchSize INT = 100
 AS
@@ -16,6 +12,7 @@ AS
 		- 20181120@Dominic: Add new column custinfo.maxpermatch164 - Redmine: #104972
 		- 20181120@Dominic: Enhance performance - Redmine: #105480
 		- 20191002@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
+		- 20200226@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 	Parameter:
 		
 	
@@ -352,6 +349,8 @@ BEGIN
 		OR EXISTS(SELECT 1 FROM bodb02..bettransRNG14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..translog (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..translog14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
+		OR EXISTS(SELECT 1 FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
+		OR EXISTS(SELECT 1 FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 	BEGIN
 		SELECT @LstCustID = STUFF((
 		SELECT ',' + CAST(CusTID as VARCHAR(15))
@@ -379,6 +378,12 @@ BEGIN
 			UNION
 			SELECT CustID 
 			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
+			UNION
+			SELECT CustID 
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK))
+			UNION
+			SELECT CustID 
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK))
 		) tmp
 		FOR XML PATH('')
 		), 1, 1, '');
@@ -418,13 +423,18 @@ BEGIN
 			UNION ALL
 			SELECT CustID 
 			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
+			UNION
+			SELECT CustID 
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK))
+			UNION
+			SELECT CustID 
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK))
 		)
 	END
-	--Check data in bodb_Report.dbo.STATEMENT seperately due to performance reasons
-	ELSE IF EXISTS(SELECT 1 
+	--Check data in Cust_TrackingLastBetDate
+	ELSE IF EXISTS(	SELECT 1 
 					FROM #Dep_Customer_Archived t  
-					INNER JOIN DB06.bodb_Report.dbo.STATEMENT s WITH(NOLOCK) ON s.custid = t.custid and s.accDate >= t.CheckDate
-					WHERE s.TransType <> 'bal' 
+							INNER JOIN DBACC.bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
 					)
 	BEGIN
 		SELECT @LstCustID = STUFF((
@@ -432,9 +442,7 @@ BEGIN
 		FROM (
 			SELECT t.CustID 
 			FROM #Dep_Customer_Archived t  
-					INNER JOIN DB06.bodb_Report.dbo.STATEMENT s WITH(NOLOCK) ON s.custid = t.custid and s.accDate >= t.CheckDate
-					WHERE s.TransType <> 'bal' 
-			GROUP BY t.CustID 
+					INNER JOIN DBACC.bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
 		) tmp
 		FOR XML PATH('')
 		), 1, 1, '');
@@ -449,13 +457,9 @@ BEGIN
 		--Delete Dep_Customer_Archived
 		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5
 		
-		DELETE #Dep_Customer_Archived
-		WHERE CustID IN (
-			SELECT t.CustID 
-			FROM #Dep_Customer_Archived t  
-					INNER JOIN DB06.bodb_Report.dbo.STATEMENT s WITH(NOLOCK) ON s.custid = t.custid and s.accDate >= t.CheckDate
-					WHERE s.TransType <> 'bal' 
-		)
+		DELETE t
+		FROM #Dep_Customer_Archived t  
+				INNER JOIN DBACC.bodb02.dbo.Cust_TrackingLastBetDate s WITH(NOLOCK) ON s.custid = t.custid and s.LastBetDate >= t.CheckDate
 	END
 
 	IF NOT EXISTS (SELECT 1 FROM #Dep_Customer_Archived)
