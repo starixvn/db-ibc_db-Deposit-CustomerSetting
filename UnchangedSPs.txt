@@ -1,3 +1,1 @@
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
+Deposit-Customer-Archive\3.SP\Task_Dep_Customer_Archive_GetDormantCustomer.sql
