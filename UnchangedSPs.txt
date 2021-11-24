@@ -1,1 +1,1 @@
-Deposit-Customer-Archive\3.SP\Task_Dep_Customer_Archive_GetDormantCustomer.sql
+Deposit-Customer-Archive\3.SP\Task_Dep_Customer_Archive_GetDormantCustomer.sql 

@@ -40,11 +40,15 @@ BEGIN
 	(
 		custid INT
 	)
+	
+	CREATE NONCLUSTERED INDEX ix_TmpBettingMember_custid ON #BettingMember(custid)
 
 	CREATE TABLE #tmpMember 
 	(
 		custid INT PRIMARY KEY
 	)
+
+	CREATE TABLE #BettingMember_AGC_GD(CustID INT PRIMARY KEY)
 
 -- 1.Get infor of all customer in Customer and custinfo table
 	INSERT INTO #Member (custid, username, username2)
@@ -122,23 +126,23 @@ BEGIN
 					WHERE b.custid = m.custid
 				)
 
-			INSERT INTO #BettingMember (custid)
-			SELECT custid 
-			FROM #tmpMember m
-			where EXISTS (
-				SELECT custid
-				FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-				WHERE b.custid = m.custid
-				)
+			--INSERT INTO #BettingMember (custid)
+			--SELECT custid 
+			--FROM #tmpMember m
+			--where EXISTS (
+			--	SELECT custid
+			--	FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
+			--	WHERE b.custid = m.custid
+			--	)
 			
-			INSERT INTO #BettingMember (custid)
-			SELECT custid 
-			FROM #tmpMember m
-			WHERE EXISTS (
-					SELECT custid
-					FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
-					WHERE b.custid = m.custid
-				)
+			--INSERT INTO #BettingMember (custid)
+			--SELECT custid 
+			--FROM #tmpMember m
+			--WHERE EXISTS (
+			--		SELECT custid
+			--		FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+			--		WHERE b.custid = m.custid
+			--	)
 
 			UPDATE #Member
 			SET isProcessed = 1
@@ -148,6 +152,23 @@ BEGIN
 
 		DELETE FROM #Member
 		WHERE custid IN (SELECT custid FROM #BettingMember)
+
+		INSERT INTO #BettingMember_AGC_GD(CustID)
+		SELECT custid
+		FROM OPENQUERY (DBPTCS, ';WITH tmp AS (
+									SELECT b.custid
+									FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+									WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
+									UNION ALL
+									SELECT b.custid
+									FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
+									WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
+								)
+								SELECT DISTINCT CustID
+								FROM tmp')
+
+		DELETE FROM #Member
+		WHERE custid IN (SELECT custid FROM #BettingMember_AGC_GD)
 
 		-- 3. Update balance of all member in #Member (can apply batch processing)
 		WHILE(1=1)
@@ -188,4 +209,5 @@ BEGIN
 	DROP TABLE #tmpMember
 	DROP TABLE #BettingMember
 	DROP TABLE #Member
+	DROP TABLE #BettingMember_AGC_GD
 END

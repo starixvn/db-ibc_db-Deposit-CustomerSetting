@@ -341,6 +341,21 @@ BEGIN
 		DELETE #Dep_Customer_Archived WHERE LicenseeID IS NULL
 	END
 
+	CREATE TABLE #BettingMember_AGC_GD(CustID INT PRIMARY KEY)
+	INSERT INTO #BettingMember_AGC_GD(CustID)
+	SELECT custid
+	FROM OPENQUERY (DBPTCS, ';WITH tmp AS (
+								SELECT b.custid
+								FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
+								UNION ALL
+								SELECT b.custid
+								FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
+								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
+							)
+							SELECT DISTINCT CustID
+							FROM tmp')
+
 	IF EXISTS(SELECT 1 FROM bodb02..bettrans (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) AND bettype <> 20000)
 		OR EXISTS(SELECT 1 FROM bodb02..bettrans14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..bettransLC (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
@@ -349,8 +364,7 @@ BEGIN
 		OR EXISTS(SELECT 1 FROM bodb02..bettransRNG14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..translog (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 		OR EXISTS(SELECT 1 FROM bodb02..translog14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
+		OR EXISTS(SELECT 1 FROM #BettingMember_AGC_GD WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
 	BEGIN
 		SELECT @LstCustID = STUFF((
 		SELECT ',' + CAST(CusTID as VARCHAR(15))
@@ -380,10 +394,7 @@ BEGIN
 			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
 			UNION
 			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK))
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC_GD)
 		) tmp
 		FOR XML PATH('')
 		), 1, 1, '');
@@ -425,10 +436,7 @@ BEGIN
 			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
 			UNION
 			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe WITH(NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino WITH(NOLOCK))
+			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC_GD)
 		)
 	END
 	--Check data in Cust_TrackingLastBetDate
@@ -996,5 +1004,8 @@ BEGIN
 				, @Action='CLEAR-BALANCE'
 				, @Status='Done'
 				, @Message=@Message
+
+	DROP TABLE #BettingMember_AGC_GD
+	DROP TABLE #Dep_Customer_Archived
 END
 GO
