@@ -341,7 +341,9 @@ BEGIN
 		DELETE #Dep_Customer_Archived WHERE LicenseeID IS NULL
 	END
 
+	CREATE TABLE #Active_Cust (CustID INT PRIMARY KEY)
 	CREATE TABLE #BettingMember_AGC_GD(CustID INT PRIMARY KEY)
+
 	INSERT INTO #BettingMember_AGC_GD(CustID)
 	SELECT custid
 	FROM OPENQUERY (DBPTCS, ';WITH tmp AS (
@@ -356,46 +358,39 @@ BEGIN
 							SELECT DISTINCT CustID
 							FROM tmp')
 
-	IF EXISTS(SELECT 1 FROM bodb02..bettrans (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) AND bettype <> 20000)
-		OR EXISTS(SELECT 1 FROM bodb02..bettrans14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM bodb02..bettransLC (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM bodb02..bettransLC14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM bodb02..bettransRNG (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM bodb02..bettransRNG14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM bodb02..translog (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM bodb02..translog14 (NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
-		OR EXISTS(SELECT 1 FROM #BettingMember_AGC_GD WITH(NOLOCK) WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived))
+	INSERT INTO #Active_Cust(custid)
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans (NOLOCK) WHERE bettype <> 20000)
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans14 (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransLC (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransLC14 (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransRNG (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransRNG14 (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC_GD)
+
+	IF EXISTS(SELECT 1 FROM #Active_Cust)
 	BEGIN
 		SELECT @LstCustID = STUFF((
 		SELECT ',' + CAST(CusTID as VARCHAR(15))
-		FROM (
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans (NOLOCK) WHERE bettype <> 20000)
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans14 (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransLC (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransLC14 (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransRNG (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransRNG14 (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC_GD)
-		) tmp
+		FROM (SELECT CustID FROM #Active_Cust) tmp
 		FOR XML PATH('')
 		), 1, 1, '');
 
@@ -410,34 +405,7 @@ BEGIN
 		EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5
 		
 		DELETE #Dep_Customer_Archived
-		WHERE CustID IN (
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans (NOLOCK) WHERE bettype <> 20000)
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans14 (NOLOCK))
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransLC (NOLOCK))
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransLC14 (NOLOCK))
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransRNG (NOLOCK))
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettransRNG14 (NOLOCK))
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog (NOLOCK))
-			UNION ALL
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
-			UNION
-			SELECT CustID 
-			FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC_GD)
-		)
+		WHERE CustID IN (SELECT CustID FROM #Active_Cust)
 	END
 	--Check data in Cust_TrackingLastBetDate
 	ELSE IF EXISTS(	SELECT 1 
