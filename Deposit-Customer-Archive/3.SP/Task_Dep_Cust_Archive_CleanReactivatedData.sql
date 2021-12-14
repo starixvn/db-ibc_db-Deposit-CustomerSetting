@@ -103,10 +103,10 @@ BEGIN
 	
 	--Delete data in Dep_Customer_Archived
 	EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5 
-	INSERT INTO DBACC.bodb02.dbo.Cust_TrackingLastBetDate (CustID) 
-	SELECT CustID 
-	FROM #Dep_Customer_Archived a
-	WHERE NOT EXISTS( SELECT TOP 1 1 FROM DBACC.bodb02.dbo.Cust_TrackingLastBetDate t WITH(NOLOCK) WHERE a.CustID = t.CustID)
+	--INSERT INTO DBACC.bodb02.dbo.Cust_TrackingLastBetDate (CustID) 
+	--SELECT CustID 
+	--FROM #Dep_Customer_Archived a
+	--WHERE NOT EXISTS( SELECT TOP 1 1 FROM DBACC.bodb02.dbo.Cust_TrackingLastBetDate t WITH(NOLOCK) WHERE a.CustID = t.CustID)
 
 	SELECT @Message = 'Finish deleting archive data for reactivated members: ' + @LstCustID
 
