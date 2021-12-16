@@ -12,6 +12,7 @@ AS
 	
 	Revisions:
 		- 20201005@Winfred: Check OddsAdj dummy customers [redmine:#142952]
+		- 20211112@Eden: Alpha/NAP - In-house Replication (isDeleted & RepUpdateTime) [RedmineID: #164321]
 
 	Explanation's Param:
 		
@@ -28,7 +29,8 @@ BEGIN
 
 	IF @SiteId <> '' AND EXISTS( SELECT 1 
 						FROM DBPRO.bodb02.dbo.LicSiteSetting p WITH (NOLOCK)
-						WHERE SiteId = @SiteId AND ApplySpreadAdjustment = 1)
+						WHERE SiteId = @SiteId AND ApplySpreadAdjustment = 1
+							AND ISNULL(p.IsDeleted,0) = 0)
 	BEGIN
 		SELECT @IsOffer = 1
 	END
