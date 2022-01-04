@@ -13,6 +13,7 @@ AS
 		- 20180912@Dominic: First commit
 		- 20181206@Dominic: Add a new input param @LstCustID for batch processing - Redmine #105893
 		- 20181218@Dominic: Change data type of input param @ActionID
+		- 20220104@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 	Parameter:
 		@ActionID: 
 				1: Update Dep_Customer_Archived.status = archived
@@ -94,7 +95,7 @@ BEGIN
 		INSERT INTO #LstCustID(CustID) 
 		SELECT r.value('.','INT')
 		FROM @xml.nodes('//root/r') AS RECORDS(r)
-
+		OPTION ( OPTIMIZE FOR ( @xml = NULL ) )
 
 		IF @ActionID IN (1,2,3,4)
 		BEGIN
