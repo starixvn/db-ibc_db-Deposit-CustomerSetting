@@ -33,6 +33,8 @@ AS
 	- 20201118@Winfred: Create currency for existing licensee [RedmineID:#143761]
 	- 20210623@Winfred: Integrate 7 products [RedmineID:#156877]
 	- 20211101@Winfred: Merge Sports Lottery under Sportsbook [redmine:#164129]
+	- 20220117@Winfred: Change message error for stake level group [redmine:#167097]
+	
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @Product:<ROOT>
@@ -569,7 +571,7 @@ BEGIN
 														WHERE  GameTypeID = a.Bettype AND ExchangeID = a.Currency )
 			)
 	BEGIN
-		SELECT @ErrMsg = 'Break rule bet limit', @ErrCode = 10002
+		SELECT @ErrMsg = 'This product does not support the selected currencies', @ErrCode = 10007
 		RETURN
 	END
 
