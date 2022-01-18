@@ -2588,7 +2588,8 @@ BEGIN
 									, @IsCashOut													AS '@CashOut'	
 									, @IsCreateSub													AS '@Subsidiary'	
 									, @ErrCode														AS '@ErrCode'	
-									, @ErrMsg														AS '@ErrMsg'	
+									, @ErrMsg														AS '@ErrMsg'
+									, @IsChinaView													AS '@IsChinaView'	
 							FOR XML PATH('GeneralInfo'), 
 							TYPE
 							),
