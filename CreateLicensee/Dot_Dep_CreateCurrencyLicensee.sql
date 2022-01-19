@@ -268,14 +268,6 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 																	MaxPerBall="0" 
 																/>
 																<Product 
-																	ProductID="42"
-																	Currency="4"	
-																	MinBet="0" 
-																	MaxBet="0"	
-																	MaxPerMatch="0"
-																	MaxPerBall="0" 
-																/>
-																<Product 
 																	ProductID="66"
 																	Currency="4"	
 																	MinBet="0" 
