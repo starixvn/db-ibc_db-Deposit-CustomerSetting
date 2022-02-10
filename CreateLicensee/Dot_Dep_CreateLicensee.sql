@@ -23,6 +23,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,   @PT_SAGaming		SMALLMONEY=0
 	,   @PT_SpadeGaming		SMALLMONEY=0
 	,	@StakeLevel			VARCHAR(MAX)	= ''
+	,	@IsChinaView		BIT
 AS  
 /*  
  Created: 20190425@Winnie  
@@ -41,6 +42,7 @@ AS
 	- 20200827@Winfred: Check Offered currency on deposit [RedmineID:#140084]
 	- 20210623@Winfred: Integrate 7 products [RedmineID:#156877]
 	- 20211101@Winfred: Merge Sports Lottery under Sportsbook [redmine:#164129]
+	- 20220117@Winfred: Change message error for stake level group and add parameter CV [redmine:#167097]
 	
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -275,14 +277,6 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																	MaxPerBall="0" 
 																/>
 																<Product 
-																	ProductID="42"
-																	Currency="4"	
-																	MinBet="0" 
-																	MaxBet="0"	
-																	MaxPerMatch="0"
-																	MaxPerBall="0" 
-																/>
-																<Product 
 																	ProductID="66"
 																	Currency="4"	
 																	MinBet="0" 
@@ -327,7 +321,7 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="20" MaxStake="200" />
 							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="30" MaxStake="500" />
 					</ROOT>',
-@Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
+@Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@IsChinaView=1 ,@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
 SELECT @ErrorCode,@Errmsg
 
 */  
@@ -582,7 +576,7 @@ BEGIN
 														WHERE  GameTypeID = a.Bettype AND ExchangeID = a.Currency )
 			)
 	BEGIN
-		SELECT @ErrMsg = 'Break rule bet limit', @ErrCode = 10002
+		SELECT  @ErrMsg = 'This product does not support the selected currencies', @ErrCode = 10007
 		RETURN
 	END
 
@@ -619,8 +613,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit)
-		VALUES (@sitename, 0, 1, 1, 1)
+		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView)
+		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView)
 	
 		IF @@ERROR <> 0
 		BEGIN
@@ -2586,7 +2580,8 @@ BEGIN
 									, @IsCashOut													AS '@CashOut'	
 									, @IsCreateSub													AS '@Subsidiary'	
 									, @ErrCode														AS '@ErrCode'	
-									, @ErrMsg														AS '@ErrMsg'	
+									, @ErrMsg														AS '@ErrMsg'
+									, @IsChinaView													AS '@IsChinaView'	
 							FOR XML PATH('GeneralInfo'), 
 							TYPE
 							),
