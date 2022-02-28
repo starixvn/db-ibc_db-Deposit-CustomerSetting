@@ -19,18 +19,17 @@ AS
 */  
 BEGIN
 	SET NOCOUNT ON
-	CREATE TABLE #result (Productid INT,ProductName	VARCHAR(50),ExchangeId	INT,Currency NVARCHAR(50))
+	CREATE TABLE #result (Productid INT,ExchangeId	INT,Currency NVARCHAR(50))
 	
-	INSERT INTO #result(Productid, ProductName, ExchangeId, currency)
-	SELECT DISTINCT a.ProductID, p.ProductName, sl.ExchangeID, e.currency 
+	INSERT INTO #result(Productid,  ExchangeId, currency)
+	SELECT DISTINCT a.ProductID, sl.ExchangeID, e.currency 
 	FROM Dep_ProductSetting a WITH(NOLOCK)
 		INNER JOIN Dep_ProductSettingDetail psd WITH(NOLOCK) ON a.ProductSettingID = psd.ProductSettingID
 		INNER JOIN DEP_StakeLevel sl WITH(NOLOCK)  ON sl.GameTypeID = psd.BetType
 		INNER JOIN exchange e WITH(NOLOCK) ON sl.ExchangeID = e.ExchangeId
-		LEFT JOIN DBPRO.bodb02.dbo.Products p  WITH (NOLOCK)ON p.ProductID = a.ProductID
 	WHERE a.SettingType = 8	AND psd.SettingStatus = 0 AND (@ProductID = 0 OR a.ProductID = @ProductID)
 	     
-    SELECT  Productid, ProductName, ExchangeId, Currency
+    SELECT  Productid, ExchangeId, Currency
     FROM #result 
     ORDER BY Productid , ExchangeId
      
