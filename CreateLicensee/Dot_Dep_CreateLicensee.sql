@@ -43,6 +43,7 @@ AS
 	- 20210623@Winfred: Integrate 7 products [RedmineID:#156877]
 	- 20211101@Winfred: Merge Sports Lottery under Sportsbook [redmine:#164129]
 	- 20220117@Winfred: Change message error for stake level group and add parameter CV [redmine:#167097]
+	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
 	
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -230,14 +231,6 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																	MaxPerBall="30000" 
 															/>
 															<Product 
-																	ProductID="25" 
-																	Currency="0" 
-																	MinBet="0" 
-																	MaxBet="0" 
-																	MaxPerMatch="0"
-																	MaxPerBall="0" 
-															/>
-																<Product 
 																	ProductID="-1" 
 																	Currency="0" 
 																	MinBet="0" 
@@ -2391,7 +2384,7 @@ BEGIN
 			TRUNCATE TABLE #StakelevelInput
 				-- Insert cashout
 			SELECT @ErrMsg=''
-			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=25 AND (Currency=@Currency OR Currency=0))
+			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
 			BEGIN
 				EXEC [Acc_3rdProductUpdSuperStatus] @ProductID=25, @CustID=@SuperID,@IsEnable=1,@ApplyToMember=1,@UserID=@CreatorID,@IP=@IP,@ErrMsg=@ErrMsg OUTPUT
 				IF @ErrMsg<>''
@@ -2401,11 +2394,13 @@ BEGIN
 				END
 			END		
 	END
-
 	
 	DECLARE @ProductCode VARCHAR(100)=''
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
-		SELECT @ProductCode=@ProductCode+'SB,SPR,'
+	BEGIN
+		SELECT @ProductCode=@ProductCode+'SB,SPR,CO,'
+		SELECT @IsCashOut=1
+	END	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=5)
 		SELECT @ProductCode=@ProductCode+'VS,'
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=27)
@@ -2416,11 +2411,6 @@ BEGIN
 		SELECT @ProductCode=@ProductCode+'KN,'
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=3)
 		SELECT @ProductCode=@ProductCode+'NG,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=25)
-	BEGIN
-		SELECT @ProductCode=@ProductCode+'CO,'
-		SELECT @IsCashOut=1
-	END
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=-1)
 	BEGIN
 		SELECT @ProductCode=@ProductCode+'BA,'
