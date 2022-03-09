@@ -17,12 +17,14 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,   @PT_VirtualGames	SMALLMONEY=0
 	,   @PT_TableGame		SMALLMONEY=0
 	,   @PT_ArcadiaGaming	SMALLMONEY=0
-	,   @PT_Saba			SMALLMONEY=0
 	,   @PT_Vgaming			SMALLMONEY=0
 	,   @PT_PGSoft			SMALLMONEY=0
 	,   @PT_SAGaming		SMALLMONEY=0
 	,   @PT_SpadeGaming		SMALLMONEY=0
 	,	@StakeLevel			VARCHAR(MAX)	= ''
+	,   @PT_AP				SMALLMONEY=0
+	,   @PT_ApMini			SMALLMONEY=0
+	,   @PT_CG				SMALLMONEY=0
 	,	@IsChinaView		BIT
 AS  
 /*  
