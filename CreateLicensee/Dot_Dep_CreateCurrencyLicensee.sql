@@ -37,6 +37,7 @@ AS
 	- 20211101@Winfred: Merge Sports Lottery under Sportsbook [redmine:#164129]
 	- 20220117@Winfred: Change message error for stake level group [redmine:#167097]
 	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
+	- 20220307@Winfred: Integrate 3 products Creative Gaming, Advantplay, Advantplay mini products [redmine:#169473]
 	
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
