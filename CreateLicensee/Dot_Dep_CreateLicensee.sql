@@ -2465,9 +2465,6 @@ BEGIN
 	--SA Gaming	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=39)
 		SELECT @ProductCode=@ProductCode+'SAG,'
-	--	Saba.club
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=42)
-		SELECT @ProductCode=@ProductCode+'SBC,'
 	--	PG Soft
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=55)
 		SELECT @ProductCode=@ProductCode+'PGS,'
@@ -2653,7 +2650,7 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerBall 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,42,66,36,55,39)		
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,42,66,36,55,39,62,67,68)		
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
 								TYPE
