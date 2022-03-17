@@ -8,6 +8,7 @@ AS
 
 	Revisions:
 		- 20200218@Eden: First commit  [#RM:125823]
+		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 
 	Param's Explanation:
 */
@@ -52,6 +53,12 @@ BEGIN
 
 	--> Get all deposit members (distinct) have bet ticket from yesterday to today (on all bettrans tables)
 	INSERT INTO #BettingMember(custid)
+	SELECT b.custid
+	FROM Dep_CustSuper c WITH(NOLOCK)
+		INNER JOIN transfer b with (NOLOCK,forceseek) ON c.CustID = b.srecommend
+	WHERE bettype NOT IN(19999, 20000) 
+		AND b.transdate >= @ScanDate
+	UNION
 	SELECT b.custid
 	FROM Dep_CustSuper c WITH(NOLOCK)
 		INNER JOIN bettrans b with (NOLOCK,forceseek) ON c.CustID = b.srecommend
@@ -102,6 +109,23 @@ BEGIN
 		INSERT INTO #BettingMember(custid,LastBetDate)
 		SELECT b.custid, MAX(b.transdate) AS transdate
 		FROM bettrans b with (NOLOCK)
+			INNER JOIN #tmpMember t ON t.custid = b.custid
+		WHERE bettype NOT IN(19999, 20000)
+			AND b.transdate > t.LastBetDate 
+			AND b.transdate >= @ScanDate
+		GROUP BY b.custid
+
+		UPDATE a
+		SET  a.LastBetDate = b.LastBetDate
+			,a.IsUpdate = 1
+		FROM #tmpMember a
+			INNER JOIN #BettingMember b ON a.custID = b.custid
+
+		--> scan ticket from transfer
+		TRUNCATE TABLE #BettingMember
+		INSERT INTO #BettingMember(custid,LastBetDate)
+		SELECT b.custid, MAX(b.transdate) AS transdate
+		FROM transfer b with (NOLOCK)
 			INNER JOIN #tmpMember t ON t.custid = b.custid
 		WHERE bettype NOT IN(19999, 20000)
 			AND b.transdate > t.LastBetDate 
