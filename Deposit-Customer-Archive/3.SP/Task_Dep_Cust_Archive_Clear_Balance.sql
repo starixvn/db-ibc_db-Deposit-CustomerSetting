@@ -13,6 +13,7 @@ AS
 		- 20181120@Dominic: Enhance performance - Redmine: #105480
 		- 20191002@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200226@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
+		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 	Parameter:
 		
 	
@@ -360,7 +361,10 @@ BEGIN
 
 	INSERT INTO #Active_Cust(custid)
 	SELECT CustID 
-	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans (NOLOCK) WHERE bettype <> 20000)
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..Transfer (NOLOCK) WHERE bettype <> 20000)
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans (NOLOCK))
 	UNION
 	SELECT CustID 
 	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..bettrans14 (NOLOCK))

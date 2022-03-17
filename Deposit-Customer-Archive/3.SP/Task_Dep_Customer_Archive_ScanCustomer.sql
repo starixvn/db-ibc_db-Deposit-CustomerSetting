@@ -19,6 +19,7 @@ AS
 		- 20190304@Dominic: Delete existing dormant members
 		- 20190312@Dominic: Improve performance - #109528
 		- 20200211@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
+		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
@@ -96,6 +97,15 @@ BEGIN
 			WHERE EXISTS (
 					SELECT custid
 					FROM bettrans b with (NOLOCK)
+					WHERE b.custid = m.custid
+				)
+
+			INSERT INTO #BettingMember (custid)
+			SELECT custid 
+			FROM #tmpMember m
+			WHERE EXISTS (
+					SELECT custid
+					FROM transfer b with (NOLOCK)
 					WHERE bettype <> 20000 AND b.custid = m.custid
 				)
 
@@ -184,7 +194,7 @@ BEGIN
 			FROM #Member
 			INNER JOIN (
 				SELECT custid, ISNULL(SUM(winlost-actual_stake+playercomm),0) as MemberBalance
-				FROM bettrans WITH (NOLOCK)
+				FROM transfer WITH (NOLOCK)
 				WHERE custid IN (SELECT custid FROM #tmpMember)
 				GROUP BY custid
 				) b ON #Member.custid = b.custid
