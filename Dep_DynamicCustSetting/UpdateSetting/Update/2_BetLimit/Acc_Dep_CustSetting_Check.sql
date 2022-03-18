@@ -56,7 +56,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype= s.BetType
+					AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
 					AND CBS.AgentID=@AgentID
 					AND Site=@site 
 					AND CurrencyID=@currency 
@@ -76,7 +76,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType 
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype= s.BetType
+					AND  CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
 					AND CBS.AgentID=@AgentID
 					AND Site=@site 
 					AND CurrencyID=@currency  
@@ -99,7 +99,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype= s.BetType
+					 AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
 					AND CBS.AgentID IS NULL
 					AND Site=@site 
 					AND CurrencyID=@currency 
@@ -119,7 +119,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType 
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype= s.BetType
+					AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
 					AND CBS.AgentID IS NULL
 					AND Site=@site 
 					AND CurrencyID=@currency  
