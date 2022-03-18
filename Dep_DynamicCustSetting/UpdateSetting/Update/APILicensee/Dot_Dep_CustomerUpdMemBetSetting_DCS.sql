@@ -25,6 +25,7 @@ AS
   
 	Revisions:  
 		- 20180921@Johnson: format log [Redmine:#101293]
+		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
 	Param's Explanation:  
 
 	Excution sample: 
@@ -36,11 +37,12 @@ BEGIN
   
 	DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT  	
 	DECLARE @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY, @Old_MinBet MONEY, @Old_MaxBet MONEY, @Old_MaxPerMatch MONEY   
-	DECLARE @ErrAcc VARCHAR(4000), @ErrType VARCHAR(4000), @UserName VARCHAR(30), @recommend INT, @roleid TINYINT, @UplineClosed BIT  
+	DECLARE @ErrAcc VARCHAR(4000), @ErrType VARCHAR(4000), @UserName VARCHAR(30), @recommend INT, @roleid TINYINT, @UplineClosed BIT  , @IsNotMaxPerMatch INT  
 	DECLARE @LogSPData VARCHAR(5000), @TrackingValue2 VARCHAR(5000) 
 
 	SET @startRun = GETDATE()  
-
+	SET @IsNotMaxPerMatch = 0
+	
 	SELECT @UplineClosed = ISNULL(closed,0)  
 	FROM custinfo (NOLOCK)   
 	WHERE custid = @UserID   
@@ -48,7 +50,16 @@ BEGIN
 	SELECT @UserName = username, @recommend = recommend, @roleid = roleid  
 	FROM customer WITH (NOLOCK)  
 	WHERE CustID = @CustID  
-
+	
+	IF EXISTS(	SELECT TOP 1 1 
+				FROM dbo.Dep_ProductSetting dps WITH(NOLOCK)
+					INNER JOIN Dep_ProductSettingDetail dpsd  WITH(NOLOCK) ON dps.ProductSettingID = dpsd.ProductSettingID
+				WHERE 	dpsd.SportType = @Sporttype AND dpsd.BetType = @Bettype AND dps.SettingType	 = 11		
+			)
+	BEGIN
+		SET @IsNotMaxPerMatch = 1
+	END		 
+	
 	SELECT       
 		@Old_MinBet = ISNULL(MinBet ,0),  
 		@Old_MaxBet = ISNULL(MaxBet ,0),
@@ -57,7 +68,7 @@ BEGIN
 		dbo.Dep_CustBetSetting_Member WITH (NOLOCK)      
 	WHERE custid = @CustID and bettype = @Bettype and sporttype = @Sporttype
      
-	IF  @Old_MinBet = @MinBet AND @Old_MaxBet = @MaxBet AND @Old_MaxPerMatch = @MaxPerMatch    
+	IF  @Old_MinBet = @MinBet AND @Old_MaxBet = @MaxBet AND (@IsNotMaxPerMatch = 1 OR (@IsNotMaxPerMatch = 0 AND @Old_MaxPerMatch = @MaxPerMatch))
 		RETURN    
   
 	IF ISNULL(@roleid,0) <> 1  
@@ -83,7 +94,7 @@ BEGIN
 	
 	SELECT   @MinMinBet = MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),   
 			 @MaxMaxBet = MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),
-			 @MaxMaxperMatch = MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END)  
+			 @MaxMaxperMatch = MIN(CASE WHEN cs.MaxPerMatch = 0 AND @IsNotMaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END)  
 	FROM   dbo.Dep_CustBetSetting_Agent AS cs WITH (NOLOCK)  
 		INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.Recommend OR cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = @Bettype AND cs.sporttype = @Sporttype
 	WHERE ci.custid = @recommend  
@@ -106,7 +117,7 @@ BEGIN
 		RETURN  
 	END   
    
-	IF ((@MinBet<>0 OR @MaxBet<>0 OR @MaxPerMatch<>0) AND (@MinBet > @MaxBet OR @MaxBet > @MaxPerMatch))  
+	IF ((@MinBet<>0 OR @MaxBet<>0 OR (@IsNotMaxPerMatch = 0 AND @MaxPerMatch<>0)) AND (@MinBet > @MaxBet OR (@IsNotMaxPerMatch = 0 AND @MaxBet > @MaxPerMatch)))  
 	BEGIN  
 		SELECT @ErrMsg = @UserName + ': '+  CASE @Language  WHEN 'E' THEN 'Min bet must be less than max bet and max bet must be less than max bet per match'  
 															WHEN 'CS' THEN N'最低投注不能高于最高投注，最高投注不能高于单场最高投注设定'  
@@ -151,7 +162,7 @@ BEGIN
 		RETURN  
 	END  
    
-	IF (@MaxMaxPerMatch > 0 AND @MaxPerMatch > 0 AND @MaxPerMatch > @MaxMaxPerMatch)  
+	IF (@IsNotMaxPerMatch = 0 AND @MaxMaxPerMatch > 0 AND @MaxPerMatch > 0 AND @MaxPerMatch > @MaxMaxPerMatch)  
 	BEGIN  
 		SELECT @ErrMsg = @UserName + ': '+  CASE @Language  WHEN 'E' THEN 'Max Per Match must be equal to or less than Agent Max Per Match'  
 															WHEN 'CS' THEN N'单场最高投注需相等于或少于代理单场最高投注'  
@@ -169,7 +180,7 @@ BEGIN
 	UPDATE dbo.Dep_CustBetSetting_Member WITH (ROWLOCK, UPDLOCK)  
 	SET MinBet = @MinBet,  
 		MaxBet = @MaxBet,
-		MaxPerMatch = @MaxPerMatch
+		MaxPerMatch = CASE WHEN @IsNotMaxPerMatch = 0 THEN @MaxPerMatch ELSE MaxPerMatch END 
 	WHERE custid = @CustID AND SportType = @Sporttype AND BetType = @Bettype
 
 	IF (@@ERROR <> 0)  
