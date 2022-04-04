@@ -21,6 +21,7 @@ AS
 		- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20210317@Eden: Licensee - Soccer Parlay Max Per Match is incorrect with reactivated customer [Redmine: #151846]
 		- 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
+		- 20220401@Eden: Hotfix- Licensees - Process deposit conflicts with process Reactivation of archived member causes wrong balance [redmine: #170791]
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
 	? @ReinitOldBalance: flag to reinit old balance   
@@ -1643,63 +1644,68 @@ BEGIN
 	END    
 	    
 	---------------------------------------------------------------------------------    
-	---- Create balance for new customer    
-	--EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID  
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
+	IF NOT EXISTS( SELECT TOP 1 1 FROM DBTXN.bodb02.dbo.BalCreditSports WITH(NOLOCK) WHERE custid = @CustID)
+	BEGIN
+		---- Create balance for new customer    
+		--EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID  
+		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
 	 
 	    
-	IF @ErrCode <> 0    
-	BEGIN     
-	 --Error occurs    
-	 SELECT     
-	  @ErrMsg = 'Add member fail. Please try again',    
-	  @ErrCode=215    
+		IF @ErrCode <> 0    
+		BEGIN     
+			--Error occurs    
+			SELECT     
+			@ErrMsg = 'Add member fail. Please try again',    
+			@ErrCode=215    
 	     
-	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+			-- MANUALLY ROLLBACK    
+			DELETE Dep_CustSetting WHERE CustID = @CustID    
+			DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 
-	 DELETE CustSettingGame WHERE CustID = @CustID    
-	 DELETE CustGameType WHERE CustID = @CustID    
-	 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
+			DELETE CustSettingGame WHERE CustID = @CustID    
+			DELETE CustGameType WHERE CustID = @CustID    
+			EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
 	 
-	 EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
-				, @Action='REACTIVATION'
-				, @Status='Failed'
-				, @Message= 'Failed to insert credit balance tables'
+			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
+					, @Action='REACTIVATION'
+					, @Status='Failed'
+					, @Message= 'Failed to insert credit balance tables'
 				  
-	 RETURN    
-	END    
+			RETURN    
+		END    
+	END	
+
+	IF NOT EXISTS( SELECT TOP 1 1 FROM DBTXN.bodb02.dbo.BalDebitSports WITH(NOLOCK) WHERE custid = @CustID)
+	BEGIN
+		--EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID    
+		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT    
 	    
-	--EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID    
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT    
-	    
-	IF @ErrCode <> 0    
-	BEGIN     
-	 --Error occurs    
-	 SELECT     
-	  @ErrMsg = 'Add member fail. Please try again',    
-	  @ErrCode=215    
+		IF @ErrCode <> 0    
+		BEGIN     
+			--Error occurs    
+			SELECT     
+			@ErrMsg = 'Add member fail. Please try again',    
+			@ErrCode=215    
 	     
-	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+			-- MANUALLY ROLLBACK    
+			DELETE Dep_CustSetting WHERE CustID = @CustID    
+			DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
-	 DELETE CustSettingGame WHERE CustID = @CustID    
-	 DELETE CustGameType WHERE CustID = @CustID    
-	 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-	 EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID    
-	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
+			DELETE CustSettingGame WHERE CustID = @CustID    
+			DELETE CustGameType WHERE CustID = @CustID    
+			EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
+			EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID    
+			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 
-	 EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
-				, @Action='REACTIVATION'
-				, @Status='Failed'
-				, @Message= 'Failed to insert debit balance tables'
+			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
+					, @Action='REACTIVATION'
+					, @Status='Failed'
+					, @Message= 'Failed to insert debit balance tables'
 
-	 RETURN    
+			RETURN    
+		END
 	END
-
 
 
 	/*HELEN-CUSTOMER SETTING DCS DEPOSIT-START*/
