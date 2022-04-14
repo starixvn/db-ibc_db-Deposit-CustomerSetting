@@ -17,11 +17,13 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,   @PT_VirtualGames	SMALLMONEY=0
 	,   @PT_TableGame		SMALLMONEY=0
 	,   @PT_ArcadiaGaming	SMALLMONEY=0
-	,   @PT_Saba			SMALLMONEY=0
 	,   @PT_Vgaming			SMALLMONEY=0
 	,   @PT_PGSoft			SMALLMONEY=0
 	,   @PT_SAGaming		SMALLMONEY=0
 	,   @PT_SpadeGaming		SMALLMONEY=0
+	,   @PT_AP				SMALLMONEY=0
+	,   @PT_ApMini			SMALLMONEY=0
+	,   @PT_CG				SMALLMONEY=0
 	,	@StakeLevel			VARCHAR(MAX)	= ''
 	,	@IsChinaView		BIT
 AS  
@@ -44,6 +46,7 @@ AS
 	- 20211101@Winfred: Merge Sports Lottery under Sportsbook [redmine:#164129]
 	- 20220117@Winfred: Change message error for stake level group and add parameter CV [redmine:#167097]
 	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
+	- 20220307@Winfred: Integrate 3 products Creative Gaming, Advantplay, Advantplay mini products [redmine:#169473]
 	
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -74,11 +77,13 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 	,	@PT_VirtualGames	=0.85
 	,	@PT_TableGame		=0.80
 	,	@PT_ArcadiaGaming 	=0.81
-	,	@PT_Saba  			=0.82
 	,	@PT_Vgaming  		=0.83
 	,	@PT_PGSoft  		=0.85
 	,	@PT_SAGaming  		=0.8
 	,	@PT_SpadeGaming  	=0.8
+	,   @PT_AP				=0.8
+	,   @PT_ApMini			=0.8
+	,   @PT_CG				=0.8
 ,@Product='<ROOT>
 															<Product 
 																	ProductID="1" 
@@ -294,12 +299,36 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																	MaxPerBall="0" 
 																/>
 																<Product	
-																ProductID="39"	
-																Currency="4"	
-																MinBet="0"	
-																MaxBet="0"	
-																MaxPerMatch="0"	
-																MaxPerBall="0"	
+																	ProductID="39"	
+																	Currency="4"	
+																	MinBet="0"	
+																	MaxBet="0"	
+																	MaxPerMatch="0"	
+																	MaxPerBall="0"	
+																/>
+																<Product	
+																	ProductID="62"	
+																	Currency="4"	
+																	MinBet="0"	
+																	MaxBet="0"	
+																	MaxPerMatch="0"	
+																	MaxPerBall="0"	
+																/>
+																<Product	
+																	ProductID="67"	
+																	Currency="4"	
+																	MinBet="0"	
+																	MaxBet="0"	
+																	MaxPerMatch="0"	
+																	MaxPerBall="0"	
+																/>
+																<Product	
+																	ProductID="68"	
+																	Currency="4"	
+																	MinBet="0"	
+																	MaxBet="0"	
+																	MaxPerMatch="0"	
+																	MaxPerBall="0"	
 																/>
 														</ROOT>' ,
 @StakeLevel =  '<ROOT>
@@ -327,11 +356,13 @@ BEGIN
 	SELECT @PT_TableGame=@PT_TableGame*100
 	
 	SELECT @PT_ArcadiaGaming=@PT_ArcadiaGaming*100
-	SELECT @PT_Saba=@PT_Saba*100
 	SELECT @PT_Vgaming=@PT_Vgaming*100
 	SELECT @PT_PGSoft=@PT_PGSoft*100
 	SELECT @PT_SAGaming=@PT_SAGaming*100
 	SELECT @PT_SpadeGaming=@PT_SpadeGaming*100
+	SELECT @PT_AP=@PT_AP*100
+	SELECT @PT_ApMini=@PT_ApMini*100
+	SELECT @PT_CG=@PT_CG*100
 	
 	DECLARE @PT_Esports SMALLMONEY
 	SELECT @PT_Esports=@PT_Sportsbook*100
@@ -2040,26 +2071,30 @@ BEGIN
 				END	
 			END
 
-			--Arcadia Gaming , Saba.club,Vgaming , SG,PG Soft
+			--Arcadia Gaming , Saba.club,Vgaming , SG,PG Soft , AdvantPlay , AdvantPlay Mini, CG
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
 			SELECT ProductID 
 				,CASE ProductID 
 						WHEN 34 THEN @PT_ArcadiaGaming  
 						WHEN 36 THEN @PT_SpadeGaming  
-						WHEN 42 THEN @PT_Saba  
 						WHEN 55 THEN @PT_PGSoft  
 						WHEN 66 THEN @PT_Vgaming  
+						WHEN 67 THEN @PT_AP  
+						WHEN 68 THEN @PT_ApMini  
+						WHEN 62 THEN @PT_CG  
 						END AS PT
 				,CASE ProductID 
 						WHEN 34 THEN 'Arcadia Gaming'  
-						WHEN 36 THEN 'SpadeGaming'  
-						WHEN 42 THEN 'Saba.club'  
+						WHEN 36 THEN 'SpadeGaming' 
 						WHEN 55 THEN 'PG Soft'  
-						WHEN 66 THEN 'Vgaming' 
+						WHEN 66 THEN 'Vgaming'  
+						WHEN 67 THEN 'AdvantPlay'
+						WHEN 68 THEN 'AdvantPlay Mini' 
+						WHEN 62 THEN 'CG' 
 					END AS ProductName
 			FROM #Product 
-			WHERE ProductID in (34,42,66,36,55) AND Currency=@Currency
+			WHERE ProductID in (34,66,36,55,62,67,68) AND Currency=@Currency
 			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
 			BEGIN
 				WHILE(1 =1)
@@ -2430,9 +2465,6 @@ BEGIN
 	--SA Gaming	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=39)
 		SELECT @ProductCode=@ProductCode+'SAG,'
-	--	Saba.club
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=42)
-		SELECT @ProductCode=@ProductCode+'SBC,'
 	--	PG Soft
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=55)
 		SELECT @ProductCode=@ProductCode+'PGS,'
@@ -2441,9 +2473,17 @@ BEGIN
 		SELECT @ProductCode=@ProductCode+'SLT,'
 	-- Vgaming	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=66)
-		SELECT @ProductCode=@ProductCode+'VGA,'						
+		SELECT @ProductCode=@ProductCode+'VGA,'	
+	-- CG	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=62)
+		SELECT @ProductCode=@ProductCode+'CG,'
+	-- AdvantPlay	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=67)
+		SELECT @ProductCode=@ProductCode+'AP,'
+	-- AdvantPlay Mini	
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=68)
+		SELECT @ProductCode=@ProductCode+'APM,'					
 			
-
 	SELECT @ProductCode=SUBSTRING(@ProductCode, 1, LEN(@ProductCode) - 1)
 	-- Insert LM Licensee
 	EXEC bodb_Licensee.dbo.Dot_Dep_LM_CreateNewLicensee
@@ -2504,11 +2544,13 @@ BEGIN
 	SELECT @PT_TableGame=@PT_TableGame/100
 	
 	SELECT @PT_ArcadiaGaming=@PT_ArcadiaGaming/100
-	SELECT @PT_Saba=@PT_Saba/100
 	SELECT @PT_Vgaming=@PT_Vgaming/100
 	SELECT @PT_PGSoft=@PT_PGSoft/100
 	SELECT @PT_SAGaming=@PT_SAGaming/100
 	SELECT @PT_SpadeGaming=@PT_SpadeGaming/100
+	SELECT @PT_AP=@PT_AP/100
+	SELECT @PT_ApMini=@PT_ApMini/100
+	SELECT @PT_CG=@PT_CG/100
 
 	DECLARE @XML XML
 	CREATE TABLE #PTLog(ProductID INT,PT FLOAT)					
@@ -2551,11 +2593,15 @@ BEGIN
 		UNION 
 		SELECT  39, @PT_SAGaming
 		UNION 
-		SELECT  42, @PT_Saba
-		UNION 
 		SELECT  55, @PT_PGSoft
 		UNION 
 		SELECT  66, @PT_Vgaming
+		UNION 
+		SELECT  62, @PT_CG
+		UNION 
+		SELECT  67, @PT_AP
+		UNION 
+		SELECT  68, @PT_ApMini
 		
 		DELETE FROM #PTLog WHERE ProductID NOT IN(SELECT ProductID FROM #Product WHERE Currency=@Currency)		
 			
@@ -2604,7 +2650,7 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerBall 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,42,66,36,55,39)		
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,42,66,36,55,39,62,67,68)		
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
 								TYPE
