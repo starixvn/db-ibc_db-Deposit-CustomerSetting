@@ -1,1 +1,7 @@
 Dep_DynamicCustSetting\UpdateSetting\Update\7_StakeLevel\Acc_Dep_CustSetting_StakeLevelUpd.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
+Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql
+CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql

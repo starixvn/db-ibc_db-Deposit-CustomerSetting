@@ -29,7 +29,8 @@ AS
 		- 20210817@Johnson: Add VGaming [redmine:#159696]
 		- 20211101@Winfred: Merge Sports Lottery under Sportsbook when turn on BA [redmine:#163191]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
-		
+		- 20220422@Winfred: LAP - Support commission for 3rd party products - Phase 4.2 [Redmine: #171586]   
+
 	Param's Explanation:
 */
 BEGIN
@@ -219,7 +220,7 @@ BEGIN
 	END
 	
 	-----------Setting Comm-------------
-	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6) AND @IsDisabled = 0 
+	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6,49,62,67,68) AND @IsDisabled = 0 
 	BEGIN
 		EXEC Acc_Dep_DynamicCustSetting_06
 			@CustID			= @CustID
