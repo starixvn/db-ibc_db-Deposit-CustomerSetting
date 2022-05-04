@@ -47,7 +47,8 @@ AS
 	- 20220117@Winfred: Change message error for stake level group and add parameter CV [redmine:#167097]
 	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
 	- 20220307@Winfred: Integrate 3 products Creative Gaming, Advantplay, Advantplay mini products [redmine:#169473]
-	
+	- 20220413@Elodie: Remove code to delete site in case of error [RedmineID: #170752]
+
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @Product:<ROOT>
@@ -644,8 +645,8 @@ BEGIN
 		BEGIN
 			SELECT @ErrMsg = 'Insert Site Failed', @ErrCode = 10001
 
-			DELETE dbo.Site
-			WHERE site = @sitename AND isDeposit = 1
+			--DELETE dbo.Site
+			--WHERE site = @sitename AND isDeposit = 1
 
 			RETURN
 		END
@@ -853,7 +854,7 @@ BEGIN
 				SELECT @ErrMsg = @ErrMsg + @Super
 				SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))																														
 				EXEC Dot_Dep_RollBackLicensee @ListCustID=@ListCustIDRollBack	
-				DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1
+				--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1
  				RETURN 				
 			END
 			INSERT INTO #tempSuper(CustID)
@@ -906,7 +907,7 @@ BEGIN
 				SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))																					
 				EXEC Dot_Dep_RollBackLicensee @ListCustID=@ListCustIDRollBack	
-				DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1					
+				--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1					
 				RETURN
 			END
 			--Insert agent
@@ -954,7 +955,7 @@ BEGIN
 			IF @ErrCode<>0
 			BEGIN
 				SELECT @ErrMsg = @ErrMsg + @Agent
-				DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
+				--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
 				SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))											
@@ -1006,7 +1007,7 @@ BEGIN
 			IF @ErrCode<>0
 			BEGIN
 				SELECT @ErrMsg = @ErrMsg + @AccMaster
-				DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
+				--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
 				SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1060,7 +1061,7 @@ BEGIN
 			IF @ErrCode<>0
 			BEGIN
 				SELECT @ErrMsg = @ErrMsg + @AccAgent
-				DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
+				--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
 				SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1134,7 +1135,7 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Create Dummy accounts.'
-					DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
+					--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1230,7 +1231,7 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Create sub agent.'
-						DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
+						--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1276,7 +1277,7 @@ BEGIN
 			IF @ErrCode<>0
 			BEGIN
 				SELECT @ErrMsg = @ErrMsg + 'Create Global Stake level.'
-				DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
+				--DELETE dbo.Site WITH(ROWLOCK)WHERE site = @sitename AND isDeposit = 1	
 				SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 											CAST(@MasterID AS VARCHAR(20))+','+
 											CAST(@AgentID AS VARCHAR(20))+','+
