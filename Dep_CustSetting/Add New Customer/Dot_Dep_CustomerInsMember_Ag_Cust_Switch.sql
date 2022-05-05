@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust_Switch]     
 	@FirstName NVARCHAR(50),    
 	@LastName NVARCHAR(50),    
@@ -10,7 +10,8 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust_Switch]
 	@AgentID INT,    
 	@AffiliateID INT = NULL,    
 	@BonusCode VARCHAR(20) = NULL,    
-	@Country NVARCHAR(50) = '',    
+	@Country NVARCHAR(50) = '',
+	@SubsidiaryID INT = 0,
 	@CustID INT = 0 OUTPUT,    
 	@Username VARCHAR(50) ='' OUTPUT,    
 	@ErrCode INT = 0 OUTPUT,    
@@ -28,7 +29,8 @@ AS
 	 - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
 	 - 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	 - 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
-	 
+	 - 20220505@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
+
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -1133,7 +1135,11 @@ BEGIN
 		@ErrMsg = @ErrMsg OUTPUT    
 
 	IF @ErrCode <> 0    
-		RETURN    
+		RETURN   
+	
+	--Insert SubsidiaryID
+	INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
+	VALUES (@CustID, @SubsidiaryID)
 	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
@@ -1479,8 +1485,9 @@ BEGIN
 	 @CustID = @CustID,    
 	 @SuperID = @srecommend,      
 	 @ErrCode = @ErrCode OUTPUT,      
-	 @ErrMsg = @ErrMsg OUTPUT    
-	    
+	 @ErrMsg = @ErrMsg OUTPUT  
+	 
+	--Write Info Log
 	set @endRun = getdate()    
 	set @duration  = datediff (millisecond,@startRun,@endRun)    
 	    
@@ -1495,6 +1502,7 @@ BEGIN
 	'DepositUserName="'+ coalesce(cast(@DepositUserName as varchar(50)),space(1)) + '" ' +    
 	'DepositUserID="'+ coalesce(cast(@DepositUserID as varchar(50)),space(1)) + '" ' +    
 	'OddsType="'+ coalesce(cast(@OddsType as varchar(5)),space(1)) + '" ' +    
+	'SubsidiaryID="'+ coalesce(cast(@SubsidiaryID as varchar(50)),space(1)) + '" ' +    
 	'AgentID="'+ coalesce(cast(@AgentID as varchar(50)),space(1)) + '" ' +    
 	'AffiliateID="'+ coalesce(cast(@AffiliateID as varchar(50)),space(1)) + '" ' +    
 	'BonusCode="'+ coalesce(cast(@BonusCode as varchar(20)),space(1)) + '" ' +    
