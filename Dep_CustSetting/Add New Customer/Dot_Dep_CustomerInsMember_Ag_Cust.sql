@@ -13,6 +13,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust]
 	@AffiliateID INT = NULL,    
 	@BonusCode VARCHAR(20) = NULL,    
 	@Country NVARCHAR(50) = '',    
+	@SubsidiaryID INT = 0,
 	@CustID INT = 0 OUTPUT,    
 	@Username VARCHAR(50) ='' OUTPUT,    
 	@ErrCode INT = 0 OUTPUT,    
@@ -168,6 +169,7 @@ AS
 	 - 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	 - 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	 - 20200907@Eden: Minimize UM Time - 1st Deposit [Redmine: #136741]
+	 - 20220505@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -228,6 +230,8 @@ BEGIN
 			,@ErrCode			= @ErrCode OUTPUT
 			,@ErrMsg			= @ErrMsg OUTPUT
 	END
-END
 
+	INSERT INTO dbo.DepositCustomer (Custid, SubsidiaryID)
+	VALUES (@CustID, @SubsidiaryID)
+END
 GO 
