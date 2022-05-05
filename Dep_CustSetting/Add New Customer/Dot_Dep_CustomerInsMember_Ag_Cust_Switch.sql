@@ -1277,8 +1277,9 @@ BEGIN
 	  @ErrCode=215    
 	     
 	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID    
+	 DELETE DepositCustomer		WHERE CustID = @CustID
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 	 return    
 	END    
@@ -1295,9 +1296,10 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	
+	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID    
+	 DELETE DepositCustomer		WHERE CustID = @CustID
+	 
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 	 return    
@@ -1318,9 +1320,10 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
-	 DELETE Dep_CustSetting WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
-	
+	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID    
+	 DELETE DepositCustomer		WHERE CustID = @CustID
+	 
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
@@ -1342,6 +1345,7 @@ BEGIN
 	 -- MANUALLY ROLLBACK    
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+	 DELETE DepositCustomer		WHERE CustID = @CustID
 
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
@@ -1363,6 +1367,7 @@ BEGIN
 	 -- MANUALLY ROLLBACK    
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+	 DELETE DepositCustomer		WHERE CustID = @CustID
 	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
@@ -1391,6 +1396,7 @@ BEGIN
 		 -- MANUALLY ROLLBACK    
 		 DELETE Dep_CustSetting WHERE CustID = @CustID    
 		 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+		 DELETE DepositCustomer		WHERE CustID = @CustID
 	
 		 DELETE CustSettingGame WHERE CustID = @CustID    
 		 DELETE CustGameType WHERE CustID = @CustID    
