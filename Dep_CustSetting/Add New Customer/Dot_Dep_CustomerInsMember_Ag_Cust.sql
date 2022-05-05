@@ -231,7 +231,7 @@ BEGIN
 			,@ErrMsg			= @ErrMsg OUTPUT
 	END
 
-	INSERT INTO dbo.DepositCustomer (Custid, SubsidiaryID)
+	INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
 	VALUES (@CustID, @SubsidiaryID)
 END
 GO 
