@@ -291,6 +291,7 @@ Revisions:
 	- 20200617@Eden: Virtual Rate for Basketball - New IBO dummy super must have VR setting = 0%  [Redmine: #134978] 
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	- 20210520@Eden: Apply default VR Setting which is -90% whenever there is new LICENSEE Supers creation [Redmine:#153411]
+	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	
 Param's Explanation:
 • @ErrCode:
@@ -602,7 +603,6 @@ BEGIN
 		@virtualmultiplier = 1,	
 		
 		@DisableNumber = @DisableNumber,
-		@DisableCasino = 0,
 		
 		@MaxPerMatch = @MaxPerMatchv1,
 		@MaxPerMatchv2 = @MaxPerMatchv2,

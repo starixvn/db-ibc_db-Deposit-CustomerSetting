@@ -246,6 +246,7 @@ Revisions:
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
+	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	
 Param's Explanation:
 • @ErrCode:
@@ -1148,7 +1149,7 @@ BEGIN
 		
 		@virtualmultiplier = @VirtualMultiplier,
 	
-		@DisableCasino = 0,
+		
 		@IsInternal = 0,
 		@DisableNumber = @DisableNumber,
 		@MaxPerMatch = @MaxPerMatchv1,
@@ -1563,7 +1564,7 @@ BEGIN
 	BEGIN
 			SELECT a.userName + 'CashOut' AS UserName, a.custid AS recommend, a.mrecommend, a.currency, a.site, a.refcode1
 					, a.refcode2, a.ugroup, b.[closed], b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
-					, b.[DisableCasino], b.[SyncCasino], b.[danger2], b.[danger3], b.[DisableOutright]
+					, b.[danger2], b.[danger3], b.[DisableOutright]
 					, b.[MaxPerMatch99MP], b.[DisableNumber], b.[maxpermatch161]
 					, b.[MaxPerBall161],					
 					b.[Abnormal], b.[DoubleCommLosing]
@@ -1587,13 +1588,13 @@ BEGIN
 				END
 
 				INSERT INTO [dbo].[custInfo] ([username], [custid], [currency], [roleid], [srecommend], [mrecommend], [recommend], [closed]
-					, [MatchLimit], [VirtualMultiplier], [Enabled], [danger],  [DisableCasino]
-					, [SyncCasino], [danger2], [danger3], [DisableOutright], [MaxPerMatch99MP],[DisableNumber]
+					, [MatchLimit], [VirtualMultiplier], [Enabled], [danger]
+					, [danger2], [danger3], [DisableOutright], [MaxPerMatch99MP],[DisableNumber]
 					, [maxpermatch161], [MaxPerBall161]					
 					, [Abnormal], [DoubleCommLosing], credit)
 				SELECT a.[username], a.[custid], a.[currency], a.[roleid], a.[srecommend], a.[mrecommend], a.[recommend], b.[closed]
-					, b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger], b.[DisableCasino]
-					, b.[SyncCasino], b.[danger2], b.[danger3], b.[DisableOutright], b.[MaxPerMatch99MP],[DisableNumber]
+					, b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
+					, b.[danger2], b.[danger3], b.[DisableOutright], b.[MaxPerMatch99MP],[DisableNumber]
 					, b.[maxpermatch161], b.[MaxPerBall161]
 					,  b.[Abnormal], b.[DoubleCommLosing], 0
 				FROM Customer(NOLOCK) a

@@ -223,6 +223,7 @@ Revisions:
 	- 20190905@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
+	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	
 Param's Explanation:
 • @ErrCode:
@@ -1011,7 +1012,7 @@ BEGIN
 		@matchlimit = @matchlimit,
 		
 		@virtualmultiplier = @VirtualMultiplier,		
-		@DisableCasino = 0,
+		
 		@DisableAutoMPT = 0,
 		@DisableNumber = @DisableNumber,
 		
