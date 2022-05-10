@@ -14,6 +14,7 @@ AS
 		- 20191002@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20200226@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
+		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	Parameter:
 		
 	
@@ -629,13 +630,13 @@ BEGIN
 				,[maxpermatch3],[maxpermatch5],[maxpermatch8],[maxpermatch10]
 				,[maxpermatch11],[maxpermatch12],[maxpermatch99],[Enabled]
 				,[danger]
-				,[DisableCasino],[SyncCasino],[danger2],[danger3]
+				,0,0,[danger2],[danger3]
 				,[DisableOutright],[MaxPerMatch99MP]
 				,[DisableNumber],[maxpermatch161],[MaxPerBall161]
 				,[Abnormal]
 				,[DoubleCommLosing]
 				,[autosuspend2]
-				,[HideKeno],[DisableEsports],[HideGoldDeluxe],[DisableGoldDeluxe],[DisableSuperLive]
+				,[HideKeno],[DisableEsports],0,0,[DisableSuperLive]
 				,[DisableColossusBet],[HideColossusBet]
 				,[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
 				,[maxpermatch164]

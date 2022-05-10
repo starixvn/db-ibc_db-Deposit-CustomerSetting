@@ -60,6 +60,7 @@ AS
 		- 20200826@Eden: Adjust VR setting for Soccer of Haifa, IBO [redmine: #140368]
 		- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
 		- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
+		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -307,9 +308,9 @@ BEGIN
 	  , maxpermatch99
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 	  , MatchLimit, VirtualMultiplier
-	  , DisableOutright, DisableCasino, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
+	  , DisableOutright, DisableNumber, maxpermatch161, MaxPerMatch99MP, MaxPerBall161
 	  , danger, danger2, danger3, Abnormal, DoubleCommLosing
-	  , HideKeno, DisableEsports, DisableGoldDeluxe, HideGoldDeluxe, DisableSuperLive,DisableColossusBet,HideColossusBet
+	  , HideKeno, DisableEsports, DisableSuperLive,DisableColossusBet,HideColossusBet
 	  , MaxPerMatch1MP,maxpermatch164)
     VALUES
     (
@@ -318,9 +319,9 @@ BEGIN
 	  , @MaxPerMatchv99
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, ISNULL(@suspended, 0), 0, 0, @username
 	  , @matchlimit, @virtualmultiplier
-	  , 0, 0, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
+	  , 0, @DisableNumber,  @MaxPerMatchv161, @MaxPerMatchv99MP, @MaxPerBallv161
 	  , 0, 0, 0, 0, 0	
-	  , @HideKeno, 0, 0, 0, 0,1,1
+	  , @HideKeno, 0, 0,1,1
 	  , @MaxPerMatchv1MP, 0
     )
 	
