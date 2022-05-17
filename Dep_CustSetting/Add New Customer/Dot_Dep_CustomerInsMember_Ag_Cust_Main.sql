@@ -1138,8 +1138,11 @@ BEGIN
 		RETURN    
 
 	--Insert SubsidiaryID
-	INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
-	VALUES (@CustID, @SubsidiaryID)
+	IF @SubsidiaryID<>0
+	BEGIN
+		INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
+		VALUES (@CustID, @SubsidiaryID)
+	END
 	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
