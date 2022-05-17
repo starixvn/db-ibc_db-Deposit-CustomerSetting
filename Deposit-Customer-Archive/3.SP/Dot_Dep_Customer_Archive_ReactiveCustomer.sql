@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]
 	@CustID int = 0,  
 	@ReinitOldBalance BIT = 1,
 	@CheckUniqueUsername2 BIT = 1,
+	@SubsidiaryID INT = 0,
 	@ErrCode int = 0 OUTPUT,    
 	@ErrMsg nvarchar(2000) = '' OUTPUT     
 AS    
@@ -22,6 +23,8 @@ AS
 		- 20210317@Eden: Licensee - Soccer Parlay Max Per Match is incorrect with reactivated customer [Redmine: #151846]
 		- 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
 		- 20220401@Eden: Hotfix- Licensees - Process deposit conflicts with process Reactivation of archived member causes wrong balance [redmine: #170791]
+		- 20220517@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
+
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
 	? @ReinitOldBalance: flag to reinit old balance   
@@ -1435,7 +1438,21 @@ BEGIN
 		
 		RETURN  
 	END  
-	    
+
+	--Insert SubsidiaryID
+	IF @SubsidiaryID<>0
+	BEGIN
+		IF EXISTS (SELECT 1 FROM dbo.DepositCustomer WHERE custid=@CustID)
+		BEGIN
+			UPDATE dbo.DepositCustomer WITH (ROWLOCK, UPDLOCK)
+			SET SubsidiaryID=@SubsidiaryID
+		END
+		ELSE
+		BEGIN
+			INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
+			VALUES (@CustID, @SubsidiaryID)
+		END
+	END
 	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
