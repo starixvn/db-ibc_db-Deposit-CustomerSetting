@@ -1585,7 +1585,10 @@ BEGIN
 	UNION ALL    
 	select @custid, 90 , 161, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, @v161playerdiscount, @v161discount, @v161adiscount, @v161sdiscount, @MinBetv161, @MaxBetv161, 1    
 	    
-	if (not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or @@Error <> 0    
+	if (not exists (select 1 from DepositCustomer with (NOLOCK) where custid = @custid) or
+		not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or 
+		not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or 
+		@@Error <> 0    
 	BEGIN    
 	 --Error occurs    
 	 SELECT     
@@ -1593,6 +1596,7 @@ BEGIN
 	  @ErrCode=215    
 	     
 	 -- MANUALLY ROLLBACK    
+	 DELETE DepositCustomer	WHERE CustID = @CustID
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
@@ -1617,6 +1621,7 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
+	 DELETE DepositCustomer	WHERE CustID = @CustID
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1646,6 +1651,7 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
+	 DELETE DepositCustomer	WHERE CustID = @CustID
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1677,6 +1683,7 @@ BEGIN
 			@ErrCode=215    
 	     
 			-- MANUALLY ROLLBACK    
+			DELETE DepositCustomer WHERE CustID = @CustID
 			DELETE Dep_CustSetting WHERE CustID = @CustID    
 			DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 
@@ -1707,6 +1714,7 @@ BEGIN
 			@ErrCode=215    
 	     
 			-- MANUALLY ROLLBACK    
+			DELETE DepositCustomer WHERE CustID = @CustID
 			DELETE Dep_CustSetting WHERE CustID = @CustID    
 			DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1743,6 +1751,7 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY
 		 -- MANUALLY ROLLBACK    
+		 DELETE DepositCustomer WHERE CustID = @CustID
 		 DELETE Dep_CustSetting WHERE CustID = @CustID    
 		 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1808,7 +1817,8 @@ BEGIN
 				 DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
 				 DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
 				 DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-		     
+				 
+				 DELETE DepositCustomer WHERE CustID = @CustID
 				 DELETE Dep_CustSetting WHERE CustID = @CustID    
 				 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
