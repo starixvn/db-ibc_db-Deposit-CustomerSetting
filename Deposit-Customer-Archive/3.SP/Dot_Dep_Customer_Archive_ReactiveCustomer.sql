@@ -1954,6 +1954,7 @@ BEGIN
 	'creator="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +    
 	'username="'+ coalesce(cast(@username as varchar(30)),space(1)) + '" ' +    
 	'Email="'+ dbo.f_EncodeXMLValue(coalesce(cast(@Email as nvarchar(50)),space(1))) + '" ' +   
+	'SubsidiaryID="'+ coalesce(cast(@SubsidiaryID as varchar(50)),space(1)) + '" ' +    
 	'AgentID="'+ coalesce(cast(@AgentID as varchar(50)),space(1)) + '" ' +   
 	'recommend="'+ coalesce(cast(@recommend as varchar(50)),space(1)) + '" ' +    
 	'ugroup="'+ coalesce(cast(@ugroup as varchar(5)),space(1)) + '" ' +
