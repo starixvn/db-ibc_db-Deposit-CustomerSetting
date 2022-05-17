@@ -1442,10 +1442,11 @@ BEGIN
 	--Insert SubsidiaryID
 	IF @SubsidiaryID<>0
 	BEGIN
-		IF EXISTS (SELECT 1 FROM dbo.DepositCustomer WHERE custid=@CustID)
+		IF EXISTS (SELECT 1 FROM dbo.DepositCustomer WITH (NOLOCK) WHERE custid=@CustID)
 		BEGIN
 			UPDATE dbo.DepositCustomer WITH (ROWLOCK, UPDLOCK)
 			SET SubsidiaryID=@SubsidiaryID
+			WHERE custid=@CustID
 		END
 		ELSE
 		BEGIN
