@@ -1585,7 +1585,7 @@ BEGIN
 	UNION ALL    
 	select @custid, 90 , 161, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, @v161playerdiscount, @v161discount, @v161adiscount, @v161sdiscount, @MinBetv161, @MaxBetv161, 1    
 	    
-	if (not exists (select 1 from DepositCustomer with (NOLOCK) where custid = @custid) or
+	if ((@SubsidiaryID<>0 and not exists (select 1 from DepositCustomer with (NOLOCK) where custid = @custid))  or
 		not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or 
 		not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or 
 		@@Error <> 0    
