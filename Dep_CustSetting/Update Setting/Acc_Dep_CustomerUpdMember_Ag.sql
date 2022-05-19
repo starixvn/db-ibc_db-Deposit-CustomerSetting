@@ -1922,7 +1922,8 @@ BEGIN
 							mpositiontaking
 						END,
 		playerdiscount =	playerdiscount
-					
+	OUTPUT deleted.custid, deleted.sporttype, deleted.bettype, deleted.maxbet, GETDATE()
+		INTO @History_BetSetting(CustID, SportType, BetType, MaxBet, UpdateTime)
 	WHERE custid=@custid
 
 	if (@@error <> 0)
@@ -1934,6 +1935,22 @@ BEGIN
 						end	, @ErrCode = 104 
 		return
 	end
+
+	--update: old maxpermatch (number game)
+	UPDATE his
+	SET his.MaxPerMatch=old.MPM
+	FROM @History_BetSetting his
+		INNER JOIN #data_old old ON old.Custid=his.CustID
+								AND old.Sporttype=his.SportType
+								AND old.Bettype=his.BetType
+	WHERE his.SportType=161
+
+	--delete: update MinBet only (Number game)
+	DELETE @History_BetSetting
+	WHERE CustID=@custid AND
+	   (SportType<>161 OR
+	   (MaxBet=@maxbetv161 AND MaxPerMatch=@maxpermatchv161))
+
 
 	--Keno
 	--Check PT
@@ -2018,10 +2035,13 @@ BEGIN
 	--UPDATE dbo.CustGameType SET MinBet=
 	update g set g.MinBet = d.MinBet
 		  ,g.MaxBet = d.MaxBet
-		 ,g.MaxPerGameType = d.MaxPerMatch	
+		 ,g.MaxPerGameType = d.MaxPerMatch
+	OUTPUT deleted.CustID, d.Bettype, deleted.MaxBet, deleted.MaxPerGameType, GETDATE()
+		INTO @History_BetSetting(CustID, BetType, MaxBet, MaxPerMatch, UpdateTime)
 	FROM CustGameType g WITH (ROWLOCK, UPDLOCK) INNER JOIN #tmp_GameType gt on g.GameTypeID=gt.ID
 		 INNER JOIN #data d ON d.Bettype=gt.IBCBetTypeID
 	where CustID=@custID 
+
 	IF (@@error <> 0)
 	BEGIN
 		
@@ -2030,6 +2050,34 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](90001,@Language)
 						END	, @ErrCode = 104 
 		RETURN
+	END
+
+	--DELETED: updat MinBet only and sporttype<>202
+	DELETE old
+	FROM @History_BetSetting old
+		INNER JOIN #data new ON new.BetType=old.BetType
+	WHERE SportType IS NULL AND
+	    ((BetType < 1501 AND BetType > 1599)
+	  OR (old.MaxBet=new.MaxBet AND old.MaxPerMatch=new.MaxPerMatch))
+
+	--insert History bet setting
+	IF EXISTS ( SELECT 1 FROM @History_BetSetting)
+	BEGIN
+		SET @CustList = (SELECT CustID					AS '@CustID',
+								ISNULL(SportType, 202)	AS '@SportType',
+								BetType					AS '@BetType',
+								MaxBet					AS '@MaxBet',
+								MaxPerMatch				AS '@MaxPerMatch',
+								'NULL'					AS '@StakeLevelList',
+								UpdateTime				AS '@UpdateTime'
+						 FROM @History_BetSetting 
+						 FOR XML PATH('r'), ROOT('root')
+						 )
+
+		EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+		IF @ErrMsg<>''
+			RETURN
 	END
 
 	set @endRun = getdate()

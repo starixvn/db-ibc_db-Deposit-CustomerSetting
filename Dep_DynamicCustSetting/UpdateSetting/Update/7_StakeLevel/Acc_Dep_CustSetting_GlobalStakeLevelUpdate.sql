@@ -16,6 +16,8 @@ AS
 	Original:
 	Revisions:
 		- 20171107@Winnie: select GlobalStakeLevel of DCS product RedmineID:#85133
+		- 20220517@Tacy: Insert history of update global stake level
+
 	Param's Explanation:
 		- @StakeLevel = '<ROOT>
 									<StakeLevel StakeLevelID="0" GameTypeID="2401" MinLabel="10" MaxLabel="100" MinStake="10" MaxStake="100"/>	
@@ -24,6 +26,9 @@ AS
 */
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @SettingList VARCHAR(MAX)
+
 	-- Declare parameters and validate
 	DECLARE @tmpStakeLevel TABLE(
 								StakeLevelID	INT							
@@ -47,7 +52,9 @@ BEGIN
 								,MinLabel		NVARCHAR(50)
 								,MaxLabel		NVARCHAR(50)
 								,MinStake		DECIMAL(19,8)
-								,MaxStake		DECIMAL(19,8)							
+								,MaxStake		DECIMAL(19,8)	
+								,UpdateTime		DATETIME
+								,IsGroup		BIT
 							);
 	DECLARE @MaxStakeLevelID INT
 			,@GameTypeID	INT						
@@ -130,15 +137,52 @@ BEGIN
 				,DELETED.MaxLabel		
 				,DELETED.MinStake		
 				,DELETED.MaxStake
+				,GETDATE()
 		INTO @tmpStakeLevel_Old(
 				StakeLevelID	
 				,GameTypeID								
 				,MinLabel		
 				,MaxLabel		
 				,MinStake		
-				,MaxStake)  
+				,MaxStake
+				,UpdateTime)  
 	FROM Dep_StakeLevel d 
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
+
+	--UPDATE: isGroup StakeLevel?
+	UPDATE old
+	SET old.IsGroup = CASE WHEN dsl.GameGroupID=0 THEN 0 ELSE 1 END
+	FROM @tmpStakeLevel_Old old
+		INNER JOIN Dep_StakeLevel dsl ON dsl.StakeLevelID=old.StakeLevelID
+
+	IF EXISTS (SELECT 1 FROM @tmpStakeLevel_Old WHERE IsGroup=0)
+	BEGIN
+		SET @SettingList = (SELECT	StakeLevelID AS '@StakeLevelID',
+									GameTypeID	AS '@GameTypeID',
+									MaxLabel	AS '@MaxLabel',
+									MaxStake	AS '@MaxStake',
+									'NULL'		AS '@MaxGameStake',--???
+									UpdateTime	AS '@UpdateTime'
+							FROM @tmpStakeLevel_Old
+							WHERE IsGroup=0
+							FOR XML PATH ('r'), ROOT('root'))
+
+		--EXEC SP @SettingList=@SettingList, @IsGroup=0
+	END
+	ELSE
+	BEGIN
+		SET @SettingList = (SELECT	StakeLevelID AS '@StakeLevelID',
+									GameTypeID	AS '@GameTypeID',
+									MaxLabel	AS '@MaxLabel',
+									MaxStake	AS '@MaxStake',
+									'NULL'		AS '@MaxGameStake',	--???
+									UpdateTime	AS '@UpdateTime'
+							FROM @tmpStakeLevel_Old
+							WHERE IsGroup=1
+							FOR XML PATH ('r'), ROOT('root'))
+
+		--EXEC SP @SettingList=@SettingList, @IsGroup=1
+	END
 
 	-- Insert global stakelevel
 	INSERT INTO Dep_StakeLevel([StakeLevelID],[GameTypeID],[GameGroupID],[MinLabel],[MaxLabel],[MinStake],[MaxStake],[ExchangeID],[SiteID])

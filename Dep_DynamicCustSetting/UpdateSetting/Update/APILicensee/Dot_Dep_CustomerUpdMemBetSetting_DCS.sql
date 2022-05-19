@@ -26,6 +26,8 @@ AS
 	Revisions:  
 		- 20180921@Johnson: format log [Redmine:#101293]
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
+		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
+
 	Param's Explanation:  
 
 	Excution sample: 
@@ -34,11 +36,22 @@ AS
 */  
 BEGIN  
 	SET NOCOUNT ON  
+
+	DECLARE @CustList VARCHAR(MAX)
   
 	DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT  	
 	DECLARE @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY, @Old_MinBet MONEY, @Old_MaxBet MONEY, @Old_MaxPerMatch MONEY   
 	DECLARE @ErrAcc VARCHAR(4000), @ErrType VARCHAR(4000), @UserName VARCHAR(30), @recommend INT, @roleid TINYINT, @UplineClosed BIT  , @IsNotMaxPerMatch INT  
 	DECLARE @LogSPData VARCHAR(5000), @TrackingValue2 VARCHAR(5000) 
+
+	DECLARE @History_BetSetting TABLE(
+		CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
+		)
 
 	SET @startRun = GETDATE()  
 	SET @IsNotMaxPerMatch = 0
@@ -181,6 +194,8 @@ BEGIN
 	SET MinBet = @MinBet,  
 		MaxBet = @MaxBet,
 		MaxPerMatch = CASE WHEN @IsNotMaxPerMatch = 0 THEN @MaxPerMatch ELSE MaxPerMatch END 
+	OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+		INTO @History_BetSetting(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 	WHERE custid = @CustID AND SportType = @Sporttype AND BetType = @Bettype
 
 	IF (@@ERROR <> 0)  
@@ -196,7 +211,32 @@ BEGIN
 				@ErrCode = 107  
 		 RETURN  
 	END  
-  
+
+	--Insert history bet setting
+	IF NOT EXISTS (SELECT 1
+					FROM @History_BetSetting
+					WHERE custid = @CustID AND SportType = @Sporttype AND BetType = @Bettype
+					  AND MaxBet = @MaxBet AND 
+					  (@IsNotMaxPerMatch=1 OR MaxPerMatch=@MaxPerMatch)
+	)
+	BEGIN 
+		SET @CustList = (SELECT CustID		AS '@CustID',
+								SportType	AS '@SportType',
+								BetType		AS '@BetType',
+								MaxBet		AS '@MaxBet',
+								MaxPerMatch	AS '@MaxPerMatch',
+								'NULL'		AS '@StakeLevelList',
+								UpdateTime	AS '@UpdateTime'
+							FROM @History_BetSetting
+							FOR XML PATH ('r'), ROOT ('root')
+						)
+
+		EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+		IF @ErrMsg<>''
+			RETURN 
+	END
+
 	SELECT @LogSPData =	'<R Sport="'+ COALESCE(CAST(@SportType AS VARCHAR(50)),SPACE(1)) + '" ' +  
 						'BT="'+ COALESCE(CAST(@Bettype AS VARCHAR(50)),SPACE(1)) + '" ' +  	
 						'Min="'+ COALESCE(CAST(@minbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
