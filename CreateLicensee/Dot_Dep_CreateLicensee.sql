@@ -48,6 +48,7 @@ AS
 	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
 	- 20220307@Winfred: Integrate 3 products Creative Gaming, Advantplay, Advantplay mini products [redmine:#169473]
 	- 20220413@Elodie: Remove code to delete site in case of error [RedmineID: #170752]
+	- 20220504@Winfred: Enhance PT for Keno no rounded [redmine:#172324]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -393,7 +394,7 @@ BEGIN
 			,@StakeLevel_ByCurrency VARCHAR(MAX)
 	
 	SELECT @PTDummy=0.0000
-	SELECT @PTKeno= CAST(@PT_Keno AS VARCHAR(100))
+	SELECT @PTKeno= dbo.f_FomatNumericToChar(@PT_Keno)
 	SELECT @Pass='8058095B7DDB08A608811097E5DB8D'	
 
 	SELECT @KenoListDummy='	
