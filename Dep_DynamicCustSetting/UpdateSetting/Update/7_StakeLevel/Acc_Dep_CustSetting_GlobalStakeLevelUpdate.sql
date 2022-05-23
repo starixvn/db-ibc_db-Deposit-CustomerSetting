@@ -149,39 +149,29 @@ BEGIN
 	FROM Dep_StakeLevel d 
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
-	--UPDATE: isGroup StakeLevel?
-	UPDATE old
-	SET old.IsGroup = CASE WHEN dsl.GameGroupID=0 THEN 0 ELSE 1 END
-	FROM @tmpStakeLevel_Old old
-		INNER JOIN Dep_StakeLevel dsl ON dsl.StakeLevelID=old.StakeLevelID
+	--Delete: update MinBet only
+	DELETE his
+	FROM @tmpStakeLevel_Old his
+		INNER JOIN Dep_StakeLevel sl ON sl.StakeLevelID=his.StakeLevelID
+								AND sl.MaxStake=his.MaxStake
+								AND sl.MaxLabel=his.MaxLabel
 
-	IF EXISTS (SELECT 1 FROM @tmpStakeLevel_Old WHERE IsGroup=0)
+	IF EXISTS (SELECT 1 FROM @tmpStakeLevel_Old)
 	BEGIN
 		SET @SettingList = (SELECT	StakeLevelID AS '@StakeLevelID',
 									GameTypeID	AS '@GameTypeID',
 									MaxLabel	AS '@MaxLabel',
 									MaxStake	AS '@MaxStake',
-									'NULL'		AS '@MaxGameStake',--???
+									'NULL'		AS '@MaxGameStake',
 									UpdateTime	AS '@UpdateTime'
 							FROM @tmpStakeLevel_Old
 							WHERE IsGroup=0
 							FOR XML PATH ('r'), ROOT('root'))
 
-		--EXEC SP @SettingList=@SettingList, @IsGroup=0
-	END
-	ELSE
-	BEGIN
-		SET @SettingList = (SELECT	StakeLevelID AS '@StakeLevelID',
-									GameTypeID	AS '@GameTypeID',
-									MaxLabel	AS '@MaxLabel',
-									MaxStake	AS '@MaxStake',
-									'NULL'		AS '@MaxGameStake',	--???
-									UpdateTime	AS '@UpdateTime'
-							FROM @tmpStakeLevel_Old
-							WHERE IsGroup=1
-							FOR XML PATH ('r'), ROOT('root'))
+		EXEC Task_DetectBet_Dep_StakeLevelHistory_Insert @SettingList=@SettingList, @IsGroup=0, @ErrMsg=@ErrMsg OUTPUT
 
-		--EXEC SP @SettingList=@SettingList, @IsGroup=1
+		IF @ErrMsg<>''
+			RETURN
 	END
 
 	-- Insert global stakelevel
