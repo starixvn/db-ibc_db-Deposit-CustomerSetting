@@ -53,6 +53,7 @@ BEGIN
 								,MaxLabel		NVARCHAR(50)
 								,MinStake		DECIMAL(19,8)
 								,MaxStake		DECIMAL(19,8)	
+								,StieID			INT							
 								,UpdateTime		DATETIME
 								,IsGroup		BIT
 							);
@@ -137,6 +138,7 @@ BEGIN
 				,DELETED.MaxLabel		
 				,DELETED.MinStake		
 				,DELETED.MaxStake
+				,DELETED.SiteID
 				,GETDATE()
 		INTO @tmpStakeLevel_Old(
 				StakeLevelID	
@@ -145,6 +147,7 @@ BEGIN
 				,MaxLabel		
 				,MinStake		
 				,MaxStake
+				,StieID
 				,UpdateTime)  
 	FROM Dep_StakeLevel d 
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
@@ -163,6 +166,7 @@ BEGIN
 									MaxLabel	AS '@MaxLabel',
 									MaxStake	AS '@MaxStake',
 									'NULL'		AS '@MaxGameStake',
+									SiteID		AS '@SiteID',
 									UpdateTime	AS '@UpdateTime'
 							FROM @tmpStakeLevel_Old
 							WHERE IsGroup=0
