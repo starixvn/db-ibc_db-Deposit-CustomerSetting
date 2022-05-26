@@ -80,15 +80,10 @@ BEGIN
 	BEGIN
 		WITH csll AS (
 			SELECT tc.CustID, SportType, BetType, tc.StakeLevelList
-				, MAX(CASE WHEN st.GameGroupID=0 THEN CAST(st.MaxLabel AS MONEY) ELSE stgd.MaxStake END) MaxStake
+				, MAX(CAST(st.MaxLabel AS MONEY)) MaxStake
 			FROM #tmpCustList tc 
 				CROSS APPLY (SELECT TRIM(value) AS val FROM STRING_SPLIT(tc.StakeLevelList,',')) ss
 				INNER JOIN Dep_StakeLevel st WITH (NOLOCK) ON st.StakeLevelID = CAST(ss.val AS INT)
-				OUTER APPLY (SELECT TOP 1 stg.StakeLevelID, CAST(stg.MaxLabel AS MONEY) AS MaxStake
-							 FROM Dep_StakeLevelGroupDetail stg WITH (NOLOCK)
-							 WHERE stg.StakeLevelID = st.StakeLevelID
-							 ORDER BY CAST(stg.MaxLabel AS MONEY) DESC
-							 ) stgd
 			WHERE tc.StakeLevelList IS NOT NULL
 			GROUP BY tc.CustID, SportType, BetType, tc.StakeLevelList
 		)
