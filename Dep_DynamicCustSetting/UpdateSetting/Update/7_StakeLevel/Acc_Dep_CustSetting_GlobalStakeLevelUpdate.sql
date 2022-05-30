@@ -152,14 +152,11 @@ BEGIN
 	FROM Dep_StakeLevel d 
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
-	--Delete: update MinBet only
-	DELETE his
-	FROM @tmpStakeLevel_Old his
-		INNER JOIN Dep_StakeLevel sl ON sl.StakeLevelID=his.StakeLevelID
-								AND sl.MaxStake=his.MaxStake
-								AND sl.MaxLabel=his.MaxLabel
-
-	IF EXISTS (SELECT 1 FROM @tmpStakeLevel_Old)
+	--Insert history
+	IF NOT EXISTS (SELECT 1 FROM @tmpStakeLevel_Old his
+					INNER JOIN Dep_StakeLevel sl ON sl.StakeLevelID=his.StakeLevelID
+												AND sl.MaxStake=his.MaxStake
+												AND sl.MaxLabel=his.MaxLabel)
 	BEGIN
 		SET @SettingList = (SELECT	StakeLevelID AS '@StakeLevelID',
 									GameTypeID	AS '@GameTypeID',
