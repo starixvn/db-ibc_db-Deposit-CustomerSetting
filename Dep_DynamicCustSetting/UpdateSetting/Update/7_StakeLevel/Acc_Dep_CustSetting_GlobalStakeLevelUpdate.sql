@@ -55,7 +55,6 @@ BEGIN
 								,MaxStake		DECIMAL(19,8)	
 								,SiteID			INT							
 								,UpdateTime		DATETIME
-								,IsGroup		BIT
 							);
 	DECLARE @MaxStakeLevelID INT
 			,@GameTypeID	INT						
@@ -74,10 +73,12 @@ BEGIN
 	SET	@startRun = GETDATE();  
 
 	SELECT @MaxStakeLevelID=MAX(StakeLevelID) FROM Dep_StakeLevel WITH(NOLOCK)
+
 	SELECT @Currency=d.currency,@SiteID=s.siteid
 	FROM Dep_CustSuper d WITH(NOLOCK)
 		INNER JOIN Site s WITH(NOLOCK)	ON d.site=s.site
 	WHERE d.custid=@CustID
+
 	IF @StakeLevel IS NULL OR @StakeLevel = ''
 	BEGIN
 		SELECT @ErrCode=100
@@ -166,7 +167,6 @@ BEGIN
 									SiteID		AS '@SiteID',
 									UpdateTime	AS '@UpdateTime'
 							FROM @tmpStakeLevel_Old
-							WHERE IsGroup=0
 							FOR XML PATH ('r'), ROOT('root'))
 
 		EXEC Task_DetectBet_Dep_StakeLevelHistory_Insert  @SettingList=@SettingList, @IsGroup=0, @ErrMsg=@ErrMsg OUTPUT
