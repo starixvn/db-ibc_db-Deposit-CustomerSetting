@@ -53,7 +53,7 @@ BEGIN
 								,MaxLabel		NVARCHAR(50)
 								,MinStake		DECIMAL(19,8)
 								,MaxStake		DECIMAL(19,8)	
-								,StieID			INT							
+								,SiteID			INT							
 								,UpdateTime		DATETIME
 								,IsGroup		BIT
 							);
@@ -147,7 +147,7 @@ BEGIN
 				,MaxLabel		
 				,MinStake		
 				,MaxStake
-				,StieID
+				,SiteID
 				,UpdateTime)  
 	FROM Dep_StakeLevel d 
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
@@ -165,7 +165,7 @@ BEGIN
 									'NULL'		AS '@MaxGameStake',
 									SiteID		AS '@SiteID',
 									UpdateTime	AS '@UpdateTime'
-							FROM @tmpStakeLevel_Old
+							FROM @tmpStakeLevel_Old old
 							WHERE IsGroup=0
 							FOR XML PATH ('r'), ROOT('root'))
 
