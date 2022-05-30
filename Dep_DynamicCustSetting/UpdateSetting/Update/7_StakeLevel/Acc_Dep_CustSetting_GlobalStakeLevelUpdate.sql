@@ -165,11 +165,11 @@ BEGIN
 									'NULL'		AS '@MaxGameStake',
 									SiteID		AS '@SiteID',
 									UpdateTime	AS '@UpdateTime'
-							FROM @tmpStakeLevel_Old old
+							FROM @tmpStakeLevel_Old
 							WHERE IsGroup=0
 							FOR XML PATH ('r'), ROOT('root'))
 
-		EXEC Task_DetectBet_Dep_StakeLevelHistory_Insert @SettingList=@SettingList, @IsGroup=0, @ErrMsg=@ErrMsg OUTPUT
+		EXEC Task_DetectBet_Dep_StakeLevelHistory_Insert  @SettingList=@SettingList, @IsGroup=0, @ErrMsg=@ErrMsg OUTPUT
 
 		IF @ErrMsg<>''
 			RETURN
