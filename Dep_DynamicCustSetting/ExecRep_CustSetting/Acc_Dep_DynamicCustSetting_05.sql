@@ -92,6 +92,12 @@ BEGIN
 			INNER JOIN #StakeLevel AS tv ON cslm.Custid=tv.CustID AND cslm.SportType=tv.SportType AND cslm.BetType=tv.BetType
 		WHERE tv.RoleID =1
 
+		--delete
+		DELETE his
+		FROM #History_StakeLevel his
+			INNER JOIN #StakeLevel AS tv ON his.Custid=tv.CustID
+		WHERE his.StakeLevelList=TV.StakeLevelList
+
 		UPDATE csla
 		SET	csla.StakeLevelList = sl.StakeLevelList
 		FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH(ROWLOCK,UPDLOCK)
@@ -116,22 +122,26 @@ BEGIN
 		FROM #StakeLevel
 		WHERE RoleID IN(2,3,4)
 		
+		
 		--Insert history bet setting
-		SET @CustList = (SELECT CustID			AS '@CustID',
-								SportType		AS '@SportType',
-								BetType			AS '@BetType',
-								'NULL'			AS '@MaxBet',
-								'NULL'			AS '@MaxPerMatch',
-								StakeLevelList	AS '@StakeLevelList',
-								UpdateTime		AS '@UpdateTime'
-						 FROM #History_StakeLevel
-						 FOR XML PATH ('r'), ROOT ('root')
-						)
+		IF EXISTS (SELECT 1 FROM #History_StakeLevel)
+		BEGIN
+			SET @CustList = (SELECT CustID			AS '@CustID',
+									SportType		AS '@SportType',
+									BetType			AS '@BetType',
+									'NULL'			AS '@MaxBet',
+									'NULL'			AS '@MaxPerMatch',
+									StakeLevelList	AS '@StakeLevelList',
+									UpdateTime		AS '@UpdateTime'
+							 FROM #History_StakeLevel
+							 FOR XML PATH ('r'), ROOT ('root')
+							)
 
-		EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
-		IF @ErrMsg<>''
-			RETURN
+			IF @ErrMsg<>''
+				RETURN
+		END
 	END
 	ELSE
 	BEGIN
