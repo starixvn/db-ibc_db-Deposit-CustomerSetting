@@ -154,7 +154,8 @@ BEGIN
 		INNER JOIN @tmpStakeLevel t ON d.StakeLevelID=t.StakeLevelID AND d.GameTypeID=t.GameTypeID
 
 	--Insert history
-	IF NOT EXISTS (SELECT 1 FROM @tmpStakeLevel_Old his
+	IF EXISTS (SELECT 1 FROM @tmpStakeLevel_Old) AND
+		NOT EXISTS (SELECT 1 FROM @tmpStakeLevel_Old his
 					INNER JOIN Dep_StakeLevel sl ON sl.StakeLevelID=his.StakeLevelID
 												AND sl.MaxStake=his.MaxStake
 												AND sl.MaxLabel=his.MaxLabel)
