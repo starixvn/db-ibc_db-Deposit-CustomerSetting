@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust_Switch]     
 	@FirstName NVARCHAR(50),    
 	@LastName NVARCHAR(50),    
@@ -10,8 +10,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust_Switch]
 	@AgentID INT,    
 	@AffiliateID INT = NULL,    
 	@BonusCode VARCHAR(20) = NULL,    
-	@Country NVARCHAR(50) = '',
-	@SubsidiaryID INT = 0,
+	@Country NVARCHAR(50) = '',    
 	@CustID INT = 0 OUTPUT,    
 	@Username VARCHAR(50) ='' OUTPUT,    
 	@ErrCode INT = 0 OUTPUT,    
@@ -29,8 +28,7 @@ AS
 	 - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
 	 - 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	 - 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
-	 - 20220505@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
-
+	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -1135,15 +1133,8 @@ BEGIN
 		@ErrMsg = @ErrMsg OUTPUT    
 
 	IF @ErrCode <> 0    
-		RETURN   
-	
-	--Insert SubsidiaryID
-	IF @SubsidiaryID<>0
-	BEGIN
-		INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
-		VALUES (@CustID, @SubsidiaryID)
-	END
-
+		RETURN    
+	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
 	select @custid, 1, 1, @apositiontaking_1, @mpositiontaking_1,@spositiontaking_1, @playerdiscount, @discount, @adiscount, @sdiscount,@MinBet, @MaxBet, 0    
@@ -1272,9 +1263,7 @@ BEGIN
 	UNION ALL    
 	select @custid, 90 , 161, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, @v161playerdiscount, @v161discount, @v161adiscount, @v161sdiscount, @MinBetv161, @MaxBetv161, 1    
 	    
-	if ((@SubsidiaryID<>0 and not exists (select 1 from DepositCustomer with (NOLOCK) where custid = @custid))  or
-		not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or 
-		not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or @@Error <> 0    
+	if (not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or @@Error <> 0    
 	BEGIN    
 	 --Error occurs    
 	 SELECT     
@@ -1282,9 +1271,8 @@ BEGIN
 	  @ErrCode=215    
 	     
 	 -- MANUALLY ROLLBACK    
-	 DELETE DepositCustomer		WHERE CustID = @CustID
-	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID 
+	 DELETE Dep_CustSetting WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 	 return    
 	END    
@@ -1301,10 +1289,9 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
-	 DELETE DepositCustomer		WHERE CustID = @CustID
-	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID 
-	 
+	 DELETE Dep_CustSetting WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
 	 return    
@@ -1325,10 +1312,9 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
-	 DELETE DepositCustomer		WHERE CustID = @CustID
-	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID 
-	 
+	 DELETE Dep_CustSetting WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
+	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
@@ -1348,9 +1334,8 @@ BEGIN
 	  @ErrCode=215    
 	     
 	 -- MANUALLY ROLLBACK    
-	 DELETE DepositCustomer		WHERE CustID = @CustID
-	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID 
+	 DELETE Dep_CustSetting WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
@@ -1370,9 +1355,8 @@ BEGIN
 	  @ErrCode=215    
 	     
 	 -- MANUALLY ROLLBACK    
-	 DELETE DepositCustomer		WHERE CustID = @CustID
-	 DELETE Dep_CustSetting		WHERE CustID = @CustID    
-	 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID 
+	 DELETE Dep_CustSetting WHERE CustID = @CustID    
+	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
 	 DELETE CustSettingGame WHERE CustID = @CustID    
 	 DELETE CustGameType WHERE CustID = @CustID    
@@ -1399,9 +1383,8 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY
 		 -- MANUALLY ROLLBACK    
-		 DELETE DepositCustomer		WHERE CustID = @CustID
-		 DELETE Dep_CustSetting		WHERE CustID = @CustID    
-		 DELETE Dep_CustSetting3rd	WHERE CustID = @CustID 
+		 DELETE Dep_CustSetting WHERE CustID = @CustID    
+		 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
 		 DELETE CustSettingGame WHERE CustID = @CustID    
 		 DELETE CustGameType WHERE CustID = @CustID    
@@ -1496,9 +1479,8 @@ BEGIN
 	 @CustID = @CustID,    
 	 @SuperID = @srecommend,      
 	 @ErrCode = @ErrCode OUTPUT,      
-	 @ErrMsg = @ErrMsg OUTPUT  
-	 
-	--Write Info Log
+	 @ErrMsg = @ErrMsg OUTPUT    
+	    
 	set @endRun = getdate()    
 	set @duration  = datediff (millisecond,@startRun,@endRun)    
 	    
@@ -1513,7 +1495,6 @@ BEGIN
 	'DepositUserName="'+ coalesce(cast(@DepositUserName as varchar(50)),space(1)) + '" ' +    
 	'DepositUserID="'+ coalesce(cast(@DepositUserID as varchar(50)),space(1)) + '" ' +    
 	'OddsType="'+ coalesce(cast(@OddsType as varchar(5)),space(1)) + '" ' +    
-	'SubsidiaryID="'+ coalesce(cast(@SubsidiaryID as varchar(50)),space(1)) + '" ' +    
 	'AgentID="'+ coalesce(cast(@AgentID as varchar(50)),space(1)) + '" ' +    
 	'AffiliateID="'+ coalesce(cast(@AffiliateID as varchar(50)),space(1)) + '" ' +    
 	'BonusCode="'+ coalesce(cast(@BonusCode as varchar(20)),space(1)) + '" ' +    
