@@ -15,6 +15,7 @@ AS
 		- 20200226@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
+		- 20220608@Eden: Enhance - check exists before rollback data on licensee DB [#RM:125823]
 	Parameter:
 		
 	
@@ -757,11 +758,14 @@ BEGIN
 			END
 
 			--Roll back data for members who can not transfer closing balance
-			DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] 
-			WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
+			IF EXISTS (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
+			BEGIN
+				DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] 
+				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
 			
-			DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer 
-			WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
+				DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer 
+				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
+			END
 
 			--Turn on BA flags for members who can not transfer closing balance, but have been turned off BA flags sucessfully
 			WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE TransBalStastus=3 AND BAStastus=4)
