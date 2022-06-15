@@ -3,6 +3,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]
 	@CustID int = 0,  
 	@ReinitOldBalance BIT = 1,
 	@CheckUniqueUsername2 BIT = 1,
+	@SubsidiaryID INT = 0,
 	@ErrCode int = 0 OUTPUT,    
 	@ErrMsg nvarchar(2000) = '' OUTPUT     
 AS    
@@ -22,6 +23,8 @@ AS
 		- 20210317@Eden: Licensee - Soccer Parlay Max Per Match is incorrect with reactivated customer [Redmine: #151846]
 		- 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
 		- 20220401@Eden: Hotfix- Licensees - Process deposit conflicts with process Reactivation of archived member causes wrong balance [redmine: #170791]
+		- 20220517@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
+
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
 	? @ReinitOldBalance: flag to reinit old balance   
@@ -1435,7 +1438,22 @@ BEGIN
 		
 		RETURN  
 	END  
-	    
+
+	--Insert SubsidiaryID
+	IF @SubsidiaryID<>0
+	BEGIN
+		IF EXISTS (SELECT 1 FROM dbo.DepositCustomer WITH (NOLOCK) WHERE custid=@CustID)
+		BEGIN
+			UPDATE dbo.DepositCustomer WITH (ROWLOCK, UPDLOCK)
+			SET SubsidiaryID=@SubsidiaryID
+			WHERE custid=@CustID
+		END
+		ELSE
+		BEGIN
+			INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
+			VALUES (@CustID, @SubsidiaryID)
+		END
+	END
 	     
 	--print @v2mpositiontaking_20    
 	INSERT INTO [dbo].[Dep_CustSetting]([custid], [bettype], [sporttype], [apositiontaking], [mpositiontaking], [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [MinBet], [MaxBet], [islive])    
@@ -1567,7 +1585,10 @@ BEGIN
 	UNION ALL    
 	select @custid, 90 , 161, @v161alivepositiontaking_90, @v161mlivepositiontaking_90, @v161slivepositiontaking_90, @v161playerdiscount, @v161discount, @v161adiscount, @v161sdiscount, @MinBetv161, @MaxBetv161, 1    
 	    
-	if (not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or @@Error <> 0    
+	if ((@SubsidiaryID<>0 and not exists (select 1 from DepositCustomer with (NOLOCK) where custid = @custid))  or
+		not exists (select 1 from Dep_CustSetting with (NOLOCK) where custid = @custid) or 
+		not exists (select 1 from Dep_CustSetting3rd with (NOLOCK) where custid = @custid)) or 
+		@@Error <> 0    
 	BEGIN    
 	 --Error occurs    
 	 SELECT     
@@ -1575,6 +1596,7 @@ BEGIN
 	  @ErrCode=215    
 	     
 	 -- MANUALLY ROLLBACK    
+	 DELETE DepositCustomer	WHERE CustID = @CustID
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
@@ -1599,6 +1621,7 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
+	 DELETE DepositCustomer	WHERE CustID = @CustID
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1628,6 +1651,7 @@ BEGIN
 	  @ErrCode=218    
 	    
 	 -- MANUALLY ROLLBACK    
+	 DELETE DepositCustomer	WHERE CustID = @CustID
 	 DELETE Dep_CustSetting WHERE CustID = @CustID    
 	 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1659,6 +1683,7 @@ BEGIN
 			@ErrCode=215    
 	     
 			-- MANUALLY ROLLBACK    
+			DELETE DepositCustomer WHERE CustID = @CustID
 			DELETE Dep_CustSetting WHERE CustID = @CustID    
 			DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 
@@ -1689,6 +1714,7 @@ BEGIN
 			@ErrCode=215    
 	     
 			-- MANUALLY ROLLBACK    
+			DELETE DepositCustomer WHERE CustID = @CustID
 			DELETE Dep_CustSetting WHERE CustID = @CustID    
 			DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1725,6 +1751,7 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY
 		 -- MANUALLY ROLLBACK    
+		 DELETE DepositCustomer WHERE CustID = @CustID
 		 DELETE Dep_CustSetting WHERE CustID = @CustID    
 		 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1790,7 +1817,8 @@ BEGIN
 				 DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
 				 DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
 				 DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-		     
+				 
+				 DELETE DepositCustomer WHERE CustID = @CustID
 				 DELETE Dep_CustSetting WHERE CustID = @CustID    
 				 DELETE Dep_CustSetting3rd WHERE CustID = @CustID    
 	
@@ -1926,6 +1954,7 @@ BEGIN
 	'creator="'+ coalesce(cast(@CustID as varchar(50)),space(1)) + '" ' +    
 	'username="'+ coalesce(cast(@username as varchar(30)),space(1)) + '" ' +    
 	'Email="'+ dbo.f_EncodeXMLValue(coalesce(cast(@Email as nvarchar(50)),space(1))) + '" ' +   
+	'SubsidiaryID="'+ coalesce(cast(@SubsidiaryID as varchar(50)),space(1)) + '" ' +    
 	'AgentID="'+ coalesce(cast(@AgentID as varchar(50)),space(1)) + '" ' +   
 	'recommend="'+ coalesce(cast(@recommend as varchar(50)),space(1)) + '" ' +    
 	'ugroup="'+ coalesce(cast(@ugroup as varchar(5)),space(1)) + '" ' +
