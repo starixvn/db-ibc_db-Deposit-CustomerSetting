@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Dot_Dep_CreateCurrencyLicensee] 
+ALTER PROCEDURE [dbo].[Dot_Dep_CreateCurrencyLicensee_winfred] 
 		@sitename			VARCHAR(10)
 	,	@Product			VARCHAR(MAX)
 	,	@ErrCode			INT = 0				OUTPUT
@@ -39,7 +39,8 @@ AS
 	- 20220309@Winfred: Sitebuilder - Offer Cash Out for licensee by default [redmine:#169724]
 	- 20220307@Winfred: Integrate 3 products Creative Gaming, Advantplay, Advantplay mini products [redmine:#169473]
 	- 20220504@Winfred: Enhance PT for Keno no rounded [redmine:#172324]
-	
+	- 20220616@Winfred: Integrate new games of Virtual Games product [redmine:#172671]
+
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @Product:<ROOT>
@@ -549,6 +550,7 @@ BEGIN
 				WHERE b.SettingType = 8
 			)
 	BEGIN
+		
 		UPDATE a
 		SET a.Sporttype = c.SportType , a.Bettype = c.BetType
 		FROM #Product a
@@ -1201,6 +1203,21 @@ BEGIN
 						RETURN
 					END							
 				END
+			
+			-- Clear stake level for new licensees
+			IF EXISTS(SELECT TOP 1 1 
+						FROM #Product a
+						INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+						WHERE b.SettingType = 7)
+			BEGIN
+				DELETE sl
+				FROM #Product a
+				INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+				INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+				INNER JOIN Dep_StakeLevel sl WITH(ROWLOCK) ON sl.GameTypeID = c.BetType 
+											AND sl.ExchangeID = @Currency AND sl.SiteID = @SiteID
+				WHERE b.SettingType = 7 AND a.Currency = sl.ExchangeID
+			END
 
 			SELECT @StakeLevel_ByCurrency = CONVERT(VARCHAR(MAX),
 													(SELECT (SELECT 

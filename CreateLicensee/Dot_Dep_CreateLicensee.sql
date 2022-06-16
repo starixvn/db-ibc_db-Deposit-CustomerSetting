@@ -49,6 +49,7 @@ AS
 	- 20220307@Winfred: Integrate 3 products Creative Gaming, Advantplay, Advantplay mini products [redmine:#169473]
 	- 20220413@Elodie: Remove code to delete site in case of error [RedmineID: #170752]
 	- 20220504@Winfred: Enhance PT for Keno no rounded [redmine:#172324]
+	- 20220616@Winfred: Integrate new games of Virtual Games product [redmine:#172671]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -1265,7 +1266,20 @@ BEGIN
 															)
 													FOR XML PATH('ROOT'),TYPE
 													)) 
-
+			-- Clear stake level for new licensees
+			IF EXISTS(SELECT TOP 1 1 
+						FROM #Product a
+						INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+						WHERE b.SettingType = 7)
+			BEGIN
+				DELETE sl
+				FROM #Product a
+				INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+				INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+				INNER JOIN Dep_StakeLevel sl WITH(ROWLOCK) ON sl.GameTypeID = c.BetType 
+											AND sl.ExchangeID = @Currency AND sl.SiteID = @SiteID
+				WHERE b.SettingType = 7 AND a.Currency = sl.ExchangeID
+			END
 			--Create Global Stake level : 
 			EXEC [dbo].[Acc_Dep_CustSetting_GlobalStakeLevelUpdate] 
 					 @StakeLevel = @StakeLevel_ByCurrency	
