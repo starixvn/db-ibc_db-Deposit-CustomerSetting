@@ -292,7 +292,7 @@ Revisions:
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	- 20210520@Eden: Apply default VR Setting which is -90% whenever there is new LICENSEE Supers creation [Redmine:#153411]
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
-	
+	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -320,14 +320,17 @@ BEGIN
 
 	DECLARE @transcode BIGINT 
 	DECLARE @isvalid BIT
-	SELECT @ErrCode = 0
+	SELECT @ErrCode = 0	
 	--------Parse xml string into table -- Keno
+	CREATE TABLE #data(Bettype SMALLINT, MaxBet money, MinBet money, MaxPerMatch money, 
+				sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,IsDisable BIT)
+				
 	DECLARE @xmlDoc int
 	EXEC sp_xml_preparedocument @xmlDoc OUTPUT, @KenoList
 
-	SELECT *
-	INTO #data
-	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(Bettype INT, MaxBet money, MinBet money, MaxPerMatch money, 
+	INSERT INTO #data(Bettype, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking,IsDisable)
+	SELECT Bettype, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking,IsDisable	
+	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(Bettype SMALLINT, MaxBet money, MinBet money, MaxPerMatch money, 
 	sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,IsDisable BIT)
 
 	EXEC sp_xml_removedocument @xmlDoc

@@ -247,7 +247,7 @@ Revisions:
 	- 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
-	
+	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 Param's Explanation:
 • @ErrCode:
     = 0: Create agent successfully.
@@ -259,60 +259,67 @@ Param's Explanation:
 BEGIN
 
 	SET NOCOUNT ON
+	CREATE TABLE #tmp_Sports(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_Bettype(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_GameType(ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	
 	----- David @ 09 JUN 2015 -------------------
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID	
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
 		IF OBJECT_ID(N'tempdb..#tmp_Sports') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
-			INSERT INTO #tmp_Sports
-			SELECT *
+			INSERT INTO #tmp_Sports(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID	
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID	
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
 		IF OBJECT_ID(N'tempdb..#tmp_Bettype') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
-			INSERT INTO #tmp_Bettype
-			SELECT *
+			INSERT INTO #tmp_Bettype(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID	
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY		
-		SELECT *
-		INTO #tmp_GameType
+		INSERT INTO #tmp_GameType(ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID	
 		FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
 		IF OBJECT_ID(N'tempdb..#tmp_GameType') IS NOT NULL
 		BEGIN
 			TRUNCATE TABLE #tmp_GameType
-			INSERT INTO #tmp_GameType
-			SELECT *
+			INSERT INTO #tmp_GameType(ID, Name, IsDisabled, IBCBettypeID)
+			SELECT ID, Name, IsDisabled, IBCBettypeID	
 			FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBTXN')	
 		END
 	END CATCH
 
 	----- /David @ 09 JUN 2015 -------------------
 	--------Parse xml string into table -- Keno
+	CREATE TABLE #data(Bettype SMALLINT, MaxBet money, MinBet money, MaxPerMatch money, 
+				sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,IsDisable BIT)
+				
 	DECLARE @xmlDoc int
 	EXEC sp_xml_preparedocument @xmlDoc OUTPUT, @KenoList
 
-	SELECT *
-	INTO #data
-	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(Bettype INT, MaxBet money, MinBet money, MaxPerMatch money, 
+	INSERT INTO #data(Bettype, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking,IsDisable)				
+	SELECT Bettype, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking,IsDisable
+	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(Bettype SMALLINT, MaxBet money, MinBet money, MaxPerMatch money, 
 	sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,IsDisable BIT)
 
 	EXEC sp_xml_removedocument @xmlDoc
@@ -1381,12 +1388,14 @@ BEGIN
 	END
 
 	--check minBet maxBet PT Upline
+	CREATE TABLE #MinMaxUpline(Bettype SMALLINT, MinBetMin MONEY, MaxbetMax MONEY, MaxPT SMALLMONEY, MaxPerMatchMax MONEY)
+	
+	INSERT INTO #MinMaxUpline(Bettype,MinBetMin,MaxbetMax,MaxPT,MaxPerMatchMax)
 	SELECT  gt.IBCBetTypeID Bettype,
 			isnull(cgt.minbet,0) AS MinBetMin, 
 			isnull(cgt.maxbet,0) AS MaxbetMax, 
 			isnull(csg.mpositiontaking,0) AS MaxPT,
-			isnull(cgt.MaxPerGameType,0) AS MaxPerMarchMax
-	INTO #MinMaxUpline
+			isnull(cgt.MaxPerGameType,0) AS MaxPerMatchMax	
 	FROM dbo.CustGameType cgt WITH(NOLOCK)
 		INNER JOIN CustSettingGame csg ON cgt.custid = csg.custid
 		INNER JOIN #tmp_GameType gT ON cgt.GameTypeID = gt.ID
@@ -1443,10 +1452,10 @@ BEGIN
 	END
 	IF EXISTS (SELECT top 1 1 
 				FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
-				WHERE (d.MaxPerMatch > m.MaxPerMarchMax) and d.MaxPerMatch >0)
+				WHERE (d.MaxPerMatch > m.MaxPerMatchMax) and d.MaxPerMatch >0)
 	BEGIN	
-		SELECT top 1 @Bet=MaxPerMarchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
-				WHERE (d.MaxPerMatch > m.MaxPerMarchMax) ORDER BY d.bettype DESC
+		SELECT top 1 @Bet=MaxPerMatchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
+				WHERE (d.MaxPerMatch > m.MaxPerMatchMax) ORDER BY d.bettype DESC
 		SELECT
 			@ErrMsg =	case @Language 
 								when 'E' then 'Max Per Match must be less than or equal '+COALESCE(CAST(@Bet AS VARCHAR(50)),SPACE(1))+' (Max Per Match).'
@@ -1470,7 +1479,7 @@ BEGIN
 				FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
 				WHERE (d.mPositionTaking > m.MaxPT) and d.mPositionTaking > 0)
 	BEGIN	
-		SELECT top 1 @Bet=MaxPerMarchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
+		SELECT top 1 @Bet=MaxPerMatchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
 				WHERE (d.mPositionTaking > m.MaxPT) ORDER BY d.bettype DESC
 		SELECT
 			@ErrMsg =	case @Language 
@@ -1561,14 +1570,24 @@ BEGIN
 	IF EXISTS (SELECT TOP 1 1 FROM TradeComm t WITH(NOLOCK) 
 				INNER JOIN custInfo c WITH(NOLOCK) ON t.AgentID=c.custid
 				WHERE srecommend=@srecommend)
-	BEGIN
+	BEGIN	
+			CREATE TABLE #tempCashOut(UserName varchar(30), recommend INT, mrecommend INT, currency TINYINT, site VARCHAR(10), refcode1 nvarchar(100)
+					, refcode2 nvarchar(100), ugroup varchar(3), [closed] bit, [MatchLimit] smallmoney, [VirtualMultiplier] smallmoney, [Enabled] bit, [danger] TINYINT
+					, [danger2] TINYINT, [danger3] TINYINT, [DisableOutright] BIT
+					, [MaxPerMatch99MP] MONEY, [DisableNumber] BIT, [maxpermatch161] MONEY
+					, [MaxPerBall161] MONEY, [Abnormal] TINYINT, [DoubleCommLosing] BIT)
+					
+			INSERT INTO #tempCashOut(UserName, recommend, mrecommend, currency, site, refcode1
+					, refcode2, ugroup, [closed], [MatchLimit], [VirtualMultiplier], [Enabled], [danger]
+					, [danger2], [danger3], [DisableOutright]
+					, [MaxPerMatch99MP], [DisableNumber], [maxpermatch161]
+					, [MaxPerBall161], [Abnormal], [DoubleCommLosing])
 			SELECT a.userName + 'CashOut' AS UserName, a.custid AS recommend, a.mrecommend, a.currency, a.site, a.refcode1
 					, a.refcode2, a.ugroup, b.[closed], b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
 					, b.[danger2], b.[danger3], b.[DisableOutright]
 					, b.[MaxPerMatch99MP], b.[DisableNumber], b.[maxpermatch161]
 					, b.[MaxPerBall161],					
-					b.[Abnormal], b.[DoubleCommLosing]
-				INTO #tempCashOut
+					b.[Abnormal], b.[DoubleCommLosing]				
 				FROM Customer a(NOLOCK)
 					INNER JOIN custInfo b(NOLOCK)
 					ON a.custid = b.custid
@@ -2219,6 +2238,8 @@ BEGIN
 
 	DROP TABLE #data
 	DROP TABLE #MinMaxUpline
-
+	DROP TABLE #tmp_Sports
+	DROP TABLE #tmp_Bettype
+	DROP TABLE #tmp_GameType
 END
 GO
