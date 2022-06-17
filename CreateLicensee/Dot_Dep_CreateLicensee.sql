@@ -610,7 +610,7 @@ BEGIN
 		SELECT @ErrMsg = 'The '+ @CurrencyError +' currency is/are not offered for Licensee. Please check again!', @ErrCode = 10006
 		RETURN
 	END
-
+	
 	IF EXISTS(SELECT TOP 1 1 
 				FROM #Product a
 					INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
@@ -639,6 +639,25 @@ BEGIN
 		SELECT @ErrMsg = 'Break rule bet limit', @ErrCode = 10005
 		RETURN
 	END
+
+	-- Check global betlimit for setting type 11
+	IF EXISTS(SELECT TOP 1 1 
+						FROM #Product a
+						INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+						INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+						INNER JOIN Dep_ProductBetSetting dpb WITH(NOLOCK) ON c.SportType = dpb.Sporttype AND c.BetType = dpb.Bettype AND dpb.Currency = a.Currency
+						WHERE b.SettingType = 11 AND (a.MinBet < dpb.MinBet)      
+			 )
+	BEGIN
+		DELETE sl
+		FROM #Product a
+		INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+		INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+		INNER JOIN Dep_StakeLevel sl WITH(ROWLOCK) ON sl.GameTypeID = c.BetType 
+									AND sl.ExchangeID = @Currency AND sl.SiteID = @SiteID
+		WHERE b.SettingType = 7
+	END
+
 	IF NOT EXISTS(SELECT TOP 1 1 
 						FROM #Product 
 						WHERE ProductID=1
