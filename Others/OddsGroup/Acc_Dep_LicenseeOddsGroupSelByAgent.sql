@@ -9,6 +9,7 @@ AS
 	DB: DBCUST.CustDB	
 	Revisions:
 		- 20210708@Johnson: initial sp [redmine:#157702]
+		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
 	Parameter's Explanation:
 		- custids: agent list
 */
@@ -28,6 +29,6 @@ BEGIN
 		LEFT JOIN [SiteConfig].[dbo].[Operator] s WITH(NOLOCK) ON c.Custid=s.AgentID
 		LEFT JOIN Dep_DefaultOddGroup d WITH(NOLOCK) ON c.custid = d.AgentID
 	WHERE roleid = 2
-		AND custid IN (SELECT val FROM dbo.strSplit(@custids,','))
+		AND custid IN (SELECT value FROM string_split(@custids,','))
 	ORDER BY username
 END

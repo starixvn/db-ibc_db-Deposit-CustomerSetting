@@ -19,6 +19,7 @@ AS
 	Revisions:
 		- 20171113@Winnie: Update Customer's Stake Level Settings - [Redmine: #85113]	
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -124,9 +125,9 @@ BEGIN
 	UPDATE tv 
 	SET tv.MemberStakeLevel = 
 		(
-			SELECT TOP 1 ss.val	
-			FROM dbo.strSplit(tv.StakeLevelList, ',') AS ss
-				INNER JOIN	dbo.Dep_StakeLevel AS sl WITH(NOLOCK)	ON CAST(ss.val AS INT) = sl.StakeLevelID		
+			SELECT TOP 1 ss.value	
+			FROM STRING_SPLIT(tv.StakeLevelList, ',') AS ss
+				INNER JOIN	dbo.Dep_StakeLevel AS sl WITH(NOLOCK)	ON CAST(ss.value AS INT) = sl.StakeLevelID		
 			ORDER BY	sl.MaxStake, sl.MinStake,sl.GameGroupID
 		)
 	FROM #tmpStake tv  

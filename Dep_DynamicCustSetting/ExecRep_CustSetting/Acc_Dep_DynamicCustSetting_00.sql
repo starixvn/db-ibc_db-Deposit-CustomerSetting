@@ -30,6 +30,7 @@ AS
 		- 20181113@Winnie: Esports  - Integration [RedmineID: #100721]
 		- 20200410@Johnson: Add comm for AB,Macau,PP,GD,AG [redmine:#131774] 
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  [Redmine: 168395]	
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	*/
 BEGIN
 	SELECT @ErrCode = 0
@@ -83,8 +84,9 @@ BEGIN
 		ELSE
 		BEGIN
 			INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID)
-			SELECT @CustID, t.val
-			FROM dbo.strSplit(@ProductProfileList,',') t
+			SELECT @CustID, t.value
+			FROM STRING_SPLIT(@ProductProfileList,',') t
+			WHERE t.value <> ''
 		END 
 		
 	END
@@ -373,10 +375,10 @@ BEGIN
 				INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList)
 				SELECT @CustID,T.SportType,T.BetType,temp.list
 				FROM #ProductSettingDetail T
-					CROSS APPLY (SELECT TOP 1 ss.val list
+					CROSS APPLY (SELECT TOP 1 ss.value list
 								FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH (NOLOCK)
-									CROSS APPLY	dbo.strSplit(csla.StakeLevelList, ',') AS ss
-									INNER JOIN Dep_StakeLevel sl WITH (NOLOCK) ON ss.val = sl.StakeLevelID  
+									CROSS APPLY	STRING_SPLIT(csla.StakeLevelList, ',') AS ss
+									INNER JOIN Dep_StakeLevel sl WITH (NOLOCK) ON ss.value = sl.StakeLevelID  
 								WHERE	csla.CustID = @UplineID
 										AND csla.SportType = T.SportType
 										AND csla.BetType = T.betType
@@ -439,10 +441,10 @@ BEGIN
 				INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList)
 				SELECT @CustID,T.SportType,T.BetType,temp.list
 				FROM #ProductSettingDetail T
-					CROSS APPLY (SELECT TOP 1 ss.val list
+					CROSS APPLY (SELECT TOP 1 ss.value list
 								FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH (NOLOCK)
-									CROSS APPLY	dbo.strSplit(csla.StakeLevelList, ',') AS ss
-									INNER JOIN Dep_StakeLevel sl WITH (NOLOCK) ON ss.val = sl.StakeLevelID  
+									CROSS APPLY	STRING_SPLIT(csla.StakeLevelList, ',') AS ss
+									INNER JOIN Dep_StakeLevel sl WITH (NOLOCK) ON ss.value = sl.StakeLevelID  
 								WHERE	csla.CustID = @UplineID AND csla.SportType = T.SportType AND csla.BetType = T.betType
 								
 								ORDER BY sl.MaxStake, sl.MinStake

@@ -1,13 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-/****** Object:  StoredProcedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 10/09/2017 09:05:41 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 11/24/2015 9:44:45 AM ******/
-
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelSelect] 
 	@ProductID		INT
 	,@CustID		INT		
@@ -22,6 +13,7 @@ AS
 	Revisions:
 		- 20171107@Winnie: select status of DCS product RedmineID:#85133
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	Param's Explanation:
 */
 BEGIN
@@ -37,9 +29,9 @@ FROM Customer d WITH(NOLOCK)
 WHERE d.custid=@CustID
 
 INSERT INTO #tempAgentStakeLevel(Sporttype,bettype,StakeLevelID)
-SELECT Sporttype,bettype,CONVERT(INT,ss.val)
+SELECT Sporttype,bettype,CONVERT(INT,ss.value)
 FROM Dep_CustStakeLevel_Agent a WITH(NOLOCK)
-	CROSS APPLY	dbo.strSplit(ISNULL(a.StakeLevelList, ''), ',') AS ss
+	CROSS APPLY	STRING_SPLIT(ISNULL(a.StakeLevelList, ''), ',') AS ss
 WHERE a.CustID=@CustID
 
 INSERT INTO  #tempStakeLevel (Sporttype , Bettype,StakeLevelID ,StakeLevelName ,IsChecked ,MinStake,MaxStake)
