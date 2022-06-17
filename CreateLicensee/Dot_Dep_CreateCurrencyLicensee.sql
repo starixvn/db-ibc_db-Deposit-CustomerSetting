@@ -627,6 +627,20 @@ BEGIN
 		SELECT @ErrMsg = 'Break rule bet limit', @ErrCode = 10005
 		RETURN
 	END
+
+	-- Check global betlimit for setting type 11
+	IF EXISTS(SELECT TOP 1 1 
+						FROM #Product a
+						INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+						INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+						INNER JOIN Dep_ProductBetSetting dpb WITH(NOLOCK) ON c.SportType = dpb.Sporttype AND c.BetType = dpb.Bettype AND dpb.Currency = a.Currency
+						WHERE b.SettingType = 11 AND (a.MinBet < dpb.MinBet OR a.MaxBet < dpb.MinBet OR dpb.MaxBet < a.MinBet OR dpb.MaxBet < a.MaxBet)      
+			 )
+	BEGIN
+		SELECT @ErrMsg = 'error betlimit', @ErrCode = 20001
+		RETURN
+	END
+
 	IF NOT EXISTS(SELECT TOP 1 1 
 						FROM #Product 
 						WHERE ProductID=1
