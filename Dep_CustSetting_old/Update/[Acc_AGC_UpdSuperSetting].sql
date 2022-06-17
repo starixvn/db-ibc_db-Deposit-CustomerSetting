@@ -1,11 +1,5 @@
-USE [CustDB]
-GO
-/****** Object:  StoredProcedure [dbo].[Acc_AGC_UpdSuperSetting]    Script Date: 09/16/2015 04:45:45 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  Stored Procedure dbo.Acc_AGC_UpdSuperSetting    Script Date: 8/28/2014 3:01:31 PM ******/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+
 ALTER PROCEDURE	[dbo].[Acc_AGC_UpdSuperSetting]
 	@CustID				INT,
 	@CheckedGroup		VARCHAR(500),
@@ -25,7 +19,8 @@ AS
 	DB: DBTXN/CustDB
 	Original:
 	Revisions:
-	- 20150916@Winnie: Add AGCasino
+		- 20150916@Winnie: Add AGCasino
+		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
 	Param's Explanation:
 */
 BEGIN
@@ -97,21 +92,22 @@ BEGIN
 
 	IF(@CheckedGroup <>'' AND @CheckedGroup_Old<>@CheckedGroup)
 	BEGIN
-	CREATE TABLE #tmpAddedGroup (AddGroup varchar(1))	
-				INSERT INTO #tmpAddedGroup (AddGroup)
-				SELECT val FROM [dbo].[strSplit_str](@CheckedGroup,',')
-				DECLARE @varAddGroup varchar(1)
-					WHILE EXISTS(SELECT TOP 1 1 FROM #tmpAddedGroup)
-					BEGIN
-					SELECT TOP 1 @varAddGroup=AddGroup FROM #tmpAddedGroup
-					IF charindex(@varAddGroup,(SELECT TOP 1 CheckedGroup FROM Dep_SuperSetting_AGCasino(NOLOCK) WHERE Custid=@UplineId)) =0
-					BEGIN
-					SELECT @ErrCode=10032
-					SELECT @ErrMsg='Invalid data because it has changed by some other people. Please refresh the page'
-					RETURN
-					END
-					DELETE FROM #tmpAddedGroup WHERE AddGroup=@varAddGroup
-					END
+		CREATE TABLE #tmpAddedGroup (AddGroup varchar(1))	
+		INSERT INTO #tmpAddedGroup (AddGroup)
+		SELECT value FROM string_split(@CheckedGroup,',') WHERE value <> ''
+
+		DECLARE @varAddGroup varchar(1)
+		WHILE EXISTS(SELECT TOP 1 1 FROM #tmpAddedGroup)
+		BEGIN
+			SELECT TOP 1 @varAddGroup=AddGroup FROM #tmpAddedGroup
+			IF charindex(@varAddGroup,(SELECT TOP 1 CheckedGroup FROM Dep_SuperSetting_AGCasino(NOLOCK) WHERE Custid=@UplineId)) =0
+			BEGIN
+				SELECT @ErrCode=10032
+				SELECT @ErrMsg='Invalid data because it has changed by some other people. Please refresh the page'
+				RETURN
+			END
+			DELETE FROM #tmpAddedGroup WHERE AddGroup=@varAddGroup
+		END
 	END
 
 	IF(@RoleId<>1)
@@ -146,7 +142,7 @@ BEGIN
 			BEGIN
 				CREATE TABLE #tmpDeletedGroup (delGroup varchar(1))	
 				INSERT INTO #tmpDeletedGroup (delGroup)
-				SELECT val FROM [dbo].[strSplit_str](@DeletedGroup,',')
+				SELECT value FROM string_split(@DeletedGroup,',') WHERE value <> ''
 				DECLARE @vardelGroup varchar(1)
 					WHILE EXISTS(SELECT TOP 1 1 FROM #tmpDeletedGroup)
 					BEGIN
@@ -288,7 +284,4 @@ BEGIN
 				@duration = @duration
 	
 END
-
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_AGC_UpdSuperSetting] TO [bodbAdminNet] AS [dbo]

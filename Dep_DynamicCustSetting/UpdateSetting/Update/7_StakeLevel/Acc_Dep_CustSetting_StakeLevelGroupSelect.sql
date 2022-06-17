@@ -1,6 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelGroupSelect] 
 	@ProductID		INT
 	,@CustID		INT		
@@ -15,6 +13,7 @@ AS
 	Revisions:
 		- 20171107@Winnie: select status of DCS product RedmineID:#85133
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
+		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	Param's Explanation:
 */
 BEGIN
@@ -29,9 +28,9 @@ FROM Customer d WITH(NOLOCK)
 WHERE d.custid=@CustID
 
 INSERT INTO #tempAgentStakeLevel(Sporttype,bettype,StakeLevelID)
-SELECT Sporttype,bettype,CONVERT(INT,ss.val)
+SELECT Sporttype,bettype,CONVERT(INT,ss.value)
 FROM Dep_CustStakeLevel_Agent a WITH(NOLOCK)
-	CROSS APPLY	dbo.strSplit(ISNULL(a.StakeLevelList, ''), ',') AS ss
+	CROSS APPLY	STRING_SPLIT(ISNULL(a.StakeLevelList, ''), ',') AS ss
 WHERE a.CustID=@CustID
 
 INSERT INTO  #tempStakeLevel (Sporttype , Bettype,StakeLevelID ,StakeLevelGroupID ,IsChecked )

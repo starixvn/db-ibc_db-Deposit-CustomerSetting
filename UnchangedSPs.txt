@@ -1,0 +1,4 @@
+Dep_CustSetting\Add New Customer\Acc_CustomerInsDummyTrade.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsLicenseeSubsidiary.sql
+Dep_CustSetting\Update Setting\Acc_3rdProductUpdSuperStatus.sql
