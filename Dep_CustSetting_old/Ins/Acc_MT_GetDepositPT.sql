@@ -220,6 +220,9 @@ BEGIN
 					@s1 As s1, @m1 AS m1, @a1 AS a1, @n1 AS n1, @l1 As l1 
 		SELECT * FROM #temp
 	END
+
+	DROP TABLE #temp
+	DROP TABLE #tmp_Bettype
 END
 GO
 

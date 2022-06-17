@@ -24,7 +24,7 @@ BEGIN
 	DECLARE @IsDisabledDownline BIT, @downlines BIT  = 0 
 	DECLARE @SuperID INT, @MasterID INT, @AgentID INT
 
-	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, sporttype SMALLINT, bettype INT, IsLive BIT, SettingType SMALLINT)
+	CREATE TABLE #SportBettypeFilter (ProductID TINYINT, sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType SMALLINT)
 	
 	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend  
 	FROM dbo.custInfo ci WITH(NOLOCK)  
