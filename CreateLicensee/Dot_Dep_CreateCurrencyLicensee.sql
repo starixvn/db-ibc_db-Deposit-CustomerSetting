@@ -3,7 +3,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateCurrencyLicensee]
 		@sitename			VARCHAR(10)
 	,	@Product			VARCHAR(MAX)
 	,	@ErrCode			INT = 0				OUTPUT
-	,	@ErrMsg				NVARCHAR(200) = ''	OUTPUT
+	,	@ErrMsg				NVARCHAR(MAX) = ''	OUTPUT
 	,	@Creator			VARCHAR(20)
 	,	@IP					VARCHAR(50)	
 	,	@IsCreateSub		BIT
@@ -528,7 +528,8 @@ BEGIN
 							isfinished BIT DEFAULT(0) )
 	CREATE TABLE #StakelevelInput(ProductID INT, StakeLevelXML VARCHAR(MAX), isfinished BIT DEFAULT(0), PRIMARY KEY(ProductID))
 	CREATE TABLE #tempProduct (ProductID INT, PT SMALLMONEY , ProductName VARCHAR(100),isfinished BIT DEFAULT(0))
-	
+	CREATE TABLE #CheckBetlimit (ProductID INT, ProductName VARCHAR(100),Currency INT, CurrencyName NVARCHAR(50),MinBet MONEY,MaxBet MONEY, MinBetGlobal MONEY,MaxBetGlobal MONEY, isfinished BIT DEFAULT(0))
+
 	BEGIN TRY
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @Product
@@ -628,16 +629,41 @@ BEGIN
 		RETURN
 	END
 
+	INSERT INTO #CheckBetlimit(ProductID, ProductName, Currency, CurrencyName, MinBet, MaxBet, MinBetGlobal, MaxBetGlobal)
+	SELECT a.ProductID, CASE WHEN a.ProductID = 49 THEN 'VS3' ELSE CAST(a.ProductID AS NVARCHAR(50)) END AS ProductName,a.Currency,e.currency AS ExchangeName, a.MinBet,a.MaxBet, dpb.MinBet as MinBetGlobal,dpb.MaxBet as MaxBetGlobal
+	FROM #Product a
+	INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+	INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
+	INNER JOIN Dep_ProductBetSetting dpb WITH(NOLOCK) ON c.SportType = dpb.Sporttype AND c.BetType = dpb.Bettype AND dpb.Currency = a.Currency
+	INNER JOIN exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency
+	WHERE b.SettingType = 11 AND (a.MinBet < dpb.MinBet OR a.MaxBet < dpb.MinBet OR dpb.MaxBet < a.MinBet OR dpb.MaxBet < a.MaxBet) 
+
 	-- Check global betlimit for setting type 11
-	IF EXISTS(SELECT TOP 1 1 
-						FROM #Product a
-						INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
-						INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
-						INNER JOIN Dep_ProductBetSetting dpb WITH(NOLOCK) ON c.SportType = dpb.Sporttype AND c.BetType = dpb.Bettype AND dpb.Currency = a.Currency
-						WHERE b.SettingType = 11 AND (a.MinBet < dpb.MinBet OR a.MaxBet < dpb.MinBet OR dpb.MaxBet < a.MinBet OR dpb.MaxBet < a.MaxBet)      
-			 )
+	IF EXISTS(SELECT TOP 1 1 FROM #CheckBetlimit)
 	BEGIN
-		SELECT @ErrMsg = 'error betlimit', @ErrCode = 20001
+		SELECT  @ErrCode = 10008
+		WHILE(1 =1)
+		BEGIN	
+			UPDATE TOP (1) c 
+			SET c.isfinished = 1
+				,@ProductID = c.ProductID
+				,@ProductName = C.ProductName
+			FROM #CheckBetlimit c 
+			WHERE isfinished = 0
+					
+			IF @@ROWCOUNT = 0 BREAK	
+
+			SELECT @ErrMsg = @ErrMsg +  + ' Violate ' + @ProductName + ' global bet setting, please follow global bet setting: ' +  STUFF((SELECT DISTINCT ', ' + CAST(CurrencyName AS NVARCHAR(50)) + ' ('+ 
+										dbo.f_CS_FomatNumber (CAST( MinBetGlobal AS VARCHAR(50))) +'-'+ 
+										dbo.f_CS_FomatNumber (CAST(MaxBetGlobal AS VARCHAR(50))) +')'
+										FROM #CheckBetlimit
+										WHERE ProductID = @ProductID
+										FOR XML PATH('')), 1, 1, '')
+			UPDATE c 
+			SET c.isfinished = 1
+			FROM #CheckBetlimit c 
+			WHERE isfinished = 0 AND c.ProductID = @ProductID
+		END
 		RETURN
 	END
 
