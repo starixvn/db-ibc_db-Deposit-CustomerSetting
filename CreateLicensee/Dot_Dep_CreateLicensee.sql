@@ -653,7 +653,7 @@ BEGIN
 	-- Check global betlimit for setting type 11
 	IF EXISTS(SELECT TOP 1 1 FROM #CheckBetlimit)
 	BEGIN
-		SELECT  @ErrCode = 10008
+		SELECT  @ErrCode = 10008, @ErrMsg = ''
 		WHILE(1 =1)
 		BEGIN	
 			UPDATE TOP (1) c 
@@ -665,7 +665,7 @@ BEGIN
 					
 			IF @@ROWCOUNT = 0 BREAK	
 
-			SELECT @ErrMsg = @ErrMsg +  + ' Violate ' + @ProductName + ' global bet setting, please follow global bet setting: ' +  STUFF((SELECT DISTINCT ', ' + CAST(CurrencyName AS NVARCHAR(50)) + ' ('+ 
+			SELECT @ErrMsg = @ErrMsg + ' Violate ' + @ProductName + ' global bet setting, please follow global bet setting: ' +  STUFF((SELECT DISTINCT ', ' + CAST(CurrencyName AS NVARCHAR(50)) + ' ('+ 
 										dbo.f_CS_FomatNumber (CAST( MinBetGlobal AS VARCHAR(50))) +'-'+ 
 										dbo.f_CS_FomatNumber (CAST(MaxBetGlobal AS VARCHAR(50))) +')'
 										FROM #CheckBetlimit
