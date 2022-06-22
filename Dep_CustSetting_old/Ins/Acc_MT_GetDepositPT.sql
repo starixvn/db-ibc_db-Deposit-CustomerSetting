@@ -26,7 +26,7 @@ BEGIN
 	
 	CREATE TABLE #temp (
 			sporttype	smallint,
-			bettype		int,
+			bettype		smallint,
 			sportname varchar(500),
 			typename varchar(500),
 			s4 smallmoney, m4 smallmoney, a4 smallmoney, n4 smallmoney, l4 smallmoney,
