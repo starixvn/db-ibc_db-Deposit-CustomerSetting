@@ -64,7 +64,7 @@ BEGIN
 		RETURN
 		
 	CREATE TABLE #ProductSettingDetail(
-		[SettingType] [smallint] NOT NULL,
+		[SettingType] [tinyint] NOT NULL,
 		[SportType] [smallint] NOT NULL,
 		[BetType] [smallint] NOT NULL,
 		[IsLive] BIT NOT NULL
@@ -250,7 +250,7 @@ BEGIN
 	
 	
 	/********************************************* Product Status: SettingType = 4 ************************************/
-	CREATE TABLE #SportBettypeFilter4(SportType SMALLINT, Bettype SMALLINT, SettingType SMALLINT, IsDisabled BIT,IsHidden BIT,bitmapOrder TINYINT)
+	CREATE TABLE #SportBettypeFilter4(SportType SMALLINT, Bettype SMALLINT, SettingType TINYINT, IsDisabled BIT,IsHidden BIT,bitmapOrder TINYINT)
 		
 	--Get sporttype/Bettype for this setting type	
 	INSERT INTO #SportBettypeFilter4(SportType , Bettype, SettingType, IsDisabled, IsHidden, bitmapOrder)
