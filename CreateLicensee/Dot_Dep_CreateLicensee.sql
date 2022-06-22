@@ -680,7 +680,7 @@ BEGIN
 	END
 
 	TRUNCATE TABLE #CheckBetlimit
-	INSERT INTO #CheckBetlimit(ProductID, ProductName, Currency, CurrencyName, MinBet, MaxBet, MinBetGlobal, MaxBetGlobal)
+	INSERT INTO #CheckBetlimit(ProductID, ProductName, Currency, CurrencyName)
 	SELECT a.ProductID, CASE WHEN a.ProductID = 49 THEN 'VS3' ELSE CAST(a.ProductID AS NVARCHAR(50)) END AS ProductName,a.Currency,e.currency AS ExchangeName
 	FROM #Product a
 	INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
