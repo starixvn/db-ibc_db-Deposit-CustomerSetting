@@ -636,7 +636,7 @@ BEGIN
 	INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
 	INNER JOIN Dep_ProductBetSetting dpb WITH(NOLOCK) ON c.SportType = dpb.Sporttype AND c.BetType = dpb.Bettype AND dpb.Currency = a.Currency
 	INNER JOIN exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency
-	WHERE b.SettingType = 11 AND dpb.MinBet <> 0 AND dpb.MaxBet <> 0 AND (a.MinBet < dpb.MinBet OR a.MaxBet < dpb.MinBet OR dpb.MaxBet < a.MinBet OR dpb.MaxBet < a.MaxBet) 
+	WHERE b.SettingType = 11 AND ((dpb.MinBet <> 0 OR dpb.MaxBet <> 0) OR (dpb.MinBet = dpb.MaxBet AND dpb.MinBet <> 0)) AND (a.MinBet < dpb.MinBet OR a.MaxBet < dpb.MinBet OR dpb.MaxBet < a.MinBet OR dpb.MaxBet < a.MaxBet) 
 
 	-- Check global betlimit for setting type 11
 	IF EXISTS(SELECT TOP 1 1 FROM #CheckBetlimit)
