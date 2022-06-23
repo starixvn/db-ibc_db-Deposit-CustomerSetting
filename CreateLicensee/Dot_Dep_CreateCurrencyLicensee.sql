@@ -279,7 +279,7 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 																	MaxPerBall="0" 
 																/>
 																<Product 
-																	ProductID="36"https://gitlab.nexdev.net/db-ibc/db-Deposit-CustomerSetting/-/merge_requests/125
+																	ProductID="36"
 																	Currency="4"	
 																	MinBet="0" 
 																	MaxBet="0"	
