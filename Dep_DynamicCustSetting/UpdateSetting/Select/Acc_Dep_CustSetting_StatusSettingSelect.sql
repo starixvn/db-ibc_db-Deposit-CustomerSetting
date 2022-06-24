@@ -13,6 +13,8 @@ AS
 
 	Revisions:
 		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 	Param's Explanation:
 	• @CustID: 
 	
@@ -21,13 +23,15 @@ BEGIN
 	
 	DECLARE @IsDisabledDownline BIT, @downlines BIT  = 0 
 	DECLARE @SuperID INT, @MasterID INT, @AgentID INT
+
+	CREATE TABLE #SportBettypeFilter (ProductID SMALLINT, sporttype SMALLINT, bettype SMALLINT, IsLive BIT, SettingType TINYINT)
 	
 	SELECT @SuperID=ci.srecommend, @MasterID=ci.mrecommend , @AgentID = ci.recommend  
 	FROM dbo.custInfo ci WITH(NOLOCK)  
 	WHERE ci.custid=@CustID 
 	
+	INSERT INTO #SportBettypeFilter (ProductID, sporttype, bettype, IsLive, SettingType)
 	SELECT @ProductID AS ProductID,SportType,Bettype,IsLive, SettingType 
-	INTO #SportBettypeFilter
 	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType)
 	
 	IF @RoleID = 4
@@ -189,10 +193,9 @@ BEGIN
 				LEFT JOIN  dbo.Dep_CustProductStatus stt_UPLINE WITH (NOLOCK)	ON stt_UPLINE.CustID = @AgentID
 				
 			WHERE pds.SettingType = @SettingType
-						
-		
 	END	
+	
+	DROP TABLE #SportBettypeFilter
 END
-
 GO
 

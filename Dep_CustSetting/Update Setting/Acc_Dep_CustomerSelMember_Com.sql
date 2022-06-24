@@ -10,22 +10,26 @@ Task : Company edit Super
 DB: DBCust.CustDB
 
 Revisions:
-- 20131014@Francis: Support selecting new virtual sports with settings via XML param
-- 20140505@Florent: Add new Sport HRFO
-- 20140512@Florent: add Sport 202 Keno
-- 20150603@Kathy: Move SP to DBCust.custDB [Redmine:#36216]
-- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
-- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
-- 20180125@Winnie: Hide inactive products [RedmineID: #86086]   
-- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
-- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
-- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	- 20131014@Francis: Support selecting new virtual sports with settings via XML param
+	- 20140505@Florent: Add new Sport HRFO
+	- 20140512@Florent: add Sport 202 Keno
+	- 20150603@Kathy: Move SP to DBCust.custDB [Redmine:#36216]
+	- 20151028@Jim:Implement Muay's Setting for Deposit Customer [Redmine: #45491]
+	- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
+	- 20180125@Winnie: Hide inactive products [RedmineID: #86086]   
+	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
+	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
+	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
 */
 BEGIN
 	SET NOCOUNT ON
+	
+	CREATE TABLE #data (bettype INT, Minbet MONEY, MaxBet MONEY, MaxPerMatch MONEY, isDisabled BIT)
 
 	DECLARE @UserName			NVARCHAR(50),
 			@MinBetv1			MONEY,  
@@ -109,12 +113,13 @@ BEGIN
 	 END CATCH
 	 
 	SELECT @vPT= ISNULL(spositiontaking,0) FROM  dbo.CustSettingGame WITH (NOLOCK) WHERE Bettype =1501 AND CustID=@CustID 
+
+	INSERT INTO #data (bettype, Minbet, MaxBet, MaxPerMatch, isDisabled)
 	SELECT gt.IBCBetTypeID bettype ,
 		ISNULL(Minbet,0) AS Minbet,
 		ISNULL(MaxBet,0) AS MaxBet,
 		ISNULL(MaxPerGameType,0) AS MaxPerMatch,
 		ISNULL(cgt.isDisabled,1) AS isDisabled
-	INTO #data
 	FROM dbo.CustGameType cgt WITH (NOLOCK) 
 	INNER JOIN @tmp_GameType gt ON cgt.GameTypeID = gt.GameTypeID
 	WHERE Custid=@CustID 

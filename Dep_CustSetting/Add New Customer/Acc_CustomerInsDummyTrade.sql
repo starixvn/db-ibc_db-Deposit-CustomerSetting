@@ -17,14 +17,14 @@ AS
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
-
+		- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	Param's Explanation:
 */
 BEGIN
 	SET NOCOUNT ON
 
 	IF (@ProductId = 25) -- CashOut
-		BEGIN
+		BEGIN			
 			DECLARE @tempAgent TABLE(CustID INT PRIMARY KEY,Username VARCHAR(30),Site VARCHAR(10))
 			INSERT INTO @tempAgent(CustID)
 			SELECT CustID
@@ -53,13 +53,23 @@ BEGIN
 			FROM @tempDummy t
 				INNER JOIN custInfo a(NOLOCK) ON t.UserName=a.UserName
 			
+			CREATE TABLE #tempCashOut(Username varchar(30), recommend INT, mrecommend INT, currency INT, site varchar(10), refcode1 nvarchar(100)
+				, refcode2 nvarchar(100), ugroup varchar(3), [closed] bit, [MatchLimit] INT, [VirtualMultiplier] SMALLINT, [Enabled] BIT, [danger] TINYINT
+				, [danger2] TINYINT, [danger3] TINYINT, [DisableOutright] BIT
+				, [MaxPerMatch99MP] MONEY, [DisableNumber] BIT, [maxpermatch161] MONEY
+				, [MaxPerBall161] MONEY, [Abnormal] TINYINT, [DoubleCommLosing] BIT)	
+			
+			INSERT INTO #tempCashOut(Username, recommend, mrecommend, currency, site, refcode1
+				, refcode2, ugroup, [closed], [MatchLimit], [VirtualMultiplier], [Enabled], [danger]
+				, [danger2], [danger3], [DisableOutright]
+				, [MaxPerMatch99MP], [DisableNumber], [maxpermatch161]
+				, [MaxPerBall161], [Abnormal], [DoubleCommLosing])			
 			SELECT t.Username, a.custid AS recommend, a.mrecommend, a.currency, a.site, a.refcode1
 				, a.refcode2, a.ugroup, b.[closed], b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
 				, b.[danger2], b.[danger3], b.[DisableOutright]
 				, b.[MaxPerMatch99MP], b.[DisableNumber], b.[maxpermatch161]
 				, b.[MaxPerBall161]
 				, b.[Abnormal], b.[DoubleCommLosing]
-			INTO #tempCashOut
 			FROM Customer a(NOLOCK)				
 				INNER JOIN @tempDummy t	ON a.custid = t.AgentID		
 				INNER JOIN custInfo b WITH(NOLOCK) ON t.AgentID=b.custid	

@@ -31,6 +31,7 @@ AS
 		- 20200410@Johnson: Add comm for AB,Macau,PP,GD,AG [redmine:#131774] 
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  [Redmine: 168395]	
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 	*/
 BEGIN
 	SELECT @ErrCode = 0
@@ -63,15 +64,15 @@ BEGIN
 		RETURN
 		
 	CREATE TABLE #ProductSettingDetail(
-		[SettingType] [smallint] NOT NULL,
+		[SettingType] [tinyint] NOT NULL,
 		[SportType] [smallint] NOT NULL,
 		[BetType] [smallint] NOT NULL,
 		[IsLive] BIT NOT NULL
 		
 	)
 
-	CREATE TABLE #tmpDep_CustBetLimit_Special(Sporttype INT,Bettype INT,MaxBet MONEY,MaxPerMatch MONEY)
-	CREATE TABLE #tmpDep_CustNewBetLimit_Special(Sporttype INT,Bettype INT,MaxBet MONEY)
+	CREATE TABLE #tmpDep_CustBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MaxBet MONEY,MaxPerMatch MONEY)
+	CREATE TABLE #tmpDep_CustNewBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MaxBet MONEY)
 	
 	IF @RoleID = 4
 	BEGIN
@@ -249,9 +250,11 @@ BEGIN
 	
 	
 	/********************************************* Product Status: SettingType = 4 ************************************/
+	CREATE TABLE #SportBettypeFilter4(SportType SMALLINT, Bettype SMALLINT, SettingType TINYINT, IsDisabled BIT,IsHidden BIT,bitmapOrder TINYINT)
+		
 	--Get sporttype/Bettype for this setting type	
-	SELECT DISTINCT psd.SportType,psd.Bettype, psd.SettingType,@IsDisable AS IsDisabled,@IsHidden AS IsHidden,pbs.bitmapOrder 
-	INTO #SportBettypeFilter4
+	INSERT INTO #SportBettypeFilter4(SportType , Bettype, SettingType, IsDisabled, IsHidden, bitmapOrder)
+	SELECT DISTINCT psd.SportType,psd.Bettype, psd.SettingType,@IsDisable AS IsDisabled,@IsHidden AS IsHidden,pbs.bitmapOrder 	
 	FROM #ProductSettingDetail psd WITH(NOLOCK)  
 		INNER JOIN Dep_ProductStatusProfile pbs WITH (NOLOCK) ON pbs.[SportType] = psd.[SportType] AND pbs.[BetType] = psd.[BetType]
 	WHERE psd.SettingType = 4

@@ -172,7 +172,7 @@ Revisions:
 	- 20200622@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
-	
+	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -186,12 +186,15 @@ BEGIN
 	SET NOCOUNT ON
 
 	--------Parse xml string into table -- Keno
+	CREATE TABLE #data(Bettype smallint, MaxBet money, MinBet money, MaxPerMatch money, 
+					sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,IsDisable BIT)
+	
 	DECLARE @xmlDoc int
 	EXEC sp_xml_preparedocument @xmlDoc OUTPUT, @KenoList
-
-	SELECT *
-	INTO #data
-	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(Bettype int, MaxBet money, MinBet money, MaxPerMatch money, 
+	
+	INSERT INTO #data(Bettype, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking, IsDisable)	
+	SELECT Bettype, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking, IsDisable
+	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(Bettype smallint, MaxBet money, MinBet money, MaxPerMatch money, 
 	sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,IsDisable BIT)
 
 	EXEC sp_xml_removedocument @xmlDoc
@@ -927,13 +930,15 @@ BEGIN
 		INSERT INTO @tmp_GameType (GameTypeID, GameTypeName, IsDisabled, IBCBettypeID)
 		SELECT GameTypeID, GameTypeName, IsDisabled, IBCBettypeID FROM DBTXN.bodb02.dbo.GameType WITH (NOLOCK)
 	 END CATCH
-
+	
+	CREATE TABLE #MinMaxUpline(Bettype smallint, MinBetMin MONEY, MaxbetMax MONEY, MaxPT SMALLMONEY, MaxPerMatchMax MONEY)
+	
+	INSERT INTO #MinMaxUpline(Bettype,MinBetMin,MaxbetMax,MaxPT,MaxPerMatchMax)
 	SELECT  gt.IBCBetTypeID Bettype ,
 			isnull(cgt.minbet,0) AS MinBetMin, 
 			isnull(cgt.maxbet,0) AS MaxbetMax, 
 			isnull(csg.mpositiontaking,0) AS MaxPT,
-			isnull(cgt.MaxPerGameType,0) AS MaxPerMarchMax
-	INTO #MinMaxUpline
+			isnull(cgt.MaxPerGameType,0) AS MaxPerMatchMax	
 	FROM dbo.CustGameType cgt WITH(NOLOCK)
 		INNER JOIN CustSettingGame csg ON cgt.custid = csg.custid
 		INNER JOIN @tmp_GameType gt ON cgt.GameTypeID = gt.GameTypeID
@@ -988,10 +993,10 @@ BEGIN
 	END
 	IF EXISTS (SELECT top 1 1 
 				FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
-				WHERE (d.MaxPerMatch > m.MaxPerMarchMax) and d.MaxPerMatch >0 )
+				WHERE (d.MaxPerMatch > m.MaxPerMatchMax) and d.MaxPerMatch >0 )
 	BEGIN	
-		SELECT top 1 @Bet=MaxPerMarchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
-				WHERE (d.MaxPerMatch > m.MaxPerMarchMax) ORDER BY d.bettype DESC
+		SELECT top 1 @Bet=MaxPerMatchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
+				WHERE (d.MaxPerMatch > m.MaxPerMatchMax) ORDER BY d.bettype DESC
 		SELECT
 			@ErrMsg =	case @Language 
 								when 'E' then 'Max Per Match must be less than or equal '+COALESCE(CAST(@Bet AS VARCHAR(50)),SPACE(1))+' (Max Per Match).'
@@ -1015,7 +1020,7 @@ BEGIN
 				FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
 				WHERE (d.mPositionTaking > m.MaxPT) and d.mPositionTaking >0)
 	BEGIN	
-		SELECT top 1 @Bet=MaxPerMarchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
+		SELECT top 1 @Bet=MaxPerMatchMax FROM #data d INNER JOIN #MinMaxUpline m on d.bettype=m.bettype
 				WHERE (d.mPositionTaking > m.MaxPT) ORDER BY d.bettype DESC
 		SELECT
 			@ErrMsg =	case @Language 

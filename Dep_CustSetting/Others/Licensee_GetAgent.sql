@@ -1,5 +1,5 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" executers="vnteam" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Licensee_GetAgent]
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewer="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Licensee_GetAgent]
 	(	
       @Site NVARCHAR(100) = NULL,
       @Currency INT = 0
@@ -11,8 +11,10 @@ AS
 	DB: DBCUST.CustDB
 	Original: 
 	Revisions:	
-		--20180912@Chris: Change where condition
-		--20180913@Chris: Add permission
+		- 20180912@Chris: Change where condition
+		- 20180913@Chris: Add permission
+		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 	Param's Explanation:  
 	  + @Site		: licensee site name  
 	  +	@Currency	:
@@ -22,8 +24,10 @@ AS
 BEGIN
 	SET NOCOUNT ON  
 	
+	CREATE TABLE #supers (custid INT)
+
+	INSERT INTO #supers(custid)
 	SELECT custid
-	INTO #supers
 	FROM Dep_CustSuper WITH (NOLOCK)
 	WHERE site in (@Site)
 	AND (@Currency = 0 OR (@Currency <> 0 AND Currency = @Currency))

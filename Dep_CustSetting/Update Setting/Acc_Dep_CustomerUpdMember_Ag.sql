@@ -272,6 +272,8 @@ Revisions:
 	- 20191107@Eden: 3rd party roducts - Remove InActive Products Phase 2 [Redmine: #118699]
 	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -282,10 +284,27 @@ Param's Explanation:
 */ 
 BEGIN
 	SET NOCOUNT ON
+	
+	CREATE TABLE #tmp_Sports (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_Bettype (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #tmp_GameType (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
+	CREATE TABLE #Data_Upline (bettype INT, Minbet_Up MONEY, MaxBet_Up MONEY, MaxPerMatch_Up MONEY)
+
+	CREATE TABLE #data (
+		BetType INT, 
+		MaxBet money, 
+		MinBet money, 
+		MaxPerMatch money, 
+		sPositionTaking smallmoney,
+		mPositionTaking smallmoney, 
+		aPositionTaking smallmoney,
+		isDisable BIT
+	)
+
 	----- David @ 09 JUN 2015 -------------------
 	BEGIN TRY
-		SELECT *
-		INTO #tmp_Sports
+		INSERT INTO #tmp_Sports (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBAGE')	
 	END TRY
 	BEGIN CATCH
@@ -293,14 +312,14 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #tmp_Sports
 			INSERT INTO #tmp_Sports
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(1,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY			
-		SELECT *
-		INTO #tmp_Bettype
+		INSERT INTO #tmp_Bettype (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
@@ -308,14 +327,14 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #tmp_Bettype
 			INSERT INTO #tmp_Bettype
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(2,'DBTXN')	
 		END
 	END CATCH
 
 	BEGIN TRY		
-		SELECT *
-		INTO #tmp_GameType
+		INSERT INTO #tmp_GameType (ID, Name, IsDisabled, IBCBettypeID)
+		SELECT ID, Name, IsDisabled, IBCBettypeID
 		FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBAGE')	
 	END TRY
 	BEGIN CATCH		
@@ -323,7 +342,7 @@ BEGIN
 		BEGIN
 			TRUNCATE TABLE #tmp_GameType
 			INSERT INTO #tmp_GameType
-			SELECT *
+			SELECT ID, Name, IsDisabled, IBCBettypeID
 			FROM dbo.f_GetSportTypeBetTypeGameType(3,'DBTXN')	
 		END
 	END CATCH
@@ -337,8 +356,8 @@ BEGIN
 	DECLARE @xmlDoc int
 	EXEC sp_xml_preparedocument @xmlDoc OUTPUT, @KenoList
 
-	SELECT *
-	INTO #data
+	INSERT INTO #data (BetType, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking, isDisable)
+	SELECT BetType, MaxBet, MinBet, MaxPerMatch, sPositionTaking, mPositionTaking, aPositionTaking, isDisable
 	FROM OPENXML (@xmlDoc, '/products/product',1) WITH(BetType INT, MaxBet money, MinBet money, MaxPerMatch money, 
 	sPositionTaking smallmoney, mPositionTaking smallmoney, aPositionTaking smallmoney,isDisable BIT)
 
@@ -1924,11 +1943,11 @@ BEGIN
 	FROM dbo.CustSettingGame WITH(NOLOCK) 
 	WHERE CustID= @recommend and Bettype=1501
 
+	INSERT INTO #Data_Upline (Bettype,MinBet_Up,Maxbet_Up,MaxPerMatch_UP)
 	SELECT IBCBetTypeID AS Bettype,
 		   ISNULL(cg.MinBet,0) AS MinBet_Up,
 		   ISNULL(cg.MaxBet,0) AS Maxbet_Up ,
 		   ISNULL(cg.MaxPerGameType,0) AS MaxPerMatch_UP
-	INTO #Data_Upline
 	FROM dbo.CustGameType cg WITH (NOLOCK)  INNER JOIN 
 	#tmp_GameType gt on cg.GameTypeID=gt.ID
 	and cg.CustID=@recommend 
@@ -2449,6 +2468,9 @@ BEGIN
 
 	DROP TABLE #data
 	DROP TABLE #data_upline
-	drop TABLE #data_old
+	DROP TABLE #data_old
+	DROP TABLE #tmp_Bettype
+	DROP TABLE #tmp_GameType
+	DROP TABLE #tmp_Sports
 END
 GO

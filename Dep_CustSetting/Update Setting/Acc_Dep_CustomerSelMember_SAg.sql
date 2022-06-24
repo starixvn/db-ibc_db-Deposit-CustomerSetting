@@ -20,12 +20,17 @@ Revisions:
 	- 20190326@Winnie: Update PT of Sportsbook for All Licensee. [RedmineID: #110111]
 	- 20190726@Winnie: Remove Muay Thai. [RedmineID: #117501]  
 	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
+	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+
 Param's Explanation:
 • @CustID: member ID
 • @VirtualSportList: VirtualSport Settings XML param
 */
 BEGIN
 	SET NOCOUNT ON
+
+	CREATE TABLE #dataUpline (bettype INT, Minbet_Up MONEY, MaxBet_Up MONEY, MaxPerMatch_Up MONEY, isDisabled BIT)
+	CREATE TABLE #data (bettype INT, Minbet MONEY, MaxBet MONEY, MaxPerMatch MONEY, isDisabled BIT)
 
 	DECLARE @MinBetv1						MONEY, 
 			@MinBetv1_Min					MONEY,
@@ -322,22 +327,23 @@ BEGIN
 	SELECT @vPT= ISNULL(mpositiontaking,0) FROM  dbo.CustSettingGame WITH (NOLOCK) WHERE Bettype =1501 AND CustID=@CustID 
 	--MinBet_Max Maxbet_Min
 	SELECT @vPT_Max= ISNULL(spositiontaking,0) FROM  dbo.CustSettingGame WITH (NOLOCK) WHERE Bettype =1501 AND CustID=@srecommend 
+
+	INSERT INTO #dataUpline (bettype, Minbet_Up, MaxBet_Up, MaxPerMatch_Up, isDisabled)
 	SELECT gt.IBCBetTypeID bettype ,
 		ISNULL(Minbet,0) AS Minbet_Up,
 		ISNULL(MaxBet,0) AS MaxBet_Up,
 		ISNULL(MaxPerGameType,0) AS MaxPerMatch_Up,
 		ISNULL(cgt.isDisabled,1) AS isDisabled
-	INTO #dataUpline
 	FROM dbo.CustGameType cgt WITH (NOLOCK) 
 	INNER JOIN @tmp_GameType gt ON cgt.GameTypeID = gt.GameTypeID
 	WHERE Custid=@srecommend 
 
+	INSERT INTO #data (bettype, Minbet, MaxBet, MaxPerMatch, isDisabled)
 	SELECT gt.IBCBetTypeID bettype ,
 		ISNULL(Minbet,0) AS Minbet,
 		ISNULL(MaxBet,0) AS MaxBet,
 		ISNULL(MaxPerGameType,0) AS MaxPerMatch,
 		ISNULL(cgt.isDisabled,1) AS isDisabled
-	INTO #data
 	FROM dbo.CustGameType cgt WITH (NOLOCK) 
 	INNER JOIN @tmp_GameType gt  ON cgt.GameTypeID = gt.GameTypeID
 	WHERE Custid=@CustID 
