@@ -273,7 +273,6 @@ Revisions:
 	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
-
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -289,7 +288,6 @@ BEGIN
 	CREATE TABLE #tmp_Bettype (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
 	CREATE TABLE #tmp_GameType (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
 	CREATE TABLE #Data_Upline (bettype INT, Minbet_Up MONEY, MaxBet_Up MONEY, MaxPerMatch_Up MONEY)
-
 	CREATE TABLE #data (
 		BetType INT, 
 		MaxBet money, 

@@ -17,7 +17,8 @@ AS
 
 	Revision:
 		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
-		
+		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
+
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -29,14 +30,12 @@ AS
 						MaxPerMatch="1000000"
 				/>
 		</ROOT>
-		
-		
-
-	*/
-
+*/
 BEGIN
 	SET NOCOUNT ON
 
+	DECLARE @CustList VARCHAR(MAX)
+	
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
 		, @duration		INT
@@ -63,6 +62,15 @@ BEGIN
 		, MinBet			MONEY
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
+		)
+
+	DECLARE @History_BetLimitTbl TABLE (
+		CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -178,6 +186,8 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+			INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 		FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID
@@ -186,6 +196,33 @@ BEGIN
 				OR main.maxbet		<> tmp.MaxBet
 				OR main.maxpermatch <> tmp.MaxperMatch
 				)
+
+		--Insert history bet setting
+		IF NOT EXISTS (	SELECT 1 
+						FROM @History_BetLimitTbl old
+							INNER JOIN @NewBetLimitTbl new ON new.SportType=old.SportType
+														AND new.BetType=old.BetType
+														AND new.MaxBet=old.MaxBet
+														AND new.MaxPerMatch=old.MaxPerMatch
+						WHERE CustID=@CustID
+						)
+		BEGIN
+			SET @CustList = (SELECT CustID		AS '@CustID',
+									SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MaxBet		AS '@MaxBet',
+									MaxPerMatch	AS '@MaxPerMatch',
+									'NULL'		AS '@StakeLevelList',
+									UpdateTime	AS '@UpdateTime'
+							 FROM @History_BetLimitTbl
+							 FOR XML PATH ('r'), ROOT ('root')
+							)
+
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+			IF @ErrMsg<>''
+				RETURN
+		END
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN
@@ -437,12 +474,4 @@ BEGIN
 						, @duration			= @duration
 	END CATCH
 END
-
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbadminNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_BetLimitUpd] TO [bodbLicenseeNet]
