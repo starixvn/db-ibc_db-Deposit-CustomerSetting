@@ -1,0 +1,391 @@
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE dbo.Acc_Dep_LicenseeSetting_PTSettingUpd 
+	 @Site			VARCHAR(10)
+	, @InputPT		VARCHAR(MAX)
+	, @UserID		INT
+	, @IP			VARCHAR(50)		= ''
+	, @ErrCode		INT				= 0		OUTPUT	
+	, @ErrMsg		NVARCHAR(200)	= ''	OUTPUT
+AS
+/*
+	Created: 20220623@Winfred
+	Task: Update licensee Customer's PT
+	Original:
+	Revision:		
+		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
+	Param's Explanation:
+		@InputPT:
+		<ROOT>
+				<PT
+						PID="59"
+						CID="0"
+						PT="90"
+				/>
+		</ROOT>
+	*/
+
+BEGIN
+	SET NOCOUNT ON
+	
+	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT
+	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT, @Batch INT, @Threshold INT,@NumberProduct INT
+	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
+	
+	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY)
+	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,Currency INT,IsLive BIT,PT SMALLMONEY,
+								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,isfinished BIT DEFAULT(0) )
+	CREATE TABLE #tmpSMA (CustID INT PRIMARY KEY CLUSTERED,RoleID INT,Currency INT,srecommend INT,isfinished BIT DEFAULT(0))
+	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)	
+	CREATE TABLE #tmpSMATemp (CustID INT PRIMARY KEY CLUSTERED,RoleID INT,Currency INT,srecommend INT)
+	CREATE TABLE #tmpPT_Old (CustID INT ,SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY, PRIMARY KEY(CustID ,Sporttype ,Bettype ))
+
+	SET @startRun = GETDATE()
+	SELECT	@ErrCode = 0, @ErrMsg = ''
+	--Parse XML
+	EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @InputPT
+
+	INSERT INTO #PTProduct (ProductID, Currency, PT)
+	SELECT	ox.PID, ox.CID, ox.PT
+	FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
+	WITH (
+		PID		INT
+	,	CID		INT
+	,	PT		SMALLMONEY	
+	) AS ox;
+
+	EXECUTE sp_xml_removedocument @iDoc;
+	
+	-- All sport type  - bettype
+	INSERT INTO #SportTypeBetType (ProductID,SportType,Bettype,Currency,IsLive,PT,ProductName,SettingLevel,ProductSettingID)
+	SELECT a.ProductID,psd.SportType,psd.BetType,a.Currency,IsLive,a.PT, p.ProductName,dp.SettingLevel,dp.ProductSettingID
+	FROM #PTProduct a
+	INNER JOIN Dep_ProductSetting dp WITH(NOLOCK) ON dp.ProductID=a.ProductID 
+	INNER JOIN Dep_ProductSettingDetail psd WITH(NOLOCK) ON dp.ProductSettingID = psd.ProductSettingID
+	LEFT JOIN exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency 
+	INNER JOIN DBPRO.bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = a.ProductID
+	WHERE dp.SettingType=1 AND (a.Currency = 0 OR (e.IsActive = 1 AND e.OfferSite IN (0,2)))
+	
+	-- ALL SMA affect
+	INSERT INTO #tmpSMA(CustID,Currency,RoleID,srecommend)
+	SELECT ci.custid, ci.currency, ci.roleid,ci.srecommend
+	FROM custInfo ci WITH(NOLOCK) 
+		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
+	WHERE Roleid=4 AND cs.site = @Site 
+	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
+	UNION ALL 
+	SELECT ci.custid, ci.currency, ci.roleid,ci.srecommend
+	FROM custInfo ci WITH(NOLOCK) 
+		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
+	WHERE Roleid=4 AND cs.site = @Site 
+	AND ci.currency NOT IN (SELECT Currency FROM #PTProduct WHERE Currency <> 0)
+	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
+	
+	INSERT INTO	#tmpPT_Old (CustID,SportType, BetType, Islive, PT)
+	SELECT DISTINCT	a.CustID	
+		,	a.SportType
+		,	a.BetType
+		,	a.IsLive
+		,	a.SuperPT			
+	FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #tmpSMA t ON a.CustID=t.CustID
+			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType AND a.IsLive = stb.IsLive 
+
+	INSERT INTO #Dummy(CustID)
+	SELECT CustID FROM Customer WITH(NOLOCK) 
+	WHERE Roleid=3 AND site = @Site
+		AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR 
+			 username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%')
+		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
+	
+	INSERT INTO #tmpSMA(CustID,Currency,RoleID,ci.srecommend)
+	SELECT CustID, currency,roleid,srecommend FROM custInfo ci WITH(NOLOCK) 
+	WHERE Enabled=1 AND Roleid in (2,3)  
+		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
+		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
+		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
+	UNION ALL 
+	SELECT CustID, currency,roleid,srecommend FROM custInfo ci WITH(NOLOCK) 
+	WHERE Enabled=1 AND Roleid in (2,3)  
+		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
+		AND NOT EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
+		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
+		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
+	
+	SET @Threshold = 3000 
+	SET @NumberProduct = (SELECT COUNT(DISTINCT Bettype) FROM #SportTypeBetType) 
+	SET @Batch = @Threshold / @NumberProduct
+	
+	WHILE(1 =1)
+	BEGIN
+		UPDATE TOP (@Batch) c WITH (ROWLOCK)
+		SET c.isfinished = 1
+		OUTPUT DELETED.CustID,DELETED.RoleID,DELETED.Currency INTO #tmpSMATemp(CustID,RoleID,Currency)
+		FROM #tmpSMA c 
+		WHERE isfinished = 0
+		
+		IF @@ROWCOUNT = 0 BREAK
+		-- exists currency
+		UPDATE a
+		SET
+			 SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
+			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
+			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
+		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID
+			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType AND t.Currency = stb.Currency 
+		
+		-- all currency
+		UPDATE a
+		SET
+			 SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
+			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
+			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
+		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID
+			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType AND stb.Currency = 0
+		WHERE  NOT EXISTS (SELECT TOP 1 1 FROM #SportTypeBetType WHERE Currency = t.Currency AND a.SportType=SportType AND a.BetType=BetType )
+		
+		TRUNCATE TABLE #tmpSMATemp
+	END
+
+	UPDATE #tmpSMA SET isfinished = 0
+	WHILE(1 =1)
+	BEGIN
+			UPDATE TOP (1) c
+			SET c.isfinished = 1, 
+				@Currency = c.Currency 
+			FROM #tmpSMA c 
+			WHERE isfinished = 0 AND RoleID = 4
+		
+			IF @@ROWCOUNT = 0 BREAK
+
+			SELECT @CustIDList =  STUFF((SELECT DISTINCT ',' + cast(custid AS VARCHAR(10))
+			FROM #tmpSMA
+			WHERE RoleID = 2 AND Currency = @Currency
+			FOR XML PATH('')), 1, 1, '')
+			
+			SET @PT = (
+				SELECT	SportType	AS '@SportType',
+						BetType		AS '@BetType',
+						IsLive 		AS '@IsLive',
+						PT 			AS '@PT'
+				
+				FROM (
+					SELECT SportType,BetType,IsLive,PT
+					FROM   #SportTypeBetType stb	
+					WHERE stb.Currency = @Currency 
+					UNION
+					SELECT	SportType,BetType,IsLive,PT
+					FROM	#SportTypeBetType stb	
+					WHERE stb.Currency = 0 AND 
+							NOT EXISTS( SELECT 1 
+							FROM #SportTypeBetType 
+							WHERE Currency = @Currency 
+							AND SportType = stb.SportType 
+							AND Bettype = stb.Bettype )) KQ
+				FOR XML PATH('PT'),ROOT ('ROOT'),
+				TYPE )
+			
+			IF @PT IS NOT NULL
+			BEGIN
+				
+				EXEC Acc_Dep_DynamicCustSetting_08	
+					@Site = @Site,
+					@Currency = @Currency,
+					@InputPT = @InputPT,
+					@CustIDList=@CustIDList,
+					@PT=@PT	
+			END
+			UPDATE #tmpSMA SET isfinished = 1 WHERE RoleID = 4 AND Currency = @Currency
+			WAITFOR DELAY '00:00:00.28'
+	END
+	
+	UPDATE #tmpSMA SET isfinished = 0
+	WHILE(1 =1)
+	BEGIN
+		UPDATE TOP (1) c
+		SET c.isfinished = 1, 
+			@SuperID = c.srecommend,
+			@Currency = c.Currency
+		FROM #tmpSMA c 
+		WHERE isfinished = 0 AND RoleID = 4
+		
+		IF @@ROWCOUNT = 0 BREAK
+
+		SELECT @CustIDList =  STUFF((SELECT DISTINCT ',' + cast(custid AS VARCHAR(10))
+		FROM #tmpSMA
+		WHERE RoleID = 2 AND srecommend = @SuperID AND Currency = @Currency
+		FOR XML PATH('')), 1, 1, '')
+
+		--START LOGGING
+		-- Log old data
+		SET @xml = (
+			SELECT	@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					(
+						SELECT DISTINCT	stb.ProductID			AS '@ProductID',
+								stb.ProductName			AS '@ProductName',
+								cs.PT					AS '@PositionTaking'	
+						FROM	#tmpPT_Old AS cs
+							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+											FROM	#SportTypeBetType
+											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+						WHERE CustID = @SuperID AND stb.SettingLevel = 1 -- Product setting level
+						ORDER BY stb.ProductID,stb.ProductName
+						FOR XML PATH('Product'), 
+						TYPE
+					),
+					(
+						SELECT	DISTINCT stb.ProductID			AS '@ProductID',
+								stb.ProductName			AS '@ProductName',
+								cs.SportType			AS '@SportType',
+								cs.PT					AS '@PositionTaking'	
+						FROM	#tmpPT_Old AS cs
+							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+											FROM	#SportTypeBetType
+											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+						WHERE CustID = @SuperID AND stb.SettingLevel = 2 -- SportType setting level
+						ORDER BY stb.ProductID,stb.ProductName,cs.SportType
+						FOR XML PATH('SportType'),
+						TYPE
+					),
+					(
+						SELECT	DISTINCT stb.ProductID			AS '@ProductID',
+								stb.ProductName			AS '@ProductName',
+								cs.BetType				AS '@BetType',
+								cs.PT					AS '@PositionTaking'	
+						FROM	#tmpPT_Old AS cs
+							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+											FROM	#SportTypeBetType
+											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+						WHERE CustID = @SuperID AND stb.SettingLevel = 3 -- BetType setting level
+						ORDER BY stb.ProductID,stb.ProductName,cs.Bettype
+						FOR XML PATH('BetType'), 
+						TYPE
+					),
+					(
+						SELECT	DISTINCT stb.ProductID			AS '@ProductID',
+								stb.ProductName			AS '@ProductName',
+								cs.SportType			AS '@SportType',
+								cs.BetType				AS '@BetType',
+								cs.PT					AS '@PositionTaking'	
+						FROM	#tmpPT_Old AS cs
+							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+											FROM	#SportTypeBetType
+											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+						WHERE CustID = @SuperID AND stb.SettingLevel = 4 -- SportType BetType setting level
+						ORDER BY stb.ProductID,stb.ProductName,cs.SportType,cs.Bettype
+						FOR XML PATH('SportTypeBetType'), 
+						TYPE
+					)
+			FOR XML PATH('R'),
+			TYPE)
+		SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+		-- Log new updated data
+		SET @xml = (
+			SELECT	@SuperID						AS '@SuperID',
+					@UserID							AS '@UserID',				
+					@IP								AS '@IP',
+					(
+						SELECT DISTINCT cs.ProductID			AS '@ProductID',
+								cs.ProductName					AS '@ProductName',
+								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
+						FROM	#SportTypeBetType AS cs	
+							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
+							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
+						WHERE cs.SettingLevel = 1 
+							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- Product setting level
+						GROUP BY cs.ProductID,	cs.ProductName
+						ORDER BY cs.ProductID,cs.ProductName
+						FOR XML PATH('Product'),
+						TYPE
+					),
+					(
+						SELECT cs.ProductID						AS '@ProductID',
+								cs.ProductName					AS '@ProductName',
+								cs.SportType					AS '@SportType',
+								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
+						FROM	#SportTypeBetType AS cs	
+							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
+							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
+						WHERE cs.SettingLevel = 2 
+							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- SportType setting level
+						GROUP BY cs.ProductID,	cs.ProductName,cs.SportType
+						ORDER BY cs.ProductID,	cs.ProductName,cs.SportType
+						FOR XML PATH('SportType'),
+						TYPE
+					),
+					(
+						SELECT DISTINCT	cs.ProductID			AS '@ProductID',
+								cs.ProductName					AS '@ProductName',
+								cs.BetType						AS '@BetType',
+								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
+						FROM	#SportTypeBetType AS cs	
+							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
+							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
+						WHERE cs.SettingLevel = 3 
+							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- BetType setting level
+						GROUP BY cs.ProductID,	cs.ProductName,cs.BetType
+						ORDER BY cs.ProductID,	cs.ProductName,cs.BetType
+						FOR XML PATH('BetType'),
+						TYPE
+					),
+					(
+						SELECT DISTINCT	cs.ProductID			AS '@ProductID',
+								cs.ProductName					AS '@ProductName',
+								cs.SportType					AS '@SportType',
+								cs.BetType						AS '@BetType',
+								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
+						FROM	#SportTypeBetType AS cs	
+							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
+							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
+						WHERE cs.SettingLevel = 4 
+							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- SportType BetType setting level
+						GROUP BY cs.ProductID,	cs.ProductName,cs.SportType, cs.BetType
+						ORDER BY cs.ProductID,	cs.ProductName,cs.SportType, cs.BetType
+						FOR XML PATH('SportTypeBetType'),
+						TYPE
+					)
+			FOR XML PATH('R'),
+			TYPE
+		)
+
+		SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+		SELECT @endRun = GETDATE()
+			, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
+			
+		BEGIN TRY
+			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
+				@UserID				= @UserID
+				, @CustIDList		= @CustIDList
+				, @ActionID			= 472
+				, @NewPT_XML		= @logSpData
+				, @OldPT_XML		= @logSpData_Old
+				, @duration			= @duration
+		END TRY
+
+		BEGIN CATCH
+			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
+				@UserID				= @UserID
+				, @CustIDList		= @CustIDList
+				, @ActionID			= 472
+				, @NewPT_XML		= @logSpData
+				, @OldPT_XML		= @logSpData_Old
+				, @duration			= @duration
+		END CATCH
+	END
+
+	SELECT @ErrMsg='Update Position Taking successfully'
+	
+	DROP TABLE #PTProduct
+	DROP TABLE #SportTypeBetType
+	DROP TABLE #tmpSMA 
+	DROP TABLE #Dummy 	
+	DROP TABLE #tmpSMATemp 
+	DROP TABLE #tmpPT_Old 
+
+	END
+GO
