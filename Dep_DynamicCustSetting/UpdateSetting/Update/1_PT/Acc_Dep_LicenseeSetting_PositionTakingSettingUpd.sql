@@ -28,7 +28,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT
-	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT, @Batch INT, @Threshold INT,@NumberProduct INT
+	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
 	
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
@@ -119,13 +119,10 @@ BEGIN
 		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
 		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
 	
-	SET @Threshold = 3000 
-	SET @NumberProduct = (SELECT COUNT(DISTINCT Bettype) FROM #SportTypeBetType) 
-	SET @Batch = @Threshold / @NumberProduct
-	
+	SET @Threshold = 5000 
 	WHILE(1 =1)
 	BEGIN
-		UPDATE TOP (@Batch) c WITH (ROWLOCK)
+		UPDATE TOP (@Threshold) c WITH (ROWLOCK)
 		SET c.isfinished = 1
 		OUTPUT DELETED.CustID,DELETED.RoleID,DELETED.Currency,DELETED.ProductSettingID INTO #tmpSMATemp(CustID,RoleID,Currency,ProductSettingID)
 		FROM #tmpSMA c 
