@@ -31,12 +31,12 @@ BEGIN
 	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT, @Batch INT, @Threshold INT,@NumberProduct INT
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
 	
-	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY)
+	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
 	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,Currency INT,IsLive BIT,PT SMALLMONEY,
-								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,isfinished BIT DEFAULT(0) )
-	CREATE TABLE #tmpSMA (CustID INT PRIMARY KEY CLUSTERED,RoleID INT,Currency INT,srecommend INT,isfinished BIT DEFAULT(0))
+								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductID,Sporttype ,Bettype ))
+	CREATE TABLE #tmpSMA (CustID INT ,RoleID INT,Currency INT,srecommend INT,  ProductSettingID INT, isfinished BIT DEFAULT(0),PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)	
-	CREATE TABLE #tmpSMATemp (CustID INT PRIMARY KEY CLUSTERED,RoleID INT,Currency INT,srecommend INT)
+	CREATE TABLE #tmpSMATemp (CustID INT,RoleID INT,Currency INT,srecommend INT, ProductSettingID INT,PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #tmpPT_Old (CustID INT ,SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY, PRIMARY KEY(CustID ,Sporttype ,Bettype ))
 
 	SET @startRun = GETDATE()
@@ -66,16 +66,20 @@ BEGIN
 	WHERE dp.SettingType=1 AND (a.Currency = 0 OR (e.IsActive = 1 AND e.OfferSite IN (0,2)))
 	
 	-- ALL SMA affect
-	INSERT INTO #tmpSMA(CustID,Currency,RoleID,srecommend)
-	SELECT ci.custid, ci.currency, ci.roleid,ci.srecommend
+	INSERT INTO #tmpSMA(CustID,Currency,RoleID,srecommend,ProductSettingID)
+	SELECT DISTINCT ci.custid, ci.currency, ci.roleid,ci.srecommend,lps.ProductSettingID
 	FROM custInfo ci WITH(NOLOCK) 
 		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
+		INNER JOIN Dep_LicenseeProductSetting lps with(nolock) ON ci.custid = lps.CustID
+		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID
 	WHERE Roleid=4 AND cs.site = @Site 
 	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
 	UNION ALL 
-	SELECT ci.custid, ci.currency, ci.roleid,ci.srecommend
+	SELECT  DISTINCT ci.custid, ci.currency, ci.roleid,ci.srecommend,lps.ProductSettingID
 	FROM custInfo ci WITH(NOLOCK) 
 		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
+		INNER JOIN Dep_LicenseeProductSetting lps with(nolock) ON ci.custid = lps.CustID
+		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID
 	WHERE Roleid=4 AND cs.site = @Site 
 	AND ci.currency NOT IN (SELECT Currency FROM #PTProduct WHERE Currency <> 0)
 	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
@@ -97,16 +101,20 @@ BEGIN
 			 username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%')
 		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
 	
-	INSERT INTO #tmpSMA(CustID,Currency,RoleID,ci.srecommend)
-	SELECT CustID, currency,roleid,srecommend FROM custInfo ci WITH(NOLOCK) 
-	WHERE Enabled=1 AND Roleid in (2,3)  
-		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
+	INSERT INTO #tmpSMA(CustID,Currency,RoleID,ci.srecommend,ProductSettingID)
+	SELECT  DISTINCT ci.CustID, ci.currency,ci.roleid,ci.srecommend, sa.ProductSettingID 
+	FROM custInfo ci WITH(NOLOCK) 
+	INNER JOIN #tmpSMA sa ON ci.srecommend = sa.CustID AND sa.RoleID = 4
+	WHERE Enabled=1 AND ci.Roleid in (2,3)  
+		AND ci.srecommend IN (SELECT CustID FROM  #tmpSMA)
 		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
 		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
 	UNION ALL 
-	SELECT CustID, currency,roleid,srecommend FROM custInfo ci WITH(NOLOCK) 
-	WHERE Enabled=1 AND Roleid in (2,3)  
-		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
+	SELECT  DISTINCT ci.CustID, ci.currency,ci.roleid,ci.srecommend, sa.ProductSettingID 
+	FROM custInfo ci WITH(NOLOCK) 
+	INNER JOIN #tmpSMA sa ON ci.srecommend = sa.CustID AND sa.RoleID = 4
+	WHERE Enabled=1 AND ci.Roleid in (2,3)  
+		AND ci.srecommend IN (SELECT CustID FROM  #tmpSMA)
 		AND NOT EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
 		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
 		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
@@ -119,7 +127,7 @@ BEGIN
 	BEGIN
 		UPDATE TOP (@Batch) c WITH (ROWLOCK)
 		SET c.isfinished = 1
-		OUTPUT DELETED.CustID,DELETED.RoleID,DELETED.Currency INTO #tmpSMATemp(CustID,RoleID,Currency)
+		OUTPUT DELETED.CustID,DELETED.RoleID,DELETED.Currency,DELETED.ProductSettingID INTO #tmpSMATemp(CustID,RoleID,Currency,ProductSettingID)
 		FROM #tmpSMA c 
 		WHERE isfinished = 0
 		
@@ -131,8 +139,9 @@ BEGIN
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
 		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID
-			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType AND t.Currency = stb.Currency 
+			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID 
+			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND a.SportType=stb.SportType 
+												AND a.BetType=stb.BetType AND t.Currency = stb.Currency 
 		
 		-- all currency
 		UPDATE a
@@ -142,7 +151,8 @@ BEGIN
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
 		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID
-			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType AND stb.Currency = 0
+			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND a.SportType=stb.SportType 
+												AND a.BetType=stb.BetType AND stb.Currency = 0
 		WHERE  NOT EXISTS (SELECT TOP 1 1 FROM #SportTypeBetType WHERE Currency = t.Currency AND a.SportType=SportType AND a.BetType=BetType )
 		
 		TRUNCATE TABLE #tmpSMATemp
@@ -196,7 +206,7 @@ BEGIN
 					@CustIDList=@CustIDList,
 					@PT=@PT	
 			END
-			UPDATE #tmpSMA SET isfinished = 1 WHERE RoleID = 4 AND Currency = @Currency
+			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency
 			WAITFOR DELAY '00:00:00.28'
 	END
 	
@@ -376,6 +386,7 @@ BEGIN
 				, @OldPT_XML		= @logSpData_Old
 				, @duration			= @duration
 		END CATCH
+		UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND srecommend = @SuperID
 	END
 
 	SELECT @ErrMsg='Update Position Taking successfully'
