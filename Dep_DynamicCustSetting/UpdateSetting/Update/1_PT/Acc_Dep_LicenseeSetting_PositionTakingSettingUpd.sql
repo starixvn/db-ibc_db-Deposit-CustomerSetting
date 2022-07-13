@@ -356,7 +356,7 @@ BEGIN
 					, @OldPT_XML		= @logSpData_Old
 					, @duration			= @duration
 			END CATCH
-			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency AND srecommend = @SuperID
+			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency AND CustID = @SuperID
 			WAITFOR DELAY '00:00:00.28'
 	END
 
