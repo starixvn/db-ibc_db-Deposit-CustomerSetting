@@ -357,7 +357,7 @@ BEGIN
 					, @duration			= @duration
 			END CATCH
 			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency AND CustID = @SuperID
-			WAITFOR DELAY '00:00:00.28'
+			WAITFOR DELAY '00:00:00.100'
 	END
 
 	SELECT @ErrMsg='Update Position Taking successfully'
