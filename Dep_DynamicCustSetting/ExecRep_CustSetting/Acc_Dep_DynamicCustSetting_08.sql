@@ -61,9 +61,6 @@ BEGIN
 		FROM dbo.Customer c WITH(NOLOCK)
 			INNER JOIN 	dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid=m.CustID	
 			INNER JOIN #Agent a ON c.recommend=a.CustID
-			CROSS APPLY (SELECT TOP 1 custid
-						 FROM dbo.Dep_CustPTSetting_Member ptm WITH (NOLOCK)
-						 WHERE 	ptm.custid = c.custid) AS tmp
 		WHERE c.roleid =1 AND m.IsGroupedPT=0
 
 		--Parse XML
@@ -116,11 +113,8 @@ BEGIN
 				INNER JOIN #ValuePT v ON a.SportType=v.SportType AND a.BetType=v.BetType AND a.IsLive=v.IsLive			
 		END
 
-		IF	ISNULL(@NumProduct	,0) = 0
-		BEGIN
-			SET @NumProduct = 1
-		END
-		SET @Threshold=3000	/ @NumProduct
+		
+		SET @Threshold=5000	/ @NumProduct
 
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
 		BEGIN

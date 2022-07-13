@@ -28,7 +28,7 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT
-	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT, @NumProduct INT
+	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT, @NumProduct INT = 0
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
 	
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
@@ -204,7 +204,7 @@ BEGIN
 				FOR XML PATH('PT'),ROOT ('ROOT'),
 				TYPE )
 			
-			IF @PT IS NOT NULL
+			IF @PT IS NOT NULL AND @NumProduct <> 0
 			BEGIN
 				EXEC Acc_Dep_DynamicCustSetting_08	
 					@Site = @Site,
