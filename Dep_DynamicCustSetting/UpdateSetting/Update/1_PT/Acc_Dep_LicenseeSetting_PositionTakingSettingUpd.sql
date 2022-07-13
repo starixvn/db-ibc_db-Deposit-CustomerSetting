@@ -28,16 +28,17 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT
-	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT
+	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT, @NumProduct INT
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
 	
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
 	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,Currency INT,IsLive BIT,PT SMALLMONEY,
-								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductID,Sporttype ,Bettype ))
+								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,IsApplyBA BIT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductID,Sporttype ,Bettype,Currency))
 	CREATE TABLE #tmpSMA (CustID INT ,RoleID INT,Currency INT,srecommend INT,  ProductSettingID INT, isfinished BIT DEFAULT(0),PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)	
 	CREATE TABLE #tmpSMATemp (CustID INT,RoleID INT,Currency INT,srecommend INT, ProductSettingID INT,PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #tmpPT_Old (CustID INT ,SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY, PRIMARY KEY(CustID ,Sporttype ,Bettype ))
+	CREATE TABLE #tmpAdjPT (SportType INT,Bettype INT,IsLive BIT,IsApplyBA BIT, PT SMALLMONEY,ProductID INT,ProductName VARCHAR(50),SettingLevel TINYINT, PRIMARY KEY(Sporttype ,Bettype ))
 
 	SET @startRun = GETDATE()
 	SELECT	@ErrCode = 0, @ErrMsg = ''
@@ -56,12 +57,12 @@ BEGIN
 	EXECUTE sp_xml_removedocument @iDoc;
 	
 	-- All sport type  - bettype
-	INSERT INTO #SportTypeBetType (ProductID,SportType,Bettype,Currency,IsLive,PT,ProductName,SettingLevel,ProductSettingID)
-	SELECT a.ProductID,psd.SportType,psd.BetType,a.Currency,IsLive,a.PT, p.ProductName,dp.SettingLevel,dp.ProductSettingID
+	INSERT INTO #SportTypeBetType (ProductID,SportType,Bettype,Currency,IsLive,PT,ProductName,SettingLevel,ProductSettingID,IsApplyBA)
+	SELECT a.ProductID,psd.SportType,psd.BetType,a.Currency,IsLive,a.PT, p.ProductName,dp.SettingLevel,dp.ProductSettingID,psd.IsApplyBA
 	FROM #PTProduct a
 	INNER JOIN Dep_ProductSetting dp WITH(NOLOCK) ON dp.ProductID=a.ProductID 
 	INNER JOIN Dep_ProductSettingDetail psd WITH(NOLOCK) ON dp.ProductSettingID = psd.ProductSettingID
-	LEFT JOIN exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency 
+	LEFT JOIN  Exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency 
 	INNER JOIN DBPRO.bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = a.ProductID
 	WHERE dp.SettingType=1 AND (a.Currency = 0 OR (e.IsActive = 1 AND e.OfferSite IN (0,2)))
 	
@@ -92,7 +93,8 @@ BEGIN
 		,	a.SuperPT			
 	FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN #tmpSMA t ON a.CustID=t.CustID
-			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType AND a.IsLive = stb.IsLive 
+			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType 
+												AND a.IsLive = stb.IsLive  AND t.ProductSettingID = stb.ProductSettingID
 
 	INSERT INTO #Dummy(CustID)
 	SELECT CustID FROM Customer WITH(NOLOCK) 
@@ -154,12 +156,13 @@ BEGIN
 		
 		TRUNCATE TABLE #tmpSMATemp
 	END
-
+	
 	UPDATE #tmpSMA SET isfinished = 0
 	WHILE(1 =1)
 	BEGIN
 			UPDATE TOP (1) c
-			SET c.isfinished = 1, 
+			SET c.isfinished = 1,
+				@SuperID = c.srecommend, 
 				@Currency = c.Currency 
 			FROM #tmpSMA c 
 			WHERE isfinished = 0 AND RoleID = 4
@@ -168,222 +171,193 @@ BEGIN
 
 			SELECT @CustIDList =  STUFF((SELECT DISTINCT ',' + cast(custid AS VARCHAR(10))
 			FROM #tmpSMA
-			WHERE RoleID = 2 AND Currency = @Currency
+			WHERE RoleID = 2 AND Currency = @Currency AND srecommend = @SuperID
 			FOR XML PATH('')), 1, 1, '')
+
+			TRUNCATE TABLE #tmpAdjPT
 			
+			INSERT INTO #tmpAdjPT(SportType,BetType,IsLive,PT,IsApplyBA,ProductID,ProductName,SettingLevel)
+			SELECT SportType,BetType,IsLive,PT,IsApplyBA,ProductID,ProductName,SettingLevel
+			FROM   #SportTypeBetType stb
+			INNER JOIN #tmpSMA sa on stb.ProductSettingID = sa.ProductSettingID
+			WHERE sa.CustID = @SuperID AND sa.RoleID = 4 AND stb.Currency = sa.Currency 
+			UNION
+			SELECT	SportType,BetType,IsLive,PT,IsApplyBA,ProductID,ProductName,SettingLevel
+			FROM	#SportTypeBetType stb	
+			INNER JOIN #tmpSMA sa on stb.ProductSettingID = sa.ProductSettingID
+			WHERE sa.CustID = @SuperID AND sa.RoleID = 4 AND stb.Currency = 0 AND 
+					NOT EXISTS( SELECT 1 
+					FROM #SportTypeBetType 
+					WHERE Currency = sa.Currency 
+					AND SportType = stb.SportType 
+					AND Bettype = stb.Bettype )
+
+			SET @NumProduct = (SELECT COUNT(1) FROM #tmpAdjPT)
+
 			SET @PT = (
 				SELECT	SportType	AS '@SportType',
 						BetType		AS '@BetType',
 						IsLive 		AS '@IsLive',
-						PT 			AS '@PT'
-				
-				FROM (
-					SELECT SportType,BetType,IsLive,PT
-					FROM   #SportTypeBetType stb	
-					WHERE stb.Currency = @Currency 
-					UNION
-					SELECT	SportType,BetType,IsLive,PT
-					FROM	#SportTypeBetType stb	
-					WHERE stb.Currency = 0 AND 
-							NOT EXISTS( SELECT 1 
-							FROM #SportTypeBetType 
-							WHERE Currency = @Currency 
-							AND SportType = stb.SportType 
-							AND Bettype = stb.Bettype )) KQ
+						PT 			AS '@PT',
+						IsApplyBA 	AS '@IsApplyBA'
+				FROM #tmpAdjPT 
 				FOR XML PATH('PT'),ROOT ('ROOT'),
 				TYPE )
 			
 			IF @PT IS NOT NULL
 			BEGIN
-				
 				EXEC Acc_Dep_DynamicCustSetting_08	
 					@Site = @Site,
 					@Currency = @Currency,
-					@InputPT = @InputPT,
+					@NumProduct = @NumProduct,
 					@CustIDList=@CustIDList,
 					@PT=@PT	
 			END
-			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency
-			WAITFOR DELAY '00:00:00.28'
-	END
-	
-	UPDATE #tmpSMA SET isfinished = 0
-	WHILE(1 =1)
-	BEGIN
-		UPDATE TOP (1) c
-		SET c.isfinished = 1, 
-			@SuperID = c.srecommend,
-			@Currency = c.Currency
-		FROM #tmpSMA c 
-		WHERE isfinished = 0 AND RoleID = 4
 		
-		IF @@ROWCOUNT = 0 BREAK
-
-		SELECT @CustIDList =  STUFF((SELECT DISTINCT ',' + cast(custid AS VARCHAR(10))
-		FROM #tmpSMA
-		WHERE RoleID = 2 AND srecommend = @SuperID AND Currency = @Currency
-		FOR XML PATH('')), 1, 1, '')
-
-		--START LOGGING
-		-- Log old data
-		SET @xml = (
-			SELECT	@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					(
-						SELECT DISTINCT	stb.ProductID			AS '@ProductID',
-								stb.ProductName			AS '@ProductName',
-								cs.PT					AS '@PositionTaking'	
-						FROM	#tmpPT_Old AS cs
-							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
-											FROM	#SportTypeBetType
-											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
-						WHERE CustID = @SuperID AND stb.SettingLevel = 1 -- Product setting level
-						ORDER BY stb.ProductID,stb.ProductName
-						FOR XML PATH('Product'), 
-						TYPE
-					),
-					(
-						SELECT	DISTINCT stb.ProductID			AS '@ProductID',
-								stb.ProductName			AS '@ProductName',
-								cs.SportType			AS '@SportType',
-								cs.PT					AS '@PositionTaking'	
-						FROM	#tmpPT_Old AS cs
-							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
-											FROM	#SportTypeBetType
-											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
-						WHERE CustID = @SuperID AND stb.SettingLevel = 2 -- SportType setting level
-						ORDER BY stb.ProductID,stb.ProductName,cs.SportType
-						FOR XML PATH('SportType'),
-						TYPE
-					),
-					(
-						SELECT	DISTINCT stb.ProductID			AS '@ProductID',
-								stb.ProductName			AS '@ProductName',
-								cs.BetType				AS '@BetType',
-								cs.PT					AS '@PositionTaking'	
-						FROM	#tmpPT_Old AS cs
-							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
-											FROM	#SportTypeBetType
-											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
-						WHERE CustID = @SuperID AND stb.SettingLevel = 3 -- BetType setting level
-						ORDER BY stb.ProductID,stb.ProductName,cs.Bettype
-						FOR XML PATH('BetType'), 
-						TYPE
-					),
-					(
-						SELECT	DISTINCT stb.ProductID			AS '@ProductID',
-								stb.ProductName			AS '@ProductName',
-								cs.SportType			AS '@SportType',
-								cs.BetType				AS '@BetType',
-								cs.PT					AS '@PositionTaking'	
-						FROM	#tmpPT_Old AS cs
-							CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
-											FROM	#SportTypeBetType
-											WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
-						WHERE CustID = @SuperID AND stb.SettingLevel = 4 -- SportType BetType setting level
-						ORDER BY stb.ProductID,stb.ProductName,cs.SportType,cs.Bettype
-						FOR XML PATH('SportTypeBetType'), 
-						TYPE
-					)
-			FOR XML PATH('R'),
-			TYPE)
-		SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-
-		-- Log new updated data
-		SET @xml = (
-			SELECT	@SuperID						AS '@SuperID',
-					@UserID							AS '@UserID',				
-					@IP								AS '@IP',
-					(
-						SELECT DISTINCT cs.ProductID			AS '@ProductID',
-								cs.ProductName					AS '@ProductName',
-								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
-						FROM	#SportTypeBetType AS cs	
-							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
-							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
-						WHERE cs.SettingLevel = 1 
-							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- Product setting level
-						GROUP BY cs.ProductID,	cs.ProductName
-						ORDER BY cs.ProductID,cs.ProductName
-						FOR XML PATH('Product'),
-						TYPE
-					),
-					(
-						SELECT cs.ProductID						AS '@ProductID',
-								cs.ProductName					AS '@ProductName',
-								cs.SportType					AS '@SportType',
-								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
-						FROM	#SportTypeBetType AS cs	
-							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
-							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
-						WHERE cs.SettingLevel = 2 
-							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- SportType setting level
-						GROUP BY cs.ProductID,	cs.ProductName,cs.SportType
-						ORDER BY cs.ProductID,	cs.ProductName,cs.SportType
-						FOR XML PATH('SportType'),
-						TYPE
-					),
-					(
-						SELECT DISTINCT	cs.ProductID			AS '@ProductID',
-								cs.ProductName					AS '@ProductName',
-								cs.BetType						AS '@BetType',
-								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
-						FROM	#SportTypeBetType AS cs	
-							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
-							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
-						WHERE cs.SettingLevel = 3 
-							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- BetType setting level
-						GROUP BY cs.ProductID,	cs.ProductName,cs.BetType
-						ORDER BY cs.ProductID,	cs.ProductName,cs.BetType
-						FOR XML PATH('BetType'),
-						TYPE
-					),
-					(
-						SELECT DISTINCT	cs.ProductID			AS '@ProductID',
-								cs.ProductName					AS '@ProductName',
-								cs.SportType					AS '@SportType',
-								cs.BetType						AS '@BetType',
-								MIN(ISNULL(sbt.PT,sbt0.PT))		AS '@PositionTaking'	
-						FROM	#SportTypeBetType AS cs	
-							LEFT JOIN #SportTypeBetType sbt ON cs.ProductID = sbt.ProductID AND cs.SportType = sbt.SportType AND cs.Bettype = sbt.Bettype AND sbt.Currency = @Currency			
-							LEFT JOIN #SportTypeBetType sbt0 ON cs.ProductID = sbt0.ProductID AND cs.SportType = sbt0.SportType AND cs.Bettype = sbt0.Bettype AND sbt0.Currency = 0			
-						WHERE cs.SettingLevel = 4 
-							AND EXISTS (SELECT 1 FROM #tmpPT_Old WHERE SportType = cs.SportType AND Bettype = cs.Bettype AND CustID = @SuperID) -- SportType BetType setting level
-						GROUP BY cs.ProductID,	cs.ProductName,cs.SportType, cs.BetType
-						ORDER BY cs.ProductID,	cs.ProductName,cs.SportType, cs.BetType
-						FOR XML PATH('SportTypeBetType'),
-						TYPE
-					)
-			FOR XML PATH('R'),
-			TYPE
-		)
-
-		SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
-
-		SELECT @endRun = GETDATE()
-			, @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
+			--START LOGGING
+			-- Log old data
+			SET @xml = (
+				SELECT	@SuperID						AS '@SuperID',
+						@UserID							AS '@UserID',				
+						@IP								AS '@IP',
+						(
+							SELECT DISTINCT	stb.ProductID			AS '@ProductID',
+									stb.ProductName			AS '@ProductName',
+									cs.PT					AS '@PositionTaking'	
+							FROM	#tmpPT_Old AS cs
+								CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+												FROM	#SportTypeBetType
+												WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+							WHERE CustID = @SuperID AND stb.SettingLevel = 1 -- Product setting level
+							ORDER BY stb.ProductID,stb.ProductName
+							FOR XML PATH('Product'), 
+							TYPE
+						),
+						(
+							SELECT	DISTINCT stb.ProductID			AS '@ProductID',
+									stb.ProductName			AS '@ProductName',
+									cs.SportType			AS '@SportType',
+									cs.PT					AS '@PositionTaking'	
+							FROM	#tmpPT_Old AS cs
+								CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+												FROM	#SportTypeBetType
+												WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+							WHERE CustID = @SuperID AND stb.SettingLevel = 2 -- SportType setting level
+							ORDER BY stb.ProductID,stb.ProductName,cs.SportType
+							FOR XML PATH('SportType'),
+							TYPE
+						),
+						(
+							SELECT	DISTINCT stb.ProductID			AS '@ProductID',
+									stb.ProductName			AS '@ProductName',
+									cs.BetType				AS '@BetType',
+									cs.PT					AS '@PositionTaking'	
+							FROM	#tmpPT_Old AS cs
+								CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+												FROM	#SportTypeBetType
+												WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+							WHERE CustID = @SuperID AND stb.SettingLevel = 3 -- BetType setting level
+							ORDER BY stb.ProductID,stb.ProductName,cs.Bettype
+							FOR XML PATH('BetType'), 
+							TYPE
+						),
+						(
+							SELECT	DISTINCT stb.ProductID			AS '@ProductID',
+									stb.ProductName			AS '@ProductName',
+									cs.SportType			AS '@SportType',
+									cs.BetType				AS '@BetType',
+									cs.PT					AS '@PositionTaking'	
+							FROM	#tmpPT_Old AS cs
+								CROSS APPLY ( SELECT DISTINCT ProductID,ProductName,SettingLevel
+												FROM	#SportTypeBetType
+												WHERE cs.SportType = SportType AND cs.Bettype = Bettype) stb
+							WHERE CustID = @SuperID AND stb.SettingLevel = 4 -- SportType BetType setting level
+							ORDER BY stb.ProductID,stb.ProductName,cs.SportType,cs.Bettype
+							FOR XML PATH('SportTypeBetType'), 
+							TYPE
+						)
+				FOR XML PATH('R'),
+				TYPE)
+			SET @logSpData_Old = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
 			
-		BEGIN TRY
-			EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
-				@UserID				= @UserID
-				, @CustIDList		= @CustIDList
-				, @ActionID			= 472
-				, @NewPT_XML		= @logSpData
-				, @OldPT_XML		= @logSpData_Old
-				, @duration			= @duration
-		END TRY
+			-- Log new updated data
+			SET @xml = (
+				SELECT	@SuperID						AS '@SuperID',
+						@UserID							AS '@UserID',				
+						@IP								AS '@IP',
+						(
+							SELECT DISTINCT cs.ProductID			AS '@ProductID',
+									cs.ProductName					AS '@ProductName',
+									cs.PT							AS '@PositionTaking'	
+							FROM	#tmpAdjPT AS cs	
+							WHERE cs.SettingLevel = 1  -- Product setting level
+							ORDER BY cs.ProductID,cs.ProductName
+							FOR XML PATH('Product'),
+							TYPE
+						),
+						(
+							SELECT cs.ProductID						AS '@ProductID',
+									cs.ProductName					AS '@ProductName',
+									cs.SportType					AS '@SportType',
+									cs.PT							AS '@PositionTaking'	
+							FROM	#tmpAdjPT AS cs				
+							WHERE cs.SettingLevel = 2  -- SportType setting level
+							ORDER BY cs.ProductID,	cs.ProductName,cs.SportType
+							FOR XML PATH('SportType'),
+							TYPE
+						),
+						(
+							SELECT DISTINCT	cs.ProductID			AS '@ProductID',
+									cs.ProductName					AS '@ProductName',
+									cs.BetType						AS '@BetType',
+									cs.PT							AS '@PositionTaking'	
+							FROM	#tmpAdjPT AS cs				
+							WHERE cs.SettingLevel = 3 -- BetType setting level
+							ORDER BY cs.ProductID,	cs.ProductName,cs.BetType
+							FOR XML PATH('BetType'),
+							TYPE
+						),
+						(
+							SELECT DISTINCT	cs.ProductID			AS '@ProductID',
+									cs.ProductName					AS '@ProductName',
+									cs.SportType					AS '@SportType',
+									cs.BetType						AS '@BetType',
+									cs.PT							AS '@PositionTaking'	
+							FROM	#tmpAdjPT AS cs			
+							WHERE cs.SettingLevel = 4 -- SportType BetType setting level
+							ORDER BY cs.ProductID,	cs.ProductName,cs.SportType, cs.BetType
+							FOR XML PATH('SportTypeBetType'),
+							TYPE
+						)
+				FOR XML PATH('R'),
+				TYPE
+			)
 
-		BEGIN CATCH
-			EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
-				@UserID				= @UserID
-				, @CustIDList		= @CustIDList
-				, @ActionID			= 472
-				, @NewPT_XML		= @logSpData
-				, @OldPT_XML		= @logSpData_Old
-				, @duration			= @duration
-		END CATCH
-		UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND srecommend = @SuperID
+			SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')
+
+			SELECT @endRun = GETDATE() , @duration = DATEDIFF(MILLISECOND, @startRun, @endRun)
+		
+			BEGIN TRY
+				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
+					@UserID				= @UserID
+					, @CustIDList		= @CustIDList
+					, @ActionID			= 472
+					, @NewPT_XML		= @logSpData
+					, @OldPT_XML		= @logSpData_Old
+					, @duration			= @duration
+			END TRY
+
+			BEGIN CATCH
+				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
+					@UserID				= @UserID
+					, @CustIDList		= @CustIDList
+					, @ActionID			= 472
+					, @NewPT_XML		= @logSpData
+					, @OldPT_XML		= @logSpData_Old
+					, @duration			= @duration
+			END CATCH
+			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency AND srecommend = @SuperID
+			WAITFOR DELAY '00:00:00.28'
 	END
 
 	SELECT @ErrMsg='Update Position Taking successfully'
@@ -394,6 +368,6 @@ BEGIN
 	DROP TABLE #Dummy 	
 	DROP TABLE #tmpSMATemp 
 	DROP TABLE #tmpPT_Old 
-
+	DROP TABLE #tmpAdjPT
 	END
 GO
