@@ -34,15 +34,11 @@ BEGIN
 	   )
 		RETURN
 
-		DECLARE @StartRow	INT, 
-				@MaxRow		INT,
-				@Threshold	INT, 
-				@StopRow	INT,
+		DECLARE @Threshold	INT, 
 				@xml		XML, 
 				@iDoc		INT		
 
-		SET @StartRow=1
-		SET @Threshold=3000
+		SET @Threshold=5000	/ @NumProduct
 		
 		CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY,IsApplyBA BIT)
 		CREATE TABLE #tempMemNoGrouped(CustID INT PRIMARY KEY CLUSTERED,isfinished BIT DEFAULT(0))	
@@ -112,10 +108,7 @@ BEGIN
 				INNER JOIN #Agent ag ON a.AgentID=ag.CustID
 				INNER JOIN #ValuePT v ON a.SportType=v.SportType AND a.BetType=v.BetType AND a.IsLive=v.IsLive			
 		END
-
 		
-		SET @Threshold=5000	/ @NumProduct
-
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
 		BEGIN
 			IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
