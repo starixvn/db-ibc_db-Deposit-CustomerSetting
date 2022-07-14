@@ -42,20 +42,27 @@ BEGIN
 
 	SET @startRun = GETDATE()
 	SELECT	@ErrCode = 0, @ErrMsg = ''
-	--Parse XML
-	EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @InputPT
+	BEGIN TRY
+		--Parse XML
+		EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @InputPT
 
-	INSERT INTO #PTProduct (ProductID, Currency, PT)
-	SELECT	ox.PID, ox.CID, ox.PT
-	FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
-	WITH (
-		PID		INT
-	,	CID		INT
-	,	PT		SMALLMONEY	
-	) AS ox;
+		INSERT INTO #PTProduct (ProductID, Currency, PT)
+		SELECT	ox.PID, ox.CID, ox.PT
+		FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
+		WITH (
+			PID		INT
+		,	CID		INT
+		,	PT		SMALLMONEY	
+		) AS ox;
 
-	EXECUTE sp_xml_removedocument @iDoc;
-	
+		EXECUTE sp_xml_removedocument @iDoc;
+	END TRY
+
+	BEGIN CATCH
+		SET @ErrCode = 100
+		SET @ErrMsg = N'Paramter invalid.'
+		RETURN
+	END CATCH;
 	-- All sport type  - bettype
 	INSERT INTO #SportTypeBetType (ProductID,SportType,Bettype,Currency,IsLive,PT,ProductName,SettingLevel,ProductSettingID,IsApplyBA)
 	SELECT a.ProductID,psd.SportType,psd.BetType,a.Currency,IsLive,a.PT, p.ProductName,dp.SettingLevel,dp.ProductSettingID,psd.IsApplyBA
@@ -206,12 +213,20 @@ BEGIN
 			
 			IF @PT IS NOT NULL AND @NumProduct <> 0
 			BEGIN
-				EXEC Acc_Dep_DynamicCustSetting_08	
-					@Site = @Site,
-					@Currency = @Currency,
-					@NumProduct = @NumProduct,
-					@CustIDList=@CustIDList,
-					@PT=@PT	
+					EXEC Acc_Dep_DynamicCustSetting_08	
+						@Site = @Site,
+						@Currency = @Currency,
+						@NumProduct = @NumProduct,
+						@CustIDList=@CustIDList,
+						@PT=@PT	
+					
+					IF	@@ERROR <> 0
+					BEGIN	
+						SELECT	@ErrCode = 101
+							,	@ErrMsg = 'Update Position Taking unsuccessfuly.';
+
+						BREAK;
+					END;
 			END
 		
 			--START LOGGING
@@ -359,8 +374,10 @@ BEGIN
 			UPDATE #tmpSMA SET isfinished = 1 WHERE isfinished = 0 AND RoleID = 4 AND Currency = @Currency AND CustID = @SuperID
 			WAITFOR DELAY '00:00:00.100'
 	END
-
-	SELECT @ErrMsg='Update Position Taking successfully'
+	IF @ErrCode = 0
+	BEGIN
+		SET @ErrMsg='Update Position Taking successfully'
+	END
 	
 	DROP TABLE #PTProduct
 	DROP TABLE #SportTypeBetType
