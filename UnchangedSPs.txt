@@ -1,0 +1,2 @@
+Dep_DynamicCustSetting\Others\f_Dep_CustSetting_SportBetTypeSettingSelect.sql
+Dep_DynamicCustSetting\UpdateSetting\Update\1_PT\Acc_Dep_CustSetting_PositionTakingSettingSelect.sql
