@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee_winfred] 
+ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee] 
 		@sitename			VARCHAR(10)
 	,	@Product			VARCHAR(MAX)	
 	,	@ErrCode			INT = 0				OUTPUT
