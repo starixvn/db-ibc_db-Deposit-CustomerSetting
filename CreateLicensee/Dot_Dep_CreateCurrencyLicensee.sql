@@ -42,6 +42,7 @@ AS
 	- 20220504@Winfred: Enhance PT for Keno no rounded [redmine:#172324]
 	- 20220616@Winfred: Integrate new games of Virtual Games product [redmine:#172671]
 	- 20220609@Winfred: Integrate Virtual Sports 3 [redmine:#173382]
+	- 20220725@Winfred: Enhance Log Virtual Sports 3 [redmine:#173382]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -2950,19 +2951,9 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerBall 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68,49)			
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68)			
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
-								TYPE
-							),
-							(
-								SELECT  ProductID																			AS [@ID]
-										,  dbo.f_CS_FomatNumber (CAST(bs3.MinBet			AS VARCHAR(50)))				AS [@minb]
-										,  dbo.f_CS_FomatNumber (CAST(bs3.MaxBet			AS VARCHAR(50)))				AS [@maxb]		
-								FROM #Product bs3 
-								WHERE Currency=@Currency AND bs3.ProductID IN(49)		
-								ORDER BY ProductID, Sporttype, Bettype				
-								FOR XML PATH('Product'), ROOT ('BS3'),
 								TYPE
 							),
 							(
