@@ -574,8 +574,14 @@ BEGIN
 	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerBall, Sporttype, Bettype)
 	SELECT DISTINCT ProductID ,20 ,1 ,10 ,100,CASE WHEN ProductID=3 THEN 100 ELSE 0 END , i.Sporttype, i.Bettype
 	FROM #ProductInput i
-	WHERE NOT EXISTS(SELECT TOP 1 1 FROM #Product p WHERE p.ProductID=i.ProductID AND ISNUll(p.Sporttype,0) =ISNUll(i.Sporttype,0) AND ISNUll(p.Bettype,0) = ISNUll(i.Bettype,0)  AND p.Currency=20 )
-		
+	WHERE ProductID <> 49 AND NOT EXISTS(SELECT TOP 1 1 FROM #Product p WHERE p.ProductID=i.ProductID AND ISNUll(p.Sporttype,0) =ISNUll(i.Sporttype,0) 
+											AND ISNUll(p.Bettype,0) = ISNUll(i.Bettype,0)  AND p.Currency=20 )
+	UNION
+	SELECT DISTINCT ProductID ,20 ,1 ,300 ,0,0 , i.Sporttype, i.Bettype
+	FROM #ProductInput i
+	WHERE ProductID = 49 AND NOT EXISTS(SELECT TOP 1 1 FROM #Product p WHERE p.ProductID=i.ProductID AND ISNUll(p.Sporttype,0) =ISNUll(i.Sporttype,0) 
+											AND ISNUll(p.Bettype,0) = ISNUll(i.Bettype,0)  AND p.Currency=20 )
+
 	IF EXISTS(SELECT TOP 1 1 
 				FROM #Product a
 				INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
