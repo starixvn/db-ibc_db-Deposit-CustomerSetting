@@ -2359,7 +2359,7 @@ BEGIN
 																	(SELECT dp.SportType AS SportType
 																		,dp.BetType as BetType
 																		,SUBSTRING((
-																					SELECT ',' + CONVERT(VARCHAR,StakeLevelID)
+																					SELECT ', ' + CONVERT(VARCHAR,StakeLevelID)
 																					FROM Dep_StakeLevel WITH(NOLOCK)
 																					WHERE GameTypeID = dp.BetType
 																						AND exchangeID = @Currency
@@ -2538,7 +2538,7 @@ BEGIN
 																	(SELECT dp.SportType AS SportType
 																		,dp.BetType as BetType
 																		,SUBSTRING((
-																					SELECT ','+CONVERT(VARCHAR,StakeLevelID)
+																					SELECT ', '+CONVERT(VARCHAR,StakeLevelID)
 																					FROM Dep_StakeLevel WITH(NOLOCK)
 																					WHERE GameTypeID = dp.BetType
 																						AND exchangeID = @Currency
