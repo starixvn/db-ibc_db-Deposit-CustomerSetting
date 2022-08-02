@@ -17,7 +17,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
-		- 20220802@Tacy: Insert history of member bet setting [RedmineID: #170739]
+		- 20220802@Tacy: Insert history of member bet setting (Number Game only) [RedmineID: #170739]
 		
 	Param's Explanation:
 	@BetLimit	= '<ROOT>
