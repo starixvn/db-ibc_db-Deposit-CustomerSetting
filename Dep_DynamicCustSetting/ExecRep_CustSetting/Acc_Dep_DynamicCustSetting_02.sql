@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_02]
 	 @CustID				INT
 	,@BetLimit				VARCHAR(MAX) =''
