@@ -17,6 +17,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220802@Tacy: Insert history of member bet setting [RedmineID: #170739]
 		
 	Param's Explanation:
 	@BetLimit	= '<ROOT>
@@ -28,6 +29,8 @@ AS
 
 BEGIN
 	SET NOCOUNT ON
+
+	DECLARE @CustList VARCHAR(MAX)
 
 	DECLARE @startRun	DATETIME
 		, @endRun		DATETIME
@@ -59,6 +62,14 @@ BEGIN
 		, MaxPerMatch		MONEY
 		, MaxPerNumber		MONEY
 		, MaxPayoutPerMatch	MONEY
+		)
+	DECLARE @History_BetLimitTbl TABLE (
+		CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -205,6 +216,8 @@ BEGIN
 			, main.maxpermatch	= tmp.MaxperMatch
 			, main.MaxPerNumber		= tmp.MaxPerNumber
 			, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+			INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 		FROM dbo.Dep_CustBetSettingGame_Member main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID
@@ -230,6 +243,37 @@ BEGIN
 			LEFT JOIN Dep_CustBetSettingGame_Member m WITH(NOLOCK) ON m.CustID = @CustID AND gr.SportType = m.SportType AND gr.BetType = m.BetType
 		WHERE m.CustID IS NULL
 			AND gr.AgentID = @AgentID
+
+		--Delete: update minbet only and be not NG
+		DELETE FROM @History_BetLimitTbl WHERE SportType<>161
+
+		DELETE old
+		FROM @History_BetLimitTbl old
+			INNER JOIN @NewBetLimitTbl new ON new.SportType=old.SportType
+											AND new.BetType=old.BetType
+											AND new.MaxBet=old.MaxBet
+											AND new.MaxPerMatch=old.MaxPerMatch
+		WHERE CustID=@CustID
+
+		--Insert history bet setting
+		IF EXISTS (SELECT 1 FROM @History_BetLimitTbl old)
+		BEGIN
+			SET @CustList = (SELECT CustID		AS '@CustID',
+									SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MaxBet		AS '@MaxBet',
+									MaxPerMatch	AS '@MaxPerMatch',
+									'NULL'		AS '@StakeLevelList',
+									UpdateTime	AS '@UpdateTime'
+							 FROM @History_BetLimitTbl
+							 FOR XML PATH ('r'), ROOT ('root')
+							)
+
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+			IF @ErrMsg<>''
+				RETURN
+		END
 	END
 	ELSE IF @RoleID IN (2, 3, 4)
 	BEGIN

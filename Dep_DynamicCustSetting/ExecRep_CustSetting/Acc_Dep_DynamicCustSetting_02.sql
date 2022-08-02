@@ -109,7 +109,8 @@ BEGIN
 
 				WHILE (0 = 0)
 				BEGIN	
-					
+					DELETE FROM @History_BetLimitTbl
+
 					UPDATE main
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
@@ -132,6 +133,26 @@ BEGIN
 												AND new.BetType=old.BetType
 												AND new.MaxBet=old.MaxBet
 												AND new.MaxPerMatch=old.MaxPerMatch
+
+					--Insert history bet setting
+					IF EXISTS (SELECT 1 FROM @History_BetLimitTbl)
+					BEGIN
+						SET @CustList = (SELECT CustID		AS '@CustID',
+												SportType	AS '@SportType',
+												BetType		AS '@BetType',
+												MaxBet		AS '@MaxBet',
+												MaxPerMatch	AS '@MaxPerMatch',
+												'NULL'		AS '@StakeLevelList',
+												UpdateTime	AS '@UpdateTime'
+										 FROM @History_BetLimitTbl
+										 FOR XML PATH ('r'), ROOT ('root')
+										 )
+
+						EXECUTE Acc_Dep_DynamicCustSetting_07 @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+						IF @ErrMsg<>''
+							RETURN
+					END
 
 					DELETE t 
 					FROM #tempMem t 
@@ -187,7 +208,8 @@ BEGIN
 
 				WHILE (0 = 0)
 				BEGIN	
-					
+					DELETE FROM @History_BetLimitTbl
+
 					UPDATE main
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
@@ -208,6 +230,26 @@ BEGIN
 												AND new.BetType=old.BetType
 												AND new.MaxBet=old.MaxBet
 												AND new.MaxPerMatch=old.MaxPerMatch
+					
+					--Insert history bet setting
+					IF EXISTS (SELECT 1 FROM @History_BetLimitTbl)
+					BEGIN
+						SET @CustList = (SELECT CustID		AS '@CustID',
+												SportType	AS '@SportType',
+												BetType		AS '@BetType',
+												MaxBet		AS '@MaxBet',
+												MaxPerMatch	AS '@MaxPerMatch',
+												'NULL'		AS '@StakeLevelList',
+												UpdateTime	AS '@UpdateTime'
+										 FROM @History_BetLimitTbl
+										 FOR XML PATH ('r'), ROOT ('root')
+										 )
+
+						EXECUTE Acc_Dep_DynamicCustSetting_07 @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+						IF @ErrMsg<>''
+							RETURN
+					END
 
 					DELETE t 
 					FROM #tempMem t 
@@ -232,7 +274,85 @@ BEGIN
 				END;
 			END;	
 		END
+	END
+	ELSE IF @Mode = 'GameBetLimit'
+	BEGIN
+		IF(dbo.f_CheckRepTable('Dep_CustBetSettingGame_Agent') = 0
+			OR dbo.f_CheckRepTable('Dep_CustBetSettingGame_Member') = 0	
+			OR dbo.f_CheckRepTable('Dep_CustBetSettingGameGroup_Member') = 0	
+			OR dbo.f_CheckRepTable('Customer') = 0	
+		   )
+			RETURN
+	
+		EXEC sp_xml_preparedocument @iDoc OUTPUT
+			, @BetLimit
 
+		INSERT @NewBetLimitTbl(SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		SELECT SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+		FROM OPENXML(@iDoc, '/ROOT/BetLimit', 1) WITH (
+				SportType		INT
+				, BetType		INT
+				, MinBet		MONEY
+				, MaxBet		MONEY
+				, MaxPerMatch	MONEY
+				, MaxPerNumber		MONEY
+				, MaxPayoutPerMatch	MONEY
+				)
+
+		EXEC sp_xml_removedocument @iDoc
+
+		INSERT INTO #tempMem(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		SELECT c.CustID,s.SportType,s.BetType,s.MinBet,s.MaxBet,s.MaxPerMatch,s.MaxPerNumber,s.MaxPayoutPerMatch
+		FROM Customer c WITH(NOLOCK)				
+			CROSS APPLY @NewBetLimitTbl s
+			LEFT JOIN Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
+		WHERE c.recommend=@CustID 
+			AND c.roleid =1	
+			AND ISNULL(m.IsGroupedBetLimit,0) = 0
+
+		IF EXISTS(SELECT 1 FROM #tempMem)
+		BEGIN
+			
+			SET @MaxRow = (SELECT MAX(ID) FROM #tempMem)
+			
+			IF	@Threshold >= @MaxRow
+			SET	@Threshold = @MaxRow
+			
+			SET @StopRow = @Threshold
+
+			WHILE (0 = 0)
+			BEGIN	
+				DELETE FROM @History_BetLimitTbl
+				
+				UPDATE main
+				SET main.minbet			= tmp.MinBet
+					, main.maxbet		= tmp.MaxBet
+					, main.maxpermatch	= tmp.MaxperMatch
+					, main.MaxPerNumber		= tmp.MaxPerNumber
+					, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
+					INTO @History_BetLimitTbl
+				FROM dbo.Dep_CustBetSettingGame_Member main WITH(ROWLOCK)
+					INNER JOIN #tempMem tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
+				WHERE ID >= @StartRow AND ID <= @StopRow
+					AND	(main.minbet		<> tmp.MinBet
+						OR main.maxbet		<> tmp.MaxBet
+						OR main.maxpermatch <> tmp.MaxperMatch
+						OR main.MaxPerNumber <> tmp.MaxPerNumber
+						OR main.MaxPayoutPerMatch <> tmp.MaxPayoutPerMatch
+						)
+				
+				--update MinBet only and be not NG
+				DELETE FROM @History_BetLimitTbl WHERE SportType<>161
+
+				DELETE old
+				FROM @History_BetLimitTbl old
+					INNER JOIN #tempMem new ON new.CustID=old.CustID
+											AND new.SportType=old.SportType
+											AND new.BetType=old.BetType
+											AND new.MaxBet=old.MaxBet
+											AND new.MaxPerMatch=old.MaxPerMatch
+					
 		--Insert history bet setting
 		IF EXISTS (SELECT 1 FROM @History_BetLimitTbl)
 		BEGIN
@@ -252,6 +372,30 @@ BEGIN
 			IF @ErrMsg<>''
 				RETURN
 		END
+
+				DELETE t 
+				FROM #tempMem t 
+				INNER JOIN Dep_CustBetSettingGame_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
+					WHERE ID >= @StartRow AND ID <= @StopRow
+
+				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+				SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+				FROM #tempMem t
+				WHERE ID >= @StartRow AND ID <= @StopRow
+	
+				IF	@StopRow = @MaxRow 
+					BREAK
+						
+				SET	@StartRow = @StopRow + 1
+						
+				SET	@StopRow = 1 + @StopRow + @Threshold
+						
+				IF	@StopRow >= @MaxRow
+					SET	@StopRow = @MaxRow
+										
+			END;
+		END;	
+	END	
 	END
 	ELSE IF @Mode = 'GameBetLimit'
 	BEGIN
