@@ -17,6 +17,7 @@ AS
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  [Redmine: 168395]	
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
+		- 20220802@Tacy: Insert history of member bet setting for Number Game [RedmineID: 170739]
 
 	Param's Explanation:
 	-- @SettingType : 2 Bet Limit , 11  New Bet limit
