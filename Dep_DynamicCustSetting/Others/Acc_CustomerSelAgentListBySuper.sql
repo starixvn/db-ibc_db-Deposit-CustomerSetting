@@ -31,7 +31,7 @@ BEGIN
 	WHERE roleid=3 and (username LIKE '%Acc%' OR username LIKE '%LocalBank%' 
 						OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%')		
 
-	SELECT username, c.CustID, CASE WHEN s.AgentID IS NOT NULL THEN 1 ELSE 0 END AS IsSub
+	SELECT username, c.CustID, c.srecommend, CASE WHEN s.AgentID IS NOT NULL THEN 1 ELSE 0 END AS IsSub
 	FROM customer c WITH (NOLOCK) 
 		INNER JOIN #Super su ON c.srecommend = su.CustID
 		LEFT JOIN [SiteConfig].[dbo].[Operator] s WITH(NOLOCK) ON c.Custid=s.AgentID
