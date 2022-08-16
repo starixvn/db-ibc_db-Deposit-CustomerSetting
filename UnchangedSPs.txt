@@ -1,3 +1,3 @@
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Com.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_SAg.sql
