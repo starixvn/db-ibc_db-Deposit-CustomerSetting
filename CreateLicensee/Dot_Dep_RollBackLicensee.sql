@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE [dbo].[Dot_Dep_RollBackLicensee] 		
+ALTER PROCEDURE [dbo].[Dot_Dep_RollBackLicensee] 		
 		@ListCustID		VARCHAR(MAX)		
 AS
 
@@ -9,23 +9,17 @@ AS
  DB: DBCUST/CustDB  
  Original:  
  Revisions:  	
-	20190425@Winnie:  Onebook SiteBuilder RedmineID: #111321
+	- 20190425@Winnie:  Onebook SiteBuilder RedmineID: #111321
+	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
  Param's Explanation: 
  */
 BEGIN
 	CREATE TABLE #tblCustomer(CustID INT,isfinished BIT DEFAULT(0))
 	DECLARE @CustID INT
 	INSERT INTO #tblCustomer (CustID)
-	SELECT ss.val
-	FROM dbo.strSplit(@ListCustID, ',') AS ss;	
-
-	DELETE d
-	FROM Dep_CustSetting d WITH (ROWLOCK)
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID
-
-	DELETE d
-	FROM Dep_CustSetting3rd d WITH (ROWLOCK) 
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID
+	SELECT ss.value
+	FROM string_split(@ListCustID, ',') AS ss
+	WHERE ss.value <> ''
 
 	DELETE d 
 	FROM Dep_CustSuper d WITH(ROWLOCK) 

@@ -12,6 +12,7 @@ AS
  Revisions:  	
 	- 20210623@Winfred: Get Product list which offered for selected licensees [RedmineID:#160130]
 	- 20211015@Winfred: Enhance SP to get product list following UUS currency [RedmineID:#163260]
+	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	
  Param's Explanation: 
  Sample exec:
@@ -19,20 +20,18 @@ AS
 */  
 BEGIN
 	SET NOCOUNT ON
-	CREATE TABLE #supers (custid INT,DisableNumber	BIT,DisableKeno	BIT)
+	CREATE TABLE #supers (custid INT)
 	CREATE TABLE #result (Productid INT,ProductName	VARCHAR(50))
 	DECLARE @LicenseeID INT	
 	SELECT @LicenseeID=LicenseeID FROM bodb_Licensee.dbo.Licensees WITH(NOLOCK) WHERE LicenseeName=@sitename
 			
-	INSERT INTO #supers(custid,DisableNumber,DisableKeno)
-	SELECT ci.custid ,DisableNumber,cg.IsDisabled as DisableKeno
+	INSERT INTO #supers(custid)
+	SELECT ci.custid
 	FROM custInfo ci WITH (NOLOCK) 	
 		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
-		LEFT JOIN dbo.CustGameType cg WITH(NOLOCK) ON cs.custid = cg.CustID
 	WHERE ci.roleid =4	
 		AND ci.Enabled=1
 		AND cs.site in (@sitename)
-		AND cg.GameTypeID = 1
 	
 	-- Default Sportbook	
 	IF 	EXISTS (SELECT TOP 1 1 FROM #supers ) 
@@ -44,23 +43,7 @@ BEGIN
     BEGIN  
 		 INSERT INTO #result (Productid, ProductName) VALUES ( -1 , 'BA')
     END 
-	-- Check Number Game
-	IF EXISTS (SELECT 1 FROM #supers WHERE DisableNumber = 0)  
-    BEGIN  
-		 INSERT INTO #result (Productid, ProductName)
-		 SELECT Productid, ProductName  
-		FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK)
-		 WHERE ProductID = 3
-    END 
-    
-    -- Check RNG Keno
-	IF EXISTS (SELECT 1 FROM #supers WHERE DisableKeno = 0)  
-    BEGIN  
-		 INSERT INTO #result (Productid, ProductName)
-		 SELECT Productid, ProductName  
-		 FROM DBPRO.bodb02.dbo.Products p WITH (NOLOCK)
-		 WHERE ProductID = 8
-    END
+
     -- Check Cash Out
 	IF EXISTS (SELECT 1 FROM #supers a INNER JOIN  Dep_SupperProductSetting b WITH(NOLOCK) ON a.custid = b.CustID WHERE b.ProductId = 25 AND b.IsEnabled = 1 )  
     BEGIN  

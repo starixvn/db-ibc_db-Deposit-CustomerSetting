@@ -1,7 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO 
-
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerSelMemBetSetting_DCS]  
 	@CustID INT,
 	@Sporttype SMALLINT,
@@ -14,6 +11,8 @@ AS
 	User: API Licensee  
 
 	Revisions:  
+		- 20170901@Elodie: first commit
+		- 20220415@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 
 	Param's Explanation:  
 
@@ -39,7 +38,7 @@ BEGIN
 			 @MaxPerMatch_Min = 0,
 			 @MaxPerMatch_Max = MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END)
 		FROM  
-			 dbo.Dep_CustBetSetting_Member AS cs WITH (NOLOCK)  
+			 dbo.Dep_CustBetSetting_Agent AS cs WITH (NOLOCK)  
 				INNER JOIN dbo.custinfo AS ci WITH (NOLOCK) ON (cs.custid = ci.recommend OR cs.custid = ci.mrecommend OR cs.custid = ci.srecommend) AND cs.sporttype = @Sporttype AND cs.bettype = @Bettype  			 
 		WHERE ci.custid = @CustID 
 
@@ -66,8 +65,8 @@ BEGIN
 			 @MaxPerMatch_Min = 0,
 			 @MaxPerMatch_Max = MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END)
 		FROM  
-			 dbo.Dep_CustBetSetting_Agent AS cs WITH (NOLOCK)  
-				INNER JOIN dbo.custinfo AS ci WITH (NOLOCK) ON (cs.custid = ci.recommend OR cs.custid = ci.mrecommend OR cs.custid = ci.srecommend) AND cs.sporttype = @Sporttype AND cs.bettype = @Bettype  			 
+			 dbo.Dep_CustBetSetting_Agent AS cs WITH (NOLOCK)
+				INNER JOIN dbo.custinfo AS ci WITH (NOLOCK) ON (cs.custid = ci.recommend OR cs.custid = ci.mrecommend OR cs.custid = ci.srecommend) AND cs.sporttype = @Sporttype AND cs.bettype = @Bettype AND cs.custID <> @CustID			 
 		WHERE ci.custid = @CustID     
 		
 		SELECT       

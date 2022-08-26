@@ -32,7 +32,8 @@ AS
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  [Redmine: 168395]	
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
-	*/
+		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+*/
 BEGIN
 	SELECT @ErrCode = 0
 		
@@ -56,6 +57,10 @@ BEGIN
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustBetLimit_Special') = 0 
+
+		OR dbo.f_CheckRepTable('Dep_CustBetSettingGame_Agent') = 0 
+		OR dbo.f_CheckRepTable('Dep_CustBetSettingGame_Member') = 0 
+		OR dbo.f_CheckRepTable('Dep_CustBetSettingGameGroup_Member') = 0
 		
 		OR dbo.f_CheckRepTable('Dep_CustDiscountSetting_Member') = 0 
 		OR dbo.f_CheckRepTable('Dep_CustDiscountGroupSetting_Member') = 0 
@@ -71,8 +76,7 @@ BEGIN
 		
 	)
 
-	CREATE TABLE #tmpDep_CustBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MaxBet MONEY,MaxPerMatch MONEY)
-	CREATE TABLE #tmpDep_CustNewBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MaxBet MONEY)
+	CREATE TABLE #tmpDep_CustBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MaxBet MONEY,MaxPerMatch MONEY, MaxPerNumber MONEY, MaxPayoutPerMatch MONEY)
 	
 	IF @RoleID = 4
 	BEGIN
@@ -478,24 +482,24 @@ BEGIN
 	END	
 	
 	
-	/********************************************* Betting Limit: SettingType = 2 ***********************************/
-	IF EXISTS (SELECT 1 FROM #ProductSettingDetail WHERE SettingType = 2)
+	/********************************************* Betting Limit: SettingType = 2,11,10,12 ***********************************/
+	IF EXISTS (SELECT 1 FROM #ProductSettingDetail WHERE SettingType IN (2,11,10,12))
 	BEGIN
 		BEGIN TRY
 			IF @RoleID = 1 -- RoleID = 1
 			BEGIN	
 				
-				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MaxBet ,MaxPerMatch)
-				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet ,MaxPerMatch
+				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
+				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
 				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType = 2
+					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
 				WHERE AgentID=@AgentID AND Site=@site AND CurrencyID=@currency
 
-				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MaxBet ,MaxPerMatch)
-				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet ,MaxPerMatch
+				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
+				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
 				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType = 2
-				WHERE AgentID IS NULL AND NOT EXISTS(SELECT 1 FROM #tmpDep_CustBetLimit_Special a WITH(NOLOCK) WHERE a.SportType=smcs.SportType AND ((CASE WHEN a.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE a.Bettype END)  = smcs.BetType))
+					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
+				WHERE AgentID IS NULL AND NOT EXISTS(SELECT 1 FROM #tmpDep_CustBetLimit_Special a WITH(NOLOCK) WHERE a.SportType=smcs.SportType AND ((CASE WHEN a.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE a.Bettype END)  = smcs.BetType))
 				 AND Site=@site AND CurrencyID=@currency
 	 		
 				INSERT INTO [dbo].[Dep_CustBetSetting_Member]
@@ -511,69 +515,81 @@ BEGIN
 							ISNULL(t.MaxBet,smcs.MaxBet),
 							ISNULL(t.MaxPerMatch,smcs.MaxPerMatch)
 				FROM dbo.Dep_CustBetSetting_Agent smcs WITH (NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType = 2
+					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType IN(2,11)
 					LEFT JOIN #tmpDep_CustBetLimit_Special t ON smcs.SportType=t.Sporttype AND smcs.BetType=t.Bettype
 				WHERE smcs.custid = @AgentID	
-			END
-		END TRY
-		BEGIN CATCH
-			SELECT @ErrCode = 2
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
-				
-				
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSetting_Agent WHERE CustID = @CustID
-			END
-		
-			DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-			
-			RETURN
-			
-		END CATCH
-	END	
-	/********************************************* Betting Limit: SettingType =11 ***********************************/
-	IF EXISTS (SELECT 1 FROM #ProductSettingDetail WHERE SettingType = 11)
-	BEGIN
-		BEGIN TRY
-			IF @RoleID = 1 -- RoleID = 1
-			BEGIN	
-				
-				INSERT INTO #tmpDep_CustNewBetLimit_Special(Sporttype ,Bettype ,MaxBet )
-				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet 
-				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND (S.Bettype  = smcs.BetType) AND S.SettingType = 11
-				WHERE AgentID=@AgentID AND Site=@site AND CurrencyID=@currency
 
-				INSERT INTO #tmpDep_CustNewBetLimit_Special(Sporttype ,Bettype ,MaxBet )
-				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet 
-				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND (S.Bettype  = smcs.BetType) AND S.SettingType = 11
-				WHERE AgentID IS NULL AND NOT EXISTS(SELECT 1 FROM #tmpDep_CustNewBetLimit_Special a WITH(NOLOCK) WHERE a.SportType=smcs.SportType AND (a.Bettype  = smcs.BetType))
-				 AND Site=@site AND CurrencyID=@currency
-	 		
-				INSERT INTO [dbo].[Dep_CustBetSetting_Member]
-					([CustID]
+				-->Bet Limit Game
+				INSERT INTO [dbo].[Dep_CustBetSettingGameGroup_Member](	
+					 AgentID
 					,[SportType]
 					,[BetType]
 					,[MinBet]
-					,[MaxBet])
-					   	
-				SELECT @CustID, smcs.SportType,smcs.BetType,
-							smcs.MinBet,
-							ISNULL(t.MaxBet,smcs.MaxBet)
-				FROM dbo.Dep_CustBetSetting_Agent smcs WITH (NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType = 11
-					LEFT JOIN #tmpDep_CustNewBetLimit_Special t ON smcs.SportType=t.Sporttype AND smcs.BetType=t.Bettype
-				WHERE smcs.custid = @AgentID	
+					,[MaxBet]
+					,[MaxPerMatch]
+					,MaxPerNumber
+					,MaxPayoutPerMatch
+					)
+				SELECT @AgentID
+					,acs.SportType
+					,acs.BetType
+					,[MinBet]
+					,[MaxBet]
+					,[MaxPerMatch]
+					,MaxPerNumber
+					,MaxPayoutPerMatch
+				FROM dbo.[Dep_CustBetSettingGame_Agent] acs WITH (NOLOCK)
+				WHERE acs.custid = @AgentID
+					AND NOT EXISTS (SELECT TOP 1 1 
+									FROM dbo.[Dep_CustBetSettingGameGroup_Member] WITH (NOLOCK) 
+									WHERE AgentID = @AgentID AND SportType = acs.SportType AND BetType = acs.BetType)
+			
+				IF EXISTS(		
+								SELECT TOP 1 1
+								FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
+									INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType IN(10,12)
+									LEFT JOIN #tmpDep_CustBetLimit_Special t ON smcs.SportType=t.Sporttype AND smcs.BetType=t.Bettype
+									INNER JOIN Dep_CustBetSettingGameGroup_Member gr ON smcs.SportType=gr.Sporttype AND smcs.BetType=gr.Bettype AND smcs.CustID = gr.AgentID
+								WHERE smcs.custid = @AgentID
+									AND (	COALESCE(t.MaxBet,smcs.MaxBet,0) <> COALESCE(gr.MaxBet,0)
+											OR COALESCE(t.MaxPerMatch,smcs.MaxPerMatch,0) <> COALESCE(gr.MaxPerMatch,0)
+											OR COALESCE(t.MaxPerNumber,smcs.MaxPerNumber,0) <> COALESCE(gr.MaxPerNumber,0)
+											OR COALESCE(t.MaxPayoutPerMatch,smcs.MaxPayoutPerMatch,0) <> COALESCE(gr.MaxPayoutPerMatch,0)
+											OR COALESCE(smcs.MinBet,0) <> COALESCE(gr.MinBet,0)
+										)
+							)
+				BEGIN
+					INSERT INTO [dbo].[Dep_CustBetSettingGame_Member]
+						([CustID]
+						,[SportType]
+						,[BetType]
+						,[MinBet]
+						,[MaxBet]
+						,[MaxPerMatch]
+						,MaxPerNumber
+						,MaxPayoutPerMatch
+						)
+					SELECT @CustID, smcs.SportType,smcs.BetType,
+								smcs.MinBet,
+								ISNULL(t.MaxBet,smcs.MaxBet),
+								ISNULL(t.MaxPerMatch,smcs.MaxPerMatch),
+								ISNULL(t.MaxPerNumber,smcs.MaxPerNumber),
+								ISNULL(t.MaxPayoutPerMatch,smcs.MaxPayoutPerMatch)
+					FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
+						INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType IN(10,12)
+						LEFT JOIN #tmpDep_CustBetLimit_Special t ON smcs.SportType=t.Sporttype AND smcs.BetType=t.Bettype
+					WHERE smcs.custid = @AgentID	
+					
+					UPDATE dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
+					SET IsGroupedBetLimit = 0
+					WHERE CustID = @CustID
+				END
+				ELSE
+				BEGIN
+					UPDATE dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
+					SET IsGroupedBetLimit = 1
+					WHERE CustID = @CustID
+				END
 			END
 		END TRY
 		BEGIN CATCH
@@ -584,6 +600,7 @@ BEGIN
 				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
 				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
 				DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
+				DELETE FROM Dep_CustBetSettingGame_Member WHERE CustID = @CustID
 				
 				
 			END
@@ -592,6 +609,7 @@ BEGIN
 				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
 				DELETE FROM Dep_CustStakeLevel_Agent WHERE CustID = @CustID
 				DELETE FROM Dep_CustBetSetting_Agent WHERE CustID = @CustID
+				DELETE FROM Dep_CustBetSettingGame_Agent WHERE CustID = @CustID
 			END
 		
 			DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
@@ -617,27 +635,34 @@ BEGIN
 				,SuperDiscount
 			)
 			SELECT @AgentID
-				,sporttype
-				,betType
-				,0
-				,0
-				,0
-				,0
+				,ps.sporttype
+				,ps.betType
+				,0 AS playerDiscount
+				,ISNULL(ag.Discount,0) AS AgentDiscount
+				,ISNULL(mag.Discount,0) AS MasterDiscount
+				,ISNULL(sag.Discount,0) AS SuperDiscount
 			FROM #ProductSettingDetail ps
+				OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @AgentID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) ag
+				OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @MasterID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) mag
+				OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @SuperID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) sag
 			WHERE SettingType=9	
 				AND NOT EXISTS (SELECT TOP 1 1 FROM dbo.Dep_CustDiscountGroupSetting_Member WITH (NOLOCK) WHERE AgentID = @AgentID AND SportType = ps.SportType AND BetType = ps.BetType)
 				
 			--check customer has same setting with group or not 
 			IF EXISTS(SELECT 1 
 				FROM dbo.Dep_CustDiscountGroupSetting_Member cs WITH(NOLOCK) 
-					INNER JOIN (SELECT sporttype,betType,playerDiscount,AgentDiscount,MasterDiscount,SuperDiscount
-								FROM #ProductSettingDetail
-								CROSS APPLY (SELECT 0 AS PlayerDiscount,
-													0 AS AgentDiscount,
-													0 AS MasterDiscount,
-													0 AS SuperDiscount
-											)s 
-								WHERE settingType = 9			
+					INNER JOIN (
+									SELECT ps.sporttype
+										,ps.betType
+										,0 AS playerDiscount
+										,ISNULL(ag.Discount,0) AS AgentDiscount
+										,ISNULL(mag.Discount,0) AS MasterDiscount
+										,ISNULL(sag.Discount,0) AS SuperDiscount
+									FROM #ProductSettingDetail ps
+										OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @AgentID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) ag
+										OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @MasterID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) mag
+										OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @SuperID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) sag
+									WHERE SettingType = 9			
 								)t ON cs.sporttype= t.sporttype
 									AND cs.betType= t.betType
 				WHERE cs.AgentID = @AgentID 
@@ -658,13 +683,16 @@ BEGIN
 					,SuperDiscount
 				)
 				SELECT @CustID
-					,sporttype
-					,betType
-					,0
-					,0
-					,0
-					,0
-				FROM #ProductSettingDetail
+					,ps.sporttype
+					,ps.betType
+					,0 AS playerDiscount
+					,ISNULL(ag.Discount,0) AS AgentDiscount
+					,ISNULL(mag.Discount,0) AS MasterDiscount
+					,ISNULL(sag.Discount,0) AS SuperDiscount
+				FROM #ProductSettingDetail ps
+					OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @AgentID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) ag
+					OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @MasterID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) mag
+					OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @SuperID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) sag
 				WHERE SettingType=9	
 					
 				IF EXISTS(SELECT 1 FROM dbo.Dep_CustSettingMode WITH(NOLOCK) WHERE custID = @CustID)
@@ -703,6 +731,7 @@ BEGIN
 				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
 				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
 				DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
+				DELETE FROM Dep_CustBetSettingGame_Member WHERE CustID = @CustID
 				DELETE FROM Dep_CustDiscountSetting_Member WHERE CustID = @CustID			
 			END
 		END CATCH
@@ -713,4 +742,3 @@ BEGIN
 END
 
 GO
-

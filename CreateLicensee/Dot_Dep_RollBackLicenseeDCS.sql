@@ -13,6 +13,7 @@ AS
 	- 20200415@Eden: OnebookSiteBuilder - Add Virtual Games And Table Games [RedmineID:#132393] 
 	- 20200903@Johnson: offer comm for DCS products [redmine:#140388]
 	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
  Param's Explanation: 
  */
 BEGIN
@@ -49,6 +50,10 @@ BEGIN
 	DELETE d
 	FROM Dep_CustDiscountSetting_Member d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
+
+	DELETE d
+	FROM Dep_CustBetSettingGame_Agent d WITH(ROWLOCK)
+		INNER JOIN #tblCustomer t ON d.custid=t.CustID
 		
 	IF @SiteID IS NOT NULL
 		DELETE d

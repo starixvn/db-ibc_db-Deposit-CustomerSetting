@@ -16,6 +16,8 @@ AS
 		- 20181112@Winnie: Esports - Redmine: #100721
 		- 20200618@Helen: LAP - Support commission for 3rd party products [Redmine: #131774]
 		- 20200718@Elodie: Support level sporttype/bettype [RedmineID:#135872]
+		- 202202220@Elodie: Apply DCS for SB [RedmineID: #167898] 
+
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -38,29 +40,16 @@ BEGIN
 	   )
 		RETURN
 
-		DECLARE @StartRow	INT, 
-				@MaxRow		INT,
-				@Currency	INT,
-				@Site		VARCHAR(10),
-				@Threshold	INT, 
-				@StopRow	INT,
-				@xml		XML, 
-				@iDoc INT		
-
-		SET @StartRow=1
-		SET @Threshold=3000
+		DECLARE @StartRow INT, @StopRow	INT, @MaxRow INT, @Threshold INT, 
+				@Currency INT, @Site VARCHAR(10),
+				@xml XML, @iDoc INT				
 
 		DECLARE @SportBettypeFilter TABLE(SportType INT,Bettype INT,IsLive BIT,IsApplyBA BIT)		
 		CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
+		CREATE TABLE #tempMemNoGrouped(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )	
 
-		CREATE TABLE #tempMemBA(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )	
-		CREATE TABLE #tempMemNonBA(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )		
-		CREATE TABLE #tempMemNoGrouped(ID INT IDENTITY (1,1) PRIMARY KEY,CustID INT )		
-
-		CREATE NONCLUSTERED INDEX IDX_tempMemBA ON #tempMemBA(CustID)
-		CREATE NONCLUSTERED INDEX IDX_tempMemNonBA ON #tempMemNonBA(CustID)
 		CREATE NONCLUSTERED INDEX IDX_tempMemNoGrouped ON #tempMemNoGrouped(CustID)
-		
+
 		INSERT INTO @SportBettypeFilter (SportType,Bettype,IsLive,IsApplyBA)
 		SELECT DISTINCT SportType,Bettype,IsLive,IsApplyBA
 		FROM Dep_ProductSetting ps WITH(NOLOCK) 
@@ -69,39 +58,6 @@ BEGIN
 		
 		SELECT @Site=Site,@Currency=Currency FROM Customer WITH(NOLOCK) WHERE custid=@CustID	
 		
-		INSERT INTO #tempMemBA(CustID)
-		SELECT c.CustID
-		FROM Customer c WITH(NOLOCK)
-			INNER JOIN Dep_CustBAActive BA WITH(NOLOCK) ON c.custid=BA.CustId
-			LEFT JOIN Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
-			OUTER APPLY (SELECT TOP 1 custid
-						 FROM dbo.Dep_CustPTSetting_Member ptm WITH (NOLOCK)
-						 WHERE 	ptm.custid = c.custid) AS tmp
-		WHERE c.recommend=@CustID AND c.roleid =1
-			AND (m.CustID IS NULL OR (m.IsGroupedPT = 0 AND tmp.CustID IS NULL))
-			
-		INSERT INTO #tempMemNonBA(CustID)
-		SELECT c.CustID
-		FROM Customer c WITH(NOLOCK)
-			LEFT JOIN Dep_CustSettingMode m WITH(NOLOCK) ON c.custid = m.CustID
-			OUTER APPLY (SELECT TOP 1 custid
-						 FROM dbo.Dep_CustPTSetting_Member ptm WITH (NOLOCK)
-						 WHERE 	ptm.custid = c.custid) AS tmp
-						 			
-		WHERE c.recommend=@CustID AND c.roleid =1
-			AND (m.CustID IS NULL OR (m.IsGroupedPT = 0 AND tmp.CustID IS NULL))
-			AND c.custid NOT IN (SELECT BA.CustID FROM  Dep_CustBAActive BA WITH(NOLOCK))
-
-		INSERT INTO #tempMemNoGrouped(CustID)
-		SELECT c.CustID
-		FROM dbo.Customer c WITH(NOLOCK)
-			INNER JOIN 	dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid=m.CustID	
-			CROSS APPLY (SELECT TOP 1 custid
-						 FROM dbo.Dep_CustPTSetting_Member ptm WITH (NOLOCK)
-						 WHERE 	ptm.custid = c.custid) AS tmp
-		WHERE c.recommend=@CustID AND c.roleid =1
-			AND m.IsGroupedPT=0
-
 		--Parse XML
 		EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @PT
 
@@ -117,179 +73,93 @@ BEGIN
 
 		EXECUTE sp_xml_removedocument @iDoc;
 
+		INSERT INTO #tempMemNoGrouped(CustID)
+		SELECT c.CustID
+		FROM dbo.Customer c WITH(NOLOCK)
+			INNER JOIN 	dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid=m.CustID	
+		WHERE c.recommend = @CustID AND c.roleid =1
+			AND m.IsGroupedPT=0
+
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
 		BEGIN
-			IF EXISTS (SELECT 1 FROM 	@SportBettypeFilter ft 
-									INNER JOIN dbo.Dep_CustPTGroupSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-										WHERE AgentID=@CustID AND ft.IsApplyBA=0)
+			IF EXISTS (	SELECT 1 
+						FROM @SportBettypeFilter ft 
+							INNER JOIN dbo.Dep_CustPTGroupSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+						WHERE AgentID=@CustID)
+			BEGIN
 				UPDATE a
-					SET
-						 SuperPT  = 0
-						,MasterPT = 0
-						,AgentPT  = v.PT
+				SET
+					SuperPT  = 0
+					,MasterPT = 0
+					,AgentPT  = v.PT
 				FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
+					INNER JOIN @SportBettypeFilter t ON a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
 					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive
-				WHERE t.IsApplyBA=0
+				WHERE a.AgentID = @CustID AND t.IsApplyBA = 0
+
+				UPDATE a
+				SET
+					SuperPT  = 0
+					,MasterPT = 0
+					,AgentPT  = 0
+				FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
+					INNER JOIN @SportBettypeFilter t ON a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive
+				WHERE a.AgentID = @CustID AND t.IsApplyBA = 1
+			END
 			ELSE
+			BEGIN
 				INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
 				SELECT @CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 				FROM @SportBettypeFilter t
 					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive
 				WHERE t.IsApplyBA=0
 
-			IF EXISTS (SELECT 1 FROM 	@SportBettypeFilter ft 
-									INNER JOIN dbo.Dep_CustPTGroupSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-										WHERE AgentID=@CustID AND ft.IsApplyBA=1)
-				UPDATE a
-					SET
-						 SuperPT  = 0
-						,MasterPT = 0
-						,AgentPT  = 0
-				FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType
-				WHERE t.IsApplyBA=1
-			ELSE
 				INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
 				SELECT @CustID,SportType,BetType,IsLive,0,0,0
 				FROM @SportBettypeFilter t
 				WHERE t.IsApplyBA=1
+			END
 		END
 		ELSE
 		BEGIN
-			IF EXISTS (SELECT 1 FROM 	@SportBettypeFilter ft 
-									INNER JOIN dbo.Dep_CustPTGroupSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
-										WHERE AgentID=@CustID)
+			IF EXISTS (	SELECT 1 
+						FROM @SportBettypeFilter ft 
+							INNER JOIN dbo.Dep_CustPTGroupSetting_Member bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+						WHERE AgentID=@CustID)
 				UPDATE a
 					SET
 						 SuperPT  = 0
 						,MasterPT = 0
 						,AgentPT  = v.PT
 				FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-					INNER JOIN @SportBettypeFilter t ON a.AgentID=@CustID AND a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
-					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive			
+					INNER JOIN @SportBettypeFilter t ON a.SportType=t.SportType AND a.BetType=t.BetType AND a.IsLive=t.IsLive
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
+				WHERE a.AgentID = @CustID
 			ELSE
 				INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
 				SELECT @CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
 				FROM @SportBettypeFilter t				
-					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
+					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive	
 		END
+
+		SET @StartRow=1
+		SET @Threshold=3000
 
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
 		BEGIN
-			IF EXISTS(SELECT 1 FROM #tempMemBA)
-			BEGIN
-			
-				SET @MaxRow = (SELECT MAX(ID) FROM #tempMemBA)
-			
-				IF	@Threshold >= @MaxRow
-				SET	@Threshold = @MaxRow
-			
-				SET @StopRow = @Threshold
-
-				WHILE (0 = 0)
-				BEGIN	
-				
-					UPDATE dcm 
-						   SET IsGroupedPT = 1
-					FROM dbo.Dep_CustSettingMode dcm WITH (ROWLOCK)	
-						INNER JOIN #tempMemBA c ON c.CustID = dcm.CustID AND dcm.IsGroupedPT = 0
-					WHERE ID >= @StartRow AND ID <= @StopRow
-					
-					INSERT INTO dbo.Dep_CustSettingMode
-						   (CustID
-						   ,IsGroupedPT
-						   ,IsGroupedComm
-						   ,IsGroupedBetLimit
-						)	
-					SELECT c.CustID,1,0,0
-					FROM #tempMemBA c
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustSettingMode m WITH(NOLOCK) WHERE m.CustID=c.CustID)	
-		
-					IF	@StopRow = @MaxRow 
-						BREAK
-						
-					SET	@StartRow = @StopRow + 1
-						
-					SET	@StopRow = 1 + @StopRow + @Threshold
-						
-					IF	@StopRow >= @MaxRow
-						SET	@StopRow = @MaxRow
-										
-				END;
-			END;	
-			
-			SET @StartRow=1
-			SET @Threshold=3000	
-
-			IF EXISTS(SELECT 1 FROM #tempMemNonBA)
-			BEGIN
-			
-				SET @MaxRow = (SELECT MAX(ID) FROM #tempMemNonBA)
-			
-				IF	@Threshold >= @MaxRow
-				SET	@Threshold = @MaxRow
-			
-				SET @StopRow = @Threshold
-
-				WHILE (0 = 0)
-				BEGIN
-					
-					UPDATE dcm 
-						   SET IsGroupedPT = 0
-					FROM dbo.Dep_CustSettingMode dcm WITH (ROWLOCK)	
-						INNER JOIN #tempMemNonBA c ON c.CustID = dcm.CustID AND dcm.IsGroupedPT = 1
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						
-					INSERT INTO dbo.Dep_CustSettingMode
-						   (CustID
-						   ,IsGroupedPT
-						   ,IsGroupedComm
-						   ,IsGroupedBetLimit
-						)	
-					SELECT c.CustID,0,0,0
-					FROM #tempMemNonBA c
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustSettingMode m WITH(NOLOCK) WHERE m.CustID=c.CustID)	
-
-					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
-					FROM #tempMemNonBA c		
-						CROSS APPLY @SportBettypeFilter t	
-						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
-						
-					IF	@StopRow = @MaxRow 
-						BREAK
-						
-					SET	@StartRow = @StopRow + 1
-						
-					SET	@StopRow = 1 + @StopRow + @Threshold
-						
-					IF	@StopRow >= @MaxRow
-						SET	@StopRow = @MaxRow
-										
-				END;
-			END;		
-
-			SET @StartRow=1
-			SET @Threshold=3000
-
 			IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
 			BEGIN
 			
 				SET @MaxRow = (SELECT MAX(ID) FROM #tempMemNoGrouped)
 			
-				IF	@Threshold >= @MaxRow
+				IF	@Threshold > @MaxRow
 					SET	@Threshold = @MaxRow
 			
 				SET @StopRow = @Threshold
 
 				WHILE (0 = 0)
 				BEGIN				
-				
 					UPDATE s
 					SET s.AgentPT=v.PT
 					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
@@ -311,125 +181,15 @@ BEGIN
 						
 					SET	@StartRow = @StopRow + 1
 						
-					SET	@StopRow = 1 + @StopRow + @Threshold
+					SET	@StopRow = @StartRow + @Threshold
 						
 					IF	@StopRow >= @MaxRow
 						SET	@StopRow = @MaxRow
-										
-				END;
-			END;		
+				END
+			END
 		END
 		ELSE
 		BEGIN
-			IF EXISTS(SELECT 1 FROM #tempMemNonBA)
-			BEGIN
-			
-				SET @MaxRow = (SELECT MAX(ID) FROM #tempMemNonBA)
-			
-				IF	@Threshold >= @MaxRow
-				SET	@Threshold = @MaxRow
-			
-				SET @StopRow = @Threshold
-
-				WHILE (0 = 0)
-				BEGIN	
-					
-					UPDATE dcm 
-						   SET IsGroupedPT = 1
-					FROM dbo.Dep_CustSettingMode dcm WITH (ROWLOCK)	
-						INNER JOIN #tempMemNonBA c ON c.CustID = dcm.CustID AND dcm.IsGroupedPT = 0
-					WHERE ID >= @StartRow AND ID <= @StopRow
-					
-					INSERT INTO dbo.Dep_CustSettingMode
-						   (CustID
-						   ,IsGroupedPT
-						   ,IsGroupedComm
-						   ,IsGroupedBetLimit
-						)	
-					SELECT c.CustID,1,0,0
-					FROM #tempMemNonBA c
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustSettingMode m WITH(NOLOCK) WHERE m.CustID=c.CustID)	
-		
-					IF	@StopRow = @MaxRow 
-						BREAK
-						
-					SET	@StartRow = @StopRow + 1
-						
-					SET	@StopRow = 1 + @StopRow + @Threshold
-						
-					IF	@StopRow >= @MaxRow
-						SET	@StopRow = @MaxRow
-										
-				END;
-			END;	
-			
-			SET @StartRow=1
-			SET @Threshold=3000	
-
-			IF EXISTS(SELECT 1 FROM #tempMemBA)
-			BEGIN
-			
-				SET @MaxRow = (SELECT MAX(ID) FROM #tempMemBA)
-			
-				IF	@Threshold >= @MaxRow
-				SET	@Threshold = @MaxRow
-			
-				SET @StopRow = @Threshold
-
-				WHILE (0 = 0)
-				BEGIN
-					
-					UPDATE dcm 
-						   SET IsGroupedPT = 0
-					FROM dbo.Dep_CustSettingMode dcm WITH (ROWLOCK)	
-						INNER JOIN #tempMemBA c ON c.CustID = dcm.CustID AND dcm.IsGroupedPT = 1
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						
-					INSERT INTO dbo.Dep_CustSettingMode
-						   (CustID
-						   ,IsGroupedPT
-						   ,IsGroupedComm
-						   ,IsGroupedBetLimit
-						)	
-					SELECT c.CustID,0,0,0
-					FROM #tempMemBA c
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustSettingMode m WITH(NOLOCK) WHERE m.CustID=c.CustID)	
-
-					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,SportType,BetType,IsLive,0,0,0
-					FROM #tempMemBA c		
-						CROSS APPLY @SportBettypeFilter t	
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
-						AND t.IsApplyBA=1
-
-					INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT)
-					SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT
-					FROM #tempMemBA c		
-						CROSS APPLY @SportBettypeFilter t
-						INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive			
-					WHERE ID >= @StartRow AND ID <= @StopRow	
-						AND NOT EXISTS (SELECT 1 FROM  Dep_CustPTSetting_Member m WITH(NOLOCK) WHERE m.CustID=c.CustID AND m.SportType=t.SportType AND m.BetType=t.Bettype AND m.IsLive=t.IsLive)	
-						AND t.IsApplyBA=0
-
-					IF	@StopRow = @MaxRow 
-						BREAK
-						
-					SET	@StartRow = @StopRow + 1
-						
-					SET	@StopRow = 1 + @StopRow + @Threshold
-						
-					IF	@StopRow >= @MaxRow
-						SET	@StopRow = @MaxRow
-										
-				END;
-			END;		
-
-			SET @StartRow=1
-			SET @Threshold=3000
-
 			IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
 			BEGIN
 			
@@ -483,13 +243,13 @@ BEGIN
 						
 					SET	@StartRow = @StopRow + 1
 						
-					SET	@StopRow = 1 + @StopRow + @Threshold
+					SET	@StopRow = @StartRow + @Threshold
 						
 					IF	@StopRow >= @MaxRow
 						SET	@StopRow = @MaxRow
 										
-				END;
-			END;		
+				END
+			END	
 		END
 END	
 
