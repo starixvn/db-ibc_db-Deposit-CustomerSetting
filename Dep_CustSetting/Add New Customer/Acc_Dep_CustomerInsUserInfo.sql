@@ -8,50 +8,25 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@currency INT,
 	@site NVARCHAR(50),
 	@ugroup VARCHAR(5) = NULL,
-
 	@srecommend INT,
 	@mrecommend INT,
 	@recommend INT,
 	@roleid INT,
-	
 	@Danger TINYINT = 0,
 	@Danger2 TINYINT = 0,
 	@Danger3 TINYINT = 0, 
-	
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
 	@suspended BIT = NULL,
 	@closed BIT = NULL,	
 	@DisableOutright BIT = 0,
 	@matchlimit SMALLMONEY,
 	@virtualmultiplier SMALLMONEY,
-	
 	@DisableAutoMPT BIT = 1,
 	@IsInternal BIT = 0,
-	
-	@MaxPerMatch MONEY,
-	@MaxPerMatchv2 MONEY,
-	@MaxPerMatchv3 MONEY,
-	@MaxPerMatchv5 MONEY,
-	@MaxPerMatchv8 MONEY,
-	@MaxPerMatchv10 MONEY,
-	@MaxPerMatchv11 MONEY,
-
-	--v201
-	@MaxPerMatchv99 MONEY,
-	@MaxPerMatchv1MP MONEY =0,
-	@MaxPerMatchv99MP MONEY,	
-	@MaxPerMatchv161 MONEY,	
-	@MaxPerBallv161 MONEY = 0,
-	@DisableNumber BIT = 0,
-	
-	@HideKeno BIT =0,
-
 	@credit MONEY,
 	@maxcredit MONEY = 0,
-	
 	@IP VARCHAR(15)='',
 	@TransferOption_dec TINYINT,
-
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT
@@ -86,6 +61,7 @@ Revisions:
 	- 20210520@Eden: Apply default VR Setting which is -90% whenever there is new LICENSEE Supers creation [Redmine:#153411]
 	- 20210802@Eden: Deposit - Support default VR based on bettypes [Redmine:#159547]
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
+	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	
 Param's Explanation:
 • @ErrCode:
@@ -280,15 +256,15 @@ BEGIN
 END
 
 INSERT INTO [dbo].[custinfo](
-	[custId], [currency], [maxpermatch], [maxpermatch2], [maxpermatch3], [maxpermatch5], [maxpermatch8], [maxpermatch10], [maxpermatch11],[maxpermatch99]
+	[custId], [currency]
 	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
-	, DisableOutright,DisableNumber
-	,maxpermatch161,MaxPerMatch99MP,MaxPerMatch1MP,MaxPerBall161,danger,danger2,danger3,HideKeno)
+	,DisableOutright
+	,danger,danger2,danger3)
 VALUES(
-	@custid, @currency, @MaxPerMatch, @MaxPerMatchv2, @MaxPerMatchv3, @MaxPerMatchv5, @MaxPerMatchv8, @MaxPerMatchv10, @MaxPerMatchv11, @MaxPerMatchv99
+	@custid, @currency
 	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
-	,@DisableOutright, @DisableNumber
-	,@MaxPerMatchv161,@MaxPerMatchv99MP,@MaxPerMatchv1MP,@MaxPerBallv161,@danger,@danger2,@danger3,@HideKeno)
+	,@DisableOutright
+	,@danger,@danger2,@danger3)
 
 IF @@ERROR <> 0
 BEGIN 

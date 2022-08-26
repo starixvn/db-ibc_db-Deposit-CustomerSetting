@@ -18,6 +18,7 @@ AS
 		- 20171009@Winnie: Update PT of DCS product RedmineID:#82346
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 		- 20200718@Elodie: Support level sporttype/bettype [RedmineID:#135872]
+		- 202202220@Elodie: Apply DCS for SB [RedmineID: #167898] 
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -91,7 +92,7 @@ BEGIN
 	BEGIN
 		IF EXISTS (	SELECT 1 
 					FROM #tmpPT ft 
-						INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+						INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype AND ft.IsLive = bl.IsLive
 					WHERE CustID=@SuperID)
 			UPDATE a
 			 SET
@@ -99,7 +100,7 @@ BEGIN
 				  ,MasterPT = t.PT
 				  ,AgentPT  = t.PT
 			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #tmpPT t ON a.CustID=@SuperID AND a.SportType=t.SportType AND a.BetType=t.BetType
+				INNER JOIN #tmpPT t ON a.CustID=@SuperID AND a.SportType=t.SportType AND a.BetType=t.BetType AND t.IsLive = a.IsLive
 		 ELSE
 			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
 			SELECT @SuperID,SportType,BetType,IsLive,PT,PT,PT
@@ -107,7 +108,7 @@ BEGIN
 
 		IF EXISTS (SELECT 1 
 					FROM #tmpPT ft 
-						INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+						INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype AND ft.IsLive = bl.IsLive
 					WHERE CustID=@mrecommend)
 			UPDATE a
 				SET
@@ -115,7 +116,7 @@ BEGIN
 					,MasterPT = PT
 					,AgentPT  = 0
 			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-				INNER JOIN #tmpPT t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType
+				INNER JOIN #tmpPT t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType AND t.IsLive = a.IsLive
 		 ELSE
 			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
 			SELECT @mrecommend,SportType,BetType,IsLive,0,PT,0
@@ -128,14 +129,14 @@ BEGIN
 
 	IF EXISTS (	SELECT  1 
 				FROM #tmpPT ft 
-					INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype 
+					INNER JOIN dbo.Dep_CustPTSetting_Agent bl WITH (NOLOCK) ON ft.SportType = bl.sporttype AND ft.BetType = bl.bettype AND ft.IsLive = bl.IsLive
 				WHERE CustID=@AgentID)
 		UPDATE a
 		SET SuperPT   = 0
 			,MasterPT = 0
 			,AgentPT  = PT
 		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tmpPT t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType
+			INNER JOIN #tmpPT t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType AND t.IsLive = a.IsLive
 	ELSE
 		INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
 		SELECT @AgentID,SportType,BetType,IsLive,0,0,PT

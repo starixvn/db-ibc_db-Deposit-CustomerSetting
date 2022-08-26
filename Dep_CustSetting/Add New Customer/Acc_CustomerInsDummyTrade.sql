@@ -18,6 +18,7 @@ AS
 		- 20190906@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
+		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	Param's Explanation:
 */
 BEGIN
@@ -56,19 +57,15 @@ BEGIN
 			CREATE TABLE #tempCashOut(Username varchar(30), recommend INT, mrecommend INT, currency INT, site varchar(10), refcode1 nvarchar(100)
 				, refcode2 nvarchar(100), ugroup varchar(3), [closed] bit, [MatchLimit] INT, [VirtualMultiplier] SMALLINT, [Enabled] BIT, [danger] TINYINT
 				, [danger2] TINYINT, [danger3] TINYINT, [DisableOutright] BIT
-				, [MaxPerMatch99MP] MONEY, [DisableNumber] BIT, [maxpermatch161] MONEY
-				, [MaxPerBall161] MONEY, [Abnormal] TINYINT, [DoubleCommLosing] BIT)	
+				, [Abnormal] TINYINT, [DoubleCommLosing] BIT)	
 			
 			INSERT INTO #tempCashOut(Username, recommend, mrecommend, currency, site, refcode1
 				, refcode2, ugroup, [closed], [MatchLimit], [VirtualMultiplier], [Enabled], [danger]
 				, [danger2], [danger3], [DisableOutright]
-				, [MaxPerMatch99MP], [DisableNumber], [maxpermatch161]
-				, [MaxPerBall161], [Abnormal], [DoubleCommLosing])			
+				, [Abnormal], [DoubleCommLosing])			
 			SELECT t.Username, a.custid AS recommend, a.mrecommend, a.currency, a.site, a.refcode1
 				, a.refcode2, a.ugroup, b.[closed], b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
 				, b.[danger2], b.[danger3], b.[DisableOutright]
-				, b.[MaxPerMatch99MP], b.[DisableNumber], b.[maxpermatch161]
-				, b.[MaxPerBall161]
 				, b.[Abnormal], b.[DoubleCommLosing]
 			FROM Customer a(NOLOCK)				
 				INNER JOIN @tempDummy t	ON a.custid = t.AgentID		
@@ -94,13 +91,11 @@ BEGIN
 
 			INSERT INTO [dbo].[custInfo] ([username], [custid], [currency], [roleid], [srecommend], [mrecommend], [recommend], [closed]
 				, [MatchLimit], [VirtualMultiplier], [Enabled], [danger]
-				, [danger2], [danger3], [DisableOutright], [MaxPerMatch99MP]
-				, [DisableNumber], [maxpermatch161], [MaxPerBall161]
+				, [danger2], [danger3], [DisableOutright]
 				, [Abnormal], [DoubleCommLosing], credit)
 			SELECT a.[username], a.[custid], a.[currency], a.[roleid], a.[srecommend], a.[mrecommend], a.[recommend], b.[closed]
 				, b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
-				, b.[danger2], b.[danger3], b.[DisableOutright], b.[MaxPerMatch99MP]
-				, b.[DisableNumber], b.[maxpermatch161], b.[MaxPerBall161]
+				, b.[danger2], b.[danger3], b.[DisableOutright]
 				, b.[Abnormal]
 				, b.[DoubleCommLosing], 0
 			FROM Customer(NOLOCK) a
@@ -258,59 +253,6 @@ BEGIN
 					INNER JOIN Customer b WITH (NOLOCK)
 					ON a.username = b.username
 
-				----Insert Dep_Custsetting
-				INSERT INTO [dbo].[Dep_CustSetting] ([custid], [bettype], [sporttype], [islive], [apositiontaking], [mpositiontaking]
-					, [spositiontaking], [playerdiscount], [discount], [adiscount], [sdiscount], [minbet], [maxbet])
-				SELECT @tradeCustId, [bettype], [sporttype], [islive], [apositiontaking], [mpositiontaking], [spositiontaking]
-					, [playerdiscount], [discount], [adiscount], [sdiscount], [minbet], [maxbet]
-				FROM [Dep_CustSetting] a(NOLOCK)
-				WHERE custid = @tradeAgentId
-					AND NOT EXISTS (
-						SELECT TOP 1 1
-						FROM [Dep_CustSetting] b(NOLOCK)
-						WHERE b.custid = @tradeCustId
-							AND a.bettype = b.bettype
-							AND a.sporttype = b.sporttype
-							AND a.islive = b.islive
-						)
-
-				---------------------------------------------------------------------------------  
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert TradeCust'
-
-					DELETE a
-					FROM Customer a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.username = b.username
-
-					DELETE a
-					FROM custInfo a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.username = b.username
-
-					DELETE a
-					FROM [TradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempCashOut b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [Dep_CustSetting] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempCashOut b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [TradeComm] a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.AgentId = b.recommend
-
-					RETURN
-				END
-
 				---------------------------------------------------------------------------------  
 				-- Insert Balance
 				EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @tradeCustID
@@ -331,13 +273,6 @@ BEGIN
 
 					DELETE a
 					FROM [TradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempCashOut b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [Dep_CustSetting] a(NOLOCK)
 						INNER JOIN Customer(NOLOCK) c
 						ON a.custid = c.Custid
 						INNER JOIN #tempCashOut b
@@ -371,13 +306,6 @@ BEGIN
 
 					DELETE a
 					FROM [TradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempCashOut b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [Dep_CustSetting] a(NOLOCK)
 						INNER JOIN Customer(NOLOCK) c
 						ON a.custid = c.Custid
 						INNER JOIN #tempCashOut b
