@@ -1,5 +1,5 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]     
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member,Dot_Evolution" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]
 	@CustID int = 0,  
 	@ReinitOldBalance BIT = 1,
 	@CheckUniqueUsername2 BIT = 1,

@@ -1,5 +1,5 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
-ALTER PROCEDURE Acc_CustomerInfo_Execrep_10
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+ALTER PROCEDURE Acc_CustomerInfo_Execrep_10 
 	@CustID INT = -1
 	,@ActionID SMALLINT = -1
 	,@LstCustID VARCHAR(MAX) = ''
