@@ -61,7 +61,7 @@ BEGIN
 		, MaxPerNumber		MONEY
 		, MaxPayoutPerMatch	MONEY
 		)
-	
+
 	DECLARE @ProductID		TINYINT,
 			@ProductName	VARCHAR(50),
 			@SettingLevel	TINYINT
