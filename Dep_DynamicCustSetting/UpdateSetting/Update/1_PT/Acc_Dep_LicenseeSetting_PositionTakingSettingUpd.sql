@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_Dep_LicenseeSetting_PTSettingUpd 
-	 @Site			VARCHAR(10)
+	 @Site			VARCHAR(20)
 	, @InputPT		VARCHAR(MAX)
 	, @UserID		INT
 	, @IP			VARCHAR(50)		= ''
