@@ -22,6 +22,7 @@ AS
 						PT="90"
 				/>
 		</ROOT>
+		* when PT =  -1 => don't update value
 	*/
 
 BEGIN
@@ -71,7 +72,7 @@ BEGIN
 	INNER JOIN Dep_ProductSettingDetail psd WITH(NOLOCK) ON dp.ProductSettingID = psd.ProductSettingID
 	LEFT JOIN  Exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency 
 	INNER JOIN DBPRO.bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = a.ProductID
-	WHERE dp.SettingType=1 AND (a.Currency = 0 OR (e.IsActive = 1 AND e.OfferSite IN (0,2)))
+	WHERE dp.SettingType=1 AND (a.Currency = 0 OR (e.IsActive = 1 AND e.OfferSite IN (0,2))) AND a.PT <> -1
 	
 	-- ALL SMA affect
 	INSERT INTO #tmpSMA(CustID,Currency,RoleID,srecommend,ProductSettingID)
@@ -81,7 +82,7 @@ BEGIN
 		INNER JOIN Dep_LicenseeProductSetting lps with(nolock) ON ci.custid = lps.CustID
 		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID
 	WHERE Roleid=4 AND cs.site = @Site 
-	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
+	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency AND PT <> -1)
 	UNION ALL 
 	SELECT  DISTINCT ci.custid, ci.currency, ci.roleid,ci.srecommend,lps.ProductSettingID
 	FROM custInfo ci WITH(NOLOCK) 
@@ -89,8 +90,8 @@ BEGIN
 		INNER JOIN Dep_LicenseeProductSetting lps with(nolock) ON ci.custid = lps.CustID
 		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID
 	WHERE Roleid=4 AND cs.site = @Site 
-	AND ci.currency NOT IN (SELECT Currency FROM #PTProduct WHERE Currency <> 0)
-	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
+	AND ci.currency NOT IN (SELECT Currency FROM #PTProduct WHERE Currency <> 0 AND PT <> -1)
+	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0  AND PT <> -1)
 	
 	INSERT INTO	#tmpPT_Old (CustID,SportType, BetType, Islive, PT)
 	SELECT DISTINCT	a.CustID	
