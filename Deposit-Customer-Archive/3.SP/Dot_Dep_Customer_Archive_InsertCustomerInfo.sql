@@ -25,6 +25,9 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@Danger TINYINT = 0,
 	@Danger2 TINYINT = 0,
 	@Danger3 TINYINT = 0,
+	@Danger4 TINYINT = 0,
+	@Danger5 TINYINT = 0,
+
 	@Abnormal TINYINT = 0,
 	
 	@phone NVARCHAR(50),
@@ -79,7 +82,8 @@ AS
 		- 20190909@Eden: 3rd party products - Remove InActive Products Phase 2 [Redmine: #118699]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
-	
+		- 20220907@Tacy: NAP - Set Dangerous Level of member following upline (Agent) [Redmine: #176518]
+
 	Param's Explanation:
 	• @ErrCode:
 		= 0: Insert successfully.
@@ -212,7 +216,8 @@ BEGIN
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 	  , MatchLimit, VirtualMultiplier
 	  , DisableOutright
-	  , danger, danger2, danger3, Abnormal	 
+	  , danger, danger2, danger3, Danger4, Danger5
+	  , Abnormal	 
 	  , DoubleCommLosing	
 	  , DisableSuperLive,DisableColossusBet,HideColossusBet
 	  )
@@ -222,7 +227,8 @@ BEGIN
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), 0, ISNULL(@closed, 0), @username
 	  , @matchlimit, @virtualmultiplier
 	  , @DisableOutright
-	  , @danger, @danger2, @danger3, @Abnormal
+	  , @danger, @danger2, @danger3, @Danger4, @Danger5
+	  , @Abnormal
 	  , 0
 	  , @DisableSuperLive,@DisableColossusBet,@HideColossusBet
     )

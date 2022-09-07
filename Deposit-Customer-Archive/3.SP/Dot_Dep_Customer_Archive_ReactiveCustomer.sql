@@ -27,6 +27,7 @@ AS
 		- 20220517@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+		- 20220907@Tacy: NAP - Set Dangerous Level of member following upline (Agent) [Redmine: #176518]
 
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
@@ -159,6 +160,12 @@ BEGIN
 		RETURN    
 	END
 	---------------------------------
+
+	DECLARE @danger		TINYINT=0,	--Original
+			@danger2	TINYINT=0,	--ABI
+			@danger3	TINYINT=0,	--Basketball
+			@danger4	TINYINT=0,	--E-sports
+			@danger5	TINYINT=0	--Other Sports
 	    
 	select    
 	 @srecommend = ci.srecommend,    
@@ -171,7 +178,13 @@ BEGIN
 	 @Aclosed   = closed,    
 	 @Asuspended   = reject,    
 	 @matchlimit   = matchlimit,    
-	 @virtualmultiplier = virtualmultiplier
+	 @virtualmultiplier = virtualmultiplier,
+	 ----- get danger value
+	 @danger=danger,
+	 @danger2=danger2, 
+	 @danger3=danger3,
+	 @danger4=Danger4,
+	 @danger5=Danger5
 	FROM custinfo ci WITH(NOLOCK)     
 	 inner join customer c WITH(NOLOCK) ON ci.custid = c.custid    
 	WHERE ci.CustID = @AgentID    
@@ -319,6 +332,11 @@ BEGIN
 	 @mrecommend = @mrecommend,    
 	 @recommend = @recommend,    
 	 @roleid = 1,    
+	 @danger=@danger,
+	 @danger2=@danger2,
+	 @danger3=@danger3,
+	 @danger4=@Danger4,
+	 @danger5=@Danger5,
 	 @phone = @phone,    
 	 @mobilephone = @mobilephone,    
 	 @email = @Email,    
