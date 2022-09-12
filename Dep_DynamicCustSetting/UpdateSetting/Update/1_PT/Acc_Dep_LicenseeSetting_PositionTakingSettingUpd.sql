@@ -61,7 +61,7 @@ BEGIN
 
 	BEGIN CATCH
 		SET @ErrCode = 100
-		SET @ErrMsg = N'Paramter invalid.'
+		SET @ErrMsg = N'Unable to process update NAP PT due to invalid parameters, please try again.'
 		RETURN
 	END CATCH;
 	-- All sport type  - bettype
@@ -224,8 +224,7 @@ BEGIN
 					IF	@@ERROR <> 0
 					BEGIN	
 						SELECT	@ErrCode = 101
-							,	@ErrMsg = 'Update Position Taking unsuccessfuly.';
-
+							,	@ErrMsg = 'Fail to update member Position Taking, please try again.';
 						BREAK;
 					END;
 			END
