@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
+ALTER PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingUpd 
 	  @SuperID		INT
 	, @AgentID		INT
 	, @IsAgentOnly	BIT
@@ -19,6 +19,7 @@ AS
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 		- 20200718@Elodie: Support level sporttype/bettype [RedmineID:#135872]
 		- 202202220@Elodie: Apply DCS for SB [RedmineID: #167898] 
+		- 20220912@Eden: Licensee DCS - Missing ProductSettingID for SB [RedmineID: #177703] 
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -36,7 +37,7 @@ BEGIN
 
 	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend	INT
 	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT
-	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductSettingID	INT
+	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT
 	CREATE TABLE #tmpPT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
 	CREATE TABLE #tmpPT_Old (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY)
 
@@ -53,7 +54,7 @@ BEGIN
 	IF @ErrCode <> 0 
 		RETURN 
 			
-	SELECT  @SettingLevel=SettingLevel, @ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType=1
+	SELECT  @SettingLevel=SettingLevel FROM Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType=1
 
 	-- Select ProductName
 	SELECT @ProductName = p.ProductName
@@ -85,7 +86,9 @@ BEGIN
 		INNER JOIN	#tmpPT AS ts ON	ts.SportType=cslm.SportType AND ts.BetType = cslm.BetType AND ts.IsLive = cslm.IsLive
 	WHERE	cslm.CustID = @SuperID
 
-	IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
+	IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
+							WHERE ProductID=@ProductID AND SettingType = 1 AND CustID=@SuperID)
 		SELECT @IsAgentOnly=0
 
 	IF(@IsAgentOnly=0)
@@ -122,9 +125,16 @@ BEGIN
 			SELECT @mrecommend,SportType,BetType,IsLive,0,PT,0
 			FROM #tmpPT t
 
-		IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
+		IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
+									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
+								WHERE ProductID=@ProductID AND SettingType = 1 AND CustID=@SuperID)
+		BEGIN
 			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			VALUES( @SuperID,@ProductSettingID)	
+			SELECT @SuperID,ProductSettingID
+			FROM Dep_ProductSetting WITH(NOLOCK)
+			WHERE ProductID=@ProductID AND SettingType = 1
+		END			
+
 	END
 
 	IF EXISTS (	SELECT  1 
