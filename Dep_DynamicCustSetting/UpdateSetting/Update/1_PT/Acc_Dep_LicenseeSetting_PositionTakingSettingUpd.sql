@@ -102,7 +102,7 @@ BEGIN
 		,	a.BetType
 		,	a.IsLive
 		,	a.SuperPT			
-	FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
+	FROM dbo.Dep_CustPTSetting_Agent a WITH(NOLOCK)
 			INNER JOIN #tmpSMA t ON a.CustID=t.CustID
 			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType 
 												AND a.IsLive = stb.IsLive  AND t.ProductSettingID = stb.ProductSettingID
