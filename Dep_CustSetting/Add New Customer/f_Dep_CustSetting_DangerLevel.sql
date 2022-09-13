@@ -2,7 +2,7 @@
 ALTER FUNCTION [dbo].[f_Dep_CustSetting_DangerLevel]
 	(@currency	INT,
 	 @site		NVARCHAR(50))
-RETURNS BIGINT	
+RETURNS @DangerLevel TABLE (DangerLevel BIGINT)
 AS
 /*
 	Created: 20220913@Tacy
@@ -15,18 +15,20 @@ AS
 	Parameter's Explanation:		
 */	
 BEGIN
-RETURN
-	(
-	 SELECT dbo.f_GenerateDangerLevelInfo(0,
-										  CASE WHEN @currency<>4	THEN 9        
-                                               WHEN @currency=4		THEN 11     --Currency: TB
-                                               WHEN @site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88') THEN 10
-                                          END,	--SoccerLevel 
-										  CASE WHEN @site IN ('Livv88sw','Haifa') OR @currency=96 
-                                                OR (@site IN ('Happy8','SM88','AEUG','365Online','368cash') AND @currency=51)        --Currency: INH
-                                                OR (@site='WINCLUB88' AND @currency=15)        --Currency: IN
-                                                THEN 10 ELSE 9 
-										  END,	--BasketballLevel 
-										  1,1)
-	)
+	DECLARE @SoccerLevel TINYINT,
+            @BasketballLevel TINYINT
+
+	SELECT	@SoccerLevel=CASE WHEN @currency<>4 THEN 9        
+                                        WHEN @currency=4 THEN 11                --Currency: TB
+                                        WHEN @site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88') THEN 10
+                            END,
+			@BasketballLevel=CASE WHEN @site IN ('Livv88sw','Haifa') OR @currency=96 
+                                                                    OR (@site IN ('Happy8','SM88','AEUG','365Online','368cash') AND @currency=51)        --Currency: INH
+                                                                    OR (@site='WINCLUB88' AND @currency=15)        --Currency: IN
+                                                            THEN 10 ELSE 9 
+                                                    END
+	INSERT INTO @DangerLevel(DangerLevel)
+    SELECT dbo.f_GenerateDangerLevelInfo(0,@SoccerLevel,@BasketballLevel,1,1)
+
+	RETURN
 END

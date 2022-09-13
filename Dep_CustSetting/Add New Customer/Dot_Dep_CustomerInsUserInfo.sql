@@ -298,7 +298,8 @@ BEGIN
 
 	DECLARE @DangerLevel BIGINT
 
-	SELECT @DangerLevel=f_Dep_CustSetting_DangerLevel(@site, @currency)
+	SELECT @DangerLevel=DangerLevel
+	FROM f_Dep_CustSetting_DangerLevel(@site, @currency)
 
 	--get dangerous setting's upline:
 	SELECT @danger=danger
