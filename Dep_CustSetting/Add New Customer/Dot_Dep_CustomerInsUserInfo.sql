@@ -48,6 +48,7 @@ AS
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220816@Tacy: Set default new downline Dangerous Setting [Redmine: #176518]
+		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 
 	Param's Explanation:
 		• @ErrCode:
@@ -295,6 +296,10 @@ BEGIN
 		RETURN
 	END
 
+	DECLARE @DangerLevel BIGINT
+
+	SELECT @DangerLevel=f_Dep_CustSetting_DangerLevel(@site, @currency)
+
 	--get dangerous setting's upline:
 	SELECT @danger=danger
 		, @danger2=danger2 
@@ -313,6 +318,7 @@ BEGIN
 	  , danger, danger2, danger3, Danger4, Danger5
 	  , Abnormal, DoubleCommLosing	
 	  , DisableEsports, DisableSuperLive,DisableColossusBet,HideColossusBet
+	  , DangerLevel
 	  )
     VALUES
     (
@@ -323,6 +329,7 @@ BEGIN
 	  , @danger, @danger2, @danger3, @danger4, @danger5
 	  , 0, 0	
 	  , 0, 0,1,1
+	  , @DangerLevel
     )
 	
     IF @@ERROR <> 0
