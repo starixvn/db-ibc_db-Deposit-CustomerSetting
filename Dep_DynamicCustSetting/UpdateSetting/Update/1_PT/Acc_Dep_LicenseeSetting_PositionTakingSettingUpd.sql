@@ -2,7 +2,7 @@
 ALTER PROCEDURE dbo.Acc_Dep_LicenseeSetting_PTSettingUpd 
 	 @Site			VARCHAR(20)
 	, @InputPT		VARCHAR(MAX)
-	, @UserID		INT
+	, @UserName		VARCHAR(50)
 	, @IP			VARCHAR(50)		= ''
 	, @ErrCode		INT				= 0		OUTPUT	
 	, @ErrMsg		NVARCHAR(200)	= ''	OUTPUT
@@ -28,10 +28,12 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT
+	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT , @UserID	INT
 	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT, @NumProduct INT = 0
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
 	
+	SET @UserID = 10278938	--StarixIT
+
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
 	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,Currency INT,IsLive BIT,PT SMALLMONEY,
 								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,IsApplyBA BIT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductID,Sporttype ,Bettype,Currency))
@@ -235,6 +237,7 @@ BEGIN
 				SELECT	@SuperID						AS '@SuperID',
 						@UserID							AS '@UserID',				
 						@IP								AS '@IP',
+						@UserName						AS '@AdminName',
 						(
 							SELECT DISTINCT	stb.ProductID			AS '@ProductID',
 									stb.ProductName			AS '@ProductName',
@@ -300,6 +303,7 @@ BEGIN
 				SELECT	@SuperID						AS '@SuperID',
 						@UserID							AS '@UserID',				
 						@IP								AS '@IP',
+						@UserName						AS '@AdminName',
 						(
 							SELECT DISTINCT cs.ProductID			AS '@ProductID',
 									cs.ProductName					AS '@ProductName',
