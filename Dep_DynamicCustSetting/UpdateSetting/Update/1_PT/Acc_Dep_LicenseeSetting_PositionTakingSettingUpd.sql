@@ -2,7 +2,7 @@
 ALTER PROCEDURE dbo.Acc_Dep_LicenseeSetting_PTSettingUpd 
 	 @Site			VARCHAR(20)
 	, @InputPT		VARCHAR(MAX)
-	, @UserName		VARCHAR(50)
+	, @UserName		VARCHAR(50) 
 	, @IP			VARCHAR(50)		= ''
 	, @ErrCode		INT				= 0		OUTPUT	
 	, @ErrMsg		NVARCHAR(200)	= ''	OUTPUT
@@ -14,6 +14,7 @@ AS
 	Revision:		
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
 	Param's Explanation:
+		*@UserName : Name user LA update
 		@InputPT:
 		<ROOT>
 				<PT
