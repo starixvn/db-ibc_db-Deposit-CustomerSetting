@@ -2,6 +2,7 @@
 ALTER PROCEDURE dbo.Acc_Dep_LicenseeSetting_PTSettingUpd 
 	 @Site			VARCHAR(20)
 	, @InputPT		VARCHAR(MAX)
+	, @UserID		INT
 	, @UserName		VARCHAR(50) 
 	, @IP			VARCHAR(50)		= ''
 	, @ErrCode		INT				= 0		OUTPUT	
@@ -29,11 +30,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT , @UserID	INT
+	DECLARE @startRun DATETIME, @endRun	DATETIME, @duration INT, @mrecommend INT , @creator	INT
 	DECLARE @logSpData NVARCHAR(MAX), @logSpData_Old NVARCHAR(MAX), @xml XML, @iDoc INT,  @Threshold INT, @NumProduct INT = 0
 	DECLARE	@ProductName VARCHAR(50), @SettingLevel	TINYINT, @ProductID INT,@Currency INT,@CustIDList VARCHAR(MAX),@SuperID INT,@PT XML
 	
-	SET @UserID = 10278938	--StarixIT
+	SET @creator = 10278938	--StarixIT
 
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
 	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,Currency INT,IsLive BIT,PT SMALLMONEY,
@@ -236,8 +237,9 @@ BEGIN
 			-- Log old data
 			SET @xml = (
 				SELECT	@SuperID						AS '@SuperID',
-						@UserID							AS '@UserID',				
-						@IP								AS '@IP',
+						@creator						AS '@UserID',				
+						@IP								AS '@IP',				
+						@UserID							AS '@AdmiID',
 						@UserName						AS '@AdminName',
 						(
 							SELECT DISTINCT	stb.ProductID			AS '@ProductID',
@@ -302,8 +304,9 @@ BEGIN
 			-- Log new updated data
 			SET @xml = (
 				SELECT	@SuperID						AS '@SuperID',
-						@UserID							AS '@UserID',				
-						@IP								AS '@IP',
+						@creator						AS '@UserID',				
+						@IP								AS '@IP',			
+						@UserID							AS '@AdmiID',
 						@UserName						AS '@AdminName',
 						(
 							SELECT DISTINCT cs.ProductID			AS '@ProductID',
