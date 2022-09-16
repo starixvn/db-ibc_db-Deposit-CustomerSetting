@@ -213,12 +213,15 @@ BEGIN
 	END
 
 	--Set DangerLevel
-	DECLARE @DangerLevel BIGINT
+	DECLARE @DangerLevel BIGINT = NULL
 
-	SELECT	@DangerLevel=DangerLevel
-	FROM dbo.f_Dep_CustSetting_DangerLevel(@site, @currency)
-
-    INSERT INTO [dbo].[custinfo]
+	IF @roleid=1
+	BEGIN
+		SELECT	@DangerLevel=DangerLevel
+		FROM dbo.f_Dep_CustSetting_DangerLevel(@site, @currency)
+	END
+    
+	INSERT INTO [dbo].[custinfo]
     (
 	    custid, currency
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
