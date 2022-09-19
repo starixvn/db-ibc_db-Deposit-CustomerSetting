@@ -300,18 +300,19 @@ BEGIN
 
 	IF @roleid=1
 	BEGIN
+		--get DangerLevel
 		SELECT @DangerLevel=DangerLevel
 		FROM f_Dep_CustSetting_DangerLevel(@site, @currency)
-	END
 
-	--get dangerous setting's upline:
-	SELECT @danger=danger
-		, @danger2=danger2 
-		, @danger3=danger3
-		, @danger4=Danger4
-		, @danger5=Danger5
-	FROM custInfo ci WITH (NOLOCK)
-	WHERE custid=@recommend
+		--get dangerous setting's upline:
+		SELECT @danger=danger
+			, @danger2=danger2 
+			, @danger3=danger3
+			, @danger4=Danger4
+			, @danger5=Danger5
+		FROM custInfo ci WITH (NOLOCK)
+		WHERE custid=@recommend
+	END
 
 	INSERT INTO [dbo].[custinfo]
     (

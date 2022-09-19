@@ -18,9 +18,9 @@ BEGIN
 	DECLARE @SoccerLevel TINYINT,
             @BasketballLevel TINYINT
 
-	SELECT	@SoccerLevel=CASE WHEN @currency<>4 THEN 9        
-                                        WHEN @currency=4 THEN 11                --Currency: TB
-                                        WHEN @site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88') THEN 10
+	SELECT	@SoccerLevel=CASE WHEN @site IN ('IG128','SM88','SL88SW','LIVV88SW','365Online','SKY88','Sin88','One88') THEN 10
+							  WHEN @currency<>4 THEN 9        
+							  WHEN @currency=4	THEN 11  --Currency: TB
                             END,
 			@BasketballLevel=CASE WHEN @site IN ('Livv88sw','Haifa') OR @currency=96 
                                                                     OR (@site IN ('Happy8','SM88','AEUG','365Online','368cash') AND @currency=51)        --Currency: INH
