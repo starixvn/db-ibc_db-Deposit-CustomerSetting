@@ -84,19 +84,19 @@ BEGIN
 	FROM custInfo ci WITH(NOLOCK) 
 		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
 		INNER JOIN Dep_LicenseeProductSetting lps with(nolock) ON ci.custid = lps.CustID
-		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID
+		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID AND stp.Currency <> 0
 	WHERE Roleid=4 AND cs.site = @Site 
-	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency AND PT <> -1)
+	AND EXISTS (SELECT 1 FROM #PTProduct WHERE ProductID = stp.ProductID AND Currency = ci.currency AND PT <> -1)
 	UNION ALL 
 	SELECT  DISTINCT ci.custid, ci.currency, ci.roleid,ci.srecommend,lps.ProductSettingID
 	FROM custInfo ci WITH(NOLOCK) 
 		INNER JOIN Dep_custsuper cs WITH (NOLOCK) ON ci.custid = cs.custid
 		INNER JOIN Dep_LicenseeProductSetting lps with(nolock) ON ci.custid = lps.CustID
-		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID
+		INNER JOIN #SportTypeBetType stp with(nolock) ON stp.ProductSettingID = lps.ProductSettingID AND stp.Currency = 0
 	WHERE Roleid=4 AND cs.site = @Site 
-	AND ci.currency NOT IN (SELECT Currency FROM #PTProduct WHERE Currency <> 0 AND PT <> -1)
-	AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0  AND PT <> -1)
-	
+	AND ci.currency NOT IN (SELECT Currency FROM #PTProduct WHERE ProductID = stp.ProductID AND Currency <> 0)
+	AND EXISTS (SELECT 1 FROM #PTProduct WHERE ProductID = stp.ProductID AND Currency = 0  AND PT <> -1)
+
 	INSERT INTO	#tmpPT_Old (CustID,SportType, BetType, Islive, PT)
 	SELECT DISTINCT	a.CustID	
 		,	a.SportType
