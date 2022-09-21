@@ -12,6 +12,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220921@Winfred: Licensee DCS setting - HF Get multiple bet limit . [Feature #178013]
 		
 	Param's Explanation:
 		
@@ -24,7 +25,12 @@ BEGIN
 	SELECT DISTINCT ProductID, SportType,Bettype,IsLive 
 	FROM Dep_ProductSetting ps WITH(NOLOCK) 
 		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-	WHERE ProductID = @ProductID AND SettingType IN (10,12)
+	WHERE ProductID = @ProductID AND SettingType IN (10,12)	
+
+	IF @AgentID = 0
+	BEGIN
+		SET @AgentID = @SuperID
+	END
 
 	SELECT ft.SportType  
 		, ft.BetType  
