@@ -384,7 +384,7 @@ BEGIN
 	END
 	IF @ErrCode = 0
 	BEGIN
-		SET @ErrMsg='Update Position Taking successfully'
+		SET @ErrMsg=''
 	END
 	
 	DROP TABLE #PTProduct
