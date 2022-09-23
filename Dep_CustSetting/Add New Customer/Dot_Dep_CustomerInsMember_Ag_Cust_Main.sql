@@ -31,6 +31,7 @@ AS
 	 - 20210319@Eden: Correct comm group - bettype = 20  [redmine: #151213]
 	 - 20220505@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
 	 - 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	 - 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -243,42 +244,6 @@ BEGIN
 	END
 
 	---------------------------------------------------------------------------------    
-	---- Create balance for new customer    
-	--EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID  
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
-	 
-	    
-	IF @ErrCode <> 0    
-	BEGIN     
-	 --Error occurs    
-	 SELECT     
-	  @ErrMsg = 'Add member fail. Please try again',    
-	  @ErrCode=215    
-	     
-	 -- MANUALLY ROLLBACK     
-	 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID
-	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID 
-	 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-	 return    
-	END    
-	    
-	EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT    
-	    
-	IF @ErrCode <> 0    
-	BEGIN     
-	 --Error occurs    
-	 SELECT     
-	  @ErrMsg = 'Add member fail. Please try again',    
-	  @ErrCode=215    
-	     
-	 -- MANUALLY ROLLBACK     
-	 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID 
-	 EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID  
-	 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
-	 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-	 return    
-	END
-
 	/*HELEN-CUSTOMER SETTING DCS DEPOSIT-START*/
 	DECLARE @DCSErrCode INT = 0
 	EXEC dbo.Acc_Dep_DynamicCustSetting_00
@@ -294,9 +259,7 @@ BEGIN
 	BEGIN
 		 --Error occur
 		 SET @ErrCode = 911
-		 -- ROLLBACK MANUALLY  
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID    
+		 -- ROLLBACK MANUALLY     
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
 		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
 		 RETURN    

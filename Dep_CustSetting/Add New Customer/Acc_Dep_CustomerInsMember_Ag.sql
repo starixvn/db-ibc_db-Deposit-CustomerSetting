@@ -48,6 +48,7 @@ Revisions:
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -136,20 +137,6 @@ BEGIN
 
 	if @ErrCode <> 0
 		return
-
-	--Exclude created member from Balance checking
-	--INSERT INTO dbo.Task_Cust_CheckBalance_Exception(custid, remark) values(@custid, @username)
-	EXEC DBTXN.bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username
-	IF @@ERROR <> 0
-	BEGIN
-		--Error occur
-		SELECT @ErrMsg = case @Language 
-								when 'E' then 'Exclude customer from balance checking failed.'
-								else N'Exclude customer from balance checking failed.'
-							end,
-			@ErrCode = 211		
-		RETURN
-	END
 
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)

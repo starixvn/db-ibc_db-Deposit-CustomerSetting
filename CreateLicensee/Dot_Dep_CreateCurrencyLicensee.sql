@@ -26,6 +26,8 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateCurrencyLicensee]
 	,   @PT_CG				SMALLMONEY=0
 	,   @PT_VS3				SMALLMONEY=0
 	,	@StakeLevel			VARCHAR(MAX)	= '<ROOT></ROOT>'
+	,	@InsBalCustList		varchar(MAX) = '' OUTPUT
+	,	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
 AS  
 /*  
  Created: 20201118@Winfred  
@@ -44,26 +46,34 @@ AS
 	- 20220609@Winfred: Integrate Virtual Sports 3 [redmine:#173382]
 	- 20220725@Winfred: Enhance Log Virtual Sports 3 [redmine:#173382]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 
  Param's Explanation: 
- @LicenseeType = (Boping, OneWorks, Zelianta)
- @Product:<ROOT>
-				<Product 
-						ProductID="1" 
-						Currency="20" 
-						MinBet="1" 
-						MaxBet="30000" 
-						MaxPerMatch="1000000"
-						MaxPerBall="30000" 
-				/>
-			</ROOT>
- @StakeLevel  =  <ROOT>
-							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="100"/>	
-							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="200" />
-							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="300" />
-					</ROOT>',
+	- @LicenseeType = (Boping, OneWorks, Zelianta)
+	- @Product:<ROOT>
+					<Product 
+							ProductID="1" 
+							Currency="20" 
+							MinBet="1" 
+							MaxBet="30000" 
+							MaxPerMatch="1000000"
+							MaxPerBall="30000" 
+					/>
+				</ROOT>
+	- @StakeLevel  =  <ROOT>
+								<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="100"/>	
+								<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="200" />
+								<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="300" />
+						</ROOT>',
+
+	- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
+                    EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID 
+                    EXEC bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID
+    - @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
+                    EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username
+
 Sample exec:
-DECLARE @ErrorCode INT, @Errmsg NVARCHAR(MAX)
+DECLARE @ErrorCode INT, @Errmsg NVARCHAR(MAX), @InsBalCustList varchar(MAX),  @InsBalExceptCustList varchar(MAX)
 EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 	,	@PT_Sportsbook		=0.88
 	,	@PT_VirtualSports1	=0.88
@@ -353,11 +363,18 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 							<StakeLevel Currency="4" GameTypeID="3001"  MinStake="30" MaxStake="500" />
 					</ROOT>',
 @Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
-SELECT @ErrorCode,@Errmsg
+,@InsBalCustList=@InsBalCustList OUTPUT,@InsBalExceptCustList=@InsBalExceptCustList OUTPUT  , @SiteDBGroupID = 0
+SELECT @ErrorCode,@Errmsg ,@InsBalCustList,@InsBalExceptCustList 
 
 */  
 BEGIN  
-	SET NOCOUNT ON  
+	SET NOCOUNT ON
+	DECLARE @InsBalCustList_s		varchar(MAX) = '',
+			@InsBalExceptCustList_s varchar(MAX) = ''
+
+	SET @InsBalCustList = ''
+	SET @InsBalExceptCustList = ''
+
 	SELECT @PT_VirtualSports1=@PT_VirtualSports1*100
 	SELECT @PT_VirtualSports2=@PT_VirtualSports2*100
 	SELECT @PT_Loterry=@PT_Loterry*100
@@ -779,7 +796,9 @@ BEGIN
 			--Insert agent
 			EXEC Acc_Dep_CustomerInsMember_MAg 
 				@Custid=@AgentID OUTPUT,@creator=@CreatorID,@Username=@Agent,@userpwd=@Pass,@mrecommend=@MasterID,
-				@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+				@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT,
+				@InsBalCustList = @InsBalCustList_s OUTPUT,
+				@InsBalExceptCustList = @InsBalExceptCustList_s OUTPUT
 
 			IF @ErrCode<>0
 			BEGIN
@@ -790,6 +809,10 @@ BEGIN
 				EXEC Dot_Dep_RollBackLicensee @ListCustID=@ListCustIDRollBack
 				RETURN
 			END
+
+			SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + @InsBalCustList_s, '')
+			SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + @InsBalExceptCustList_s, '')
+
 			-- Insert dummy account
 			EXEC Acc_Dep_CustomerInsMember_SAg 
 				@Custid=@AccMasterID OUTPUT,@creator=@CreatorID,@Username=@AccMaster,@userpwd=@Pass,@srecommend=@SuperID,
@@ -809,7 +832,9 @@ BEGIN
 			-- Insert dummy account
 			EXEC Acc_Dep_CustomerInsMember_MAg 
 				@Custid=@AccAgentID OUTPUT,@creator=@CreatorID,@Username=@AccAgent,@userpwd=@Pass,@mrecommend=@AccMasterID,
-				@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
+				@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT,
+				@InsBalCustList = @InsBalCustList_s OUTPUT,
+				@InsBalExceptCustList = @InsBalExceptCustList_s OUTPUT
 				
 			IF @ErrCode<>0
 			BEGIN
@@ -822,6 +847,10 @@ BEGIN
 				EXEC Dot_Dep_RollBackLicensee @ListCustID=@ListCustIDRollBack
 				RETURN
 			END
+
+			SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + @InsBalCustList_s, '')
+			SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + @InsBalExceptCustList_s, '')
+
 			-- Insert tranfer
 			INSERT INTO #tempDumUserName(Username)
 			SELECT @ClearBal
@@ -858,6 +887,7 @@ BEGIN
 				INSERT INTO #tempDumCustID(CustID)
 				SELECT 	@tmpDumCustID		
 
+				SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@tmpDumCustID) +  ';' + @tmpDumUserName,'')
 			END
 				
 
@@ -912,10 +942,15 @@ BEGIN
 
 						EXEC Acc_Dep_CustomerInsMember_MAg 
 							@Custid=@tmpSubCustID OUTPUT,@creator=@CreatorID,@Username=@tmpSubUserName,@userpwd=@Pass,@mrecommend=@MasterID,
-							@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT	
+							@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT	,
+							@InsBalCustList = @InsBalCustList_s OUTPUT,
+							@InsBalExceptCustList = @InsBalExceptCustList_s OUTPUT	
 						
 						INSERT INTO #tempSubCustID(CustID)
-						SELECT 	@tmpSubCustID					
+						SELECT 	@tmpSubCustID				
+						
+						SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + @InsBalCustList_s, '')
+						SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + @InsBalExceptCustList_s, '')
 					END
 					
 					
@@ -2717,11 +2752,15 @@ BEGIN
 			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
 			BEGIN
 				EXEC [Acc_3rdProductUpdSuperStatus] @ProductID=25, @CustID=@SuperID,@IsEnable=1,@ApplyToMember=1,@UserID=@CreatorID,@IP=@IP,@ErrMsg=@ErrMsg OUTPUT
+					,@InsBalCustList = @InsBalCustList_s OUTPUT
+
 				IF @ErrMsg<>''
 				BEGIN
 					SELECT @ErrCode=10000,@ErrMsg='CashOut.'+@ErrMsg
 					RETURN
 				END
+
+				SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + @InsBalCustList_s, '')
 			END		
 	END
 
@@ -3010,12 +3049,27 @@ BEGIN
 					)
 		SET @logSpData = REPLACE(CONVERT(VARCHAR(MAX), @xml), '" />', '"/"')		
 		
-		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP 
+		EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
 			@UserID = @CreatorID,
 			@CustID = @SuperID,
 			@ActionID = 2216,
 			@TrackingValue = @LogSPData,
 			@duration = @duration
 	END	
+
+	SET @InsBalCustList = STUFF(@InsBalCustList,1,1,'')
+	SET @InsBalExceptCustList = STUFF(@InsBalExceptCustList,1,1,'')
+
+	DECLARE @NewLogData VARCHAR(MAX)
+	SELECT @NewLogData = '<R '
+						+ 'InsBalCustList="'+ coalesce(cast(@InsBalCustList as varchar(MAX)),space(1)) + '" '
+						+ 'InsBalExceptCustList="'+ coalesce(cast(@InsBalExceptCustList as varchar(MAX)),space(1)) + '" '
+						+ ' />'
+
+	EXEC dbo.Acc_WriteLog_UserLog_RunSP_Wrapper
+		@UserId				= @CreatorID,
+		@CustID				= 0,
+		@ActionId			= 2220,
+		@TrackingValue		= @NewLogData
 END
 GO

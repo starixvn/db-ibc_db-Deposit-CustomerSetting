@@ -5,7 +5,9 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]
 	@CheckUniqueUsername2 BIT = 1,
 	@SubsidiaryID INT = 0,
 	@ErrCode int = 0 OUTPUT,    
-	@ErrMsg nvarchar(2000) = '' OUTPUT     
+	@ErrMsg nvarchar(2000) = '' OUTPUT,
+	@CustIDBalanceDummy INT = NULL OUTPUT,
+	@ClosingBalance MONEY = NULL OUTPUT     
 AS       
 /*    
 	Created: 20181010@Kean    
@@ -24,6 +26,7 @@ AS
 		- 20220401@Eden: Hotfix- Licensees - Process deposit conflicts with process Reactivation of archived member causes wrong balance [redmine: #170791]
 		- 20220517@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
@@ -85,10 +88,7 @@ BEGIN
 			@birthday smalldatetime,
 			@refcode1	nvarchar(50),
 			@remark nvarchar(50),
-			@createDate smalldatetime,
-			-- Use for reinit old balance
-			@CustIDBalanceDummy INT,
-			@ClosingBalance MONEY
+			@createDate smalldatetime
 
 	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
 			, @Action='REACTIVATION'
@@ -374,60 +374,6 @@ BEGIN
 	END
 
 	------------------------------------------------------------------------    
-	---- Create balance for new customer    
-	--EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID  
-	IF NOT EXISTS( SELECT TOP 1 1 FROM DBTXN.bodb02.dbo.BalCreditSports WITH(NOLOCK) WHERE custid = @CustID)
-	BEGIN
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT
-	 
-	    
-		IF @ErrCode <> 0    
-		BEGIN     
-		 --Error occurs    
-		 SELECT     
-		  @ErrMsg = 'Add member fail. Please try again',    
-		  @ErrCode=215    
-	     
-		 -- MANUALLY ROLLBACK    
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID
-		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
-		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-	 
-		 EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
-					, @Action='REACTIVATION'
-					, @Status='Failed'
-					, @Message= 'Failed to insert credit balance tables'
-				  
-		 RETURN    
-		END 
-	END   
-	   
-	IF NOT EXISTS( SELECT TOP 1 1 FROM DBTXN.bodb02.dbo.BalDebitSports WITH(NOLOCK) WHERE custid = @CustID)
-	BEGIN 
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitInitialize @CustID = @CustID, @errCode = @ErrCode OUTPUT    
-	    
-		IF @ErrCode <> 0    
-		BEGIN     
-		 --Error occurs    
-		 SELECT     
-		  @ErrMsg = 'Add member fail. Please try again',    
-		  @ErrCode=215    
-	     
-		 -- MANUALLY ROLLBACK      
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID 
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID
-		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
-		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-
-		 EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
-					, @Action='REACTIVATION'
-					, @Status='Failed'
-					, @Message= 'Failed to insert debit balance tables'
-
-		 RETURN    
-		END
-	END
-
 	/*HELEN-CUSTOMER SETTING DCS DEPOSIT-START*/
 	DECLARE @DCSErrCode INT = 0
 	EXEC dbo.Acc_Dep_DynamicCustSetting_00
@@ -443,9 +389,7 @@ BEGIN
 	BEGIN
 		 --Error occur
 		 SET @ErrCode = 911
-		 -- ROLLBACK MANUALLY    
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID 
-		 EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID   
+		 -- ROLLBACK MANUALLY      
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID   
 		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
 
@@ -465,60 +409,6 @@ BEGIN
 				   , @ClosingBalance = ClosingBalance
 		FROM dbo.Dep_Customer_Archived WITH(NOLOCK)
 		WHERE Status = 'completed' AND CustID = @CustID
-
-		IF @ClosingBalance <> 0
-		BEGIN
-			IF @ClosingBalance > 0
-			BEGIN
-				EXEC DBTXN.bodb02.dbo.Dot_Int_BettransInsTransactionWithoutLog_Cust
-						@custid=@CustID,
-						@amount= @ClosingBalance,
-						@bal_custid=@CustIDBalanceDummy,
-						@Bettype = 23203,
-						@transdesc = 'Reinit old member balance in deposit reactivation process',
-						@ErrCode= @ErrCode OUTPUT,
-						@ErrMsg= @ErrMsg OUTPUT
-			END
-			ELSE
-			BEGIN
-				EXEC DBTXN.bodb02.dbo.Dot_Int_BettransInsTransactionWithoutLog_Cust
-						@custid=@CustID,
-						@amount= @ClosingBalance,
-						@bal_custid=@CustIDBalanceDummy,
-						@Bettype = 23203,
-						@transdesc = 'Reinit old member balance in deposit reactivation process',
-						@IsCharge = 1, --Not check negative balance
-						@ErrCode= @ErrCode OUTPUT,
-						@ErrMsg= @ErrMsg OUTPUT
-			END
-
-			IF @ErrCode <> 0 
-			 BEGIN
-				 --Error occur
-				 SELECT 
-				 @ErrMsg = 'Failed to transfer closing balance: ' + @ErrMsg ,    
-				 @ErrCode=215  
-				 -- MANUALLY ROLLBACK
-				 DELETE FROM Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-				 DELETE FROM Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-				 DELETE FROM Dep_CustStakeLevel_member WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-				 DELETE FROM Dep_CustBetSetting_Member WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-				 DELETE FROM Dep_CustProductStatus WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-				 DELETE FROM Dep_CustBetSettingGame_Member WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-				 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-		      
-				 EXEC DBTXN.bodb02.dbo.Dot_BalanceCreditRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @CustID
-				 EXEC DBTXN.bodb02.dbo.Dot_BalanceDebitRemove @CustID = @CustID --EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @CustID    
-				 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID    
-
-				 EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
-				, @Action='REACTIVATION'
-				, @Status='Failed'
-				, @Message= @ErrMsg
-
-				 RETURN    
-			 END
-		END
 	 END 
 	---------------------------------------------------------------------------------    
 	--Bonus

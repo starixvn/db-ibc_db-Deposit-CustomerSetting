@@ -1,5 +1,4 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,Dot_member" viewers="" isFunction="0"></info>*/
-
 ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] 
 	@ProductID INT
 	, @CustID INT
@@ -9,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus]
 	, @IP VARCHAR(40)
 	, @Langkey VARCHAR(10) = 'en-US'
 	, @ErrMsg VARCHAR(100) = '' OUTPUT
+	, @InsBalCustList varchar(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20150309@Winne
@@ -25,8 +25,12 @@ AS
 		- 20180717@Winnie: NAP - Enable Cash out: Adjust the setting to reflect 100% profit of Cash Out to group [RedmineID: #90870]
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 		- 20190901@Elodie: Remove Inactive product [Redmine:#118699]
+		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 
 	Param's Explanation:
+		- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
+                    EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID1/@CustID2
+                    EXEC bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID1/@CustID2
 */
 BEGIN
 	SET NOCOUNT ON
@@ -84,6 +88,7 @@ BEGIN
 									,@CustID	=@CustID
 									,@UserID	=@UserID
 									,@ErrMsg	=@ErrMsg
+									,@InsBalCustList = @InsBalCustList OUTPUT
 
 	IF @IsEnable = 0
 		SET @ApplyToMember = 1

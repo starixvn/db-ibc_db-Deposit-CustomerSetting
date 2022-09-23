@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[Acc_CustomerInsDummyTrade]
 	 ,@CustID INT
 	 ,@UserID INT
 	 ,@ErrMsg VARCHAR(100) = '' OUTPUT
+	 ,@InsBalCustList varchar(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20170301@Winnie
@@ -19,10 +20,15 @@ AS
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	Param's Explanation:
+		- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
+                    EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID1/@CustID2
+                    EXEC bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID1/@CustID2
 */
 BEGIN
 	SET NOCOUNT ON
+	SET @InsBalCustList = ''
 
 	IF (@ProductId = 25) -- CashOut
 		BEGIN			
@@ -254,75 +260,6 @@ BEGIN
 					ON a.username = b.username
 
 				---------------------------------------------------------------------------------  
-				-- Insert Balance
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @tradeCustID
-
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert TradeCust'
-
-					DELETE a
-					FROM Customer a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.username = b.username
-
-					DELETE a
-					FROM custInfo a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.username = b.username
-
-					DELETE a
-					FROM [TradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempCashOut b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [TradeComm] a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.AgentId = b.recommend
-
-					EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @tradeCustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid   
-
-					RETURN
-				END
-
-				EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebit @CustID = @tradeCustID
-
-				IF (@@ERROR <> 0)
-				BEGIN
-					SELECT @ErrMsg = 'Could not insert TradeCust'
-
-					DELETE a
-					FROM Customer a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.username = b.username
-
-					DELETE a
-					FROM custInfo a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.username = b.username
-
-					DELETE a
-					FROM [TradeCust] a(NOLOCK)
-						INNER JOIN Customer(NOLOCK) c
-						ON a.custid = c.Custid
-						INNER JOIN #tempCashOut b
-						ON c.username = b.username
-
-					DELETE a
-					FROM [TradeComm] a(NOLOCK)
-						INNER JOIN #tempCashOut b
-						ON a.AgentId = b.recommend
-
-					EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @tradeCustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid   
-
-					EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @tradeCustID
-
-					RETURN
-				END
-
 				--Set default player comm  
 				EXEC bodb_Licensee.dbo.Lrf_CustomerSetDefaultComm @LicenseeName = @tradesite
 					, @CustID = @tradeCustID, @ErrCode = @tradeErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
@@ -330,11 +267,14 @@ BEGIN
 				DELETE
 				FROM #tempCashOut
 				WHERE UserName = @tradeUserName
+
+				--Output custlist to insertbalance
+				SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + CONVERT(VARCHAR,@tradeCustID), '')
 			END
 					--end Cashout
 					--end Cashout		
-				
 		END
+		SET @InsBalCustList = STUFF(@InsBalCustList,1,1,'')
 END
 
 GO

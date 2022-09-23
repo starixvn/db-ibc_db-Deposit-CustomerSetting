@@ -9,7 +9,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_MAg]
 	@Language varchar(2)= 'E',
 	@SubAccID int = 0, --Sub-AccountID
 	@ErrCode int = 0 OUTPUT,
-	@ErrMsg nvarchar(4000) = '' OUTPUT
+	@ErrMsg nvarchar(4000) = '' OUTPUT,
+	@InsBalCustList varchar(MAX) = '' OUTPUT,
+	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
+
 AS
 --@Source Control
 /*
@@ -54,21 +57,36 @@ Revisions:
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+
 Param's Explanation:
-• @ErrCode:
-    = 0: Create agent successfully.
-    > 0: Specific Error.
+	- @ErrCode:
+		= 0: Create agent successfully.
+		> 0: Specific Error.
   
-• @ErrMsg: Error description.
+	- @ErrMsg: Error description.
+
+    - @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
+                    EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID 
+                    EXEC bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID
+    - @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
+                    EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username"
 
 */
 BEGIN
 	SET NOCOUNT ON
-
+	SET @InsBalCustList = ''
+	SET @InsBalExceptCustList = ''
 	declare @startRun datetime
 	declare @endRun datetime
 	declare @duration int
 	set @startRun = getdate()
+
+	CREATE TABLE #tempCashOut(
+		UserName varchar(30), recommend INT, mrecommend INT, currency TINYINT, site VARCHAR(10), refcode1 nvarchar(100)  
+		, refcode2 nvarchar(100), ugroup varchar(3), [closed] bit, [MatchLimit] smallmoney, [VirtualMultiplier] smallmoney, [Enabled] bit, [danger] TINYINT  
+		, [danger2] TINYINT, [danger3] TINYINT, [DisableOutright] BIT  
+		, [Abnormal] TINYINT, [DoubleCommLosing] BIT)
 
 	--Check an account disabled or not 
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @mrecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
@@ -174,13 +192,7 @@ BEGIN
 	IF EXISTS (SELECT TOP 1 1 FROM TradeComm t WITH(NOLOCK) 
 				INNER JOIN custInfo c WITH(NOLOCK) ON t.AgentID=c.custid
 				WHERE srecommend=@srecommend)
-	BEGIN
-		CREATE TABLE #tempCashOut(
-				UserName varchar(30), recommend INT, mrecommend INT, currency TINYINT, site VARCHAR(10), refcode1 nvarchar(100)  
-			 , refcode2 nvarchar(100), ugroup varchar(3), [closed] bit, [MatchLimit] smallmoney, [VirtualMultiplier] smallmoney, [Enabled] bit, [danger] TINYINT  
-			 , [danger2] TINYINT, [danger3] TINYINT, [DisableOutright] BIT  
-			 , [Abnormal] TINYINT, [DoubleCommLosing] BIT)  
-
+	BEGIN  
 		INSERT INTO #tempCashOut(
 					UserName, recommend, mrecommend, currency, site, refcode1  
 				 , refcode2, ugroup, [closed], [MatchLimit], [VirtualMultiplier], [Enabled], [danger]  
@@ -339,76 +351,7 @@ BEGIN
 				, @tradeCurrency = b.currency, @tradeSite = b.site
 		FROM #tempCashOut a
 			INNER JOIN Customer b WITH (NOLOCK)
-			ON a.username = b.username
-			
-		-- Insert Balance
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceInsCredit @CustID = @tradeCustID
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert TradeCust'
-
-			DELETE a
-			FROM Customer a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM custInfo a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM [TradeCust] a(NOLOCK)
-				INNER JOIN Customer(NOLOCK) c
-				ON a.custid = c.Custid
-				INNER JOIN #tempCashOut b
-				ON c.username = b.username
-
-			DELETE a
-			FROM [TradeComm] a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.AgentId = b.recommend
-
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @tradeCustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid   
-
-			RETURN
-		END
-
-		EXEC DBTXN.bodb02.dbo.Dot_BalanceInsDebit @CustID = @tradeCustID
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert TradeCust'
-
-			DELETE a
-			FROM Customer a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM custInfo a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM [TradeCust] a(NOLOCK)
-				INNER JOIN Customer(NOLOCK) c
-				ON a.custid = c.Custid
-				INNER JOIN #tempCashOut b
-				ON c.username = b.username
-
-			DELETE a
-			FROM [TradeComm] a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.AgentId = b.recommend
-
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceDelCredit @CustID = @tradeCustID --DELETE BalanceCredit WITH (ROWLOCK) WHERE custid = @custid   
-
-			EXEC DBTXN.bodb02.dbo.Dot_BalanceDelDebit @CustID = @tradeCustID
-
-			RETURN
-		END				
+			ON a.username = b.username			
 
 		--Set default player comm  
 		EXEC bodb_Licensee.dbo.Lrf_CustomerSetDefaultComm @LicenseeName = @tradesite
@@ -418,6 +361,8 @@ BEGIN
 		FROM #tempCashOut
 		WHERE UserName = @tradeUserName
 		--end Cashout	
+
+		SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + CONVERT(VARCHAR,@tradeCustID), '')
 	END
 
 	---- check site offer OddAdj
@@ -446,6 +391,7 @@ BEGIN
 			@ErrCode		=	@ErrCode output,
 			@ErrMsg			=	@ErrMsg output
 		
+			SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@CustIdOddAdj) +  ';' + @UsernameOddAdj,'')
 		END
 		  
 	END 
@@ -484,6 +430,9 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 
+	SET @InsBalCustList = STUFF(@InsBalCustList,1,1,'')
+	SET @InsBalExceptCustList = STUFF(@InsBalExceptCustList,1,1,'')
+
+	DROP TABLE #tempCashOut
 END
-GO
 GO

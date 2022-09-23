@@ -5,7 +5,8 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_OddAdj]
 	@Recommend		INT, -- Real Agent 
 	@IP				VARCHAR(15)='',
 	@ErrCode		INT = 0 OUTPUT,
-	@ErrMsg			NVARCHAR(4000) = '' OUTPUT
+	@ErrMsg			NVARCHAR(4000) = '' OUTPUT,
+	@Username		VARCHAR(30) OUTPUT
 AS
 /*
 	Created by: Winfred
@@ -17,13 +18,14 @@ AS
 	Revisions:
 		- 20201005@Winfred: Check OddsAdj dummy customers [redmine:#142952]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 
 	Explanation's Param:
 		
 */   
 BEGIN 
 	SET NOCOUNT ON
-	DECLARE	@Username VARCHAR(30),@Site NVARCHAR(100),	@Userpwd VARCHAR(40)
+	DECLARE	@Site NVARCHAR(100),	@Userpwd VARCHAR(40)
 	
 	SELECT @Userpwd = '8058095B7DDB08A608811097E5DB8D'
 	
