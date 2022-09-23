@@ -9,7 +9,9 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsLicenseeSubsidiary]
 	@IP varchar(15)='',
 	@Language varchar(2)= 'E',
 	@ErrCode int = 0 OUTPUT,
-	@ErrMsg nvarchar(4000) = '' OUTPUT
+	@ErrMsg nvarchar(4000) = '' OUTPUT,
+	@InsBalCustList varchar(MAX) = '' OUTPUT,
+	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
 AS
 /*
 	Created: 20190917@Winnie
@@ -23,7 +25,16 @@ AS
 		- 20200702@Johnson: add soccer parlay [redmine:#135261]
 		- 20201119@Johnson: output @ExistedCustID [redmine: #140966]
 		- 20220701@Johnson: HF Keno PT value does not support three decimal digits number[redmine: #174808]
-		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
+		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+
+	Param's Explanation:
+	- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
+                    EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID 
+                    EXEC bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID
+    - @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
+                    EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username
+
 */
 BEGIN
 	SET NOCOUNT ON
@@ -53,6 +64,9 @@ BEGIN
 	EXEC Acc_Dep_CustomerInsMember_MAg 
 		@Custid=@custid OUTPUT,@creator=@creator,@Username=@username,@userpwd=@userpwd,@mrecommend=@mrecommend
 		,@IP=@IP,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT	
+		,@InsBalCustList = @InsBalCustList OUTPUT
+		,@InsBalExceptCustList = @InsBalExceptCustList OUTPUT
+
 		
 	IF @ErrCode<>0
 		RETURN

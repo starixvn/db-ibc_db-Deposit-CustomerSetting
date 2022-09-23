@@ -62,6 +62,7 @@ Revisions:
 	- 20210802@Eden: Deposit - Support default VR based on bettypes [Redmine:#159547]
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	
 Param's Explanation:
 • @ErrCode:
@@ -108,13 +109,16 @@ END
 IF @roleid = 4
 BEGIN
 	DECLARE @CurrencyModifier SMALLMONEY
+	DECLARE @SiteDBGroupID SMALLINT
 	EXEC @CurrencyModifier = f_GetCurrencyModifier @currency
+
+	SELECT @SiteDBGroupID = SiteDBGroupID FROM Site WITH(NOLOCK) WHERE site = @site
 
 	SET @srecommend = @custid 
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
 
-	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier)
-	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier)
+	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier,SiteDBGroupID)
+	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier, @SiteDBGroupID)
 
 	IF @CurrencyModifier <> 1
 	BEGIN
@@ -201,7 +205,6 @@ BEGIN
 	-- ROLLBACK MANUALLY
 	IF @RoleID = 4
 	BEGIN
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 	END
 	ELSE IF @RoleID = 3
@@ -240,7 +243,6 @@ BEGIN
 	-- ROLLBACK MANUALLY
 	IF @RoleID = 4
 	BEGIN
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 	END
 	ELSE IF @RoleID = 3
@@ -278,7 +280,6 @@ BEGIN
 	-- ROLLBACK MANUALLY
 	IF @RoleID = 4
 	BEGIN
-		DELETE FROM CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 	END
 	ELSE IF @RoleID = 3
