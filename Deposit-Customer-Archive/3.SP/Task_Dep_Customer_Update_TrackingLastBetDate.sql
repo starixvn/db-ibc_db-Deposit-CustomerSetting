@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20200218@Eden: First commit  [#RM:125823]
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
+		- 20220928@Eden: Remove scanning on bettrans_GoldDeluxe, scan bettrans_AGCasino based on winlostdate instead of transdate [#RM:178300]
 
 	Param's Explanation:
 */
@@ -204,18 +205,10 @@ BEGIN
 	TRUNCATE TABLE #BettingMember
 	INSERT INTO #BettingMember(custid,LastBetDate)
 	SELECT custid, transdate
-	FROM OPENQUERY (DBPTCS, ';WITH TMP AS(
-								SELECT b.custid, b.transdate
-								FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
-								UNION ALL
-								SELECT b.custid, b.transdate
-								FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
-							)
-							SELECT CustID, MAX(transdate) AS transdate 
-							FROM tmp
-							GROUP BY CustID')
+	FROM OPENQUERY (DBPTCS, ' SELECT b.custid, MAX(b.Winlostdate) AS transdate
+							  FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+							  WHERE Winlostdate >= CONVERT(DATE,GETDATE() - 1)
+							  GROUP BY custid')
 
 	--> Scan to update Cust_TrackingLastBetDate.LastBetDate( and insert if not exists yet)
 	IF EXISTS( SELECT 1 FROM #BettingMember)
