@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),
@@ -47,6 +47,9 @@ AS
 		- 20210224@Eden: Implement Lock for VR update [Redmine:#149370]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
+		- 20220816@Tacy: Set default new downline Dangerous Setting [Redmine: #176518]
+		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
+
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -56,6 +59,12 @@ AS
 */
 BEGIN
     SET NOCOUNT ON 
+
+	DECLARE @danger		TINYINT=0,	--Original
+			@danger2	TINYINT=0,	--ABI
+			@danger3	TINYINT=0,	--Basketball
+			@danger4	TINYINT=0,	--E-sports
+			@danger5	TINYINT=0	--Other Sports
 
 	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
 	BEGIN
@@ -287,14 +296,34 @@ BEGIN
 		RETURN
 	END
 
+	DECLARE @DangerLevel BIGINT = NULL
+
+	IF @roleid=1
+	BEGIN
+		--get DangerLevel
+		SELECT @DangerLevel=DangerLevel
+		FROM f_Dep_CustSetting_DangerLevel(@site, @currency)
+
+		--get dangerous setting's upline:
+		SELECT @danger=danger
+			, @danger2=danger2 
+			, @danger3=danger3
+			, @danger4=Danger4
+			, @danger5=Danger5
+		FROM custInfo ci WITH (NOLOCK)
+		WHERE custid=@recommend
+	END
+
 	INSERT INTO [dbo].[custinfo]
     (
 	    custid, currency
 	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
 	  , MatchLimit, VirtualMultiplier
 	  , DisableOutright
-	  , danger, danger2, danger3, Abnormal, DoubleCommLosing
+	  , danger, danger2, danger3, Danger4, Danger5
+	  , Abnormal, DoubleCommLosing	
 	  , DisableEsports, DisableSuperLive,DisableColossusBet,HideColossusBet
+	  , DangerLevel
 	  )
     VALUES
     (
@@ -302,8 +331,10 @@ BEGIN
 	  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, ISNULL(@suspended, 0), 0, 0, @username
 	  , @matchlimit, @virtualmultiplier
 	  , 0
-	  , 0, 0, 0, 0, 0	
+	  , @danger, @danger2, @danger3, @danger4, @danger5
+	  , 0, 0	
 	  , 0, 0,1,1
+	  , @DangerLevel
     )
 	
     IF @@ERROR <> 0
