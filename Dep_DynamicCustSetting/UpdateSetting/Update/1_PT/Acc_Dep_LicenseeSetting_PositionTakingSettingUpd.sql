@@ -362,7 +362,7 @@ BEGIN
 		
 			BEGIN TRY
 				EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
-					@UserID				= @UserID
+					@UserID				= @creator
 					, @CustIDList		= @CustIDList
 					, @ActionID			= 472
 					, @NewPT_XML		= @logSpData
@@ -372,7 +372,7 @@ BEGIN
 
 			BEGIN CATCH
 				EXEC bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP_MultiCust 
-					@UserID				= @UserID
+					@UserID				= @creator
 					, @CustIDList		= @CustIDList
 					, @ActionID			= 472
 					, @NewPT_XML		= @logSpData
