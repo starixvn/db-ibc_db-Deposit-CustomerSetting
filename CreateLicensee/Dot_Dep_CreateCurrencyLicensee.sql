@@ -1657,7 +1657,7 @@ BEGIN
 			END
 			
 			--Bitcoin			
-			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=69 AND Currency=@Currency)
+			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1 AND Currency=@Currency)
 			BEGIN
 					SET @ProductID = 69	
 					SET @ProductName = 'Bitcoin'
@@ -2890,7 +2890,7 @@ BEGIN
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=51)
 		SELECT @ProductCode=@ProductCode+'WM,'	
 	-- Bitcoin	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=69)
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
 		SELECT @ProductCode=@ProductCode+'BTC,'		
 	-- CG	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=62)
