@@ -15,6 +15,7 @@ AS
 
 	Revision:
 		- 20220218@Winfred: Licensee DCS setting - Support insert/edit setting for sub_licensee for new BetLimit. [Feature #168395]
+		- 20220921@Winfred: Licensee DCS setting - HF Get multiple bet limit . [Feature #178013]
 	Param's Explanation:
 	
 	*/
@@ -27,7 +28,12 @@ BEGIN
 	FROM Dep_ProductSetting ps WITH(NOLOCK) 
 		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
 	WHERE ProductID = @ProductID AND SettingType = 11
-	
+
+	IF @AgentID = 0
+	BEGIN
+		SET @AgentID = @SuperID
+	END
+
 	SELECT @Currency = Currency	FROM dbo.Customer c WITH(NOLOCK) WHERE c.custID = @SuperID
 	
 	SELECT ft.SportType  
