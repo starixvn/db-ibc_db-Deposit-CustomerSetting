@@ -1,5 +1,4 @@
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
+Dep_DynamicCustSetting\UpdateSetting\Update\10_12_GameBetLimit\Acc_Dep_CustSetting_Game_BetLimitSettingSelect.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
-CreateLicensee\Dot_Dep_CreateLicensee.sql
-CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
