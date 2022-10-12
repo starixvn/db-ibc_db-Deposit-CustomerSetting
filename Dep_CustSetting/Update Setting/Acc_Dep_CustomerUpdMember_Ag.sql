@@ -273,6 +273,8 @@ Revisions:
 	- 20200619@Johnson: add Soccer Parlay bet limit [redmine: #135261]
 	- 20201214@Winfred: Adjust PT value with 4 decimal places for SB  [redmine: #146574]
 	- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+	- 20220720@Tacy: Insert history of member bet setting [RedmineID: 170739]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Update successfully.
@@ -284,6 +286,8 @@ Param's Explanation:
 BEGIN
 	SET NOCOUNT ON
 	
+	DECLARE @CustList VARCHAR(MAX)
+
 	CREATE TABLE #tmp_Sports (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
 	CREATE TABLE #tmp_Bettype (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
 	CREATE TABLE #tmp_GameType (ID INT, Name NVARCHAR(500),IsDisabled BIT,IBCBettypeID INT)
@@ -297,6 +301,15 @@ BEGIN
 		mPositionTaking smallmoney, 
 		aPositionTaking smallmoney,
 		isDisable BIT
+	)
+
+	DECLARE @History_BetSetting TABLE(
+		  CustID				INT
+		, SportType			SMALLINT
+		, BetType			SMALLINT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, UpdateTime		DATETIME
 	)
 
 	----- David @ 09 JUN 2015 -------------------
@@ -1577,6 +1590,8 @@ BEGIN
 	/*----------------------------
 	UPDATE Customer Info
 	---------------------------*/
+	DECLARE @NG_old TABLE (custid INT, MaxPerMatch161 MONEY)
+
 	update custinfo with (ROWLOCK, UPDLOCK)
 	set 	
 		MaxPerMatch = @MaxPerMatchv1,
@@ -1593,6 +1608,7 @@ BEGIN
 		MaxPerMatch99MP = @MaxPerMatchv99MP,
 		MaxPerMatch161 = @MaxPerMatchv161,
 		MaxPerBall161 = @MaxPerBallv161	
+	OUTPUT deleted.custid, deleted.MaxPerBall161 INTO @NG_old
 	where custid = @custid 
 	if (@@error <> 0)
 	begin
@@ -1920,8 +1936,18 @@ BEGIN
 							mpositiontaking
 						END,
 		playerdiscount =	playerdiscount
-					
+	OUTPUT deleted.custid, deleted.sporttype, deleted.bettype, deleted.maxbet, GETDATE()
+		INTO @History_BetSetting (CustID, SportType, BetType, MaxBet, UpdateTime)
 	WHERE custid=@custid
+
+
+	--UPDATE OLD MAXPERMATCH
+	UPDATE hbs
+	SET hbs.MaxPerMatch=old.MaxPerMatch161
+	FROM @History_BetSetting hbs 
+		INNER JOIN @NG_old old ON old.custid=hbs.CustID
+	WHERE hbs.SportType=161
+
 
 	if (@@error <> 0)
 	begin
@@ -2017,9 +2043,12 @@ BEGIN
 	update g set g.MinBet = d.MinBet
 		  ,g.MaxBet = d.MaxBet
 		 ,g.MaxPerGameType = d.MaxPerMatch	
+	OUTPUT deleted.CustID, 202, d.BetType, deleted.MaxBet, deleted.MaxPerGameType, GETDATE()
+		INTO @History_BetSetting (CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 	FROM CustGameType g WITH (ROWLOCK, UPDLOCK) INNER JOIN #tmp_GameType gt on g.GameTypeID=gt.ID
 		 INNER JOIN #data d ON d.Bettype=gt.IBCBetTypeID
 	where CustID=@custID 
+
 	IF (@@error <> 0)
 	BEGIN
 		
@@ -2029,6 +2058,43 @@ BEGIN
 						END	, @ErrCode = 104 
 		RETURN
 	END
+
+	--Delete: update minbet only
+	DELETE FROM @History_BetSetting 
+	WHERE SportType NOT IN  (161,202)
+		OR (SportType=161 AND MaxBet=@maxbetv161 AND MaxPerMatch=@MaxPerBallv161)
+
+	DELETE hbs 
+	FROM @History_BetSetting hbs
+		INNER JOIN #data d on d.Bettype=hbs.BetType
+	WHERE SportType = 202
+		AND d.MaxBet=hbs.MaxBet AND d.MaxPerMatch=hbs.MaxPerMatch
+
+	--Insert history bet setting
+	IF EXISTS (SELECT 1	FROM @History_BetSetting)
+	BEGIN 
+		SET @CustList = (SELECT DISTINCT
+								CustID		AS '@CustID',
+								SportType	AS '@SportType',
+								BetType		AS '@BetType',
+								MaxBet		AS '@MaxBet',
+								MaxPerMatch	AS '@MaxPerMatch',
+								'NULL'		AS '@StakeLevelList',
+								UpdateTime	AS '@UpdateTime'
+							FROM @History_BetSetting
+							FOR XML PATH ('r'), ROOT ('root')
+						)
+
+		EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+		IF @ErrMsg<>''
+			RETURN 
+	END
+
+
+
+
+
 
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
