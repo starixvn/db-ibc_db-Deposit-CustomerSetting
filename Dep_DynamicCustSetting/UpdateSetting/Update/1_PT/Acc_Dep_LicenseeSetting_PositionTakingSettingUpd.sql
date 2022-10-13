@@ -218,7 +218,7 @@ BEGIN
 			
 			IF @PT IS NOT NULL AND @NumProduct <> 0
 			BEGIN
-					EXEC Acc_Dep_DynamicCustSetting_08	
+					EXEC Acc_Dep_DynamicCustSetting_10	
 						@Site = @Site,
 						@Currency = @Currency,
 						@NumProduct = @NumProduct,

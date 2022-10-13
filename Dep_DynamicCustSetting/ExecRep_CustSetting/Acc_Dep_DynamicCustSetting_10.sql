@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_08]
+ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_10]
 	 @Site			VARCHAR(10)
 	,@Currency		INT
 	,@NumProduct	INT = 1
