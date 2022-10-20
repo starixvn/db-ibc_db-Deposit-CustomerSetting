@@ -28,6 +28,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 		- 20220907@Tacy: NAP - Set Dangerous Level of member following upline (Agent) [Redmine: #176518]
+		- 20220930@Eden: Reactive - write balance info to log [redmine: #178439]
 
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
@@ -502,10 +503,14 @@ BEGIN
 	 --Update Dep_Customer_Archived.status = reactivation
 	EXEC dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=4    
 
+	DECLARE @LogMsg VARCHAR(200) = 'Finish reactivating customer'
+	
+	SET @LogMsg = @LogMsg + ' (ClosingBalance =  ' + CONVERT(VARCHAR(20),ISNULL(@ClosingBalance,0),2) + ')'
+
 	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
 			, @Action='REACTIVATION'
 			, @Status='Done'
-			, @Message= 'Finish reactivating customer'
+			, @Message= @LogMsg
 
 	set @endRun = getdate()    
 	set @duration  = datediff (millisecond,@startRun,@endRun)    
