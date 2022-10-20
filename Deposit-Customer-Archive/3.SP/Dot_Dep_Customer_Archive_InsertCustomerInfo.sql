@@ -84,6 +84,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220907@Tacy: NAP - Set Dangerous Level of member following upline (Agent) [Redmine: #176518]
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
+		- 20220930@Eden: Reactive - Enhance to prevent lacking settings [redmine: #178439]
 
 	Param's Explanation:
 	• @ErrCode:
@@ -132,27 +133,14 @@ BEGIN
 	
     IF @ErrCode <> 0
     BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
+			SELECT @ErrMsg = CASE	WHEN @ErrCode = 22 THEN @ErrMsg
+									WHEN @Language = 'E' THEN 'Create customer failed. Please try again.'
+									ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
 						    END,
 		    @ErrCode = 111
     		
 	    RETURN
     END
-	
-	IF @ErrCode <>0
-	BEGIN
-			SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END
-				, @ErrCode = 116
-		 -- ROLLBACK MANUALLY
-			DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-			
-			RETURN
-	END
 	
     DECLARE	@UplineSecurityCode			 VARCHAR(50)
 	      , @isForcedChangeSecurityCode BIT

@@ -43,6 +43,7 @@ AS
 	Revisions:    
 		- 20181228@Dominic: First commit
 		- 20201103@Tina: Get site from Agent for member level [redmine: #144323]
+		- 20220930@Eden: Reactive - Enhance to prevent lacking settings [redmine: #178439]
 	
 	Param's Explanation:
 	• @ErrCode:
@@ -53,6 +54,7 @@ AS
 */
 BEGIN
     SET NOCOUNT ON 
+	DECLARE @System_ERROR INT, @Rowcount INT
 
 	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
 	BEGIN
@@ -68,15 +70,16 @@ BEGIN
 			    city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
 			    currency, pwdexpiry, creator, Site, creatdate, ugroup, birthday, refcode1, remark, refcode2, username2
 			    ) 
- 		     VALUES (@custid, @username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
-			    @city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-			    @currency, @pwdexpiry, @creator, @site, @createDate, @ugroup, @birthday, @refcode1, @remark, @refcode2, @username2
-			    )
-	
+ 	SELECT @custid, @username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
+		@city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
+		@currency, @pwdexpiry, @creator, @site, @createDate, @ugroup, @birthday, @refcode1, @remark, @refcode2, @username2
+	WHERE NOT EXISTS( SELECT 1 FROM Customer WITH(NOLOCK) WHERE custid = @custid)
+
+	SELECT @System_ERROR = @@ERROR, @Rowcount = @@ROWCOUNT
+			    
 	SET IDENTITY_INSERT dbo.Customer OFF
 	
-	
-    IF @@ERROR <> 0
+    IF @System_ERROR <> 0
     BEGIN
 	    SELECT @ErrMsg = CASE @Language 
 							    WHEN 'E' THEN 'Create customer failed. Please try again.'
@@ -89,4 +92,12 @@ BEGIN
     		
 	    RETURN
     END
+
+	IF @Rowcount = 0 
+	BEGIN
+			SELECT @ErrMsg = 'This member has been reactivated by someone else.',
+				@ErrCode = 22
+    		
+	    RETURN
+	END
 END
