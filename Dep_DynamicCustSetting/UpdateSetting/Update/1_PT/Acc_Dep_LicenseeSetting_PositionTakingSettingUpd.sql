@@ -37,7 +37,7 @@ BEGIN
 	SET @creator = 10278938	--StarixIT
 
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
-	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,Currency INT,IsLive BIT,PT SMALLMONEY,
+	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,BettypeName NVARCHAR(128),Currency INT,IsLive BIT,PT SMALLMONEY,
 								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,IsApplyBA BIT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductID,Sporttype ,Bettype,Currency))
 	CREATE TABLE #tmpSMA (CustID INT ,RoleID INT,Currency INT,srecommend INT,  ProductSettingID INT, isfinished BIT DEFAULT(0),PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)	
@@ -69,15 +69,19 @@ BEGIN
 		RETURN
 	END CATCH;
 	-- All sport type  - bettype
-	INSERT INTO #SportTypeBetType (ProductID,SportType,Bettype,Currency,IsLive,PT,ProductName,SettingLevel,ProductSettingID,IsApplyBA)
-	SELECT a.ProductID,psd.SportType,psd.BetType,a.Currency,IsLive,a.PT, p.ProductName,dp.SettingLevel,dp.ProductSettingID,psd.IsApplyBA
+	INSERT INTO #SportTypeBetType (ProductID,SportType,Bettype,BettypeName,Currency,IsLive,PT,ProductName,SettingLevel,ProductSettingID,IsApplyBA)
+	SELECT a.ProductID,psd.SportType,psd.BetType,bt.typenamee AS BettypeName,a.Currency,IsLive,a.PT, p.ProductName,dp.SettingLevel,dp.ProductSettingID,psd.IsApplyBA
 	FROM #PTProduct a
 	INNER JOIN Dep_ProductSetting dp WITH(NOLOCK) ON dp.ProductID=a.ProductID 
 	INNER JOIN Dep_ProductSettingDetail psd WITH(NOLOCK) ON dp.ProductSettingID = psd.ProductSettingID
 	LEFT JOIN  Exchange e WITH(NOLOCK) ON e.ExchangeId = a.Currency 
 	INNER JOIN DBPRO.bodb02.dbo.Products p WITH(NOLOCK) ON p.ProductID = a.ProductID
+	INNER JOIN DBPRO.bodb02.dbo.bettype bt WITH(NOLOCK) ON bt.typeid = psd.BetType
 	WHERE dp.SettingType=1 AND (a.Currency = 0 OR (e.IsActive = 1 AND e.OfferSite IN (0,2))) AND a.PT <> -1
 	
+	-- Remove Bettype Jackpot Contribution
+	DELETE FROM #SportTypeBetType WHERE BettypeName LIKE '%' + 'Contribution'
+
 	-- ALL SMA affect
 	INSERT INTO #tmpSMA(CustID,Currency,RoleID,srecommend,ProductSettingID)
 	SELECT DISTINCT ci.custid, ci.currency, ci.roleid,ci.srecommend,lps.ProductSettingID
