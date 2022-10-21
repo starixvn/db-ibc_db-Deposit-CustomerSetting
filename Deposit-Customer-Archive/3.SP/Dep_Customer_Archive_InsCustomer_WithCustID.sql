@@ -73,7 +73,7 @@ BEGIN
  	SELECT @custid, @username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
 		@city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
 		@currency, @pwdexpiry, @creator, @site, @createDate, @ugroup, @birthday, @refcode1, @remark, @refcode2, @username2
-	WHERE NOT EXISTS( SELECT 1 FROM Customer WITH(NOLOCK) WHERE custid = @custid)
+	WHERE NOT EXISTS( SELECT 1 FROM Customer WITH(ROWLOCK,UPDLOCK) WHERE custid = @custid)
 
 	SELECT @System_ERROR = @@ERROR, @Rowcount = @@ROWCOUNT
 			    
