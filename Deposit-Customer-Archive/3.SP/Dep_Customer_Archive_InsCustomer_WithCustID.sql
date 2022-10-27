@@ -63,41 +63,39 @@ BEGIN
 		WHERE cus.custid = @recommend
 	END
 	
-	SET IDENTITY_INSERT dbo.Customer ON
-		
-    INSERT INTO Customer   			
-			    (custid, username, firstname, lastname, phone, mobilephone, fax, email, address,
-			    city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
-			    currency, pwdexpiry, creator, Site, creatdate, ugroup, birthday, refcode1, remark, refcode2, username2
-			    ) 
- 	SELECT @custid, @username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
-		@city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-		@currency, @pwdexpiry, @creator, @site, @createDate, @ugroup, @birthday, @refcode1, @remark, @refcode2, @username2
-	WHERE NOT EXISTS( SELECT 1 FROM Customer WITH(ROWLOCK,UPDLOCK) WHERE custid = @custid)
+	BEGIN TRY
+		SET IDENTITY_INSERT dbo.Customer ON
+		INSERT INTO Customer   			
+					(custid, username, firstname, lastname, phone, mobilephone, fax, email, address,
+					city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
+					currency, pwdexpiry, creator, Site, creatdate, ugroup, birthday, refcode1, remark, refcode2, username2
+					) 
+ 		SELECT @custid, @username, @firstname, @lastname, @phone, @mobilephone, @fax, @email, @address, 
+			@city, @state, @country, @postal, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
+			@currency, @pwdexpiry, @creator, @site, @createDate, @ugroup, @birthday, @refcode1, @remark, @refcode2, @username2
+		WHERE NOT EXISTS( SELECT 1 FROM Customer WITH(UPDLOCK,HOLDLOCK) WHERE custid = @custid)
 
-	SELECT @System_ERROR = @@ERROR, @Rowcount = @@ROWCOUNT
-			    
-	SET IDENTITY_INSERT dbo.Customer OFF
-	
-    IF @System_ERROR <> 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END,
-		    @ErrCode = 111
-    		
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-    		
-	    RETURN
-    END
+		SELECT @Rowcount = @@ROWCOUNT
 
-	IF @Rowcount = 0 
-	BEGIN
-			SELECT @ErrMsg = 'This member has been reactivated by someone else.',
-				@ErrCode = 22
+		SET IDENTITY_INSERT dbo.Customer OFF
+
+		IF @Rowcount = 0 
+		BEGIN
+				SELECT @ErrMsg = 'This member has been reactivated by someone else.',
+					@ErrCode = 22
     		
-	    RETURN
-	END
+			RETURN
+		END
+	END TRY
+	BEGIN CATCH
+		SET IDENTITY_INSERT dbo.Customer OFF
+
+		SELECT @ErrMsg = CASE @Language 
+								WHEN 'E' THEN 'Create customer failed. Please try again.'
+								ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
+							END,
+			@ErrCode = 111
+    		
+		RETURN
+	END CATCH
 END
