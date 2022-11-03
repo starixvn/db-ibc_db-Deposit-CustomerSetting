@@ -56,6 +56,7 @@ AS
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20220720@Winfred: ONEbook Sitebuilder - Integrate some 3rd products [redmine:#175422]
+	- 20221027@Winfred: ONEbook Sitebuilder - Fix Issue extra space when creating stakelevel [redmine:#179663]
 
  Param's Explanation: 
 	- @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -2359,7 +2360,7 @@ BEGIN
 																	(SELECT dp.SportType AS SportType
 																		,dp.BetType as BetType
 																		,SUBSTRING((
-																					SELECT ', ' + CONVERT(VARCHAR,StakeLevelID)
+																					SELECT ',' + CONVERT(VARCHAR,StakeLevelID)
 																					FROM Dep_StakeLevel WITH(NOLOCK)
 																					WHERE GameTypeID = dp.BetType
 																						AND exchangeID = @Currency
@@ -2538,7 +2539,7 @@ BEGIN
 																	(SELECT dp.SportType AS SportType
 																		,dp.BetType as BetType
 																		,SUBSTRING((
-																					SELECT ', '+CONVERT(VARCHAR,StakeLevelID)
+																					SELECT ','+CONVERT(VARCHAR,StakeLevelID)
 																					FROM Dep_StakeLevel WITH(NOLOCK)
 																					WHERE GameTypeID = dp.BetType
 																						AND exchangeID = @Currency
