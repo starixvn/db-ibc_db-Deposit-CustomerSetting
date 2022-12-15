@@ -57,6 +57,7 @@ AS
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20220720@Winfred: ONEbook Sitebuilder - Integrate some 3rd products [redmine:#175422]
 	- 20221027@Winfred: ONEbook Sitebuilder - Fix Issue extra space when creating stakelevel [redmine:#179663]
+	- 20221107@Danny: Discount By Gross Win - Automatically mark on new launch currency [redmine:#179367]
 
  Param's Explanation: 
 	- @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -3038,6 +3039,13 @@ BEGIN
 				SELECT @ErrMsg='LAP.'+@ErrMsg			
 				RETURN
 			END
+			
+			EXEC bodb_Licensee.dbo.LA_DiscountByGrossWinCurrencyIns
+				@SiteName				 =@SiteName
+				,@CurrencyId			= @Currency
+				,@PT_Sportsbook			= @PT_Sportsbook
+				,@UserId				= @CreatorID
+				,@IP					= @IP
 	END 
 	
 	-- Insert BA
