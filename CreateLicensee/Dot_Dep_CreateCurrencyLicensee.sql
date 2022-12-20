@@ -58,6 +58,8 @@ AS
 	- 20220720@Winfred: ONEbook Sitebuilder - Integrate some 3rd products [redmine:#175422]
 	- 20221027@Winfred: ONEbook Sitebuilder - Fix Issue extra space when creating stakelevel [redmine:#179663]
 	- 20221107@Danny: Discount By Gross Win - Automatically mark on new launch currency [redmine:#179367]
+	- 20221130@Winfred: ONEbook Sitebuilder - Fix Issue does not have Bitcoin log [redmine:#181001]
+	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
 
  Param's Explanation: 
 	- @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -2460,7 +2462,7 @@ BEGIN
 											 SportType AS 'SportType'
 											,Bettype AS 'BetType'
 											,IsLive AS 'IsLive'
-											,@PT_TEMP AS 'PT'
+											, CASE WHEN Bettype IN (4297,4599) THEN 100 ELSE @PT_TEMP END AS 'PT'
 										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
 										FOR XML RAW('PT')) + '</ROOT>')
 					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
@@ -2505,7 +2507,7 @@ BEGIN
 													 SportType AS 'SportType'
 													,Bettype AS 'BetType'
 													,IsLive AS 'IsLive'
-													,@PT_TEMP AS 'PT'
+													,CASE WHEN Bettype IN (4297,4599) THEN 100 ELSE @PT_TEMP END AS 'PT'
 												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)  
 												FOR XML RAW('PT')) + '</ROOT>')
 							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
@@ -3229,7 +3231,7 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerNumber 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68,51,69,6,22,32,61,21,45)			
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68,51,6,22,32,61,21,45)			
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
 								TYPE
