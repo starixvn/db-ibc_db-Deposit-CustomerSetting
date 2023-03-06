@@ -49,7 +49,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220816@Tacy: Set default new downline Dangerous Setting [Redmine: #176518]
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
-
+		- 20230303@Johnson: Return Basketball VR to its original state [redmine:#184339]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -165,7 +165,7 @@ BEGIN
 						)
 		SELECT	sporttype,bettype,islive,0.5
 		from ProfileVirtualSetting 		
-		WHERE sporttype NOT IN (1,2)
+		WHERE sporttype NOT IN (1)
 
 		DECLARE	@virtualXML			TABLE (
 											seqNo		TINYINT PRIMARY KEY
@@ -323,7 +323,7 @@ BEGIN
 	  , danger, danger2, danger3, Danger4, Danger5
 	  , Abnormal, DoubleCommLosing	
 	  , DisableEsports, DisableSuperLive,DisableColossusBet,HideColossusBet
-	  , DangerLevel
+	  , DangerLevel, autosuspend3
 	  )
     VALUES
     (
@@ -334,7 +334,7 @@ BEGIN
 	  , @danger, @danger2, @danger3, @danger4, @danger5
 	  , 0, 0	
 	  , 0, 0,1,1
-	  , @DangerLevel
+	  , @DangerLevel, 0
     )
 	
     IF @@ERROR <> 0
