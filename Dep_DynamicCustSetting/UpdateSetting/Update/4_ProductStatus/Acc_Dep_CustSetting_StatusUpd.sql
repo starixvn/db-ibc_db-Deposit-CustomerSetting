@@ -31,7 +31,7 @@ AS
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220422@Winfred: LAP - Support commission for 3rd party products - Phase 4.2 [Redmine: #171586]   
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
-
+		- 20230315@Johnson: Add MaxGame, FGG, Jili Comm [redmine:#182922]
 	Param's Explanation:
 */
 BEGIN
@@ -221,7 +221,7 @@ BEGIN
 	END
 	
 	-----------Setting Comm-------------
-	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6,49,62,67,68,3,8) AND @IsDisabled = 0 
+	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6,49,62,67,68,3,8,60,70,75) AND @IsDisabled = 0 
 	BEGIN
 		EXEC Acc_Dep_DynamicCustSetting_06
 			@CustID			= @CustID
