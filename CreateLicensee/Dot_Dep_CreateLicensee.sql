@@ -69,6 +69,7 @@ AS
 	- 20221027@Winfred: ONEbook Sitebuilder - Fix Issue extra space when creating stakelevel [redmine:#179663]
 	- 20221130@Winfred: ONEbook Sitebuilder - Fix Issue does not have Bitcoin log [redmine:#181001]
 	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
+	- 20230321@Winfred: Adjust SB UUS betlimit [redmine:#182810]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -702,9 +703,11 @@ BEGIN
 	FROM #ProductInput
 
 	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch, Sporttype, Bettype)
-	SELECT DISTINCT ProductID ,20 ,1 ,10 ,100
+	SELECT DISTINCT ProductID ,20 ,1 
+		,CASE WHEN ProductID = 1 THEN 1000 ELSE 10  END AS MaxBet 
+		,CASE WHEN ProductID = 1 THEN 10000 ELSE 100  END AS MaxPerMatch 
 		,CASE WHEN ProductID = 3 THEN 100 ELSE 0 END AS MaxPerNumber
-		,CASE WHEN ProductID = 1 THEN 800 ELSE 0 END AS MaxPayoutPerMatch
+		,CASE WHEN ProductID = 1 THEN 80000 ELSE 0 END AS MaxPayoutPerMatch
 		, i.Sporttype, i.Bettype
 	FROM #ProductInput i
 	WHERE ProductID <> 49 AND NOT EXISTS(SELECT TOP 1 1 FROM #Product p WHERE p.ProductID=i.ProductID AND ISNUll(p.Sporttype,0) =ISNUll(i.Sporttype,0) 
