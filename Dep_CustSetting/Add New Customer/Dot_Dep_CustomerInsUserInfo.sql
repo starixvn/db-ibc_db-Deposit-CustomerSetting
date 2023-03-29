@@ -49,7 +49,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220816@Tacy: Set default new downline Dangerous Setting [Redmine: #176518]
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
-
+		- 20230303@Johnson: Return Basketball VR to its original state [redmine:#184339]
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -146,89 +146,6 @@ BEGIN
 	FROM customer WITH(NOLOCK)
 	WHERE custid = @recommend
 
-	--20191211@Johnson
-	--re-set  virtual rate for all sports except soccer to -50 for IBO 
-	IF @licensee = 'IBO'
-	BEGIN
-		DECLARE	@tblVirtualrate		TABLE (
-									SportType			INT
-								,	BetType				INT
-								,	IsLive				BIT
-								,	VirtualMultiplier	SMALLMONEY	
-								);
-										
-		INSERT INTO	@tblVirtualrate (
-								SportType
-							,	BetType
-							,	IsLive
-							,	VirtualMultiplier
-						)
-		SELECT	sporttype,bettype,islive,0.5
-		from ProfileVirtualSetting 		
-		WHERE sporttype NOT IN (1,2)
-
-		DECLARE	@virtualXML			TABLE (
-											seqNo		TINYINT PRIMARY KEY
-										,	Pos			VARBINARY(64)
-										,	Val			VARBINARY(64)
-										);
-										
-		INSERT INTO @virtualXML
-					(	seqNo, Pos, Val                       )
-				SELECT	seqNo, p1.Pos, p2.Val
-				FROM (
-					SELECT	DISTINCT seqNo
-					FROM	ProfileVirtualSetting WITH (NOLOCK)
-				) pvs
-				CROSS APPLY (
-					SELECT CONVERT(VARBINARY(64), (
-						SELECT	CONVERT(VARCHAR, CAST(ipvs.profileID - 64 * (ipvs.seqNo - 1) AS BINARY(1)), 2)
-						FROM		@tblVirtualrate			AS tmp
-							INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
-								ON	tmp.sporttype	= ipvs.sporttype
-									AND	tmp.bettype		= ipvs.bettype
-									AND	tmp.isLive		= ipvs.islive
-						WHERE	ipvs.seqNo = pvs.seqNo
-						FOR XML PATH ('')						
-					), 2) AS Pos
-				) p1
-				CROSS APPLY (
-					SELECT CONVERT(VARBINARY(64), (
-						SELECT	CONVERT(VARCHAR, CAST(CASE WHEN CAST(VirtualMultiplier * 100 AS INT) > 200 THEN ((CAST(VirtualMultiplier * 100 AS INT) - 200) / 5 + 200) ELSE CAST(VirtualMultiplier * 100 AS INT) END AS BINARY(1)), 2)
-						FROM		@tblVirtualrate			AS tmp
-							INNER JOIN	ProfileVirtualSetting	AS ipvs WITH (NOLOCK)
-								ON	tmp.sporttype	= ipvs.sporttype
-									AND	tmp.bettype		= ipvs.bettype
-									AND	tmp.isLive		= ipvs.islive
-						WHERE	ipvs.seqNo = pvs.seqNo
-						FOR XML PATH ('')						
-					), 2) AS Val
-				) p2;
-
-		UPDATE cvs
-			SET cvs.bitmapVirtual = bm.bitmap
-		FROM		CustVirtualSetting	AS cvs WITH(UPDLOCK, ROWLOCK)			
-			INNER JOIN	@virtualXML			AS tmp
-					ON	cvs.seqNo = tmp.seqNo
-			CROSS APPLY (SELECT TOP 1 bitmap FROM dbo.f_GenerateVirtualSetting_inline(cvs.bitmapVirtual, tmp.Val, tmp.Pos)) AS bm
-		WHERE	cvs.custid = @custid
-		
-		IF @@ERROR <> 0
-		BEGIN
-			SELECT @ErrMsg = CASE @Language 
-							   WHEN 'E' THEN 'Create customer failed. Please try again.'
-							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							 END
-				 , @ErrCode = 112
-
-			-- ROLLBACK MANUALLY
-			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-			RETURN
-		END	
-	END	
-
 	IF @licensee IN('haifa','IBO','mansion88','Athena000','Happy8','ManBetX') 
 		AND @currency IN (13,20) --RMB
 	BEGIN
@@ -323,7 +240,7 @@ BEGIN
 	  , danger, danger2, danger3, Danger4, Danger5
 	  , Abnormal, DoubleCommLosing	
 	  , DisableEsports, DisableSuperLive,DisableColossusBet,HideColossusBet
-	  , DangerLevel
+	  , DangerLevel, autosuspend3
 	  )
     VALUES
     (
@@ -334,7 +251,7 @@ BEGIN
 	  , @danger, @danger2, @danger3, @danger4, @danger5
 	  , 0, 0	
 	  , 0, 0,1,1
-	  , @DangerLevel
+	  , @DangerLevel, 0
     )
 	
     IF @@ERROR <> 0

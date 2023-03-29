@@ -48,6 +48,7 @@ Revisions:
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20230303@Johnson: Return Basketball VR to its original state [redmine: #184339]
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -137,41 +138,7 @@ BEGIN
 		DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
  		RETURN 
 	END  
-
-	--New IBO dummy super must have VR setting = 0% (Basketball level)
-	IF @site = 'IBO'
-	BEGIN
-		DECLARE @VirtualMultiplier VARCHAR(MAX) = ''
-
-		SELECT @VirtualMultiplier = CONVERT(VARCHAR(MAX),(  SELECT b.LevelID,vr.ValueID AS ValueIDLive,vr.ValueID AS ValueIDNonLive 
-															FROM VRSettingHierarchy b WITH(NOLOCK) 
-																CROSS APPLY VRValueMapping vr (NOLOCK)
-															WHERE b.SportType = 2 
-																AND b.VRLeagueGroupID = -1 
-																AND b.BetType = -1 
-																AND vr.Value = 1
-															FOR XML RAW('Row'), ROOT ('Root'))
-											)
-
-		EXEC [Acc_CustVirtualMultiplier_Upd]
-			  @CustID = @CustID
-			, @SportType = 2
-			, @VirtualMultiplier = @VirtualMultiplier
-			, @UserID  = @creator
-			, @IP  = @IP
-			, @ErrCode = @ErrCode OUTPUT 
-			, @ErrMsg = @ErrMsg OUTPUT
-		
-		IF @ErrCode <> 0 
-		BEGIN
-			DELETE VRCustSetting WITH(ROWLOCK) WHERE custId  =@custid
-			DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-			EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-			DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
-			RETURN 
-		END  
-	END
-
+	
 	--Insert ProductSetting of SportBooks for Super:
 	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
 	SELECT @custid, p.ProductSettingID
