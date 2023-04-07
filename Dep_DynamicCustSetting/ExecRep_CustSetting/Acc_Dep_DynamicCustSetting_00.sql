@@ -33,6 +33,7 @@ AS
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105] 
 */
 BEGIN
 	SELECT @ErrCode = 0
@@ -76,7 +77,7 @@ BEGIN
 		
 	)
 
-	CREATE TABLE #tmpDep_CustBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MaxBet MONEY,MaxPerMatch MONEY, MaxPerNumber MONEY, MaxPayoutPerMatch MONEY)
+	CREATE TABLE #tmpDep_CustBetLimit_Special(Sporttype SMALLINT,Bettype SMALLINT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY, MaxPerNumber MONEY, MaxPayoutPerMatch MONEY)
 	
 	IF @RoleID = 4
 	BEGIN
@@ -489,14 +490,14 @@ BEGIN
 			IF @RoleID = 1 -- RoleID = 1
 			BEGIN	
 				
-				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
-				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
+				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MinBet ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
+				SELECT DISTINCT s.Sporttype ,s.Bettype, MinBet ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
 				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
 					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
 				WHERE AgentID=@AgentID AND Site=@site AND CurrencyID=@currency
 
-				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
-				SELECT DISTINCT s.Sporttype ,s.Bettype ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
+				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MinBet ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
+				SELECT DISTINCT s.Sporttype ,s.Bettype ,MinBet ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
 				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
 					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
 				WHERE AgentID IS NULL AND NOT EXISTS(SELECT 1 FROM #tmpDep_CustBetLimit_Special a WITH(NOLOCK) WHERE a.SportType=smcs.SportType AND ((CASE WHEN a.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE a.Bettype END)  = smcs.BetType))
@@ -511,7 +512,7 @@ BEGIN
 					,[MaxPerMatch])
 					   	
 				SELECT @CustID, smcs.SportType,smcs.BetType,
-							smcs.MinBet,
+							ISNULL(t.MinBet,smcs.MinBet),
 							ISNULL(t.MaxBet,smcs.MaxBet),
 							ISNULL(t.MaxPerMatch,smcs.MaxPerMatch)
 				FROM dbo.Dep_CustBetSetting_Agent smcs WITH (NOLOCK)
@@ -555,7 +556,7 @@ BEGIN
 											OR COALESCE(t.MaxPerMatch,smcs.MaxPerMatch,0) <> COALESCE(gr.MaxPerMatch,0)
 											OR COALESCE(t.MaxPerNumber,smcs.MaxPerNumber,0) <> COALESCE(gr.MaxPerNumber,0)
 											OR COALESCE(t.MaxPayoutPerMatch,smcs.MaxPayoutPerMatch,0) <> COALESCE(gr.MaxPayoutPerMatch,0)
-											OR COALESCE(smcs.MinBet,0) <> COALESCE(gr.MinBet,0)
+											OR COALESCE(t.MinBet,smcs.MinBet,0) <> COALESCE(gr.MinBet,0)
 										)
 							)
 				BEGIN
@@ -570,7 +571,7 @@ BEGIN
 						,MaxPayoutPerMatch
 						)
 					SELECT @CustID, smcs.SportType,smcs.BetType,
-								smcs.MinBet,
+								ISNULL(t.MinBet,smcs.MinBet),
 								ISNULL(t.MaxBet,smcs.MaxBet),
 								ISNULL(t.MaxPerMatch,smcs.MaxPerMatch),
 								ISNULL(t.MaxPerNumber,smcs.MaxPerNumber),

@@ -16,8 +16,9 @@ AS
 	Original:
 
 	Revision:
-		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20221117@Johnson: Add saba cricket [redmine: #175659]
+		- 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105] 
 		
 	Param's Explanation:
 */
@@ -55,6 +56,26 @@ BEGIN
 
 	IF(EXISTS(SELECT top 1 1 FROM Dep_CustBetLimit_Special WITH(NOLOCK) WHERE AgentID = @AgentID))  
 	BEGIN
+		SELECT @ErrType=''
+		SELECT @ErrType = @ErrType + sportname + ', '   	
+		FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
+			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
+			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
+				ON  CBS.SportType = S.SportType
+				AND CBS.Bettype=(CASE WHEN S.SportType IN (161) THEN 1 ELSE S.Bettype END)
+				AND CBS.AgentID=@AgentID
+				AND Site=@site 
+				AND CurrencyID=@currency 
+		WHERE (CBS.MinBet<smcs.MinBet) AND smcs.CustID=@AgentID
+
+		IF @ErrType <>''    
+		BEGIN    
+		 SELECT    
+		  @ErrMsg = 'Sorry, Min bet must be equal to or greater than Master/Agent min bet ('+@ErrType+').',    
+		  @ErrCode = 107    
+		 return    
+		END   
+
 		SELECT @ErrType=''
 		SELECT @ErrType = @ErrType + sportname + ', '   	
 		FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
@@ -138,7 +159,27 @@ BEGIN
 		END   
 	END
 	ELSE 
-	BEGIN
+	BEGIN	
+		SELECT @ErrType=''
+		SELECT @ErrType = @ErrType + sportname + ', '   	
+		FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
+			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
+			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
+				ON  CBS.SportType = S.SportType
+				AND CBS.Bettype=(CASE WHEN S.SportType IN (161) THEN 1 ELSE S.Bettype END)
+				AND CBS.AgentID IS NULL
+				AND Site=@site 
+				AND CurrencyID=@currency 
+		WHERE (CBS.MinBet<smcs.MinBet) AND smcs.CustID=@AgentID
+
+		IF @ErrType <>''    
+		BEGIN    
+		 SELECT    
+		  @ErrMsg = 'Sorry, Min bet must be equal to or greater than Master/Agent min bet ('+@ErrType+').',    
+		  @ErrCode = 107    
+		 return    
+		END   
+
 		SELECT @ErrType=''
 		SELECT @ErrType = @ErrType + sportname + ', '   	
 		FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
