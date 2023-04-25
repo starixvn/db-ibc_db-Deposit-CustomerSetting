@@ -17,6 +17,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20221117@Johnson: Add saba cricket [redmine: #175659]
 		
 	Param's Explanation:
 */
@@ -47,8 +48,10 @@ BEGIN
 		INNER JOIN DBEXT.bodb02.dbo.Sports s WITH(NOLOCK) ON t.SportType=s.SportType
 
 	UPDATE #ProductSettingDetail
-	SET SportName = CASE WHEN SportType = 9901 THEN 'Saba Soccer' ELSE 'Saba Basketball' END
-	WHERE SportType IN (9901,9902)
+	SET SportName = CASE WHEN SportType = 9901 THEN 'Saba Soccer' 
+						WHEN SportType = 9902 THEN'Saba Basketball' 
+						WHEN SportType = 9907 THEN 'Saba Cricket' END
+	WHERE SportType IN (9901,9902,9907)
 
 	IF(EXISTS(SELECT top 1 1 FROM Dep_CustBetLimit_Special WITH(NOLOCK) WHERE AgentID = @AgentID))  
 	BEGIN
