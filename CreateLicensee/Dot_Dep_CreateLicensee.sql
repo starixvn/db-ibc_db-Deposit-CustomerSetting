@@ -70,6 +70,7 @@ AS
 	- 20221130@Winfred: ONEbook Sitebuilder - Fix Issue does not have Bitcoin log [redmine:#181001]
 	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
 	- 20230321@Winfred: Adjust SB UUS betlimit [redmine:#182810]
+	- 20230517@Eden: Enhance to validate space in Licensee name [redmine:#188416]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -486,6 +487,8 @@ BEGIN
 	SET @InsBalCustList = ''
 	SET @InsBalExceptCustList = ''
 
+	SELECT @sitename = LTRIM(RTRIM(@sitename))
+
 	SELECT @PT_VirtualSports1=@PT_VirtualSports1*100
 	SELECT @PT_VirtualSports2=@PT_VirtualSports2*100
 	SELECT @PT_Loterry=@PT_Loterry*100
@@ -876,6 +879,12 @@ BEGIN
 			)
 	BEGIN
 		SELECT @ErrMsg = 'Must offer Sportbook', @ErrCode = 10004
+		RETURN
+	END
+
+	IF CHARINDEX(space(1), @Sitename) > 0
+	BEGIN
+		SELECT @ErrMsg = 'Site name can''t contain spaces. Please check again', @ErrCode = 10099
 		RETURN
 	END
 
