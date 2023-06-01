@@ -11,6 +11,7 @@ AS
  Revisions:  	
 	- 20190425@Winnie:  Onebook SiteBuilder RedmineID: #111321
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20230601@Eden: Remove unused tables [Redmine: #189081] 
  Param's Explanation: 
  */
 BEGIN
@@ -25,14 +26,6 @@ BEGIN
 	FROM Dep_CustSuper d WITH(ROWLOCK) 
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID
 		
-	DELETE d 
-	FROM CustSettingGame d WITH(ROWLOCK) 
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID
-
-	DELETE d 
-	FROM CustOverrideGame d WITH(ROWLOCK) 
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID
-
 	WHILE (1 = 1)
 	BEGIN		
 		UPDATE TOP (1) #tblCustomer
@@ -47,8 +40,4 @@ BEGIN
 	DELETE d 
 	FROM Dep_AgentCommRate d WITH(ROWLOCK) 
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID
-
-	DELETE d 
-	FROM CustGameType d WITH(ROWLOCK) 
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 END
