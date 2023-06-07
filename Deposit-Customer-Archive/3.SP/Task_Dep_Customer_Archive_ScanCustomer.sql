@@ -20,6 +20,7 @@ AS
 		- 20190312@Dominic: Improve performance - #109528
 		- 20200211@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
+		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
@@ -30,6 +31,13 @@ BEGIN
 
 	SET NOCOUNT ON
 	DECLARE @MinBettingDate DATETIME
+
+	DECLARE @MBBU TABLE (BalanceUpDay SMALLDATETIME, MoveBetsDay SMALLDATETIME)
+	INSERT INTO @MBBU (BalanceUpDay, MoveBetsDay)
+	EXEC dbo.Age_SelBalanceUpDay
+
+	DECLARE @BalanceUpDate SMALLDATETIME
+	SELECT  @BalanceUpDate = BalanceUpDay FROM @MBBU
 
 	SET @MinBettingDate = DATEADD(dd, -@minDays, CAST(GETDATE() AS DATE))
 	CREATE TABLE #Member 
@@ -196,6 +204,9 @@ BEGIN
 				SELECT custid, ISNULL(SUM(winlost-actual_stake+playercomm),0) as MemberBalance
 				FROM transfer WITH (NOLOCK)
 				WHERE custid IN (SELECT custid FROM #tmpMember)
+					AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+								WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
+								ELSE 1 END
 				GROUP BY custid
 				) b ON #Member.custid = b.custid
 
