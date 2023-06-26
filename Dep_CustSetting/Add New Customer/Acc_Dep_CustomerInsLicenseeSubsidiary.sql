@@ -27,6 +27,7 @@ AS
 		- 20220701@Johnson: HF Keno PT value does not support three decimal digits number[redmine: #174808]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 
 	Param's Explanation:
 	- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
@@ -40,8 +41,6 @@ BEGIN
 	SET NOCOUNT ON
 	
 	DECLARE @mrecommend INT
-			,@DisableColossusBet BIT
-			,@HideColossusBet	BIT
 			
 	SELECT @ExistedCustID=CustID,@mrecommend=mrecommend FROM custInfo WITH (NOLOCK) WHERE Username=@ExistedUsername AND Enabled=1
 	
@@ -57,9 +56,6 @@ BEGIN
 		SELECT @ErrMsg='Username to copy does not exist.'
 		RETURN
 	END
-
-	SELECT @DisableColossusBet=DisableColossusBet, @HideColossusBet=HideColossusBet
-	FROM custInfo WITH(NOLOCK) WHERE custid = @Existedcustid
 
 	EXEC Acc_Dep_CustomerInsMember_MAg 
 		@Custid=@custid OUTPUT,@creator=@creator,@Username=@username,@userpwd=@userpwd,@mrecommend=@mrecommend
@@ -254,10 +250,6 @@ BEGIN
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
-
-	UPDATE CustInfo WITH(ROWLOCK,UPDLOCK)
-		SET DisableColossusBet=@DisableColossusBet,HideColossusBet=@HideColossusBet
-	WHERE custid=@custid
 
 	Declare @LogSPData varchar(MAX)
 	--Log status

@@ -52,10 +52,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@autosuspend BIT = 0,
 	@autosuspend2 BIT = 0,
 
-	
-	@DisableColossusBet BIT = 1,
-	@HideColossusBet BIT = 1,
-	
 	@DisableSuperLive BIT = 0,
 	@maxcredit MONEY = 0,
 	@isSearchAndCopy BIT = 0,
@@ -85,6 +81,7 @@ AS
 		- 20220907@Tacy: NAP - Set Dangerous Level of member following upline (Agent) [Redmine: #176518]
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 		- 20220930@Eden: Reactive - Enhance to prevent lacking settings [redmine: #178439]
+		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 
 	Param's Explanation:
 	• @ErrCode:
@@ -218,7 +215,7 @@ BEGIN
 	  , danger, danger2, danger3, Danger4, Danger5
 	  , Abnormal	 
 	  , DoubleCommLosing	
-	  , DisableSuperLive,DisableColossusBet,HideColossusBet
+	  , DisableSuperLive
 	  , DangerLevel
 	  )
     VALUES
@@ -230,7 +227,7 @@ BEGIN
 	  , @danger, @danger2, @danger3, @Danger4, @Danger5
 	  , @Abnormal
 	  , 0
-	  , @DisableSuperLive,@DisableColossusBet,@HideColossusBet
+	  , @DisableSuperLive
 	  , @DangerLevel
     )
 
