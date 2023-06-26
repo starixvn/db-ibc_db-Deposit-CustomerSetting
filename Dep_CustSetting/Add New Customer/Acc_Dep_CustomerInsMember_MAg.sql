@@ -58,6 +58,7 @@ Revisions:
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 
 Param's Explanation:
 	- @ErrCode:
@@ -170,21 +171,10 @@ BEGIN
 	if @ErrCode <> 0
 		return
 
-	 -------Insert Dep_AgentCommRate for ColossusBets
-	 INSERT INTO Dep_AgentCommRate
-			   ([CustID]
-			   ,[Sporttype]
-			   ,[Bettype]
-			   ,CommRate)
-	SELECT @custid, 204, 18001, 0.1215
-	UNION ALL
-	SELECT @custid, 204, 18002, 0.45
-
 	----------------------CHECK Error
 	 IF @@ERROR <> 0 
 	 BEGIN 	
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
  		RETURN 
 	 END  
 

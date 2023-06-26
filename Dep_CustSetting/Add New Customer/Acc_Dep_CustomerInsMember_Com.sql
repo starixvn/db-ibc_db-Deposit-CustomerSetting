@@ -48,7 +48,9 @@ Revisions:
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20230303@Johnson: Return Basketball VR to its original state [redmine: #184339]
+
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -120,22 +122,12 @@ BEGIN
 	IF @ErrCode <> 0
 		RETURN
 
-	-------Insert Dep_AgentCommRate for ColossusBets
-	INSERT INTO Dep_AgentCommRate
-			([CustID]
-			,[Sporttype]
-			,[Bettype]
-			,CommRate)
-	SELECT @custid, 204, 18001, 0.1215
-	UNION ALL
-	SELECT @custid, 204, 18002, 0.45
 	----------------------CHECK Error
 
 	IF @@ERROR <> 0
 	BEGIN
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
  		RETURN 
 	END  
 	
@@ -155,7 +147,6 @@ BEGIN
 		DELETE VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		DELETE Dep_AgentCommRate WITH(ROWLOCK) WHERE custid = @custid
 		DELETE Dep_LicenseeProductSetting WITH(ROWLOCK) WHERE custid = @custid
 		RETURN 
 	END  

@@ -1,1 +1,6 @@
-Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer_Trans.sql
+CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
+Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql

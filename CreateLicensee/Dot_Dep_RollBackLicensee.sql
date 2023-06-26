@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_RollBackLicensee] 		
 		@ListCustID		VARCHAR(MAX)		
 AS
@@ -12,6 +12,7 @@ AS
 	- 20190425@Winnie:  Onebook SiteBuilder RedmineID: #111321
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20230601@Eden: Remove unused tables [Redmine: #189081] 
+	- 20230616@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
  Param's Explanation: 
  */
 BEGIN
@@ -35,9 +36,5 @@ BEGIN
 
 		IF @@ROWCOUNT = 0 BREAK 		
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID												
-	END	
-	
-	DELETE d 
-	FROM Dep_AgentCommRate d WITH(ROWLOCK) 
-		INNER JOIN #tblCustomer t ON d.custid=t.CustID
+	END
 END
