@@ -13,6 +13,7 @@ Original:
 
 Revisions:
     - 20190918@Winnie: Create SP RedmineID:#120141
+	- 20230605@Winfred: NAP LM - New function to create agent subsidiary for TM team [redmine:#185123]
 */
 BEGIN
 DECLARE @startnum INT
@@ -27,17 +28,23 @@ BEGIN
 	SELECT * FROM #tempSubUserName
 	RETURN
 END
-SELECT @startnum=ISNULL(CAST(REPLACE(username, @mrecommendUsername, '') AS INT), 0)+1
-FROM dbo.customer WITH(NOLOCK)  
-WHERE custid = (SELECT MAX(custid)   
-	FROM dbo.customer WITH(NOLOCK)   
-	WHERE username LIKE @mrecommendUsername + '%'   
-	AND username NOT LIKE @mrecommendUsername+'%'+'BetTrade'  
-	AND username NOT LIKE @mrecommendUsername+'%'+'CashOut'
-	AND username NOT LIKE @mrecommendUsername+'%'+'ClearBal'  
-	AND mrecommend = @mrecommend
-	AND RoleId = 2)
 
+BEGIN TRY
+	SELECT @startnum=ISNULL(CAST(REPLACE(username, @mrecommendUsername, '') AS INT), 0)+1
+	FROM dbo.customer WITH(NOLOCK)  
+	WHERE custid = (SELECT MAX(custid)   
+		FROM dbo.customer WITH(NOLOCK)   
+		WHERE username LIKE @mrecommendUsername + '%'   
+		AND username NOT LIKE @mrecommendUsername+'%'+'BetTrade'  
+		AND username NOT LIKE @mrecommendUsername+'%'+'CashOut'
+		AND username NOT LIKE @mrecommendUsername+'%'+'ClearBal'  
+		AND mrecommend = @mrecommend
+		AND RoleId = 2)
+END TRY
+BEGIN CATCH
+	SELECT * FROM #tempSubUserName
+	RETURN
+END CATCH
 SELECT @endnum=@startnum+@Num-1
 
 ;WITH gen AS (
