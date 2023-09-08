@@ -37,7 +37,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,	@InsBalCustList		varchar(MAX) = '' OUTPUT
 	,	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
 	,	@SiteDBGroupID		SMALLINT --require
-	,	@SpecialPlatfrom	TINYINT
+	,	@SpecialPlatform	TINYINT
 AS  
 /*  
  Created: 20190425@Winnie  
@@ -76,7 +76,7 @@ AS
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
- @SpecialPlatfrom : SpecialPlatfrom=2 => Jollysports licensee
+ @SpecialPlatform : SpecialPlatfrom=2 => Jollysports licensee
 					SpecialPlatfrom=0 (default value) => Saba licensee
    -@Product:<ROOT>
 				<Product 
@@ -905,7 +905,7 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatform)
-		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatfrom)
+		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform)
 	
 		IF @@ERROR <> 0
 		BEGIN
@@ -3259,7 +3259,7 @@ BEGIN
 									, @ErrCode														AS '@ErrCode'	
 									, @ErrMsg														AS '@ErrMsg'
 									, @IsChinaView													AS '@IsChinaView'
-									, @SpecialPlatfrom												AS '@SpecialPlatform'	
+									, @SpecialPlatform												AS '@SpecialPlatform'	
 							FOR XML PATH('GeneralInfo'), 
 							TYPE
 							),
