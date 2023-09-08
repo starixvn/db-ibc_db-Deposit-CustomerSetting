@@ -37,6 +37,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,	@InsBalCustList		varchar(MAX) = '' OUTPUT
 	,	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
 	,	@SiteDBGroupID		SMALLINT --require
+	,	@SpecialPlatfrom	TINYINT
 AS  
 /*  
  Created: 20190425@Winnie  
@@ -71,9 +72,12 @@ AS
 	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
 	- 20230321@Winfred: Adjust SB UUS betlimit [redmine:#182810]
 	- 20230517@Eden: Enhance to validate space in Licensee name [redmine:#188416]
+	- 20230908@Winfred: Sitebuilder - Add SpecialPlatfrom for Jollysports licensee[redmine:#193758]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
+ @SpecialPlatfrom : SpecialPlatfrom=2 => Jollysports licensee
+					SpecialPlatfrom=0 (default value) => Saba licensee
    -@Product:<ROOT>
 				<Product 
 						ProductID="1" 
@@ -472,7 +476,7 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 							<StakeLevel Currency="4" GameTypeID="3101"  MinStake="20" MaxStake="5000" />
 							<StakeLevel Currency="4" GameTypeID="3101"  MinStake="30" MaxStake="9000" />
 					</ROOT>',
-@Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@IsChinaView=1 ,@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
+@Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@IsChinaView=1, @SpecialPlatfrom=2 ,@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
 ,@InsBalCustList=@InsBalCustList OUTPUT,@InsBalExceptCustList=@InsBalExceptCustList OUTPUT  , @SiteDBGroupID = 0
 SELECT @ErrorCode,@Errmsg,@InsBalCustList,@InsBalExceptCustList 
 
@@ -900,8 +904,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID)
-		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID)
+		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatform)
+		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatfrom)
 	
 		IF @@ERROR <> 0
 		BEGIN
@@ -3254,7 +3258,8 @@ BEGIN
 									, @IsCreateSub													AS '@Subsidiary'	
 									, @ErrCode														AS '@ErrCode'	
 									, @ErrMsg														AS '@ErrMsg'
-									, @IsChinaView													AS '@IsChinaView'	
+									, @IsChinaView													AS '@IsChinaView'
+									, @SpecialPlatfrom												AS '@SpecialPlatform'	
 							FOR XML PATH('GeneralInfo'), 
 							TYPE
 							),
