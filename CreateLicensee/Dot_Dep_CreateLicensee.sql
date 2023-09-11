@@ -476,7 +476,7 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 							<StakeLevel Currency="4" GameTypeID="3101"  MinStake="20" MaxStake="5000" />
 							<StakeLevel Currency="4" GameTypeID="3101"  MinStake="30" MaxStake="9000" />
 					</ROOT>',
-@Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@IsChinaView=1, @SpecialPlatfrom=2 ,@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
+@Creator=1,@IP='192.168.1.1',@IsCreateSub=1,@LicenseeType='Boping',@IsChinaView=1, @SpecialPlatform=2 ,@ErrCode=@ErrorCode OUTPUT,@Errmsg=@Errmsg OUTPUT
 ,@InsBalCustList=@InsBalCustList OUTPUT,@InsBalExceptCustList=@InsBalExceptCustList OUTPUT  , @SiteDBGroupID = 0
 SELECT @ErrorCode,@Errmsg,@InsBalCustList,@InsBalExceptCustList 
 
