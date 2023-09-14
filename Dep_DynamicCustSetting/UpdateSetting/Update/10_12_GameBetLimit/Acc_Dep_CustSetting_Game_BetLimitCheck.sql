@@ -18,6 +18,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20230828@Luke: LAP - SEA Localization [Redmine: #187132]
 		
 	Param's Explanation:
 	,@BetLimit	= '<ROOT>
@@ -349,7 +350,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 				SELECT 10003 AS '@MsgID'
-					, 'Wrong Min bet/ Max bet/ Max per match/ Max per number/ Max payout per match.' AS '@Msg'
+					, 'Wrong Min Bet/ Max Bet/ Max Per Match/ Max Per Ball/ Max Payout Per Match.' AS '@Msg'
 					, (
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
@@ -402,7 +403,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 				SELECT 10005 AS '@MsgID'
-					, 'Min bet must be less than max bet and max bet must be less than max bet per match.' AS '@Msg'
+					, 'Min Bet must be less than Max Bet and Max Bet must be less than Max Per Match.' AS '@Msg'
 					, (
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
@@ -461,7 +462,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 				SELECT 10005 AS '@MsgID'
-					, 'Max bet must be less than max bet per number and max bet per number must be less than max bet per match.' AS '@Msg'
+					, 'Max Bet must be less than Max Per Ball and Max Per Ball must be less than Max Per Match.' AS '@Msg'
 					, (
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
@@ -504,7 +505,7 @@ BEGIN
 	BEGIN
 		SET @xml = (
 				SELECT 10005 AS '@MsgID'
-					, 'Max bet per match must be less than max payout per match.' AS '@Msg'
+					, 'Max Per Match must be less than Max Payout Per Match.' AS '@Msg'
 					, (
 						SELECT tmp.SportType AS '@SportType'
 							, tmp.BetType AS '@BetType'
@@ -548,11 +549,11 @@ BEGIN
 							AS '@MsgID'
 						, CASE 
 								WHEN @RoleID = 3
-									THEN 'Min bet must be equal to or greater than Super Agent min bet'
+									THEN 'Min Bet must be equal to or greater than Super Agent Min Bet'
 								WHEN @RoleID = 2
-									THEN 'Min bet must be equal to or greater than Master Agent min bet'
+									THEN 'Min Bet must be equal to or greater than Master Agent Min Bet'
 								WHEN @RoleID = 1
-									THEN 'Min bet must be equal to or greater than Agent min bet'
+									THEN 'Min Bet must be equal to or greater than Agent Min Bet'
 								END 
 							AS '@Msg'
 						, (
@@ -594,11 +595,11 @@ BEGIN
 							AS '@MsgID'
 						, CASE 
 								WHEN @RoleID = 3
-									THEN 'Max bet must be equal to or less than Super Agent max bet'
+									THEN 'Max Bet must be equal to or less than Super Agent Max Bet'
 								WHEN @RoleID = 2
-									THEN 'Max bet must be equal to or less than Master Agent max bet'
+									THEN 'Max Bet must be equal to or less than Master Agent Max Bet'
 								WHEN @RoleID = 1
-									THEN 'Max bet must be equal to or less than Agent max bet'
+									THEN 'Max Bet must be equal to or less than Agent Max Bet'
 								END 
 							AS '@Msg'
 						, (
@@ -686,11 +687,11 @@ BEGIN
 							AS '@MsgID'
 						, CASE 
 								WHEN @RoleID = 3
-									THEN 'Max Per Number must be equal to or less than Super Agent Max Per Number'
+									THEN 'Max Per Ball must be equal to or less than Super Agent Max Per Ball'
 								WHEN @RoleID = 2
-									THEN 'Max Per Number must be equal to or less than Master Agent Max Per Number'
+									THEN 'Max Per Ball must be equal to or less than Master Agent Max Per Ball'
 								WHEN @RoleID = 1
-									THEN 'Max Per Number must be equal to or less than Agent Max Per Number'
+									THEN 'Max Per Ball must be equal to or less than Agent Max Per Ball'
 								END
 							AS '@Msg'
 						, (
