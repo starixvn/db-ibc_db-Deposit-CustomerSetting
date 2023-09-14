@@ -904,7 +904,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatform)
+		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom)
 		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform)
 	
 		IF @@ERROR <> 0
