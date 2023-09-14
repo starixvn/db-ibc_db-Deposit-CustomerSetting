@@ -1,8 +1,3 @@
-CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
-CreateLicensee\Dot_Dep_CreateLicensee.sql
-Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql
-Dep_CustSetting\Add New Customer\Acc_CustomerInsDummyTrade.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsUserInfo.sql
+Dep_DynamicCustSetting\UpdateSetting\Update\4_ProductStatus\Acc_Dep_CustomerSelCheckAllowedDownlines.sql
+Dep_DynamicCustSetting\UpdateSetting\Update\10_12_GameBetLimit\Acc_Dep_CustSetting_Game_BetLimitUpd.sql
