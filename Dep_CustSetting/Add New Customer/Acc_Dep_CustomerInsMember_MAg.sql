@@ -98,7 +98,6 @@ BEGIN
 		@currency int, 
 		@pwdexpiry datetime, 
 		@site nvarchar(50),
-		@mUsername nvarchar(50),
 		@srecommend int,	 
 		@matchlimit smallmoney,
 		@TransferOption_dec tinyint,
@@ -110,7 +109,6 @@ BEGIN
 		@currency = currency, 
 		@UplineClosed = closed,
 		@srecommend = srecommend,
-		@mUsername=username,
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
 		@VirtualMultiplier = ci.VirtualMultiplier
@@ -390,7 +388,7 @@ BEGIN
 	END 
 	
 	-- Create ParlayBoostAdj dummy account
-	IF @mUsername LIKE '%ACC%' --Master username (dummy account)
+	IF @Username LIKE '%ACC%01' --Agent username (dummy account)
 	BEGIN
 		DECLARE @UsernameParlayBoostAdj VARCHAR(30)
 
