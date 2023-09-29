@@ -59,7 +59,7 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
-	- 20230922@Tacy: Add new ParlayBoostAdj dummy customers [Redmine: #192238]
+	- 20230922@Tacy: Add new ParlayBoostAdj dummy customers [Redmine: #194542]
 
 Param's Explanation:
 	- @ErrCode:
