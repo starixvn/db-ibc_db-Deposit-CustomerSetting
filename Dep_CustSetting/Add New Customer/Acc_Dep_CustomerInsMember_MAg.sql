@@ -59,6 +59,7 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
+	- 20230922@Tacy: Add new ParlayBoostAdj dummy customers [Redmine: #192238]
 
 Param's Explanation:
 	- @ErrCode:
@@ -97,6 +98,7 @@ BEGIN
 		@currency int, 
 		@pwdexpiry datetime, 
 		@site nvarchar(50),
+		@mUsername nvarchar(50),
 		@srecommend int,	 
 		@matchlimit smallmoney,
 		@TransferOption_dec tinyint,
@@ -108,6 +110,7 @@ BEGIN
 		@currency = currency, 
 		@UplineClosed = closed,
 		@srecommend = srecommend,
+		@mUsername=username,
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
 		@VirtualMultiplier = ci.VirtualMultiplier
@@ -365,7 +368,7 @@ BEGIN
 		FROM exchange with(nolock)
 		WHERE ExchangeId = @Currency
 		SET @IsExists = 0
-		EXEC Age_CustomerCheckExists @username = @UsernameOddAdj, @IsExists = @IsExists OUTPUT
+		EXEC Acc_Dep_CustomerCheckExists @username = @UsernameOddAdj, @IsExists = @IsExists OUTPUT
 
 		IF @IsExists = 0
 		BEGIN
@@ -386,6 +389,35 @@ BEGIN
 		  
 	END 
 	
+	-- Create ParlayBoostAdj dummy account
+	IF @mUsername LIKE '%ACC%' --Master username (dummy account)
+	BEGIN
+		DECLARE @UsernameParlayBoostAdj VARCHAR(30)
+
+		SELECT @UsernameParlayBoostAdj = @Site + currency + 'ParlayBoostAdj'  
+		FROM exchange with(nolock)
+		WHERE ExchangeId = @Currency
+
+		SET @IsExists = 0
+	
+		EXEC Acc_Dep_CustomerCheckExists @username = @UsernameParlayBoostAdj, @IsExists = @IsExists OUTPUT
+
+		IF @IsExists = 0
+		BEGIN
+			EXEC Acc_Dep_CustomerInsMember_Ag 
+			@custid			=	@CustIdOddAdj output,
+			@creator		=	@Creator,
+			@username		=	@UsernameParlayBoostAdj,
+			@userpwd		=	@Userpwd,
+			@recommend		=	@Custid,
+			@IP				=	@IP,
+			@Language		=	@Language,
+			@SubAccID		=	@SubAccID,
+			@ErrCode		=	@ErrCode output,
+			@ErrMsg			=	@ErrMsg output
+		END
+	END
+
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
 
