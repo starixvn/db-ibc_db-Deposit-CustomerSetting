@@ -392,7 +392,7 @@ BEGIN
 	BEGIN
 		DECLARE @UsernameParlayBoostAdj VARCHAR(30)
 
-		SELECT @UsernameParlayBoostAdj = @Site + currency + 'ParlayBoostAdj'  
+		SELECT @UsernameParlayBoostAdj = @Site + 'ParlayBoostAdj' + currency  
 		FROM exchange with(nolock)
 		WHERE ExchangeId = @Currency
 
