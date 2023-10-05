@@ -389,8 +389,9 @@ BEGIN
 	
 	-- Create ParlayBoostAdj dummy account
 	IF @Username LIKE '%ACC%01' --Agent username (dummy account)
+		AND @site NOT IN ('Saba789','SEAL888')
 	BEGIN
-		DECLARE @UsernameParlayBoostAdj VARCHAR(30)
+		DECLARE @CustIdParlayBoostAdj INT, @UsernameParlayBoostAdj VARCHAR(30)
 
 		SELECT @UsernameParlayBoostAdj = @Site + 'ParlayBoostAdj' + currency  
 		FROM exchange with(nolock)
@@ -403,7 +404,7 @@ BEGIN
 		IF @IsExists = 0
 		BEGIN
 			EXEC Acc_Dep_CustomerInsMember_Ag 
-			@custid			=	@CustIdOddAdj output,
+			@custid			=	@CustIdParlayBoostAdj output,
 			@creator		=	@Creator,
 			@username		=	@UsernameParlayBoostAdj,
 			@userpwd		=	@Userpwd,
@@ -414,6 +415,8 @@ BEGIN
 			@ErrCode		=	@ErrCode output,
 			@ErrMsg			=	@ErrMsg output
 		END
+
+		SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@CustIdParlayBoostAdj) +  ';' + @UsernameParlayBoostAdj,'')
 	END
 
 	set @endRun = getdate()
