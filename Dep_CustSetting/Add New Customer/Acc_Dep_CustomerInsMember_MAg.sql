@@ -414,9 +414,10 @@ BEGIN
 			@SubAccID		=	@SubAccID,
 			@ErrCode		=	@ErrCode output,
 			@ErrMsg			=	@ErrMsg output
+
+			SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@CustIdParlayBoostAdj) +  ';' + @UsernameParlayBoostAdj,'')
 		END
 
-		SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@CustIdParlayBoostAdj) +  ';' + @UsernameParlayBoostAdj,'')
 	END
 
 	set @endRun = getdate()
