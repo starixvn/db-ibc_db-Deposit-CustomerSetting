@@ -59,7 +59,6 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
-	- 20230922@Tacy: Add new ParlayBoostAdj dummy customers [Redmine: #194542]
 
 Param's Explanation:
 	- @ErrCode:
@@ -366,7 +365,7 @@ BEGIN
 		FROM exchange with(nolock)
 		WHERE ExchangeId = @Currency
 		SET @IsExists = 0
-		EXEC Acc_Dep_CustomerCheckExists @username = @UsernameOddAdj, @IsExists = @IsExists OUTPUT
+		EXEC Age_CustomerCheckExists @username = @UsernameOddAdj, @IsExists = @IsExists OUTPUT
 
 		IF @IsExists = 0
 		BEGIN
@@ -387,39 +386,6 @@ BEGIN
 		  
 	END 
 	
-	-- Create ParlayBoostAdj dummy account
-	IF @Username LIKE '%ACC%01' --Agent username (dummy account)
-		AND @site NOT IN ('Saba789','SEAL888')
-	BEGIN
-		DECLARE @CustIdParlayBoostAdj INT, @UsernameParlayBoostAdj VARCHAR(30)
-
-		SELECT @UsernameParlayBoostAdj = @Site + 'ParlayBoostAdj' + currency  
-		FROM exchange with(nolock)
-		WHERE ExchangeId = @Currency
-
-		SET @IsExists = 0
-	
-		EXEC Acc_Dep_CustomerCheckExists @username = @UsernameParlayBoostAdj, @IsExists = @IsExists OUTPUT
-
-		IF @IsExists = 0
-		BEGIN
-			EXEC Acc_Dep_CustomerInsMember_Ag 
-			@custid			=	@CustIdParlayBoostAdj output,
-			@creator		=	@Creator,
-			@username		=	@UsernameParlayBoostAdj,
-			@userpwd		=	@Userpwd,
-			@recommend		=	@Custid,
-			@IP				=	@IP,
-			@Language		=	@Language,
-			@SubAccID		=	@SubAccID,
-			@ErrCode		=	@ErrCode output,
-			@ErrMsg			=	@ErrMsg output
-
-			SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@CustIdParlayBoostAdj) +  ';' + @UsernameParlayBoostAdj,'')
-		END
-
-	END
-
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
 

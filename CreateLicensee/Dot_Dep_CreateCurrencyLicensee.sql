@@ -60,10 +60,10 @@ AS
 	- 20221130@Winfred: ONEbook Sitebuilder - Fix Issue does not have Bitcoin log [redmine:#181001]
 	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
 	- 20230814@Winfred: Integrate MaxGame, VS3 new products - remove VS3 Old [redmine:#183802]
+	- 20230922@Tacy: Add new ParlayBoostAdj dummy customers [Redmine: #194542]
 	- 20231115@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
 	- 20240103@Winfred: Sitebuilder - Bitcoin/SLT - Enhance the settings when creating a new licensee [#196704]
 	- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199521]
-
  Param's Explanation: 
 	- @LicenseeType = (Boping, OneWorks, Zelianta)
 	- @Product:<ROOT>
@@ -519,7 +519,7 @@ BEGIN
 	SELECT @Pass='8058095B7DDB08A608811097E5DB8D'		
 
 	DECLARE @Super VARCHAR(30),@Master VARCHAR(30),@Agent VARCHAR(30),@AccMaster VARCHAR(30),@AccAgent VARCHAR(30),@Transf VARCHAR(30),@Charge VARCHAR(30),@Bonus01 VARCHAR(30)
-			,@Bonus02 VARCHAR(30),@Dummy3rd VARCHAR(30),@ClearBal VARCHAR(30)
+			,@Bonus02 VARCHAR(30),@Dummy3rd VARCHAR(30),@ClearBal VARCHAR(30),@ParlayBoost VARCHAR(30)
 			,@Withdraw VARCHAR(30),@Currency INT				
 			,@MinBet MONEY,@MaxBet MONEY,@MaxPerMatch MONEY
 			,@MaxPerNumber MONEY,@MaxPayoutPerMatch MONEY
@@ -622,7 +622,7 @@ BEGIN
 	CREATE TABLE #ProductInput(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerNumber MONEY,MaxPayoutPerMatch MONEY,Sporttype INT,Bettype INT)
 	CREATE TABLE #Product(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerNumber MONEY,MaxPayoutPerMatch MONEY,Sporttype INT,Bettype INT , StakeLevelID	INT, PT SMALLMONEY, ProductName VARCHAR(100))
 	CREATE TABLE #Username(Super VARCHAR(30),Master VARCHAR(30),Agent VARCHAR(30),AccMaster VARCHAR(30),AccAgent VARCHAR(30),Transf VARCHAR(30),Charge VARCHAR(30),
-							Bonus01 VARCHAR(30),Bonus02 VARCHAR(30),Withdraw VARCHAR(30),Dummy3rd VARCHAR(30),Currency INT,ClearBal VARCHAR(30),				
+							Bonus01 VARCHAR(30),Bonus02 VARCHAR(30),Withdraw VARCHAR(30),Dummy3rd VARCHAR(30),Currency INT,ClearBal VARCHAR(30),ParlayBoost VARCHAR(30),				
 							isfinished BIT DEFAULT(0) )
 	CREATE TABLE #StakelevelInput(ProductID INT, StakeLevelXML VARCHAR(MAX), isfinished BIT DEFAULT(0), PRIMARY KEY(ProductID))
 	CREATE TABLE #tempProduct (ProductID INT, PT SMALLMONEY , ProductName VARCHAR(100),isfinished BIT DEFAULT(0))
@@ -880,11 +880,12 @@ BEGIN
 	DECLARE @SiteID INT 
 	SELECT @SiteID = siteid FROM dbo.Site WITH (NOLOCK) WHERE site = @Sitename
 
-	INSERT INTO #Username(Super,Master,Agent,AccMaster,AccAgent,Transf,Charge ,Bonus01,Bonus02,Withdraw,Dummy3rd,Currency,ClearBal)
+	INSERT INTO #Username(Super,Master,Agent,AccMaster,AccAgent,Transf,Charge ,Bonus01,Bonus02,Withdraw,Dummy3rd,Currency,ClearBal,ParlayBoost)
 	SELECT DISTINCT @sitename+'Super'+e.currency,@sitename+e.currency,@sitename+e.currency+'01'
 			,@sitename+'ACC'+e.currency,@sitename+'ACC'+e.currency+'01',@sitename+'Transfer'+e.currency,
 			@sitename+'Charges'+e.currency,@sitename+'Bonus'+e.currency,@sitename+'Bonus02'+e.currency,
 			@sitename+'Withdrawal'+e.currency,@sitename+'Dummy3rd'+e.currency,t.Currency,@sitename+e.currency+'01ClearBal'
+			,@sitename+'ParlayBoostAdj'+e.currency
 	FROM #Product t
 		INNER JOIN exchange e WITH(NOLOCK) ON t.Currency=e.exchangeid
 	WHERE t.ProductID=1
@@ -895,7 +896,7 @@ BEGIN
 		UPDATE TOP (1) #Username
 		SET isfinished = 1
 			,@Super=Super,@Master=Master,@Agent=Agent,@AccMaster=AccMaster,@AccAgent=AccAgent,@Transf=Transf,@Charge=Charge ,@Bonus01=Bonus01,@Withdraw=Withdraw 
-			,@Bonus02=Bonus02,@Dummy3rd=Dummy3rd,@ClearBal=ClearBal
+			,@Bonus02=Bonus02,@Dummy3rd=Dummy3rd,@ClearBal=ClearBal, @ParlayBoost=ParlayBoost
 			,@Currency=Currency
 		WHERE isfinished = 0	
 
@@ -1001,6 +1002,9 @@ BEGIN
 			SELECT @Withdraw
 			UNION ALL
 			SELECT @Dummy3rd
+			UNION ALL
+			SELECT @ParlayBoost
+
 			WHILE (1 = 1)
 			BEGIN		
 				UPDATE TOP (1) #tempDumUserName
