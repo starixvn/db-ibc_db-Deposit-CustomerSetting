@@ -32,6 +32,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateCurrencyLicensee]
 	,	@PT_PP  			SMALLMONEY=0
 	,	@PT_AE  			SMALLMONEY=0
 	,	@PT_Habanero		SMALLMONEY=0
+	,	@PT_MaxGame 		SMALLMONEY=0
 	,	@StakeLevel			VARCHAR(MAX)	= '<ROOT></ROOT>'
 	,	@InsBalCustList		varchar(MAX) = '' OUTPUT
 	,	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
@@ -60,6 +61,7 @@ AS
 	- 20221107@Danny: Discount By Gross Win - Automatically mark on new launch currency [redmine:#179367]
 	- 20221130@Winfred: ONEbook Sitebuilder - Fix Issue does not have Bitcoin log [redmine:#181001]
 	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
+	- 20230814@Winfred: Integrate MaxGame, VS3 new products - remove VS3 Old [redmine:#183802]
 
  Param's Explanation: 
 	- @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -112,6 +114,7 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 	,	@PT_PP  			=0.9
 	,	@PT_AE  			=0.9
 	,	@PT_Habanero		=0.9
+	,	@PT_MaxGame 		=0.9	
 ,@Product='<ROOT>
 															<Product 
 																	ProductID="1" 
@@ -335,28 +338,12 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 																	MaxPerBall="0"	
 																/>
 																<Product 	
-																	ProductID="69"
-																	Currency="4"	
-																	MinBet="1" 
-																	MaxBet="300000"	
-																	MaxPerMatch="600000"	
-																	MaxPerBall="0" 
-																/>
-																<Product 	
 																	ProductID="62"	
 																	Currency="4"	
 																	MinBet="1" 
 																	MaxBet="300000"	
 																	MaxPerMatch="600000"	
 																	MaxPerBall="0" 
-																/>
-																<Product 
-																	ProductID="51"
-																	Currency="4"	
-																	MinBet="0"	
-																	MaxBet="0"	
-																	MaxPerMatch="0"	
-																	MaxPerBall="0"	
 																/>
 																<Product	
 																	ProductID="67"	
@@ -374,13 +361,21 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 																	MaxPerMatch="0"	
 																	MaxPerBall="0"	
 																/>
-																<Product 
-																	ProductID="49" 
-																	Currency="4" 
+																<Product 	
+																	ProductID="69"
+																	Currency="4"	
 																	MinBet="1" 
-																	MaxBet="20000" 
-																	MaxPerMatch="0"
+																	MaxBet="300000"	
+																	MaxPerMatch="600000"	
 																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="51"
+																	Currency="4"	
+																	MinBet="0"	
+																	MaxBet="0"	
+																	MaxPerMatch="0"	
+																	MaxPerBall="0"	
 																/>
 																<Product 
 																	ProductID="6"
@@ -430,6 +425,22 @@ EXEC Dot_Dep_CreateCurrencyLicensee @sitename='wtest45'
 																	MaxPerMatch="0"
 																	MaxPerBall="0" 
 																/>	
+																<Product 
+																	ProductID="60"
+																	Currency="4"	
+																	MinBet="0" 
+																	MaxBet="0"	
+																	MaxPerMatch="0"
+																	MaxPerBall="0" 
+																/>
+																<Product 
+																	ProductID="77" 
+																	Currency="4" 
+																	MinBet="1" 
+																	MaxBet="30000" 
+																	MaxPerMatch="1000000"
+																	MaxPerBall="0" 
+																/>
 														</ROOT>' ,
 @StakeLevel =  '<ROOT>
 							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="100"/>	
@@ -495,6 +506,7 @@ BEGIN
 	SELECT @PT_PP=@PT_PP*100
 	SELECT @PT_AE=@PT_AE*100
 	SELECT @PT_Habanero=@PT_Habanero*100
+	SELECT @PT_MaxGame=@PT_MaxGame*100
 	
 	SELECT @PT_Sportsbook = @PT_Sportsbook*100
 	SELECT @PT_NumberGame = @PT_NumberGame*100
@@ -627,7 +639,7 @@ BEGIN
 	CREATE TABLE #NewBetLimit(Sporttype INT,Bettype INT,MinBet MONEY,MaxBet MONEY)
 	CREATE TABLE #NewBetLimitInput(Sporttype INT,Bettype INT,MinBet MONEY,MaxBet MONEY,isfinished BIT DEFAULT(0),PRIMARY KEY(Sporttype,Bettype))
 	CREATE TABLE #ProductInput(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerNumber MONEY,MaxPayoutPerMatch MONEY,Sporttype INT,Bettype INT)
-	CREATE TABLE #Product(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerNumber MONEY,MaxPayoutPerMatch MONEY,Sporttype INT,Bettype INT , StakeLevelID	INT)
+	CREATE TABLE #Product(ProductID INT,Currency INT,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerNumber MONEY,MaxPayoutPerMatch MONEY,Sporttype INT,Bettype INT , StakeLevelID	INT, PT SMALLMONEY, ProductName VARCHAR(100))
 	CREATE TABLE #Username(Super VARCHAR(30),Master VARCHAR(30),Agent VARCHAR(30),AccMaster VARCHAR(30),AccAgent VARCHAR(30),Transf VARCHAR(30),Charge VARCHAR(30),
 							Bonus01 VARCHAR(30),Bonus02 VARCHAR(30),Withdraw VARCHAR(30),Dummy3rd VARCHAR(30),Currency INT,ClearBal VARCHAR(30),				
 							isfinished BIT DEFAULT(0) )
@@ -671,8 +683,49 @@ BEGIN
 		AND i.ProductID = 1
 		AND saba.Sporttype IS NULL
 
-	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch,Sporttype,Bettype)
+	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch,Sporttype,Bettype, PT, ProductName)
 	SELECT ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch ,Sporttype ,Bettype
+		,CASE ProductID WHEN 28 THEN @PT_Loterry 
+								WHEN 77 THEN @PT_VS3
+								WHEN 38 THEN @PT_VirtualGames
+								WHEN 51 THEN @PT_WM 
+								WHEN 39 THEN @PT_SAGaming 	
+								WHEN 21 THEN @PT_Allbet 	
+								WHEN 45 THEN @PT_AE
+								WHEN 34 THEN @PT_ArcadiaGaming 
+								WHEN 36 THEN @PT_SpadeGaming 
+								WHEN 55 THEN @PT_PGSoft  
+								WHEN 66 THEN @PT_Vgaming 
+								WHEN 67 THEN @PT_AP  
+								WHEN 68 THEN @PT_ApMini  
+								WHEN 62 THEN @PT_CG   
+								WHEN 6  THEN @PT_SabaCasino   
+								WHEN 22 THEN @PT_MacauGames   
+								WHEN 32 THEN @PT_PP   
+								WHEN 61 THEN @PT_Habanero   
+								WHEN 60 THEN @PT_MaxGame  
+					  ELSE NULL END AS PT
+				,CASE ProductID WHEN 28 THEN 'Lottery' 
+								WHEN 63 THEN 'Sports Lottery'
+								WHEN 77 THEN 'Virtual Sports 3'
+								WHEN 38 THEN 'Virtual Games'
+								WHEN 51 THEN 'WM' 
+								WHEN 39 THEN 'SA Gaming'  
+								WHEN 21 THEN 'Allbet'
+								WHEN 45 THEN 'AE Sexy'
+								WHEN 34 THEN 'Arcadia Gaming'  
+								WHEN 36 THEN 'SpadeGaming'  
+								WHEN 55 THEN 'PG Soft'  
+								WHEN 66 THEN 'Vgaming' 
+								WHEN 67 THEN 'AdvantPlay'
+								WHEN 68 THEN 'AdvantPlay Mini' 
+								WHEN 62 THEN 'CG' 
+								WHEN 6  THEN 'Saba Casino' 
+								WHEN 22 THEN 'Macau Games' 
+								WHEN 32 THEN 'PP' 
+								WHEN 61 THEN 'Habanero'  
+								WHEN 60 THEN 'MaxGame' 
+					  ELSE CAST(ProductID AS NVARCHAR(50)) END AS ProductName
 	FROM #ProductInput
 	
 	INSERT #Currency (Currency,isfinished)
@@ -717,22 +770,20 @@ BEGIN
 		RETURN
 	END
 
-	IF EXISTS(SELECT TOP 1 1 
-				FROM #Product a
-					INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
-				WHERE b.SettingType = 8 AND NOT EXISTS(SELECT TOP 1 1 
-														FROM DEP_StakeLevel WITH(NOLOCK) 
-														WHERE  GameTypeID = a.Bettype AND ExchangeID = a.Currency )
-			)
+	SELECT TOP 1 @ProductName = a.ProductName 
+	FROM #Product a
+		INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
+	WHERE b.SettingType = 8 AND NOT EXISTS(SELECT TOP 1 1 FROM DEP_StakeLevel WITH(NOLOCK) WHERE  GameTypeID = a.Bettype AND ExchangeID = a.Currency )
+	
+	IF @ProductName <> ''
 	BEGIN
-		SELECT @ErrMsg = 'This product does not support the selected currencies', @ErrCode = 10007
+		SELECT  @ErrMsg = 'This product '+ @ProductName +' does not support the selected currencies', @ErrCode = 10007
 		RETURN
 	END
 
 	IF EXISTS(SELECT TOP 1 1 
 						FROM #Product
-						WHERE  MinBet<0 OR MaxBet<0 OR MinBet>MaxBet OR (ProductID <> 49 AND (MaxPerMatch<0  OR MaxBet>MaxPerMatch))
-			)
+						WHERE  MinBet<0 OR MaxBet<0 OR MinBet>MaxBet OR MaxPerMatch<0  OR MaxBet>MaxPerMatch)
 	BEGIN
 		SELECT @ErrMsg = 'Break rule bet limit', @ErrCode = 10002
 		RETURN
@@ -758,7 +809,7 @@ BEGIN
 	END
 
 	INSERT INTO #CheckBetlimit(ProductID, ProductName, Currency, CurrencyName, MinBet, MaxBet, MinBetGlobal, MaxBetGlobal)
-	SELECT a.ProductID, CASE WHEN a.ProductID = 49 THEN 'VS3' ELSE CAST(a.ProductID AS NVARCHAR(50)) END AS ProductName,a.Currency,e.currency AS ExchangeName, a.MinBet,a.MaxBet, dpb.MinBet as MinBetGlobal,dpb.MaxBet as MaxBetGlobal
+	SELECT a.ProductID, a.ProductName,a.Currency,e.currency AS ExchangeName, a.MinBet,a.MaxBet, dpb.MinBet as MinBetGlobal,dpb.MaxBet as MaxBetGlobal
 	FROM #Product a
 	INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
 	INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
@@ -797,7 +848,7 @@ BEGIN
 	 
 	TRUNCATE TABLE #CheckBetlimit
 	INSERT INTO #CheckBetlimit(ProductID, ProductName, Currency, CurrencyName)
-	SELECT a.ProductID, CASE WHEN a.ProductID = 49 THEN 'VS3' ELSE CAST(a.ProductID AS NVARCHAR(50)) END AS ProductName,a.Currency,e.currency AS ExchangeName
+	SELECT a.ProductID, a.ProductName,a.Currency,e.currency AS ExchangeName
 	FROM #Product a
 	INNER JOIN Dep_ProductSetting b WITH(NOLOCK) ON a.ProductID = b.ProductID
 	INNER JOIN Dep_ProductSettingDetail c WITH(NOLOCK) ON b.ProductSettingID = c.ProductSettingID
@@ -1787,14 +1838,12 @@ BEGIN
 					TRUNCATE TABLE #SportsStatus
 			END
 			
-			-- lottery , Sports Lottery
+			-- lottery , Sports Lottery, Virtual Sports 3
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
-			SELECT DISTINCT ProductID 
-				,@PT_Loterry AS PT
-				,CASE WHEN ProductID = 28 THEN 'Lottery' ELSE 'Sports Lottery' END AS ProductName
+			SELECT DISTINCT ProductID, PT, ProductName
 			FROM #Product 
-			WHERE ProductID in (28,63) AND Currency=@Currency
+			WHERE ProductID in (28,63,77) AND Currency=@Currency
 	
 			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
 			BEGIN	
@@ -1851,7 +1900,7 @@ BEGIN
 
 					TRUNCATE TABLE #SportsStatus
 					-- Insert PT
-					IF @ProductID = 28
+					IF @ProductID IN ( 28, 77)
 					BEGIN
 						SELECT  @PT_XML = ('<ROOT>' + (
 									SELECT 
@@ -1938,156 +1987,6 @@ BEGIN
 				END
 			END
 			
-			-- Virtual Sports 3
-			TRUNCATE TABLE #tempProduct
-			INSERT INTO #tempProduct(ProductID, PT,ProductName)
-			SELECT DISTINCT ProductID 
-				,@PT_VS3 AS PT
-				,'Virtual Sports 3'  AS ProductName
-			FROM #Product 
-			WHERE ProductID in (49) AND Currency=@Currency
-	
-			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
-			BEGIN	
-				WHILE(1 =1)
-				BEGIN
-					
-					UPDATE TOP (1) c 
-					SET c.isfinished = 1
-						,@ProductID = c.ProductID
-						,@PT_TEMP = C.PT
-						,@ProductName = C.ProductName
-					FROM #tempProduct c 
-					WHERE isfinished = 0
-					
-					IF @@ROWCOUNT = 0 BREAK
-					
-					INSERT INTO #NewBetLimit(Sporttype,Bettype,MinBet,MaxBet)
-					EXEC Acc_Dep_CustSetting_NewBetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=@ProductID,@AgentID=0 	
-					INSERT INTO #NewBetLimitInput(Sporttype,Bettype,MinBet,MaxBet)
-					SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet
-					FROM #NewBetLimit b
-						CROSS JOIN #Product p  	
-					WHERE p.ProductID=@ProductID AND p.Currency=@Currency	
-					TRUNCATE TABLE #NewBetLimit	
-						
-					INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
-					EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=@ProductID,@CustID=@SuperID
-					SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
-
-					EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=@ProductID,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
-						@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-					IF @ErrCode<>0
-					BEGIN
-						SELECT @ErrMsg = @ErrMsg + 'Status DCS ' + @ProductName + '.' +@Super
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-												CAST(@MasterID AS VARCHAR(20))+','+
-												CAST(@AgentID AS VARCHAR(20))+','+
-												CAST(@AccMasterID AS VARCHAR(20))+','+
-												CAST(@AccAgentID AS VARCHAR(20))+','
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-							from #tempDumCustID T1
-							FOR XML PATH('')),1,1,''),'')
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','	
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-							from #tempSubCustID T1
-							FOR XML PATH('')),1,1,''),'')
-						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-						RETURN
-					END	
-
-					TRUNCATE TABLE #SportsStatus
-					
-					-- Insert PT
-					SELECT  @PT_XML = ('<ROOT>' + (
-								SELECT 
-									 SportType AS 'SportType'
-									,Bettype AS 'BetType'
-									,IsLive AS 'IsLive'
-									,@PT_TEMP AS 'PT'
-								FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
-								FOR XML RAW('PT')) + '</ROOT>')
-					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
-							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-					IF @ErrCode<>0
-					BEGIN
-						SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName + '.' +@Super
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-												CAST(@MasterID AS VARCHAR(20))+','+
-												CAST(@AgentID AS VARCHAR(20))+','+
-												CAST(@AccMasterID AS VARCHAR(20))+','+
-												CAST(@AccAgentID AS VARCHAR(20))+','
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-							from #tempDumCustID T1
-							FOR XML PATH('')),1,1,''),'')
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-							from #tempSubCustID T1
-							FOR XML PATH('')),1,1,''),'')
-						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-						RETURN
-					END	
-
-					IF @IsCreateSub=1  
-					BEGIN
-						UPDATE #tempSubCustID SET isfinished=0
-						WHILE (1 = 1)
-						BEGIN		
-							UPDATE TOP (1) #tempSubCustID
-							SET isfinished = 1
-								,@tmpSubCustID=CustID
-							WHERE isfinished = 0
-
-							IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
-							-- Insert PT
-							SELECT  @PT_XML = ('<ROOT>' + (
-										SELECT 
-											 SportType AS 'SportType'
-											,Bettype AS 'BetType'
-											,IsLive AS 'IsLive'
-											,@PT_TEMP AS 'PT'
-										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1) 
-										FOR XML RAW('PT')) + '</ROOT>')		
-							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
-								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT													
-						END	
-
-						
-						IF @ErrCode<>0
-						BEGIN
-							SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName + ' sub licensees.'
-							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-													CAST(@MasterID AS VARCHAR(20))+','+
-													CAST(@AgentID AS VARCHAR(20))+','+
-													CAST(@AccMasterID AS VARCHAR(20))+','+
-													CAST(@AccAgentID AS VARCHAR(20))+','
-							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-								ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-								from #tempDumCustID T1
-								FOR XML PATH('')),1,1,''),'')
-							SELECT @ListCustIDRollBack=@ListCustIDRollBack+',' 	
-							SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-								ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-								from #tempSubCustID T1
-								FOR XML PATH('')),1,1,''),'')
-							EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-							RETURN
-						END	
-				
-					END
-					
-				END
-			END
-
 			--Table Game
 			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=40 AND Currency=@Currency)
 			BEGIN
@@ -2215,19 +2114,7 @@ BEGIN
 			--Virtual Games , SA Gaming
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
-			SELECT DISTINCT ProductID 
-				,CASE WHEN ProductID = 38 THEN @PT_VirtualGames
-					  WHEN ProductID = 51 THEN @PT_WM 
-					  WHEN ProductID = 39 THEN @PT_SAGaming 	
-					  WHEN ProductID = 21 THEN @PT_Allbet 	
-					  WHEN ProductID = 45 THEN @PT_AE
-					  ELSE @PT_SAGaming END AS PT
-				,CASE WHEN ProductID = 38 THEN 'Virtual Games'
-			              WHEN ProductID = 51 THEN 'WM' 
-				      WHEN ProductID = 39 THEN 'SA Gaming'  
-				      WHEN ProductID = 21 THEN 'Allbet'
-				      WHEN ProductID = 45 THEN 'AE Sexy'
-				ELSE 'SA Gaming' END AS ProductName
+			SELECT DISTINCT ProductID, PT, ProductName
 			FROM #Product 
 			WHERE ProductID in (38,39,51,21,45) AND Currency=@Currency
 		
@@ -2378,38 +2265,12 @@ BEGIN
 				END	
 			END
 
-			--Arcadia Gaming , Vgaming , SG,PG Soft, AdvantPlay , AdvantPlay Mini, CG, Saba Casino, Macau Games, PP, Habanero
+			--Arcadia Gaming , Vgaming , SG,PG Soft, AdvantPlay , AdvantPlay Mini, CG, Saba Casino, Macau Games, PP, Habanero, MaxGame
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
-			SELECT ProductID 
-				,CASE ProductID 
-						WHEN 34 THEN @PT_ArcadiaGaming  
-						WHEN 36 THEN @PT_SpadeGaming 
-						WHEN 55 THEN @PT_PGSoft  
-						WHEN 66 THEN @PT_Vgaming 
-						WHEN 67 THEN @PT_AP  
-						WHEN 68 THEN @PT_ApMini  
-						WHEN 62 THEN @PT_CG   
-						WHEN 6  THEN @PT_SabaCasino   
-						WHEN 22 THEN @PT_MacauGames   
-						WHEN 32 THEN @PT_PP   
-						WHEN 61 THEN @PT_Habanero  
-						END AS PT
-				,CASE ProductID 
-						WHEN 34 THEN 'Arcadia Gaming'  
-						WHEN 36 THEN 'SpadeGaming'  
-						WHEN 55 THEN 'PG Soft'  
-						WHEN 66 THEN 'Vgaming' 
-						WHEN 67 THEN 'AdvantPlay'
-						WHEN 68 THEN 'AdvantPlay Mini' 
-						WHEN 62 THEN 'CG' 
-						WHEN 6  THEN 'Saba Casino' 
-						WHEN 22 THEN 'Macau Games' 
-						WHEN 32 THEN 'PP' 
-						WHEN 61 THEN 'Habanero' 
-					END AS ProductName
+			SELECT ProductID, PT, ProductName
 			FROM #Product 
-			WHERE ProductID in (34,66,36,55,62,67,68,6,22,32,61) AND Currency=@Currency
+			WHERE ProductID in (34,66,36,55,62,67,68,6,22,32,61,60) AND Currency=@Currency
 			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
 			BEGIN
 				WHILE(1 =1)
@@ -2938,90 +2799,6 @@ BEGIN
 			END		
 	END
 
-	
-	DECLARE @ProductCode VARCHAR(100)=''
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
-	BEGIN
-		SELECT @ProductCode=@ProductCode+'SB,SPR,CO,'
-		SELECT @IsCashOut=1
-	END	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=5)
-		SELECT @ProductCode=@ProductCode+'VS,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=27)
-		SELECT @ProductCode=@ProductCode+'VS2,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=28)
-		SELECT @ProductCode=@ProductCode+'LT,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=8)
-		SELECT @ProductCode=@ProductCode+'KN,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=3)
-		SELECT @ProductCode=@ProductCode+'NG,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=-1)
-	BEGIN
-		SELECT @ProductCode=@ProductCode+'BA,'
-		SELECT @IsBA=1
-	END
-	--> Add Virtual Games, Table Games to LM
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=38)
-		SELECT @ProductCode=@ProductCode+'VRG,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=40)
-		SELECT @ProductCode=@ProductCode+'TG,'
-	--Arcadia Gaming
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=34)
-		SELECT @ProductCode=@ProductCode+'CC,'
-	--SpadeGaming		
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=36)
-		SELECT @ProductCode=@ProductCode+'SG,'
-	--SA Gaming	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=39)
-		SELECT @ProductCode=@ProductCode+'SAG,'
-	--	PG Soft
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=55)
-		SELECT @ProductCode=@ProductCode+'PGS,'
-	-- 	Sports Lottery
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=63)
-		SELECT @ProductCode=@ProductCode+'SLT,'
-	-- Vgaming	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=66)
-		SELECT @ProductCode=@ProductCode+'VGA,'
-	-- WM	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=51)
-		SELECT @ProductCode=@ProductCode+'WM,'	
-	-- Bitcoin	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
-		SELECT @ProductCode=@ProductCode+'BTC,'		
-	-- CG	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=62)
-		SELECT @ProductCode=@ProductCode+'CG,'
-	-- AdvantPlay	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=67)
-		SELECT @ProductCode=@ProductCode+'AP,'
-	-- AdvantPlay Mini	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=68)
-		SELECT @ProductCode=@ProductCode+'APM,'		
-	-- Virtual Sports 3	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=49)
-		SELECT @ProductCode=@ProductCode+'VS3,'			
-	-- Saba Casino	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=6)
-		SELECT @ProductCode=@ProductCode+'CS,'			
-	-- Macau Games	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=22)
-		SELECT @ProductCode=@ProductCode+'VB,'			
-	-- PP	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=32)
-		SELECT @ProductCode=@ProductCode+'PP,'			
-	-- Habanero	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=61)
-		SELECT @ProductCode=@ProductCode+'HB,'				
-	-- Allbet	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=21)
-		SELECT @ProductCode=@ProductCode+'AB,'			
-	-- AE Sexy	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=45)
-		SELECT @ProductCode=@ProductCode+'SXG,'			
-		
-	SELECT @ProductCode=SUBSTRING(@ProductCode, 1, LEN(@ProductCode) - 1)
-	
 	-- List Currency
 	WHILE (1 = 1)
 	BEGIN
@@ -3115,6 +2892,7 @@ BEGIN
 	SELECT @PT_PP=@PT_PP/100
 	SELECT @PT_AE=@PT_AE/100
 	SELECT @PT_Habanero=@PT_Habanero/100
+	SELECT @PT_MaxGame=@PT_MaxGame/100
 
 	DECLARE @XML XML
 	CREATE TABLE #PTLog(ProductID INT,PT FLOAT)					
@@ -3169,7 +2947,7 @@ BEGIN
 		UNION 
 		SELECT  68, @PT_ApMini
 		UNION 
-		SELECT  49, @PT_VS3
+		SELECT  77, @PT_VS3
 		UNION 
 		SELECT  6, @PT_SabaCasino
 		UNION 
@@ -3182,6 +2960,8 @@ BEGIN
 		SELECT  45, @PT_AE
 		UNION 
 		SELECT  61, @PT_Habanero
+		UNION 
+		SELECT  60, @PT_MaxGame
 
 		DELETE FROM #PTLog WHERE ProductID NOT IN(SELECT ProductID FROM #Product WHERE Currency=@Currency)		
 			
@@ -3231,7 +3011,7 @@ BEGIN
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerNumber 		AS VARCHAR(50)))				AS [@mpb]
 										,  dbo.f_CS_FomatNumber (CAST(bs.MaxPerMatch 		AS VARCHAR(50)))				AS [@mpm]				
 								FROM #Product bs 
-								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68,51,6,22,32,61,21,45)			
+								WHERE Currency=@Currency AND bs.ProductID NOT IN(-1,25,1,38,34,66,36,55,39,62,67,68,51,6,22,32,61,21,45,60)			
 								ORDER BY ProductID, Sporttype, Bettype				
 								FOR XML PATH('Product'), ROOT ('BS2'),
 								TYPE
