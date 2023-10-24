@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Task_Dep_Cust_Archive_Clear_Balance] 
 	@BatchSize INT = 100
 AS
@@ -16,6 +16,8 @@ AS
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 		- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 		- 20220608@Eden: Enhance - check exists before rollback data on licensee DB [#RM:125823]
+		- 20230424@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 	Parameter:
 		
 	
@@ -345,21 +347,13 @@ BEGIN
 	END
 
 	CREATE TABLE #Active_Cust (CustID INT PRIMARY KEY)
-	CREATE TABLE #BettingMember_AGC_GD(CustID INT PRIMARY KEY)
+	CREATE TABLE #BettingMember_AGC(CustID INT PRIMARY KEY)
 
-	INSERT INTO #BettingMember_AGC_GD(CustID)
+	INSERT INTO #BettingMember_AGC(CustID)
 	SELECT custid
-	FROM OPENQUERY (DBPTCS, ';WITH tmp AS (
-								SELECT b.custid
-								FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
-								UNION ALL
-								SELECT b.custid
-								FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-								WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
-							)
-							SELECT DISTINCT CustID
-							FROM tmp')
+	FROM OPENQUERY (DBPTCS, 'SELECT DISTINCT b.custid
+							 FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+							 WHERE transdate >= CONVERT(DATE,GETDATE() - 1)')
 
 	INSERT INTO #Active_Cust(custid)
 	SELECT CustID 
@@ -390,7 +384,7 @@ BEGIN
 	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM bodb02..translog14 (NOLOCK))
 	UNION
 	SELECT CustID 
-	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC_GD)
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC)
 
 	IF EXISTS(SELECT 1 FROM #Active_Cust)
 	BEGIN
@@ -627,20 +621,20 @@ BEGIN
 			   )
 		SELECT [username],[custid],[currency],[roleid],[srecommend],[mrecommend]
 				,[recommend],[dangercust],[autosuspend],[reject],[credit],[closed]
-				,[MatchLimit],[VirtualMultiplier],[maxpermatch],[maxpermatch2]
-				,[maxpermatch3],[maxpermatch5],[maxpermatch8],[maxpermatch10]
-				,[maxpermatch11],[maxpermatch12],[maxpermatch99],[Enabled]
+				,[MatchLimit],[VirtualMultiplier],0,0
+				,0,0,0,0
+				,0,0,0,[Enabled]
 				,[danger]
 				,0,0,[danger2],[danger3]
-				,[DisableOutright],[MaxPerMatch99MP]
-				,[DisableNumber],[maxpermatch161],[MaxPerBall161]
+				,[DisableOutright],0
+				,0,0,0
 				,[Abnormal]
 				,[DoubleCommLosing]
 				,[autosuspend2]
-				,[HideKeno],[DisableEsports],0,0,[DisableSuperLive]
-				,[DisableColossusBet],[HideColossusBet]
-				,[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
-				,[maxpermatch164]
+				,0,[DisableEsports],0,0,[DisableSuperLive]
+				,1,1
+				,[LockUpd],0,[BonusWalletFlag]
+				,0
 		FROM DBCUST.CustDB.dbo.custInfo WITH(NOLOCK)
 		WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 	END TRY
@@ -766,7 +760,6 @@ BEGIN
 				DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer 
 				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
 			END
-
 			--Turn on BA flags for members who can not transfer closing balance, but have been turned off BA flags sucessfully
 			WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE TransBalStastus=3 AND BAStastus=4)
 			BEGIN
@@ -975,14 +968,14 @@ BEGIN
 	--Update Dep_Customer_Archived.status = archived
 	EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=1
 
-	SELECT @Message = 'Finish clearing balance and Custinfo: ' + @LogLstCustID
+	SELECT @Message = 'SiteDB' + CONVERT(VARCHAR(10),dbo.f_Get_SiteDBGroupID()) + ': Finish clearing balance and Custinfo: ' + @LogLstCustID
 
 	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
 				, @Action='CLEAR-BALANCE'
 				, @Status='Done'
 				, @Message=@Message
 
-	DROP TABLE #BettingMember_AGC_GD
+	DROP TABLE #BettingMember_AGC
 	DROP TABLE #Dep_Customer_Archived
 END
 GO

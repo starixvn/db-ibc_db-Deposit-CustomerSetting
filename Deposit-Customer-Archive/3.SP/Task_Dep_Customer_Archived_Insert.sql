@@ -1,6 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="vnteam" isFunction="0"></info>*/
 CREATE PROCEDURE [Task_Dep_Customer_Archived_Insert]
-	@InsertRepTable_CustPerBatch INT = 6000
+	@InsertRepTable_CustPerBatch INT = 5000
 AS
 /*
 	Created: Dominic@20190114
@@ -10,6 +10,7 @@ AS
 	Revisions:    
 		- 20190114@Dominic: First commit
 		- 20190424@Dominic: Increase the waiting time to 3s - Feature #111652
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 
 	Explaination:
 		- @InsertRepTable_CustPerBatch: Number of customers which will be inserted into replicated table in one transaction
@@ -28,7 +29,6 @@ BEGIN
 		[Status] [varchar](50) NULL,
 		IsInserted BIT DEFAULT(0)
 	)
-
 
 	INSERT INTO #Tmp_Dep_Customer_Archived ([CustID],[ArchivedDate],[Username],[Username2],[Recommend],[ClosingBalance],[CustIDBalanceDummy],[Status])
 	SELECT [CustID]
@@ -80,8 +80,7 @@ BEGIN
 		IF @@ROWCOUNT < @InsertRepTable_CustPerBatch
 			BREAK
 
-		WAITFOR DELAY '00:00:03'
-
+		WAITFOR DELAY '00:00:00.100'
 	END
 
 	DROP TABLE #Tmp_Dep_Customer_Archived

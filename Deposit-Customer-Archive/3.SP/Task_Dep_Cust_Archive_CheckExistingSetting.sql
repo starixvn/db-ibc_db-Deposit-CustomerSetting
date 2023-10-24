@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20180917@Dominic: First commit
 		- 20181212@Dominic: Add a new param @LstCustID to check for a list of customers - Redmine: #106242
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 	Parameter:
 		
 	
@@ -17,37 +18,29 @@ AS
 BEGIN
 	DECLARE @LstArchiveExist VARCHAR(8000)
 
-	DECLARE @XML XML
-	SET @XML = N'<root><r>' + REPLACE(@LstCustID, ',', '</r><r>') + '</r></root>'
+	CREATE TABLE #LstCustID(CustID INT,IsArchiveExisting BIT  DEFAULT (0))
 
-	CREATE TABLE #LstCustID(CustID INT,IsArchiveExisting BIT,IsMainExisting BIT)
-
-	INSERT INTO #LstCustID(CustID,IsArchiveExisting,IsMainExisting) 
-	SELECT r.value('.','INT'),0,0
-	FROM @xml.nodes('//root/r') AS RECORDS(r)
+	INSERT INTO #LstCustID(CustID) 
+	SELECT value 
+	FROM string_split(@LstCustID,',')
 
 	CREATE UNIQUE CLUSTERED INDEX PK_CustID ON #LstCustID(CustID)
-
 
 	UPDATE t
 	SET t.IsArchiveExisting=1
 	FROM #LstCustID t
-	WHERE EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[CustSettingGame] (NOLOCK) WHERE CustID=t.CustID)
-		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[CustVirtualSetting] (NOLOCK) WHERE CustID=t.CustID)
+	WHERE EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[CustVirtualSetting] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustBetSetting_Member] (NOLOCK) WHERE CustID=t.CustID)
-		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustCommRate] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustDiscountSetting_Member] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustProductSetting] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustProductStatus] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustPTSetting_Member] (NOLOCK) WHERE CustID=t.CustID)
-		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustSetting] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustSetting_AGCasino] (NOLOCK) WHERE CustID=t.CustID)
-		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustSetting3rd] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustSettingGame] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustSettingMode] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustSpecialLevel] (NOLOCK) WHERE CustID=t.CustID)
 		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].[Dep_CustStakeLevel_Member] (NOLOCK) WHERE CustID=t.CustID)
-		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].CustGameType (NOLOCK) WHERE CustID=t.CustID)
+		OR EXISTS (SELECT 1 FROM Bodb_Archive_Customer_Licensee.[dbo].Dep_CustBetSettingGame_Member (NOLOCK) WHERE CustID=t.CustID)
 	
 	
 	SELECT @LstArchiveExist = STUFF((

@@ -1,10 +1,9 @@
-/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBACC-bodb02" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [Task_Dep_Customer_Archive_ScanCustomer]
 	 @agentID INT, 
 	 @minBalance MONEY, 
 	 @minDays INT,
 	 @custIDBalanceDummy INT,
-	 @CheckStatement_DaysPerBatch INT = 10,
 	 @CheckBettrans_CustPerBatch INT = 2000
 AS
 /*
@@ -21,6 +20,8 @@ AS
 		- 20200211@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
+		- 20230424@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
@@ -57,7 +58,7 @@ BEGIN
 		custid INT PRIMARY KEY
 	)
 
-	CREATE TABLE #BettingMember_AGC_GD(CustID INT PRIMARY KEY)
+	CREATE TABLE #BettingMember_AGC(CustID INT PRIMARY KEY)
 
 -- 1.Get infor of all customer in Customer and custinfo table
 	INSERT INTO #Member (custid, username, username2)
@@ -144,24 +145,6 @@ BEGIN
 					WHERE b.custid = m.custid
 				)
 
-			--INSERT INTO #BettingMember (custid)
-			--SELECT custid 
-			--FROM #tmpMember m
-			--where EXISTS (
-			--	SELECT custid
-			--	FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-			--	WHERE b.custid = m.custid
-			--	)
-			
-			--INSERT INTO #BettingMember (custid)
-			--SELECT custid 
-			--FROM #tmpMember m
-			--WHERE EXISTS (
-			--		SELECT custid
-			--		FROM DBPTCS.bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
-			--		WHERE b.custid = m.custid
-			--	)
-
 			UPDATE #Member
 			SET isProcessed = 1
 			WHERE custid IN (SELECT custid FROM #tmpMember)
@@ -171,22 +154,14 @@ BEGIN
 		DELETE FROM #Member
 		WHERE custid IN (SELECT custid FROM #BettingMember)
 
-		INSERT INTO #BettingMember_AGC_GD(CustID)
+		INSERT INTO #BettingMember_AGC(CustID)
 		SELECT custid
-		FROM OPENQUERY (DBPTCS, ';WITH tmp AS (
-									SELECT b.custid
-									FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
-									WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
-									UNION ALL
-									SELECT b.custid
-									FROM bodb_PlaytechCS.dbo.bettrans_GoldDeluxe b with (NOLOCK)
-									WHERE transdate >= CONVERT(DATE,GETDATE() - 1)
-								)
-								SELECT DISTINCT CustID
-								FROM tmp')
+		FROM OPENQUERY (DBPTCS, 'SELECT DISTINCT b.custid
+								 FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
+								 WHERE transdate >= CONVERT(DATE,GETDATE() - 1)')
 
 		DELETE FROM #Member
-		WHERE custid IN (SELECT custid FROM #BettingMember_AGC_GD)
+		WHERE custid IN (SELECT custid FROM #BettingMember_AGC)
 
 		-- 3. Update balance of all member in #Member (can apply batch processing)
 		WHILE(1=1)
@@ -230,5 +205,5 @@ BEGIN
 	DROP TABLE #tmpMember
 	DROP TABLE #BettingMember
 	DROP TABLE #Member
-	DROP TABLE #BettingMember_AGC_GD
+	DROP TABLE #BettingMember_AGC
 END
