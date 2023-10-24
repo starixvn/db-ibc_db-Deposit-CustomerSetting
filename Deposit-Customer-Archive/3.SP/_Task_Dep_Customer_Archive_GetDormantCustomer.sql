@@ -1,8 +1,7 @@
 /*<info serverAlias="DBACC-bodb02" executers="" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [Task_Dep_Customer_Archive_GetDormantCustomer]
-	@CheckStatement_DaysPerBatch INT = 1,
 	@CheckBettrans_CustPerBatch INT = 2000,
-	@InsertRepTable_CustPerBatch INT = 6000
+	@InsertRepTable_CustPerBatch INT = 5000
 AS
 /*
 	Created: 20180911@Kean
@@ -14,9 +13,9 @@ AS
 		- 20180911@Kean: First commit
 		- 20190114@Dominic: Move this SP to bodb02@DB06 - Redmine #107931
 		- 20190312@Dominic: Improve performance - #109528
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 
 	Param's Explanation:
-		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
 		- @CheckBettrans_CustPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in bettrans/translog..
 		- @InsertRepTable_CustPerBatch: Number of customers which will be inserted into replicated table in one transaction
 */
@@ -24,7 +23,7 @@ BEGIN
 	SET NOCOUNT ON
 	DECLARE @ErrMsg nvarchar(200)
 	DECLARE @Msg nvarchar(500)
-	Declare @NumberOfDormant INT = 0
+	DECLARE @NumberOfDormant INT = 0
 	
 	-- Config infor
 	DECLARE @Site VARCHAR(20)
@@ -35,9 +34,6 @@ BEGIN
 
 	-- Agent infor
 	DECLARE @srecommend INT, @agentname VARCHAR(50)
-
-	-- For insert data
-	DECLARE @CustID INT, @Username VARCHAR(50), @Username2 VARCHAR(50), @ClosingBalance MONEY
 
 	-- Write log - Start Process
 	EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @Action='PUT-QUEUE'
@@ -99,7 +95,6 @@ BEGIN
 							@minBalance = @Minbalance, 
 							@minDays = @MinDays,
 							@custIDBalanceDummy = @CustIDBalanceDummy,
-							@CheckStatement_DaysPerBatch = @CheckStatement_DaysPerBatch,
 							@CheckBettrans_CustPerBatch = @CheckBettrans_CustPerBatch
 
 
@@ -111,23 +106,33 @@ BEGIN
 				SELECT @NumberOfDormant = COUNT(1)
 				FROM bodb_Report.dbo.Tmp_Dep_Customer_Archived WITH (NOLOCK) 
 
-				SELECT @Msg = 'Start inserting Dep_Customer_Archived on CustDB@DBCUST: ' 
-						+ CAST(@NumberOfDormant AS VARCHAR(100)) + ' rows'
+				IF @NumberOfDormant > 0
+				BEGIN
+					SELECT @Msg = 'Start inserting Dep_Customer_Archived on CustDB@DBCUST: ' 
+							+ CAST(@NumberOfDormant AS VARCHAR(100)) + ' rows'
 
-				EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @Action='PUT-QUEUE'
-					, @CustID = @Recommend
-					, @Status='OnProgress'
-					, @Message=@Msg
+					EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @Action='PUT-QUEUE'
+						, @CustID = @Recommend
+						, @Status='OnProgress'
+						, @Message=@Msg
 
-				EXEC DBCUST.CustDB.dbo.Task_Dep_Customer_Archived_Insert @InsertRepTable_CustPerBatch=@InsertRepTable_CustPerBatch
+					EXEC DBCUST.CustDB.dbo.Task_Dep_Customer_Archived_Insert @InsertRepTable_CustPerBatch=@InsertRepTable_CustPerBatch
+			
+					SELECT @Msg = 'Finish inserting Dep_Customer_Archived on CustDB@DBCUST: ' 
+							+ CAST(@NumberOfDormant AS VARCHAR(100)) + ' rows'
 
-				SELECT @Msg = 'Finish inserting Dep_Customer_Archived on CustDB@DBCUST: ' 
-						+ CAST(@NumberOfDormant AS VARCHAR(100)) + ' rows'
-
-				EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @Action='PUT-QUEUE'
-					, @CustID = @Recommend
-					, @Status='OnProgress'
-					, @Message=@Msg
+					EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @Action='PUT-QUEUE'
+						, @CustID = @Recommend
+						, @Status='OnProgress'
+						, @Message=@Msg
+				END
+				ELSE
+				BEGIN
+					EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @Action='PUT-QUEUE'
+						, @CustID = @Recommend
+						, @Status='OnProgress'
+						, @Message='There is no row on table Tmp_Dep_Customer_Archived'
+				END
 			END TRY
 			BEGIN CATCH
 

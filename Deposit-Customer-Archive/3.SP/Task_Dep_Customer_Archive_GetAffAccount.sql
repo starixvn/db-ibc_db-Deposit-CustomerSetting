@@ -9,6 +9,7 @@ AS
 	Revisions:
 		- 20181019@Dominic: First commit
 		- 20190808@Dominic: Check for online DB only
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 	Param's Explanation:
 */
 BEGIN
@@ -100,8 +101,9 @@ BEGIN
 
 	--Insert new accounts
 	INSERT INTO Dep_Customer_Archived_Exception([CustID],[Remark])
-	SELECT custid,Remark
+	SELECT custid, MAX(Remark) AS Remark
 	FROM #CustAffMember
+	GROUP BY CustID
 
 	DROP TABLE #CustAffMember
 

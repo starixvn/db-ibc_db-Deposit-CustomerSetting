@@ -1,5 +1,5 @@
 /*<info serverAlias="DBARCCUST-Bodb_Archive_Customer_Licensee" executers="" viewers="" isFunction="0"></info>*/
-CREATE PROCEDURE Task_Dep_Cust_Archive_CleanReactivatedData
+ALTER PROCEDURE Task_Dep_Cust_Archive_CleanReactivatedData
 	@BatchSize INT = 100
 AS
 /*
@@ -10,6 +10,7 @@ AS
 	Revisions:
 		- 20190107@Dominic: First commit
 		- 20200220@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
+		- 20230612@Eden: Enhance for Scale Out [#179092]
 
 	Parameter:
 		
@@ -84,29 +85,22 @@ BEGIN
 	DELETE custInfo WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 
 	--Delete customer setting tables
-	DELETE [CustSettingGame] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived)
 	DELETE [CustVirtualSetting] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustBetSetting_Member] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
-	DELETE [Dep_CustCommRate] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustDiscountSetting_Member] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustProductSetting] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustProductStatus] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustPTSetting_Member] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
-	DELETE [Dep_CustSetting] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustSetting_AGCasino] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
-	DELETE [Dep_CustSetting3rd] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustSettingGame] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustSettingMode] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustSpecialLevel] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
 	DELETE [Dep_CustStakeLevel_Member] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
-	DELETE [CustGameType] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
+	DELETE [Dep_CustBetSettingGame_Member] WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived) 
+
 	
 	--Delete data in Dep_Customer_Archived
 	EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=5 
-	--INSERT INTO DBACC.bodb02.dbo.Cust_TrackingLastBetDate (CustID) 
-	--SELECT CustID 
-	--FROM #Dep_Customer_Archived a
-	--WHERE NOT EXISTS( SELECT TOP 1 1 FROM DBACC.bodb02.dbo.Cust_TrackingLastBetDate t WITH(NOLOCK) WHERE a.CustID = t.CustID)
 
 	SELECT @Message = 'Finish deleting archive data for reactivated members: ' + @LstCustID
 
