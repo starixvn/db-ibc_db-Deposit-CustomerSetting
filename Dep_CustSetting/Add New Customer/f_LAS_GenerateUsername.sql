@@ -19,7 +19,7 @@ AS
   - 20181002@Dominic: Check existing username/username2 in archived DB  [Redmine:99882]
   - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
   - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
-  
+  - 20231110@Elodie: Fix error username generation [Redmine: #196742]
  Parameters Explanation:  
 */  
   
@@ -52,6 +52,9 @@ BEGIN
 		AND username NOT LIKE Isnull(site,'') + Isnull(@UsernameOddAdj,'')  
 		AND recommend = @recommend
 		AND RoleId = 1)  
+
+	---- 20231110@Elodie: Fix error username generation [Redmine: #196742]
+	IF @Recommend IN (40436421, 40436419) AND @NumOfMem < 99999 SELECT @NumOfMem = 99999
 
 	SELECT @NumOfMem2 = ISNULL(CAST(REPLACE(username, @recommendUsername, '') AS INT), 0)  
 	FROM dbo.Dep_Customer_Archived WITH(NOLOCK)  
