@@ -18,6 +18,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
 		
 	Param's Explanation:
 
@@ -80,6 +81,7 @@ BEGIN
 	BEGIN	
 		EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
 		 @custid = @AgentID
+		,@IsSetting = 1
 		,@Language = 'E'
 		,@ErrMsg = @ErrMsg OUTPUT
 		,@ErrCode= @ErrCode OUTPUT
