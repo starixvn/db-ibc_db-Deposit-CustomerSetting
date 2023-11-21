@@ -22,6 +22,7 @@ AS
 		- 20170928@Winnie: Insert Settings Into DCS Structure - Redmine: 82346
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 		- 20190412@Winnie: Licesee Management-Licensee setting - Cannot update betting limit SMA only for big line  - Redmine: 96951
+		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
 	Param's Explanation:
 	� @BetLimit:
 		<ROOT>
@@ -80,6 +81,7 @@ BEGIN
 	BEGIN	
 		EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
 		 @custid = @AgentID
+		,@IsSetting = 1
 		,@Language = 'E'
 		,@ErrMsg = @ErrMsg OUTPUT
 		,@ErrCode= @ErrCode OUTPUT
