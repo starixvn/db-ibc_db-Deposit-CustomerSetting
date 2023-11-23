@@ -20,6 +20,7 @@ AS
   - 20190422@Elodie: Offer unique nickname for CN88 [Redmine:112287]
   - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
   - 20231110@Elodie: Fix error username generation [Redmine: #196742]
+  - 20231114@Johnson: change format username by adding 'S' (SystemID) [redmine: #196742]
  Parameters Explanation:  
 */  
   
@@ -41,11 +42,17 @@ BEGIN
 		FROM exchange with(nolock)
 		WHERE ExchangeId = @Currency),'') + '01OddsAdj'  
   
-	SELECT @NumOfMem = ISNULL(CAST(REPLACE(username, @recommendUsername, '') AS INT), 0)  
+	SELECT @NumOfMem = ISNULL(CAST(CASE WHEN CHARINDEX('S',REPLACE(username, @recommendUsername, '')) = 0 
+										THEN REPLACE(username, @recommendUsername, '')
+										ELSE REPLACE(username, @recommendUsername+ 'S', '')	END
+									AS INT), 0)  
 	FROM dbo.customer WITH(NOLOCK)  
 	WHERE custid = (SELECT MAX(custid)   
 		FROM dbo.customer WITH(NOLOCK)   
-		WHERE username LIKE @recommendUsername + '%'   
+		WHERE 
+		(username LIKE @recommendUsername + '%' 
+		OR username LIKE @recommendUsername + 'S' + '%'
+		)
 		AND username NOT LIKE @recommendUsername+'%'+'BetTrade'  
 		AND username NOT LIKE @recommendUsername+'%'+'CashOut'
 		AND username NOT LIKE @recommendUsername+'%'+'ClearBal'  
@@ -54,13 +61,16 @@ BEGIN
 		AND RoleId = 1)  
 
 	---- 20231110@Elodie: Fix error username generation [Redmine: #196742]
-	IF @Recommend IN (40436421, 40436419) AND @NumOfMem < 99999 SELECT @NumOfMem = 99999
+	--IF @Recommend IN (40436421, 40436419) AND @NumOfMem < 99999 SELECT @NumOfMem = 99999
 
-	SELECT @NumOfMem2 = ISNULL(CAST(REPLACE(username, @recommendUsername, '') AS INT), 0)  
+	SELECT @NumOfMem2 = ISNULL(CAST(CASE WHEN CHARINDEX('S',REPLACE(username, @recommendUsername, '')) = 0 
+										THEN REPLACE(username, @recommendUsername, '')
+										ELSE REPLACE(username, @recommendUsername+ 'S', '')	END
+									AS INT), 0)   
 	FROM dbo.Dep_Customer_Archived WITH(NOLOCK)  
 	WHERE custid = (SELECT MAX(custid)   
 					FROM dbo.Dep_Customer_Archived WITH(NOLOCK)   
-					WHERE username LIKE @recommendUsername + '%'
+					WHERE (username LIKE @recommendUsername + '%' OR username LIKE @recommendUsername + 'S' + '%')
 						AND recommend = @recommend)
 	
 	IF ISNULL(@NumOfMem2,0) > ISNULL(@NumOfMem,0) SELECT @NumOfMem=@NumOfMem2
@@ -86,7 +96,7 @@ BEGIN
 			SET @NumTmp = CAST(@NumOfMem AS VARCHAR(10))  
 		END  
   
-		SELECT @UserName = @recommendUsername + @NumTmp  
+		SELECT @UserName = @recommendUsername + 'S' + @NumTmp  
 		SELECT @UserName = REPLACE(@UserName, ' ', '')  
 
 		--check username exists or not?  	 
