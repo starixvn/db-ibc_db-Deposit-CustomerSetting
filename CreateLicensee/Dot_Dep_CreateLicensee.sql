@@ -75,6 +75,7 @@ AS
 	- 20230517@Eden: Enhance to validate space in Licensee name [redmine:#188416]
 	- 20230908@Winfred: Sitebuilder - Add SpecialPlatfrom for Jollysports licensee[redmine:#193758]
 	- 20230814@Winfred: Integrate MaxGame, VS3 new products - remove VS3 Old [redmine:#183802]
+	- 20231115@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -2798,6 +2799,9 @@ BEGIN
 
 			END
 			
+			-- For RNG slot product:
+			DELETE FROM #StakelevelInput WHERE StakeLevelXML IS NULL
+
 			-- Insert StakeLevel
 			WHILE (1 = 1)
 			BEGIN

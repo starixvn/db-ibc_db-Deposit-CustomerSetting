@@ -62,6 +62,7 @@ AS
 	- 20221130@Winfred: ONEbook Sitebuilder - Fix Issue does not have Bitcoin log [redmine:#181001]
 	- 20221213@Winfred: PP,SG - Incorrect PT value for Jackpot Contribution bettype [redmine:#181570]
 	- 20230814@Winfred: Integrate MaxGame, VS3 new products - remove VS3 Old [redmine:#183802]
+	- 20231115@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
 
  Param's Explanation: 
 	- @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -2686,6 +2687,9 @@ BEGIN
 				END
 
 			END
+
+			-- For RNG slot product:
+			DELETE FROM #StakelevelInput WHERE StakeLevelXML IS NULL
 
 			-- Insert StakeLevel
 			WHILE (1 = 1)
