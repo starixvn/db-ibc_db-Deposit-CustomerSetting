@@ -18,6 +18,7 @@ AS
 		- 20220608@Eden: Enhance - check exists before rollback data on licensee DB [#RM:125823]
 		- 20230424@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230612@Eden: Enhance for Scale Out [#179092]
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083] 
 	Parameter:
 		
 	
@@ -614,7 +615,7 @@ BEGIN
 				,[Abnormal]
 				,[DoubleCommLosing]
 				,[autosuspend2]
-				,[HideKeno],[DisableEsports],[HideGoldDeluxe],[DisableGoldDeluxe],[DisableSuperLive]
+				,[HideKeno],[HideGoldDeluxe],[DisableGoldDeluxe],[DisableSuperLive]
 				,[DisableColossusBet],[HideColossusBet]
 				,[LockUpd],[MaxPerMatch1MP],[BonusWalletFlag]
 				,[maxpermatch164]
@@ -631,7 +632,7 @@ BEGIN
 				,[Abnormal]
 				,[DoubleCommLosing]
 				,[autosuspend2]
-				,0,[DisableEsports],0,0,[DisableSuperLive]
+				,0,0,0,[DisableSuperLive]
 				,1,1
 				,[LockUpd],0,[BonusWalletFlag]
 				,0

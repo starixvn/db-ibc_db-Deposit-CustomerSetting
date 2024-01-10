@@ -31,7 +31,7 @@ AS
 	Created: 20190919@Elodie
 	Task : Insert general customer's Information in 1st deposit SP process
 	DB: DBCUST/CustDB
-	Original: Acc_CustomerInsUserInfo
+	Original: Acc_CustomerInsUserInfo 
 
 	Revisions:
 		- 20190919@Elodie: Initial SP [Redmine: #118699]
@@ -51,6 +51,7 @@ AS
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230303@Johnson: Return Basketball VR to its original state [redmine:#184339]
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083] 
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -239,8 +240,7 @@ BEGIN
 	  , MatchLimit, VirtualMultiplier
 	  , DisableOutright
 	  , danger, danger2, danger3, Danger4, Danger5
-	  , Abnormal, DoubleCommLosing	
-	  , DisableEsports, DisableSuperLive
+	  , Abnormal, DoubleCommLosing, DisableSuperLive
 	  , DangerLevel, autosuspend3
 	  )
     VALUES
@@ -250,8 +250,7 @@ BEGIN
 	  , @matchlimit, @virtualmultiplier
 	  , 0
 	  , @danger, @danger2, @danger3, @danger4, @danger5
-	  , 0, 0	
-	  , 0, 0
+	  , 0, 0, 0
 	  , @DangerLevel, 0
     )
 	
