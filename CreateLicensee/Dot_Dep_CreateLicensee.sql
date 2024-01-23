@@ -76,6 +76,7 @@ AS
 	- 20230908@Winfred: Sitebuilder - Add SpecialPlatfrom for Jollysports licensee[redmine:#193758]
 	- 20230814@Winfred: Integrate MaxGame, VS3 new products - remove VS3 Old [redmine:#183802]
 	- 20231115@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
+	- 20240103@Winfred: Sitebuilder - Bitcoin/SLT - Enhance the settings when creating a new licensee [#196704]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -809,7 +810,7 @@ BEGIN
 							WHEN 22 THEN 'Macau Games' 
 							WHEN 32 THEN 'PP' 
 							WHEN 61 THEN 'Habanero'  
-							WHEN 60 THEN 'MaxGame'  
+							WHEN 60 THEN 'MaxGame' 
 				  ELSE CAST(ProductID AS NVARCHAR(50)) END AS ProductName
 	FROM #ProductInput i
 	WHERE NOT EXISTS(SELECT TOP 1 1 FROM #Product p WHERE p.ProductID=i.ProductID AND ISNUll(p.Sporttype,0) =ISNUll(i.Sporttype,0) 
@@ -1901,24 +1902,21 @@ BEGIN
 					END			
 				END
 			END
-
-			--Bitcoin			
-			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1 AND Currency=@Currency)
+			
+			--Bitcoin
+			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=69 AND Currency=@Currency)
 			BEGIN
 					SET @ProductID = 69	
 					SET @ProductName = 'Bitcoin'
 					
-					IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=@ProductID AND Currency=@Currency)
-					BEGIN
-						INSERT INTO #BetLimit(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
-						EXEC Acc_Dep_CustSetting_BetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=@ProductID,@AgentID=0 	
-						INSERT INTO #BetLimitInput(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
-						SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet,p.MaxPerMatch
-						FROM #BetLimit b
-							CROSS JOIN #Product p  	
-						WHERE p.ProductID=@ProductID AND p.Currency=@Currency	
-						TRUNCATE TABLE #BetLimit
-					END	
+					INSERT INTO #BetLimit(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
+					EXEC Acc_Dep_CustSetting_BetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=@ProductID,@AgentID=0 	
+					INSERT INTO #BetLimitInput(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
+					SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet,p.MaxPerMatch
+					FROM #BetLimit b
+						CROSS JOIN #Product p  	
+					WHERE p.ProductID=@ProductID AND p.Currency=@Currency	
+					TRUNCATE TABLE #BetLimit
 										
 					INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
 					EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=@ProductID,@CustID=@SuperID
@@ -2962,7 +2960,7 @@ BEGIN
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=51)
 		SELECT @ProductCode=@ProductCode+'WM,'	
 	-- Bitcoin	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=1)
+	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=69)
 		SELECT @ProductCode=@ProductCode+'BTC,'							
 	-- CG	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=62)
