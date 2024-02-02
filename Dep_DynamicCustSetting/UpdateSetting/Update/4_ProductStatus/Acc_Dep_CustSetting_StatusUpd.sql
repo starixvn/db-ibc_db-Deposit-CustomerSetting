@@ -35,6 +35,7 @@ AS
 		- 20230804@Tacy: LAP - Offer Player Commission to Yeebet, MG-RNG [redmine: #192203]
 		- 20230808@Tacy: LAP - Offer Player Commission to VS3 (new) [redmine: #192203]
 		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
+		- 20240201@Tacy: LAP - Integrate Saba Play (SAB) [Redmine: #198245]
 
 	Param's Explanation:
 */
@@ -229,6 +230,7 @@ BEGIN
 					,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6
 					,62,67,68,3,8,60,70,75
 					,73,76	-- MG_RnG, YeeBet
+					,82		-- Saba Play
 					) 
 		AND @IsDisabled = 0 
 	BEGIN

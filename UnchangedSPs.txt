@@ -4,3 +4,5 @@ Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
 Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql
