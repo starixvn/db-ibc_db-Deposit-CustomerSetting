@@ -19,6 +19,8 @@ AS
 		- 20181119@Winnie: Check betsetting Esports [Redmine: 100721]	
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  [Redmine: 168395]	
 		- 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105] 		
+		- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
+
 	Param's Explanation:
 	
 	*/
@@ -57,7 +59,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+					AND CBS.Bettype=S.Bettype 
 					AND CBS.AgentID=@AgentID
 					AND Site=@site 
 					AND CurrencyID=@currency 
@@ -77,7 +79,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+					AND CBS.Bettype=S.Bettype
 					AND CBS.AgentID=@AgentID
 					AND Site=@site 
 					AND CurrencyID=@currency 
@@ -97,7 +99,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType 
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND  CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+					AND  CBS.Bettype=S.Bettype 
 					AND CBS.AgentID=@AgentID
 					AND Site=@site 
 					AND CurrencyID=@currency  
@@ -120,7 +122,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					 AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+					 AND CBS.Bettype=S.Bettype 
 					AND CBS.AgentID IS NULL
 					AND Site=@site 
 					AND CurrencyID=@currency 
@@ -140,7 +142,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					 AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+					 AND CBS.Bettype=S.Bettype 
 					AND CBS.AgentID IS NULL
 					AND Site=@site 
 					AND CurrencyID=@currency 
@@ -160,7 +162,7 @@ BEGIN
 			INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType 
 			INNER JOIN Dep_CustBetLimit_Special CBS WITH(NOLOCK) 
 					ON  CBS.SportType = S.SportType
-					AND CBS.Bettype=(CASE WHEN S.SportType IN (180,181,182,183,184,185,186) THEN 1 ELSE S.Bettype END) 
+					AND CBS.Bettype=S.Bettype 
 					AND CBS.AgentID IS NULL
 					AND Site=@site 
 					AND CurrencyID=@currency  

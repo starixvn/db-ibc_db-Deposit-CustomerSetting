@@ -34,6 +34,7 @@ AS
 		- 20220616@Johnson: define temp table to avoid dump db [redmine:#174035]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105] 
+		- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
 */
 BEGIN
 	SELECT @ErrCode = 0
@@ -493,14 +494,14 @@ BEGIN
 				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MinBet ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
 				SELECT DISTINCT s.Sporttype ,s.Bettype, MinBet ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
 				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
+					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
 				WHERE AgentID=@AgentID AND Site=@site AND CurrencyID=@currency
 
 				INSERT INTO #tmpDep_CustBetLimit_Special(Sporttype ,Bettype ,MinBet ,MaxBet ,MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
 				SELECT DISTINCT s.Sporttype ,s.Bettype ,MinBet ,MaxBet ,MaxPerMatch, MaxPerBall, MaxPayoutPerMatch
 				FROM Dep_CustBetLimit_Special smcs WITH(NOLOCK)
-					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
-				WHERE AgentID IS NULL AND NOT EXISTS(SELECT 1 FROM #tmpDep_CustBetLimit_Special a WITH(NOLOCK) WHERE a.SportType=smcs.SportType AND ((CASE WHEN a.SportType IN (180,181,182,183,184,185,186,161) THEN 1 ELSE a.Bettype END)  = smcs.BetType))
+					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND ((CASE WHEN S.SportType IN (161) THEN 1 ELSE S.Bettype END)  = smcs.BetType) AND S.SettingType IN(2,11,10,12)
+				WHERE AgentID IS NULL AND NOT EXISTS(SELECT 1 FROM #tmpDep_CustBetLimit_Special a WITH(NOLOCK) WHERE a.SportType=smcs.SportType AND ((CASE WHEN a.SportType IN (161) THEN 1 ELSE a.Bettype END)  = smcs.BetType))
 				 AND Site=@site AND CurrencyID=@currency
 	 		
 				INSERT INTO [dbo].[Dep_CustBetSetting_Member]
