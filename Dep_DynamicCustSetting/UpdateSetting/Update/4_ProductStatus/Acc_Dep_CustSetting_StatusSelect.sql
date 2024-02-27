@@ -12,6 +12,7 @@ AS
 	Revisions:
 		- 20171009@Winnie: select status of DCS product RedmineID:#82346
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
+		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199521]
 	Param's Explanation:
 */
 BEGIN
@@ -25,13 +26,29 @@ BEGIN
 			 ,@Bettype			    INT=0
 			 ,@RoleID				INT
 			 ,@srecommend			INT=0
-	SELECT @RoleID=RoleID,@srecommend=srecommend	FROM Customer WITH(NOLOCK) WHERE custid=@CustID
+
+	CREATE TABLE #tbDep_ProductProfile (ProductSettingID INT PRIMARY KEY,
+										ProductID INT,
+										SportType SMALLINT,
+										BetType SMALLINT,
+										bitmapOrder TINYINT)
+
+
+	SELECT @RoleID=RoleID,@srecommend=srecommend FROM Customer WITH(NOLOCK) WHERE custid=@CustID
 	
-	SELECT @bitmapOrder=bitmapOrder,@SportType=d.SportType,@Bettype=d.BetType
+	INSERT INTO #tbDep_ProductProfile(ProductSettingID, ProductID, SportType, BetType, bitmapOrder)
+	SELECT ps.ProductSettingID, ps.ProductID, d.SportType, d.BetType, p.bitmapOrder
 	FROM Dep_ProductSetting ps WITH(NOLOCK) 
 		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-		INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
-	WHERE ProductID = @ProductID AND SettingType=4	
+		INNER JOIN f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,4) f 
+															ON f.ProductID=ps.ProductID
+															AND f.SportType=d.SportType
+															AND f.Bettype=d.BetType
+															AND f.SettingType=ps.SettingType
+		INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON f.SportType=p.Sporttype AND f.BetType=p.Bettype
+
+	--Get bitmapOrder:
+	SELECT @bitmapOrder=bitmapOrder FROM #tbDep_ProductProfile
 
 	IF @RoleID=4
 	BEGIN
@@ -39,9 +56,9 @@ BEGIN
 		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
 			SELECT @HasDownline=1			
 
-		IF EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
-										INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
-									WHERE ProductID=@ProductID AND SettingType =4 AND CustID=@CustID)	
+		IF EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK) 
+					INNER JOIN #tbDep_ProductProfile t ON t.ProductSettingID=d.ProductSettingID
+					WHERE CustID=@CustID)	
 		BEGIN	
 			
 			SELECT	@IsDisabled=ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder)),1)	
@@ -73,12 +90,6 @@ BEGIN
 		FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 		WHERE stt.CustID = @srecommend	
 
-		SELECT @bitmapOrder=bitmapOrder,@SportType=d.SportType,@Bettype=d.BetType
-		FROM Dep_ProductSetting ps WITH(NOLOCK) 
-			INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-			INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON d.SportType=p.Sporttype AND d.BetType=p.Bettype
-		WHERE ProductID = @ProductID AND SettingType=4	
-	
 		SELECT	@IsDisabled=ISNULL((SELECT value FROM dbo.f_CustSetting_ProductStatusSel(stt.bitmapIsDisabled, @bitmapOrder)),1)	
 		FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 		WHERE stt.CustID = @CustID	
@@ -103,7 +114,13 @@ BEGIN
 		
 	END
 	
-	SELECT @ProductID AS ProductID,@SportType AS Sporttype, @Bettype AS Bettype,@bitmapOrder AS bitmapOrder,@IsDisabled AS IsDisabled,@IsDisabledDownline AS IsDisabledDownline,@HasDownline AS HasDownline,@IsDisabledUpline AS IsDisabledUpline
+	SELECT ProductID, Sporttype, Bettype, bitmapOrder
+		,@IsDisabled AS IsDisabled
+		,@IsDisabledDownline AS IsDisabledDownline
+		,@HasDownline AS HasDownline
+		,@IsDisabledUpline AS IsDisabledUpline
+	FROM #tbDep_ProductProfile
+
+	DROP TABLE #tbDep_ProductProfile
 END
 GO
-

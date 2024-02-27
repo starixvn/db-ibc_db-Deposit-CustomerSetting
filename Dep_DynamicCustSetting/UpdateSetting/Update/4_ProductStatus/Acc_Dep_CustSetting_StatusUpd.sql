@@ -34,6 +34,7 @@ AS
 		- 20230315@Johnson: Add MaxGame, FGG, Jili Comm [redmine:#182922]
 		- 20230804@Tacy: LAP - Offer Player Commission to Yeebet, MG-RNG [redmine: #192203]
 		- 20230808@Tacy: LAP - Offer Player Commission to VS3 (new) [redmine: #192203]
+		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
 
 	Param's Explanation:
 */
@@ -224,11 +225,10 @@ BEGIN
 	END
 	
 	-----------Setting Comm-------------
-	IF @ProductID IN (22,32,24,45,36,28,5,27,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6
-				--	,49		-- VS3 (old)
+	IF @ProductID IN (22,32,24,45,36,28,5
+					,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6
 					,62,67,68,3,8,60,70,75
 					,73,76	-- MG_RnG, YeeBet
-					,77		-- VS3 (new)
 					) 
 		AND @IsDisabled = 0 
 	BEGIN

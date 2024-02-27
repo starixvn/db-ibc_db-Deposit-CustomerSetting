@@ -9,6 +9,7 @@ AS
 
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
+	- 20240117@Tacy: NAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #198008]
 
 	Parameter Definition
 
@@ -30,7 +31,6 @@ BEGIN
 		INNER JOIN Dep_ProductSettingType t WITH(NOLOCK) ON p.SettingType = t.SettingType
 	WHERE t.SettingName IN('Position Taking','Bet Setting','Product Status','Stake Level')
 		AND p.ProductID <> 31--exclude  Exchange
+		AND SettingStatus<=1
 END
 GO
-
-
