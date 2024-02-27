@@ -10,7 +10,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,   @LicenseeType		VARCHAR(50)
 	,	@PT_Sportsbook		SMALLMONEY
 	,	@PT_VirtualSports1	SMALLMONEY=0
-	,	@PT_VirtualSports2	SMALLMONEY=0
 	,	@PT_NumberGame		SMALLMONEY=0
 	,	@PT_Keno			SMALLMONEY=0
 	,	@PT_Loterry			SMALLMONEY=0
@@ -25,7 +24,6 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee]
 	,   @PT_AP				SMALLMONEY=0
 	,   @PT_ApMini			SMALLMONEY=0
 	,   @PT_CG				SMALLMONEY=0
-	,   @PT_VS3				SMALLMONEY=0
 	,	@PT_SabaCasino  	SMALLMONEY=0
 	,	@PT_Allbet 			SMALLMONEY=0
 	,	@PT_MacauGames  	SMALLMONEY=0
@@ -77,6 +75,7 @@ AS
 	- 20230814@Winfred: Integrate MaxGame, VS3 new products - remove VS3 Old [redmine:#183802]
 	- 20231115@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
 	- 20240103@Winfred: Sitebuilder - Bitcoin/SLT - Enhance the settings when creating a new licensee [#196704]
+	- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199521]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -109,7 +108,6 @@ DECLARE @ErrorCode INT, @Errmsg NVARCHAR(MAX), @InsBalCustList varchar(MAX),  @I
 EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 	,	@PT_Sportsbook		=0.88
 	,	@PT_VirtualSports1	=0.88
-	,	@PT_VirtualSports2	=0.88
 	,	@PT_NumberGame		=0.88
 	,	@PT_Keno			=0.88
 	,	@PT_Loterry			=0.88
@@ -124,7 +122,6 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 	,   @PT_AP				=0.8
 	,   @PT_ApMini			=0.8
 	,   @PT_CG				=0.8
-	,	@PT_VS3  			=0.9
 	,	@PT_SabaCasino  	=0.9
 	,	@PT_Allbet 			=0.9
 	,	@PT_MacauGames  	=0.9
@@ -250,15 +247,7 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																	MaxBet="30000" 
 																	MaxPerMatch="1000000"
 																	MaxPerBall="0" 
-															/>														
-															<Product 
-																	ProductID="27" 
-																	Currency="4" 
-																	MinBet="1" 
-																	MaxBet="30000" 
-																	MaxPerMatch="1000000"
-																	MaxPerBall="0" 
-															/>
+															/>	
 															<Product 
 																	ProductID="28" 
 																	Currency="4" 
@@ -450,14 +439,6 @@ EXEC Dot_Dep_CreateLicensee @sitename='wtest45'
 																	MaxPerMatch="0"
 																	MaxPerBall="0" 
 																/>
-																<Product 
-																	ProductID="77" 
-																	Currency="4" 
-																	MinBet="1" 
-																	MaxBet="30000" 
-																	MaxPerMatch="1000000"
-																	MaxPerBall="0" 
-																/>
 														</ROOT>' ,
 @StakeLevel =  '<ROOT>
 							<StakeLevel Currency="4" GameTypeID="4601"  MinStake="20" MaxStake="100"/>	
@@ -506,7 +487,6 @@ BEGIN
 	SELECT @sitename = LTRIM(RTRIM(@sitename))
 
 	SELECT @PT_VirtualSports1=@PT_VirtualSports1*100
-	SELECT @PT_VirtualSports2=@PT_VirtualSports2*100
 	SELECT @PT_Loterry=@PT_Loterry*100
 	SELECT @PT_VirtualGames=@PT_VirtualGames*100
 	SELECT @PT_TableGame=@PT_TableGame*100
@@ -520,7 +500,6 @@ BEGIN
 	SELECT @PT_AP=@PT_AP*100
 	SELECT @PT_ApMini=@PT_ApMini*100
 	SELECT @PT_CG=@PT_CG*100
-	SELECT @PT_VS3=@PT_VS3*100
 	SELECT @PT_SabaCasino=@PT_SabaCasino*100
 	SELECT @PT_Allbet=@PT_Allbet*100
 	SELECT @PT_MacauGames=@PT_MacauGames*100
@@ -722,7 +701,6 @@ BEGIN
 	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch,Sporttype,Bettype, PT, ProductName)
 	SELECT ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch ,Sporttype ,Bettype
 			,CASE ProductID WHEN 28 THEN @PT_Loterry 
-							WHEN 77 THEN @PT_VS3
 							WHEN 38 THEN @PT_VirtualGames
 							WHEN 51 THEN @PT_WM 
 							WHEN 39 THEN @PT_SAGaming 	
@@ -743,7 +721,6 @@ BEGIN
 				  ELSE NULL END AS PT
 			,CASE ProductID WHEN 28 THEN 'Lottery' 
 							WHEN 63 THEN 'Sports Lottery'
-							WHEN 77 THEN 'Virtual Sports 3'
 							WHEN 38 THEN 'Virtual Games'
 							WHEN 51 THEN 'WM' 
 							WHEN 39 THEN 'SA Gaming'  
@@ -772,7 +749,6 @@ BEGIN
 		,CASE WHEN ProductID = 1 THEN 80000 ELSE 0 END AS MaxPayoutPerMatch
 		, i.Sporttype, i.Bettype
 		,CASE ProductID WHEN 28 THEN @PT_Loterry 
-							WHEN 77 THEN @PT_VS3
 							WHEN 38 THEN @PT_VirtualGames
 							WHEN 51 THEN @PT_WM 
 							WHEN 39 THEN @PT_SAGaming 	
@@ -793,7 +769,6 @@ BEGIN
 				  ELSE NULL END AS PT
 			,CASE ProductID WHEN 28 THEN 'Lottery' 
 							WHEN 63 THEN 'Sports Lottery'
-							WHEN 77 THEN 'Virtual Sports 3'
 							WHEN 38 THEN 'Virtual Games'
 							WHEN 51 THEN 'WM' 
 							WHEN 39 THEN 'SA Gaming'  
@@ -1779,130 +1754,6 @@ BEGIN
 				END					
 			END
 
-			--vs2
-			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=27 AND Currency=@Currency)
-			BEGIN
-				INSERT INTO #BetLimit(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
-				EXEC Acc_Dep_CustSetting_BetLimitFullLineSettingSelect @SuperID=@SuperID,@ProductID=27,@AgentID=0 	
-				INSERT INTO #BetLimitInput(Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch)
-				SELECT DISTINCT b.Sporttype,b.Bettype,p.MinBet,p.MaxBet,p.MaxPerMatch
-				FROM #BetLimit b
-					CROSS JOIN #Product p		
-				WHERE p.ProductID=27 AND p.Currency=@Currency	
-				TRUNCATE TABLE #BetLimit
-
-				INSERT INTO #SportsStatus(ProductID,Sporttype ,Bettype,bitmapOrder,IsDisable,IsDisableDownLine,HasDownline,IsDisableUpline)
-				EXEC Acc_Dep_CustSetting_StatusSelect @ProductID=27,@CustID=@SuperID
-				SELECT @SporttypeID=Sporttype,@BettypeID=Bettype,@bitmapOrder=bitmapOrder FROM #SportsStatus
-
-				EXEC Acc_Dep_CustSetting_StatusUpd @ProductID=27,@CustID=@SuperID,@IsDisabled=0,@IsDisabledDownLine=0,@SportType=@SportTypeID,@BetType=@BetTypeID,@bitmapOrder=@bitmapOrder,@UserID=@CreatorID,@IP=@IP,
-					@IsAgentOnly=0,@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-				IF @ErrCode<>0
-				BEGIN
-					SELECT @ErrMsg = @ErrMsg + 'Status DCS Virtual Sports 2.'+@Super
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-												CAST(@MasterID AS VARCHAR(20))+','+
-												CAST(@AgentID AS VARCHAR(20))+','+
-												CAST(@AccMasterID AS VARCHAR(20))+','+
-												CAST(@AccAgentID AS VARCHAR(20))+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempSubCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-					RETURN
-				END	
-
-				TRUNCATE TABLE #SportsStatus
-				-- Insert PT
-				SELECT  @PT_XML = ('<ROOT>' + (
-							SELECT 
-								 SportType AS 'SportType'
-								,Bettype AS 'BetType'
-								,IsLive AS 'IsLive'
-								,@PT_VirtualSports2 AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(27,1) 
-							FOR XML RAW('PT')) + '</ROOT>')
-				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=27,@UserID=@CreatorID,@IP=@IP,
-							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-
-				IF @ErrCode<>0
-				BEGIN
-					SELECT @ErrMsg = @ErrMsg + 'PT DCS Virtual Sports 2.'+@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-												CAST(@MasterID AS VARCHAR(20))+','+
-												CAST(@AgentID AS VARCHAR(20))+','+
-												CAST(@AccMasterID AS VARCHAR(20))+','+
-												CAST(@AccAgentID AS VARCHAR(20))+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-					SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempSubCustID T1
-						FOR XML PATH('')),1,1,''),'')	
-					EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-					RETURN
-				END	
-
-				IF @IsCreateSub=1  
-				BEGIN
-					UPDATE #tempSubCustID SET isfinished=0
-					WHILE (1 = 1)
-					BEGIN		
-						UPDATE TOP (1) #tempSubCustID
-						SET isfinished = 1
-							,@tmpSubCustID=CustID
-						WHERE isfinished = 0
-
-						IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
-						-- Insert PT
-						SELECT  @PT_XML = ('<ROOT>' + (
-									SELECT 
-										 SportType AS 'SportType'
-										,Bettype AS 'BetType'
-										,IsLive AS 'IsLive'
-										,@PT_VirtualSports2 AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(27,1)
-									FOR XML RAW('PT')) + '</ROOT>')
-						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=27,@UserID=@CreatorID,@IP=@IP,
-							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
-						
-					END					
-					IF @ErrCode<>0
-					BEGIN
-						SELECT @ErrMsg = @ErrMsg + 'PT DCS Virtual Sports 2 Sub licensees.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
-						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
-												CAST(@MasterID AS VARCHAR(20))+','+
-												CAST(@AgentID AS VARCHAR(20))+','+
-												CAST(@AccMasterID AS VARCHAR(20))+','+
-												CAST(@AccAgentID AS VARCHAR(20))+','
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-						ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-						from #tempDumCustID T1
-						FOR XML PATH('')),1,1,''),'')
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+','
-						SELECT @ListCustIDRollBack=@ListCustIDRollBack+				
-							ISNULL(STUFF((Select ','+ CAST(CustID AS VARCHAR(20))
-							from #tempSubCustID T1
-							FOR XML PATH('')),1,1,''),'')	
-						EXEC Dot_Dep_RollBackLicenseeDCS @ListCustID=@ListCustIDRollBack
-						RETURN
-					END			
-				END
-			END
-			
 			--Bitcoin
 			IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=69 AND Currency=@Currency)
 			BEGIN
@@ -1949,12 +1800,13 @@ BEGIN
 
 					TRUNCATE TABLE #SportsStatus
 			END
-			-- lottery , Sports Lottery, Virtual Sports 3
+
+			-- lottery , Sports Lottery
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
 			SELECT DISTINCT ProductID, PT, ProductName
 			FROM #Product 
-			WHERE ProductID in (28,63,77) AND Currency=@Currency
+			WHERE ProductID in (28,63) AND Currency=@Currency
 	
 			IF EXISTS(SELECT TOP 1 1 FROM #tempProduct)
 			BEGIN	
@@ -2010,7 +1862,7 @@ BEGIN
 					END	
 
 					TRUNCATE TABLE #SportsStatus
-					IF @ProductID IN ( 28, 77)
+					IF @ProductID IN (28)
 					BEGIN
 						-- Insert PT
 						SELECT  @PT_XML = ('<ROOT>' + (
@@ -2223,7 +2075,7 @@ BEGIN
 				END					
 			END
 
-			--Virtual Games , SA Gaming
+			--Virtual Games, SA Gaming, WM, Allbet, AE Sexy
 			TRUNCATE TABLE #tempProduct
 			INSERT INTO #tempProduct(ProductID, PT,ProductName)
 			SELECT DISTINCT ProductID, PT, ProductName
@@ -2920,8 +2772,6 @@ BEGIN
 	END	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=5)
 		SELECT @ProductCode=@ProductCode+'VS,'
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=27)
-		SELECT @ProductCode=@ProductCode+'VS2,'
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=28)
 		SELECT @ProductCode=@ProductCode+'LT,'
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=8)
@@ -2971,9 +2821,6 @@ BEGIN
 	-- AdvantPlay Mini	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=68)
 		SELECT @ProductCode=@ProductCode+'APM,'		
-	-- Virtual Sports 3	
-	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=77)
-		SELECT @ProductCode=@ProductCode+'LG,'			
 	-- Saba Casino	
 	IF EXISTS(SELECT TOP 1 1 FROM #Product WHERE ProductID=6)
 		SELECT @ProductCode=@ProductCode+'CS,'			
@@ -3002,7 +2849,7 @@ BEGIN
 	EXEC bodb_Licensee.dbo.Dot_Dep_LM_CreateNewLicensee
 		@LicenseeName = @sitename, -- from input
 		@LicenseeType = @LicenseeType, -- from input (Boping, OneWorks, Zelianta)
-		@ProductCode = @ProductCode, -- from imput, ex: SB,VS,VS2
+		@ProductCode = @ProductCode, -- from imput, ex: SB,VS
 		@SystemisActive = 'LRF,OA,Accounting', -- harcode		
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
@@ -3051,7 +2898,6 @@ BEGIN
 		SELECT @ErrMsg='Create Licensee successfully'
 
 	SELECT @PT_VirtualSports1=@PT_VirtualSports1/100
-	SELECT @PT_VirtualSports2=@PT_VirtualSports2/100
 	SELECT @PT_Loterry=@PT_Loterry/100
 	SELECT @PT_VirtualGames=@PT_VirtualGames/100
 	SELECT @PT_TableGame=@PT_TableGame/100
@@ -3065,7 +2911,6 @@ BEGIN
 	SELECT @PT_AP=@PT_AP/100
 	SELECT @PT_ApMini=@PT_ApMini/100
 	SELECT @PT_CG=@PT_CG/100
-	SELECT @PT_VS3=@PT_VS3/100
 	-----------
 	SELECT @PT_Sportsbook=@PT_Sportsbook/100
 	SELECT @PT_NumberGame=@PT_NumberGame/100
@@ -3101,8 +2946,6 @@ BEGIN
 		UNION 
 		SELECT  5, @PT_VirtualSports1											
 		UNION 
-		SELECT  27, @PT_VirtualSports2											
-		UNION 
 		SELECT  3, @PT_NumberGame												
 		UNION 
 		SELECT  8, @PT_Keno														
@@ -3130,8 +2973,6 @@ BEGIN
 		SELECT  67, @PT_AP
 		UNION 
 		SELECT  68, @PT_ApMini
-		UNION 
-		SELECT  77, @PT_VS3
 		UNION 
 		SELECT  6, @PT_SabaCasino
 		UNION 
