@@ -93,23 +93,24 @@ BEGIN
 			AND ISNULL(@Old_MaxPerNumber,0) = ISNULL(@MaxPerNumber,0) AND ISNULL(@Old_MaxPayoutPerMatch,0) = ISNULL(@MaxPayoutPerMatch,0)
 		RETURN  --value unchange	
 
-	SELECT @UplineClosed = ISNULL(closed,0)  
-	FROM custinfo (NOLOCK)   
-	WHERE custid = @UserID 
+	--no need to check for deposit
+	--SELECT @UplineClosed = ISNULL(closed,0)  
+	--FROM custinfo (NOLOCK)   
+	--WHERE custid = @UserID 
 
-	IF @UplineClosed = 1   
-	BEGIN  
-		 SELECT @ErrMsg =  CASE @Language WHEN 'E' THEN 'Your account was closed. Cannot edit member.'  
-										  WHEN 'CS' THEN N'您的账号已关闭，无法更改会员.'  
-										  WHEN 'CT' THEN N'您的帳戶已關閉. 無法更改會員.'  
-										  WHEN 'TH' THEN N'บัญชีของคุณถูกระงับใช้ ไม่สามารถแก้ไข.'  
-										  WHEN 'J' THEN N'貴方のアカウントは閉鎖されています。新規メンバーの受付はできません。'  
-										  WHEN 'KO' THEN N'계정이용이 정지되었습니다. 회원정보를 수정 할 수 없습니다.'  
-										  ELSE N'Your account was closed. Cannot edit member.'  
-							END, 
-				@ErrCode = 101
-		 RETURN  
-	END   
+	--IF @UplineClosed = 1   
+	--BEGIN  
+	--	 SELECT @ErrMsg =  CASE @Language WHEN 'E' THEN 'Your account was closed. Cannot edit member.'  
+	--									  WHEN 'CS' THEN N'您的账号已关闭，无法更改会员.'  
+	--									  WHEN 'CT' THEN N'您的帳戶已關閉. 無法更改會員.'  
+	--									  WHEN 'TH' THEN N'บัญชีของคุณถูกระงับใช้ ไม่สามารถแก้ไข.'  
+	--									  WHEN 'J' THEN N'貴方のアカウントは閉鎖されています。新規メンバーの受付はできません。'  
+	--									  WHEN 'KO' THEN N'계정이용이 정지되었습니다. 회원정보를 수정 할 수 없습니다.'  
+	--									  ELSE N'Your account was closed. Cannot edit member.'  
+	--						END, 
+	--			@ErrCode = 101
+	--	 RETURN  
+	--END   
 
 	SELECT TOP 1 @Settingtype = dps.SettingType
 	FROM dbo.Dep_ProductSetting dps WITH(NOLOCK)
