@@ -125,21 +125,15 @@ BEGIN
 		SELECT @Old_MaxPayoutPerMatch = NULL, @MaxPayoutPerMatch = NULL
 	END	
 
-	SELECT   @MinMinBet = MAX(MinBet),   
-			 @MaxMaxBet = MIN(MaxBet),
-			 @MaxMaxperMatch = MIN(cs.MaxPerMatch),
-			 @MaxMaxPerNumber = MIN(cs.MaxPerNumber),
-			 @MaxMaxPayoutperMatch = MIN(cs.MaxPayoutPerMatch)
+	SELECT   @MinMinBet = MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),   
+			 @MaxMaxBet = MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),
+			 @MaxMaxperMatch = MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),
+			 @MaxMaxPerNumber = MIN(CASE WHEN cs.MaxPerNumber = 0 THEN NULL ELSE cs.MaxPerNumber END),
+			 @MaxMaxPayoutperMatch = MIN(CASE WHEN cs.MaxPayoutPerMatch = 0 THEN NULL ELSE cs.MaxPayoutPerMatch END)
 	FROM   dbo.Dep_CustBetSettingGame_Agent AS cs WITH (NOLOCK)  
 	WHERE cs.sporttype = @Sporttype 
 		AND cs.bettype = @Bettype  
 		AND cs.custid IN (@recommend,@mrecommend,@srecommend)
-
-	SELECT   @MinMinBet = (CASE WHEN @MinMinBet = 0 THEN NULL ELSE @MinMinBet END),   
-			 @MaxMaxBet = (CASE WHEN @MaxMaxBet = 0 THEN NULL ELSE @MaxMaxBet END),
-			 @MaxMaxperMatch = (CASE WHEN @MaxMaxperMatch = 0 THEN NULL ELSE @MaxMaxperMatch END),
-			 @MaxMaxPerNumber = (CASE WHEN @MaxMaxPerNumber = 0 THEN NULL ELSE @MaxMaxPerNumber END),
-			 @MaxMaxPayoutperMatch = (CASE WHEN @MaxMaxPayoutperMatch = 0 THEN NULL ELSE @MaxMaxPayoutperMatch END) 
 
 	----------------------------------------------  
 	--Update MinBet, MaxBet, MaxPerMatch  

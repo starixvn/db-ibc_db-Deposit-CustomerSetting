@@ -56,10 +56,13 @@ BEGIN
 	SET @startRun = GETDATE()  
 	SET @IsNotMaxPerMatch = 0
 		  
-    SELECT @UserName = username, @recommend = recommend, @roleid = roleid, @mrecommend = mrecommend,
-		@srecommend = srecommend
-	FROM customer WITH (NOLOCK)  
-	WHERE CustID = @CustID  
+    SELECT @RoleID = ci.roleid, 
+		@UserName = username,
+		@recommend = ci.recommend,
+		@mrecommend = ci.mrecommend,
+		@srecommend = ci.srecommend
+	FROM dbo.custInfo ci WITH (NOLOCK) 
+	WHERE custid = @CustID 
 	
 	IF ISNULL(@roleid,0) <> 1  
 	BEGIN  
