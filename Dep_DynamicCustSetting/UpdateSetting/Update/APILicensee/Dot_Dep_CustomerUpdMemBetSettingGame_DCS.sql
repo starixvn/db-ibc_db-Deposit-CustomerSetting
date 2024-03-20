@@ -24,7 +24,7 @@ AS
   
 	Revisions:  
 		- 20220415@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
-
+		- 20240318@Johnson: Write log by service broker [redmine: #199517]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -339,20 +339,43 @@ BEGIN
 							+ CASE WHEN @settingtype = 10 THEN 'MPPM="'+ COALESCE(CAST(@Old_MaxPayoutperMatch AS VARCHAR(50)),SPACE(1)) + '" ' ELSE '' END
 							----------
 							+ '/>'  
-  
+	
+	
 	SET @endRun = getdate()  
 	SET @duration  = datediff (millisecond,@startRun,@endRun)  
 	
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
-			@UserID = @UserID,  
-			@CustID = @CustID,  
-			@ActionID = 393,  
-			@TrackingValue = @LogSPData,  
-			@TrackingValue2 = @TrackingValue2,  
-			@duration = @duration,
-			@Language = @Language,
-			@Ip = @IP
-		
+	---------- write log for servicebroker
+	DECLARE @log xml, @SB_Error BIT = 0
+	SELECT @log = (@UserID as '@UserID',  
+					@CustID as '@CustID',  
+					393 as '@ActionID',  
+					@duration as '@Duration',
+					@Language as '@Language',
+					@Ip as '@IP',
+					@LogSPData as '@TrackingValue',
+					@TrackingValue2 as '@TrackingValue2'
+				FOR XML PATH('Row')	
+				)
+				
+	EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+													@MessageType='MessageType_CustomerLog_UserLog_DepCustSetting', 
+													@functionName = 'UserLog_Others',
+													@SB_Error = @SB_Error OUT
+
+
+	--SELECT @SB_Error
+	IF @SB_Error = 1
+	BEGIN			
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
+				@UserID = @UserID,  
+				@CustID = @CustID,  
+				@ActionID = 393,  
+				@TrackingValue = @LogSPData,  
+				@TrackingValue2 = @TrackingValue2,  
+				@duration = @duration,
+				@Language = @Language,
+				@Ip = @IP
+	END	
 END 
 GO 
 
