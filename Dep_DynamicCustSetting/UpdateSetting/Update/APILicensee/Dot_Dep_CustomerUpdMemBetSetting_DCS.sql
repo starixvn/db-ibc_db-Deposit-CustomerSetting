@@ -27,7 +27,7 @@ AS
 		- 20180921@Johnson: format log [Redmine:#101293]
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
-
+		- 20240320@Johnson: Write log by service broker [redmine: #199517]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -257,15 +257,36 @@ BEGIN
   
 	SET @endRun = getdate()  
 	SET @duration  = datediff (millisecond,@startRun,@endRun)  
-  
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
-			@UserID = @UserID,  
-			@CustID = @CustID,  
-			@ActionID = 393,  
-			@TrackingValue = @LogSPData,  
-			@TrackingValue2 = @TrackingValue2,  
-			@duration = @duration,
-			@Language = @Language,
-			@Ip = @IP
+	
+	---------- write log for servicebroker
+	DECLARE @log xml, @SB_Error BIT = 0
+	SELECT @log = (SELECT @UserID as '@UserID',  
+					@CustID as '@CustID',  
+					393 as '@ActionID',  
+					@duration as '@Duration',
+					@Language as '@Language',
+					@Ip as '@IP',
+					@LogSPData as '@TrackingValue',
+					@TrackingValue2 as '@TrackingValue2'
+				FOR XML PATH('Row')	
+				)
+				
+	EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+													@MessageType='MessageType_CustomerLog_UserLog_DepCustSetting', 
+													@functionName = 'UserLog_Others',
+													@SB_Error = @SB_Error OUT
+	--SELECT @SB_Error
+	IF @SB_Error = 1
+	BEGIN	
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
+				@UserID = @UserID,  
+				@CustID = @CustID,  
+				@ActionID = 393,  
+				@TrackingValue = @LogSPData,  
+				@TrackingValue2 = @TrackingValue2,  
+				@duration = @duration,
+				@Language = @Language,
+				@Ip = @IP
+	END			
 END 
 GO 
