@@ -346,7 +346,7 @@ BEGIN
 	
 	---------- write log for servicebroker
 	DECLARE @log xml, @SB_Error BIT = 0
-	SELECT @log = (@UserID as '@UserID',  
+	SELECT @log = (SELECT @UserID as '@UserID',  
 					@CustID as '@CustID',  
 					393 as '@ActionID',  
 					@duration as '@Duration',
