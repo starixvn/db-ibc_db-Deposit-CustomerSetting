@@ -1,6 +1,2 @@
-Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql
-Dep_CustSetting\Add New Customer\Acc_CustomerInsDummyTrade.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Main.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust_Switch.sql
-Dep_CustSetting\Add New Customer\Dot_Dep_CustomerInsMember_Ag_Cust.sql
+Dep_DynamicCustSetting\UpdateSetting\Select\Acc_Dep_CustSetting_StatusSettingSelect.sql
+Dep_DynamicCustSetting\Others\f_Dep_CustSetting_SportBetTypeSettingSelect.sql
