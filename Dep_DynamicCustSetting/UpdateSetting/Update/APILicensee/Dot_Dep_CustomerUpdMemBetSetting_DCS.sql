@@ -266,6 +266,7 @@ BEGIN
 					@duration as '@Duration',
 					@Language as '@Language',
 					@Ip as '@IP',
+					GETDATE() as '@LogDate',
 					@LogSPData as '@TrackingValue',
 					@TrackingValue2 as '@TrackingValue2'
 				FOR XML PATH('Row')	
