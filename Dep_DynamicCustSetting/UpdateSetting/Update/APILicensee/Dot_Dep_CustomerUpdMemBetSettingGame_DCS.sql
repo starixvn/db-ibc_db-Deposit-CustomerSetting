@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerUpdMemBetSettingGame_DCS]  
 	@CustID INT, --MemberID  
 	@Sporttype SMALLINT,
@@ -24,7 +24,7 @@ AS
   
 	Revisions:  
 		- 20220415@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
-
+		- 20240318@Johnson: Write log by service broker [redmine: #199517]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -62,20 +62,11 @@ BEGIN
 		 RETURN  
 	END  
 
-	SELECT @Settingtype = dps.SettingType
-	FROM dbo.Dep_ProductSetting dps WITH(NOLOCK)
-		INNER JOIN Dep_ProductSettingDetail dpsd  WITH(NOLOCK) ON dps.ProductSettingID = dpsd.ProductSettingID
-	WHERE 	dpsd.SportType = @Sporttype AND dpsd.BetType = @Bettype AND dps.SettingType IN (10,12)
-
-	SELECT @UplineClosed = ISNULL(closed,0)  
-	FROM custinfo (NOLOCK)   
-	WHERE custid = @UserID 
-
 	SELECT @IsGroupedBetLimit = IsGroupedBetLimit FROM Dep_CustSettingMode WITH(NOLOCK) WHERE CustID = @CustID
 
 	IF @IsGroupedBetLimit = 1
 	BEGIN
-		SELECT       
+		SELECT     
 			@Old_MinBet = ISNULL(MinBet ,0),  
 			@Old_MaxBet = ISNULL(MaxBet ,0),
 			@Old_MaxPerMatch = ISNULL(MaxPerMatch,0),
@@ -100,7 +91,31 @@ BEGIN
      
 	IF  @Old_MinBet = @MinBet AND @Old_MaxBet = @MaxBet AND @Old_MaxPerMatch = @MaxPerMatch 
 			AND ISNULL(@Old_MaxPerNumber,0) = ISNULL(@MaxPerNumber,0) AND ISNULL(@Old_MaxPayoutPerMatch,0) = ISNULL(@MaxPayoutPerMatch,0)
-		RETURN  --value unchange
+		RETURN  --value unchange	
+
+	--no need to check for deposit
+	--SELECT @UplineClosed = ISNULL(closed,0)  
+	--FROM custinfo (NOLOCK)   
+	--WHERE custid = @UserID 
+
+	--IF @UplineClosed = 1   
+	--BEGIN  
+	--	 SELECT @ErrMsg =  CASE @Language WHEN 'E' THEN 'Your account was closed. Cannot edit member.'  
+	--									  WHEN 'CS' THEN N'您的账号已关闭，无法更改会员.'  
+	--									  WHEN 'CT' THEN N'您的帳戶已關閉. 無法更改會員.'  
+	--									  WHEN 'TH' THEN N'บัญชีของคุณถูกระงับใช้ ไม่สามารถแก้ไข.'  
+	--									  WHEN 'J' THEN N'貴方のアカウントは閉鎖されています。新規メンバーの受付はできません。'  
+	--									  WHEN 'KO' THEN N'계정이용이 정지되었습니다. 회원정보를 수정 할 수 없습니다.'  
+	--									  ELSE N'Your account was closed. Cannot edit member.'  
+	--						END, 
+	--			@ErrCode = 101
+	--	 RETURN  
+	--END   
+
+	SELECT TOP 1 @Settingtype = dps.SettingType
+	FROM dbo.Dep_ProductSetting dps WITH(NOLOCK)
+		INNER JOIN Dep_ProductSettingDetail dpsd  WITH(NOLOCK) ON dps.ProductSettingID = dpsd.ProductSettingID
+	WHERE 	dpsd.SportType = @Sporttype AND dpsd.BetType = @Bettype AND dps.SettingType IN (10,12)	
   
 	IF @Settingtype = 10 -- not use MaxPerNumber column
 	BEGIN
@@ -109,22 +124,8 @@ BEGIN
 	ELSE IF @Settingtype = 12 -- not use MaxPayoutPerMatch column
 	BEGIN
 		SELECT @Old_MaxPayoutPerMatch = NULL, @MaxPayoutPerMatch = NULL
-	END
-  
-	IF @UplineClosed = 1   
-	BEGIN  
-		 SELECT @ErrMsg =  CASE @Language WHEN 'E' THEN 'Your account was closed. Cannot edit member.'  
-										  WHEN 'CS' THEN N'您的账号已关闭，无法更改会员.'  
-										  WHEN 'CT' THEN N'您的帳戶已關閉. 無法更改會員.'  
-										  WHEN 'TH' THEN N'บัญชีของคุณถูกระงับใช้ ไม่สามารถแก้ไข.'  
-										  WHEN 'J' THEN N'貴方のアカウントは閉鎖されています。新規メンバーの受付はできません。'  
-										  WHEN 'KO' THEN N'계정이용이 정지되었습니다. 회원정보를 수정 할 수 없습니다.'  
-										  ELSE N'Your account was closed. Cannot edit member.'  
-							END, 
-				@ErrCode = 101
-		 RETURN  
-	END   
-	
+	END	
+
 	SELECT   @MinMinBet = MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),   
 			 @MaxMaxBet = MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),
 			 @MaxMaxperMatch = MIN(CASE WHEN cs.MaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END),
@@ -279,49 +280,43 @@ BEGIN
 		RETURN  
 	END  
 
-	UPDATE dbo.Dep_CustBetSettingGame_Member WITH (ROWLOCK, UPDLOCK)  
-	SET MinBet = @MinBet,  
-		MaxBet = @MaxBet,
-		MaxPerMatch = @MaxPerMatch,
-		MaxPerNumber = @MaxPerNumber,
-		MaxPayoutPerMatch = @MaxPayoutPerMatch
-	WHERE custid = @CustID 
-		AND SportType = @Sporttype 
-		AND BetType = @Bettype
-
 	--update new settings
-	INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-	SELECT @custID,@SportType,@BetType,@MinBet,@MaxBet,@MaxPerMatch,@MaxPerNumber,@MaxPayoutPerMatch
-	WHERE NOT EXISTS(	SELECT TOP 1 1 
-						FROM Dep_CustBetSettingGame_Member m WITH(NOLOCK) 
-						WHERE m.CustID = @CustID AND m.SportType = @SportType AND m.BetType = @BetType)
+	IF @IsGroupedBetLimit = 0
+	BEGIN
 
-	--Insert remain setting from group setting
-	INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-	SELECT @custID,gr.SportType,gr.BetType,gr.MinBet,gr.MaxBet,gr.MaxPerMatch,gr.MaxPerNumber,gr.MaxPayoutPerMatch
-	FROM Dep_CustBetSettingGameGroup_Member gr WITH(NOLOCK)
-		LEFT JOIN Dep_CustBetSettingGame_Member m WITH(NOLOCK) ON m.CustID = @CustID AND gr.SportType = m.SportType AND gr.BetType = m.BetType
-	WHERE m.CustID IS NULL
-		AND gr.AgentID = @recommend
+		UPDATE dbo.Dep_CustBetSettingGame_Member WITH (ROWLOCK, UPDLOCK)  
+		SET MinBet = @MinBet,  
+			MaxBet = @MaxBet,
+			MaxPerMatch = @MaxPerMatch,
+			MaxPerNumber = @MaxPerNumber,
+			MaxPayoutPerMatch = @MaxPayoutPerMatch
+		WHERE custid = @CustID 
+			AND SportType = @Sporttype 
+			AND BetType = @Bettype
+	END
+	ELSE
+	IF @IsGroupedBetLimit = 1 --> Break group
+	BEGIN
+		--insert sporttype bettyp with input param
+		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		SELECT @custID,@SportType,@BetType,@MinBet,@MaxBet,@MaxPerMatch,@MaxPerNumber,@MaxPayoutPerMatch
+		WHERE NOT EXISTS(	SELECT TOP 1 1 
+							FROM Dep_CustBetSettingGame_Member m WITH(NOLOCK) 
+							WHERE m.CustID = @CustID AND m.SportType = @SportType AND m.BetType = @BetType)
 
-	UPDATE Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK) 
-	SET IsGroupedBetLimit = 0  
-	WHERE custid = @CustID
-		AND IsGroupedBetLimit = 1
+		--Insert remain setting from group setting
+		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
+		SELECT @custID,gr.SportType,gr.BetType,gr.MinBet,gr.MaxBet,gr.MaxPerMatch,gr.MaxPerNumber,gr.MaxPayoutPerMatch
+		FROM Dep_CustBetSettingGameGroup_Member gr WITH(NOLOCK)
+			LEFT JOIN Dep_CustBetSettingGame_Member m WITH(NOLOCK) ON m.CustID = @CustID AND gr.SportType = m.SportType AND gr.BetType = m.BetType
+		WHERE m.CustID IS NULL
+			AND gr.AgentID = @recommend
 
-	--IF (@@ERROR <> 0)  
-	--BEGIN     
-	--	 SELECT @ErrMsg = @UserName + ': '+  CASE @Language   WHEN 'E' THEN 'Update process is unsuccessful !'  
-	--														  WHEN 'CS' THEN N'更新程序不成功 !'  
-	--														  WHEN 'CT' THEN N'更新程序不成功 !'  
-	--														  WHEN 'TH' THEN N'ขั้นตอนหรือกระบวนการในการปรับยอดไม่เสร็จสิ้น!'  
-	--														  WHEN 'J' THEN N'アップデート出来ません。'  
-	--														  WHEN 'KO' THEN N'업데이트에 실패했습니다.'  
-	--														  ELSE N'Update process is unsuccessful !'  
-	--										 END, 
-	--			@ErrCode = 107  
-	--	 RETURN  
-	--END  
+		UPDATE Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK) 
+		SET IsGroupedBetLimit = 0  
+		WHERE custid = @CustID
+			AND IsGroupedBetLimit = 1
+	END	
   
 	SELECT @LogSPData =	'<R Sport="'+ COALESCE(CAST(@SportType AS VARCHAR(50)),SPACE(1)) + '" ' +  
 						'BT="'+ COALESCE(CAST(@Bettype AS VARCHAR(50)),SPACE(1)) + '" ' +  	
@@ -344,21 +339,44 @@ BEGIN
 							+ CASE WHEN @settingtype = 10 THEN 'MPPM="'+ COALESCE(CAST(@Old_MaxPayoutperMatch AS VARCHAR(50)),SPACE(1)) + '" ' ELSE '' END
 							----------
 							+ '/>'  
-  
+	
+	
 	SET @endRun = getdate()  
 	SET @duration  = datediff (millisecond,@startRun,@endRun)  
+	
+	---------- write log for servicebroker
+	DECLARE @log xml, @SB_Error BIT = 0
+	SELECT @log = (SELECT @UserID as '@UserID',  
+					@CustID as '@CustID',  
+					393 as '@ActionID',  
+					@duration as '@Duration',
+					@Language as '@Language',
+					@Ip as '@IP',
+					GETDATE() as '@LogDate',
+					@LogSPData as '@TrackingValue',
+					@TrackingValue2 as '@TrackingValue2'
+				FOR XML PATH('Row')	
+				)
+				
+	EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+													@MessageType='MessageType_CustomerLog_UserLog_DepCustSetting', 
+													@functionName = 'UserLog_Others',
+													@SB_Error = @SB_Error OUT
 
-	--SELECT CONVERT(XML,@LogSPData), CONVERT(XML,@TrackingValue2)
-  
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
-			@UserID = @UserID,  
-			@CustID = @CustID,  
-			@ActionID = 393,  
-			@TrackingValue = @LogSPData,  
-			@TrackingValue2 = @TrackingValue2,  
-			@duration = @duration,
-			@Language = @Language,
-			@Ip = @IP
+
+	--SELECT @SB_Error
+	IF @SB_Error = 1
+	BEGIN			
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
+				@UserID = @UserID,  
+				@CustID = @CustID,  
+				@ActionID = 393,  
+				@TrackingValue = @LogSPData,  
+				@TrackingValue2 = @TrackingValue2,  
+				@duration = @duration,
+				@Language = @Language,
+				@Ip = @IP
+	END	
 END 
 GO 
 

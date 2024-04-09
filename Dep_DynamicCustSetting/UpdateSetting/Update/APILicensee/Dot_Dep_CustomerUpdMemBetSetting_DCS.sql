@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member,svc_tig" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
 
@@ -27,7 +27,7 @@ AS
 		- 20180921@Johnson: format log [Redmine:#101293]
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
-
+		- 20240320@Johnson: Write log by service broker [redmine: #199517]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -41,7 +41,7 @@ BEGIN
   
 	DECLARE @startRun DATETIME, @endRun DATETIME, @duration INT  	
 	DECLARE @MinMinBet MONEY, @MaxMaxBet MONEY, @MaxMaxPerMatch MONEY, @Old_MinBet MONEY, @Old_MaxBet MONEY, @Old_MaxPerMatch MONEY   
-	DECLARE @ErrAcc VARCHAR(4000), @ErrType VARCHAR(4000), @UserName VARCHAR(30), @recommend INT, @roleid TINYINT, @UplineClosed BIT  , @IsNotMaxPerMatch INT  
+	DECLARE @ErrAcc VARCHAR(4000), @ErrType VARCHAR(4000), @UserName VARCHAR(30), @recommend INT, @roleid TINYINT, @UplineClosed BIT  , @IsNotMaxPerMatch INT, @mrecommend INT, @srecommend INT
 	DECLARE @LogSPData VARCHAR(5000), @TrackingValue2 VARCHAR(5000) 
 
 	DECLARE @History_BetSetting TABLE(
@@ -55,23 +55,40 @@ BEGIN
 
 	SET @startRun = GETDATE()  
 	SET @IsNotMaxPerMatch = 0
+		  
+    SELECT @RoleID = ci.roleid, 
+		@UserName = username,
+		@recommend = ci.recommend,
+		@mrecommend = ci.mrecommend,
+		@srecommend = ci.srecommend
+	FROM dbo.custInfo ci WITH (NOLOCK) 
+	WHERE custid = @CustID 
 	
-	SELECT @UplineClosed = ISNULL(closed,0)  
-	FROM custinfo (NOLOCK)   
-	WHERE custid = @UserID   
-    
-	SELECT @UserName = username, @recommend = recommend, @roleid = roleid  
-	FROM customer WITH (NOLOCK)  
-	WHERE CustID = @CustID  
-	
-	IF EXISTS(	SELECT TOP 1 1 
-				FROM dbo.Dep_ProductSetting dps WITH(NOLOCK)
-					INNER JOIN Dep_ProductSettingDetail dpsd  WITH(NOLOCK) ON dps.ProductSettingID = dpsd.ProductSettingID
-				WHERE 	dpsd.SportType = @Sporttype AND dpsd.BetType = @Bettype AND dps.SettingType	 = 11		
-			)
-	BEGIN
-		SET @IsNotMaxPerMatch = 1
-	END		 
+	IF ISNULL(@roleid,0) <> 1  
+	BEGIN  
+		 SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Invalid user!!' ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language) END,  
+				@ErrCode = 100   
+		 RETURN  
+	END  
+
+	--no need to check
+	--SELECT @UplineClosed = ISNULL(closed,0)  
+	--FROM custinfo (NOLOCK)   
+	--WHERE custid = @UserID 
+
+	--IF @UplineClosed = 1   
+	--BEGIN  
+	--	 SELECT @ErrMsg =  CASE @Language WHEN 'E' THEN 'Your account was closed. Cannot edit member.'  
+	--									  WHEN 'CS' THEN N'您的账号已关闭，无法更改会员.'  
+	--									  WHEN 'CT' THEN N'您的帳戶已關閉. 無法更改會員.'  
+	--									  WHEN 'TH' THEN N'บัญชีของคุณถูกระงับใช้ ไม่สามารถแก้ไข.'  
+	--									  WHEN 'J' THEN N'貴方のアカウントは閉鎖されています。新規メンバーの受付はできません。'  
+	--									  WHEN 'KO' THEN N'계정이용이 정지되었습니다. 회원정보를 수정 할 수 없습니다.'  
+	--									  ELSE N'Your account was closed. Cannot edit member.'  
+	--						END, 
+	--			@ErrCode = 101
+	--	 RETURN  
+	--END   
 	
 	SELECT       
 		@Old_MinBet = ISNULL(MinBet ,0),  
@@ -84,33 +101,22 @@ BEGIN
 	IF  @Old_MinBet = @MinBet AND @Old_MaxBet = @MaxBet AND (@IsNotMaxPerMatch = 1 OR (@IsNotMaxPerMatch = 0 AND @Old_MaxPerMatch = @MaxPerMatch))
 		RETURN    
   
-	IF ISNULL(@roleid,0) <> 1  
-	BEGIN  
-		 SELECT @ErrMsg = CASE @Language WHEN 'E' THEN 'Invalid user!!' ELSE [dbo].[f_Get_MsgNamebyMsgID](40002,@Language) END,  
-				@ErrCode = 100   
-		 RETURN  
-	END  
-  
-	IF @UplineClosed = 1   
-	BEGIN  
-		 SELECT @ErrMsg =  CASE @Language WHEN 'E' THEN 'Your account was closed. Cannot edit member.'  
-										  WHEN 'CS' THEN N'您的账号已关闭，无法更改会员.'  
-										  WHEN 'CT' THEN N'您的帳戶已關閉. 無法更改會員.'  
-										  WHEN 'TH' THEN N'บัญชีของคุณถูกระงับใช้ ไม่สามารถแก้ไข.'  
-										  WHEN 'J' THEN N'貴方のアカウントは閉鎖されています。新規メンバーの受付はできません。'  
-										  WHEN 'KO' THEN N'계정이용이 정지되었습니다. 회원정보를 수정 할 수 없습니다.'  
-										  ELSE N'Your account was closed. Cannot edit member.'  
-							END, 
-				@ErrCode = 101
-		 RETURN  
-	END   
+	IF EXISTS(	SELECT TOP 1 1 
+				FROM dbo.Dep_ProductSetting dps WITH(NOLOCK)
+					INNER JOIN Dep_ProductSettingDetail dpsd  WITH(NOLOCK) ON dps.ProductSettingID = dpsd.ProductSettingID
+				WHERE 	dpsd.SportType = @Sporttype AND dpsd.BetType = @Bettype AND dps.SettingType	 = 11		
+			)
+	BEGIN
+		SET @IsNotMaxPerMatch = 1
+	END		 
 	
 	SELECT   @MinMinBet = MAX(CASE WHEN MinBet = 0 THEN NULL ELSE MinBet END),   
 			 @MaxMaxBet = MIN(CASE WHEN MaxBet = 0 THEN NULL ELSE MaxBet END),
 			 @MaxMaxperMatch = MIN(CASE WHEN cs.MaxPerMatch = 0 AND @IsNotMaxPerMatch = 0 THEN NULL ELSE cs.MaxPerMatch END)  
 	FROM   dbo.Dep_CustBetSetting_Agent AS cs WITH (NOLOCK)  
-		INNER JOIN custinfo AS ci WITH (NOLOCK) ON (cs.CustID = ci.Recommend OR cs.CustID = ci.MRecommend OR cs.CustID = ci.SRecommend) AND cs.bettype = @Bettype AND cs.sporttype = @Sporttype
-	WHERE ci.custid = @recommend  
+	WHERE cs.custid IN (@recommend,@mrecommend,@srecommend)
+		AND cs.sporttype = @Sporttype 
+		AND cs.bettype = @Bettype  
 
 	----------------------------------------------  
 	--Update MinBet, MaxBet, MaxPerMatch  
@@ -251,15 +257,37 @@ BEGIN
   
 	SET @endRun = getdate()  
 	SET @duration  = datediff (millisecond,@startRun,@endRun)  
-  
-	EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
-			@UserID = @UserID,  
-			@CustID = @CustID,  
-			@ActionID = 393,  
-			@TrackingValue = @LogSPData,  
-			@TrackingValue2 = @TrackingValue2,  
-			@duration = @duration,
-			@Language = @Language,
-			@Ip = @IP
+	
+	---------- write log for servicebroker
+	DECLARE @log xml, @SB_Error BIT = 0
+	SELECT @log = (SELECT @UserID as '@UserID',  
+					@CustID as '@CustID',  
+					393 as '@ActionID',  
+					@duration as '@Duration',
+					@Language as '@Language',
+					@Ip as '@IP',
+					GETDATE() as '@LogDate',
+					@LogSPData as '@TrackingValue',
+					@TrackingValue2 as '@TrackingValue2'
+				FOR XML PATH('Row')	
+				)
+				
+	EXEC bodb_CustomerLog.sb.CustomerLog_SendMessage @xml = @log, 
+													@MessageType='MessageType_CustomerLog_UserLog_DepCustSetting', 
+													@functionName = 'UserLog_Others',
+													@SB_Error = @SB_Error OUT
+	--SELECT @SB_Error
+	IF @SB_Error = 1
+	BEGIN	
+		EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_Dep_CustSetting
+				@UserID = @UserID,  
+				@CustID = @CustID,  
+				@ActionID = 393,  
+				@TrackingValue = @LogSPData,  
+				@TrackingValue2 = @TrackingValue2,  
+				@duration = @duration,
+				@Language = @Language,
+				@Ip = @IP
+	END			
 END 
 GO 
