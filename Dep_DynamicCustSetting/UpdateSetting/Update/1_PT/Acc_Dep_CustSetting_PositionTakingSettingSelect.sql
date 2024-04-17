@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_lap" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingSelect 
 	  @CustID		INT
 	, @ProductID	TINYINT

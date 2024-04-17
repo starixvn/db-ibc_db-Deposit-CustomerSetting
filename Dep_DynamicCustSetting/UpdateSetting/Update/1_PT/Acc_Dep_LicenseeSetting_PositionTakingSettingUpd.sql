@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbLicenseeNet,Dot_member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,wsv_lap,Dot_member" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_Dep_LicenseeSetting_PTSettingUpd 
 	 @Site			VARCHAR(20)
 	, @InputPT		VARCHAR(MAX)

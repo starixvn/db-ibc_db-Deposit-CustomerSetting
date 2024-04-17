@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,bodbLicenseeNet,Dot_Member" viewers="vnteam" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,bodbDownlineNet,wsv_lap,Dot_Member" viewers="vnteam" isFunction="1"></info>*/
 
 ALTER FUNCTION [dbo].[f_LAS_GenerateUsername]  
 (  

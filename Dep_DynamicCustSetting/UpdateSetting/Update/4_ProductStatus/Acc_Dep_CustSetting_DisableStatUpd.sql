@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,bodbLicenseeNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_DisableStatUpd] 
 	  @CustID			INT
 	, @IsDisabled	VARCHAR(MAX)
@@ -572,4 +572,4 @@ GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO [bodbDownlineNet]
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO [bodbExtAccNet]
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO  [bodbLicenseeNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO  [wsv_lap]

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,bodbLicenseeNet" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCust-CustDB,DBACC-bodb02" selecters="bodbAdminNet,bodbDownlineNet,bodbDownlineNetView,bodbExtAccNet,wsv_lap" viewers="" isFunction="1"></info>*/
 ALTER FUNCTION [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] (@ProductID TINYINT, @SettingType SMALLINT) 
 RETURNS TABLE 
 /*
