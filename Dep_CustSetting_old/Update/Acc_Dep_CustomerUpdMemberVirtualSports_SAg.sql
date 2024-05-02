@@ -1033,7 +1033,7 @@ GO
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_SAg] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_SAg] TO [bodbAdminNet]
+ GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_SAg] TO [wsv_nap]
 GO 
  GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_SAg] TO [bodbExtAccNet]
 GO 

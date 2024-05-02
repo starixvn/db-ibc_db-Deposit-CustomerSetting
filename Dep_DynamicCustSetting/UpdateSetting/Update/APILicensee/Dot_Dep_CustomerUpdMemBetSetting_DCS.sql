@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member,svc_tig" viewers="vnteam" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,svc_tig,svc_tig" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
 

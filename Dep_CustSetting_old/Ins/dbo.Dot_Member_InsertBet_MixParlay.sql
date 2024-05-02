@@ -1,12 +1,12 @@
 ﻿USE [bodb02]
 GO
-/****** Object:  StoredProcedure [dbo].[Dot_Member_InsertBet_MixParlay_Test]    Script Date: 06/26/2012 02:32:17 ******/
+/****** Object:  StoredProcedure [dbo].[svc_tig_InsertBet_MixParlay_Test]    Script Date: 06/26/2012 02:32:17 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-/****** Object:  Stored Procedure dbo.Dot_Member_InsertBet_MixParlay    Script Date: 4/24/2012 10:51:55 PM ******/
-ALTER PROCEDURE [dbo].[Dot_Member_InsertBet_MixParlay]
+/****** Object:  Stored Procedure dbo.svc_tig_InsertBet_MixParlay    Script Date: 4/24/2012 10:51:55 PM ******/
+ALTER PROCEDURE [dbo].[svc_tig_InsertBet_MixParlay]
 	@custid int,			-- Customer ID
 	-- BetInfo ------------------------------------------
 	@matchIdInfo varchar(1000),     -- Match ID list
@@ -488,4 +488,4 @@ select @transid as TransID
 
 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Dot_Member_InsertBet_MixParlay] TO [vnteam]
+GRANT VIEW DEFINITION ON [dbo].[svc_tig_InsertBet_MixParlay] TO [vnteam]

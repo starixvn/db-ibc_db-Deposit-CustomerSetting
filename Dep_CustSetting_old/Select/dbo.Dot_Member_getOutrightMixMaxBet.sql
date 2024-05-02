@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[Dot_Member_getOutrightMixMaxBet]
+﻿ALTER PROCEDURE [dbo].[svc_tig_getOutrightMixMaxBet]
 	@custid int,
 	@isLicensee bit = 0
 AS
@@ -23,4 +23,4 @@ BEGIN
 	
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Dot_Member_getOutrightMixMaxBet] TO [vnteam]
+GRANT VIEW DEFINITION ON [dbo].[svc_tig_getOutrightMixMaxBet] TO [vnteam]

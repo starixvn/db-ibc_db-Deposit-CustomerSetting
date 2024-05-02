@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_MT_GetDepositPT]
     @username  varchar(50),  
     @Sporttype int = 203,
@@ -226,7 +226,7 @@ BEGIN
 END
 GO
 
-GRANT EXECUTE ON [dbo].[Acc_MT_GetDepositPT] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_MT_GetDepositPT] TO [wsv_nap] AS [dbo]
 GO
 
 GRANT EXECUTE ON [dbo].[Acc_MT_GetDepositPT] TO [bodbDownlineNet] AS [dbo]

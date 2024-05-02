@@ -137,6 +137,6 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_DynamicCustSetting_04] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_Dep_DynamicCustSetting_04] TO [wsv_nap] AS [dbo]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_DynamicCustSetting_04] TO [vnteam] AS [dbo]

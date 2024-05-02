@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,bodbAdminNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CustDB" executers="bodbDownlineNet,wsv_nap,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CustomerUpdDisableNumber]
 	@CustID int,
 	@DisableNumber bit,
@@ -227,7 +227,7 @@ END CATCH
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableNumber] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableNumber] TO [wsv_nap] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Acc_CustomerUpdDisableNumber] TO [bodbDownlineNet] AS [dbo]
 GO

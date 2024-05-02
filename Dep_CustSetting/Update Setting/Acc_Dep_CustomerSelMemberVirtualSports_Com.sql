@@ -28,7 +28,7 @@ WHERE ci.custid = @custid
 AND cs3.sporttype = @SportType
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_Com] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_Com] TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_Com] TO [vnteam]
 Go

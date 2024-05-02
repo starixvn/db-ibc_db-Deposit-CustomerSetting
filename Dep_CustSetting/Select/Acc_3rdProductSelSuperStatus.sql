@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE dbo.Acc_3rdProductSelSuperStatus 
 	@ProductID INT

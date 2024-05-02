@@ -119,4 +119,4 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].Acc_AGC_UpdSuperStatus TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].Acc_AGC_UpdSuperStatus TO [wsv_nap] AS [dbo]

@@ -3179,7 +3179,7 @@ EXEC DBLOG.bodb_CustomerLog.dbo.WriteLog_UserLog_RunSP
 GO
 GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerUpdMemBetSetting_Cust] TO [Dot_Admin] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerUpdMemBetSetting_Cust] TO [Dot_Member] AS [dbo]
+GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerUpdMemBetSetting_Cust] TO [svc_tig] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerUpdMemBetSetting_Cust] TO [vnteam] AS [dbo]
 GO

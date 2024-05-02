@@ -700,7 +700,7 @@ GROUP BY
 GO
 GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerSelMemBetSetting_Cust] TO [Dot_Admin] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerSelMemBetSetting_Cust] TO [Dot_Member] AS [dbo]
+GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerSelMemBetSetting_Cust] TO [svc_tig] AS [dbo]
 GO
 GRANT ALTER ON [dbo].[Dot_Dep_CustomerSelMemBetSetting_Cust] TO [vnteam] AS [dbo]
 GO

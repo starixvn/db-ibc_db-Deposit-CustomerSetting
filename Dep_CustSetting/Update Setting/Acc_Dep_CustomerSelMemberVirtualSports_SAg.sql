@@ -46,7 +46,7 @@ where ci.custid = @custid
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_SAg] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_SAg] TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_SAg] TO [vnteam]
 Go

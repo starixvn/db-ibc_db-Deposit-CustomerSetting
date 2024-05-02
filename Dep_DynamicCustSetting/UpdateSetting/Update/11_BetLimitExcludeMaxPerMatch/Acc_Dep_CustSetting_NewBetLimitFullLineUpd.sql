@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,wsv_lap,Dot_member" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
 USE CustDB
 GO
 

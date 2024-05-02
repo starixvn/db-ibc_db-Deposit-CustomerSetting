@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,Dot_member" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag_CheckParam]
 	
 	@recommend int,

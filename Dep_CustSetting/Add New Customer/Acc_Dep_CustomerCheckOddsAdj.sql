@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="bodbAdminNet,Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Acc_Dep_CustomerCheckOddsAdj]
 	@Site	NVARCHAR(100),
 	@IsOffer	BIT OUTPUT 

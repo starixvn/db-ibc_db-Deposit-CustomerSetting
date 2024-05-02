@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 CREATE PROCEDURE [dbo].[Acc_Dep_CustomerSelCheckAllowedDownlines]    
  @custid   INT = 0     
  ,@IsSetting TINYINT = 0 

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBAGE-bodb02,DBEXT-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
+/*<info serverAlias="DBAGE-bodb02,DBEXT-bodb02" executers="wsv_nap" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_CurrencySel]
 	@Mode	TINYINT = 0	-- 0: All, 1 : Credit, 2 :Deposit
 AS

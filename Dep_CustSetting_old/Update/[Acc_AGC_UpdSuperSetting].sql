@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet" viewers="" isFunction="0" isNested="0"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap" viewers="" isFunction="0" isNested="0"></info>*/
 
 ALTER PROCEDURE	[dbo].[Acc_AGC_UpdSuperSetting]
 	@CustID				INT,

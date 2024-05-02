@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[Dot_Member_CheckCustSetting]
+﻿ALTER PROCEDURE [dbo].[svc_tig_CheckCustSetting]
 	@custid int,
 	@sporttype int,
 	@bettype int,
@@ -12,7 +12,7 @@ AS
 BEGIN
 	
 	-- 2011-06-21@VictorSu(DBTRANS): add sporttype 32 Netball
-	-- 2011-07-08@EddieChen(DBTRANS): get actualrate from exchange again, and output @actualrate to bet process [Dot_Member_InsertBet]
+	-- 2011-07-08@EddieChen(DBTRANS): get actualrate from exchange again, and output @actualrate to bet process [svc_tig_InsertBet]
 	-- 2011-07-19@JoeHuang(DBTRANS): sporttype 161(number game) add bet type 88,89
 	-- 2011-09-28@Viet: apply virtual rate for BA deposit customers.
 	-- 2011-10-15@Joe&Thien: add back the virtual rate for deposit tickets. Exclusion the virtual rate for Autobookie function only
@@ -226,4 +226,4 @@ BEGIN
 		@actualrate as actualrate
 END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Dot_Member_CheckCustSetting] TO [vnteam]
+GRANT VIEW DEFINITION ON [dbo].[svc_tig_CheckCustSetting] TO [vnteam]

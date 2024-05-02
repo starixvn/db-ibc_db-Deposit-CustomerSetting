@@ -18,7 +18,7 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [wsv_nap] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [bodbDownlineNet] AS [dbo]
 GO

@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[Dot_Member_Custsetting]
+﻿ALTER PROCEDURE [dbo].[svc_tig_Custsetting]
 	@custid int,
 	@sporttype int,
 	@bettype int,
@@ -92,4 +92,4 @@ BEGIN
 END
 
 GO
-GRANT VIEW DEFINITION ON [dbo].[Dot_Member_Custsetting] TO [vnteam]
+GRANT VIEW DEFINITION ON [dbo].[svc_tig_Custsetting] TO [vnteam]

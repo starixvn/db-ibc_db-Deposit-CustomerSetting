@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewer="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewer="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Licensee_GetDummy]
 	(
       @Site NVARCHAR(100) = NULL,

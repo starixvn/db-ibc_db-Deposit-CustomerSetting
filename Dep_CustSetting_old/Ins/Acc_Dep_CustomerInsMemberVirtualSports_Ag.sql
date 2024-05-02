@@ -923,7 +923,7 @@ END
 
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMemberVirtualSports_Ag] TO [bodbAdminNet] WITH GRANT OPTION  AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMemberVirtualSports_Ag] TO [wsv_nap] WITH GRANT OPTION  AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerInsMemberVirtualSports_Ag] TO [bodbExtAccNet] AS [dbo]
 GO

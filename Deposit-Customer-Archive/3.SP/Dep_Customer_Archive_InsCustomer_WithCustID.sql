@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [Dep_Customer_Archive_InsCustomer_WithCustID]
 	@custid INT,
 	@firstname NVARCHAR(50),

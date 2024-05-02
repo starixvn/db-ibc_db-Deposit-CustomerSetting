@@ -105,4 +105,4 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_AGC_SelSuperSetting] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Acc_AGC_SelSuperSetting] TO [wsv_nap] AS [dbo]

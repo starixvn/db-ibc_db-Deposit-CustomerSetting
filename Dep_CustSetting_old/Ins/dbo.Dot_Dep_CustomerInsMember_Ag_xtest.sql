@@ -2176,9 +2176,9 @@ END CATCH
 
 
 GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag] TO [bodbAdminNet]
+GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag] TO [wsv_nap]
 GO
 GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag] TO [bodbDownlineNet]
 GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag] TO [Dot_Member]
+GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag] TO [svc_tig]
 GO

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbadminNet,bodbDownlineNet,bodbExtAccNet,Dot_member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] 
 	@ProductID INT
 	, @CustID INT

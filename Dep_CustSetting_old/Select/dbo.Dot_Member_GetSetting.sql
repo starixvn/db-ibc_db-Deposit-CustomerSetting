@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[Dot_Member_GetSetting]
+﻿ALTER PROCEDURE [dbo].[svc_tig_GetSetting]
 	@custid int,
 	@isLicensee bit = 0
 AS
@@ -20,4 +20,4 @@ AS
 		WHERE custid = @custid AND sporttype = 1 AND bettype = 1
 	END
 GO
-GRANT VIEW DEFINITION ON [dbo].[Dot_Member_GetSetting] TO [vnteam]
+GRANT VIEW DEFINITION ON [dbo].[svc_tig_GetSetting] TO [vnteam]

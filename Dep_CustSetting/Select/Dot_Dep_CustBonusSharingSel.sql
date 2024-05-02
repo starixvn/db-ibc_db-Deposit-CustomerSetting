@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="Dot_Member" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="svc_tig" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustBonusSharingSel] 
 	@CustID INT = 0
 AS

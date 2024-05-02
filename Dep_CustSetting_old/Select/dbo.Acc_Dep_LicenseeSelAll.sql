@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBEXT-bodb02" executers="bodbAdminNet,bodbExtAccNet" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBEXT-bodb02" executers="wsv_nap,bodbExtAccNet" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_LicenseeSelAll]
 AS
 

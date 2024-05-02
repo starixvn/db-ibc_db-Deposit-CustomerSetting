@@ -49,7 +49,7 @@ SELECT @MaxBet_Min AS MaxBet_Min,
 	
 	
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_AgInfo] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_AgInfo] TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_AgInfo] TO [vnteam]
 Go

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,Dot_Member,svc_tig" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,svc_tig,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerUpdMemBetSettingGame_DCS]  
 	@CustID INT, --MemberID  
 	@Sporttype SMALLINT,

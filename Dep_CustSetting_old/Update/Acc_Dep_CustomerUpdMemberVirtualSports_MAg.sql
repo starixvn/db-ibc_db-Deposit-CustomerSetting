@@ -974,7 +974,7 @@ END
 GO 
  GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_MAg] TO [vnteam]
 GO 
- GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_MAg] TO [bodbAdminNet]
+ GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_MAg] TO [wsv_nap]
 GO 
  GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerUpdMemberVirtualSports_MAg] TO [bodbExtAccNet]
 GO 

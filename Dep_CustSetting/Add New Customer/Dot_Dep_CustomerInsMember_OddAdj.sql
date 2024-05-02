@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_OddAdj]
 	@Custid			INT OUTPUT,
 	@Creator		INT,

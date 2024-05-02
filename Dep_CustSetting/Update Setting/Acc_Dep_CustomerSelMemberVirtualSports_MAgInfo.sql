@@ -38,7 +38,7 @@ Param's Explanation:
  and sporttype = @Sporttype
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_MAgInfo] TO [bodbadminNet]
+GRANT EXECUTE ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_MAgInfo] TO [wsv_nap]
 GO
 GRANT VIEW DEFINITION ON [dbo].[Acc_Dep_CustomerSelMemberVirtualSports_MAgInfo] TO [vnteam]
 go

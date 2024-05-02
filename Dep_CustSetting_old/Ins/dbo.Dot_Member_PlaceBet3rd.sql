@@ -16,7 +16,7 @@ go
 --'disablebetproblem'	: custinfo disable flag is true
 -------------------------------------------------------------------
 
-ALTER PROCEDURE [dbo].[Dot_Member_PlaceBet3rd]
+ALTER PROCEDURE [dbo].[svc_tig_PlaceBet3rd]
 	@custid int,
 	@SportType tinyint,	--151(horse racing)/201(finance)/152(Greyhounds)
 	@BetType smallint,	--31(win)/32(place)/33(winplace)/51-56(5,15,30,45,60,end of day OU)/61-66(OE)

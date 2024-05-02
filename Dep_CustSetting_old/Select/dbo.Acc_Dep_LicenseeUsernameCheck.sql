@@ -1,4 +1,4 @@
-/*<info serverAlias="DBEXT-bodb02" executers="bodbAdminNet" isFunction="0"></info>*/
+/*<info serverAlias="DBEXT-bodb02" executers="wsv_nap" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_LicenseeUsernameCheck]
 	@username VARCHAR(30),
 	@Language VARCHAR(2)= 'E',

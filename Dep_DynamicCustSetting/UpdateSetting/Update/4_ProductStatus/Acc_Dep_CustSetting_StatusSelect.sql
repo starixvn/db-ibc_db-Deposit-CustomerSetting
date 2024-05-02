@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbExtAccNet,bodbDownlineNet,wsv_lap,Dot_member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSelect] 
 	@ProductID	INT

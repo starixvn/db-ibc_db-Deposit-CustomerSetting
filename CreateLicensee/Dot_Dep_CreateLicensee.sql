@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CreateLicensee] 
 		@sitename			VARCHAR(10)
 	,	@Product			VARCHAR(MAX)	

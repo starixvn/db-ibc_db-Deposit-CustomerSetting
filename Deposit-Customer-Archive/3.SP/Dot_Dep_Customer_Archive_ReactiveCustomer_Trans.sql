@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="Dot_Member,Dot_Evolution" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBTXN-bodb02" executers="svc_tig,Dot_Evolution" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer_Trans]
 	@CustID int = 0,  
 	@CustIDBalanceDummy INT = NULL,

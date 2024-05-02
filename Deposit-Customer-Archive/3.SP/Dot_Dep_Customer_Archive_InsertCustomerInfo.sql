@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,Dot_Member" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@custid INT,
 	@firstname NVARCHAR(50),

@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="bodbAdminNet,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_05]
 		@StakeLevel	VARCHAR(MAX)
 	,   @ActionID	TINYINT =1

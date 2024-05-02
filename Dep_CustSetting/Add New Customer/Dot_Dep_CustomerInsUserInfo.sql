@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Member" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@custid INT OUTPUT,
 	@firstname NVARCHAR(50),

@@ -2769,11 +2769,11 @@ BEGIN CATCH
 		@duration = @duration
 END CATCH
 GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [bodbAdminNet] AS [dbo]
+GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [wsv_nap] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [bodbDownlineNet] AS [dbo]
 GO
-GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [Dot_Member] AS [dbo]
+GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [svc_tig] AS [dbo]
 GO
 GRANT EXECUTE ON [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust] TO [vnteam] AS [dbo]
 GO

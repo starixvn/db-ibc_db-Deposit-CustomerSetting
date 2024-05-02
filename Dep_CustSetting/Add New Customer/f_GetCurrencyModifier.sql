@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="bodbAdminNet,Dot_member" viewers="" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,svc_tig" viewers="" isFunction="1"></info>*/
 
 ALTER FUNCTION f_GetCurrencyModifier
 (  
