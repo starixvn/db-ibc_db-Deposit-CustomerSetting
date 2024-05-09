@@ -22,6 +22,7 @@ AS
 		- 20230227@Evan: Balance-Up support transfer 247 [Redmine: #173554]
 		- 20230424@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230612@Eden: Enhance for Scale Out [#179092]
+		- 20240509@Eden: Enhance SP [#179092]
 
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
@@ -173,17 +174,19 @@ BEGIN
 			FROM #Member WHERE isProcessed = 1
 			IF (@@ROWCOUNT = 0) BREAK
 
-			UPDATE #Member SET memberBalance = b.MemberBalance
-			FROM #Member
-			INNER JOIN (
-				SELECT custid, ISNULL(SUM(winlost-actual_stake+playercomm),0) as MemberBalance
-				FROM transfer WITH (NOLOCK)
-				WHERE custid IN (SELECT custid FROM #tmpMember)
-					AND 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
+			;WITH tmp AS(
+				SELECT t.custid, ISNULL(SUM(winlost-actual_stake+playercomm),0) as MemberBalance
+				FROM #tmpMember t
+					INNER JOIN transfer f WITH (NOLOCK) ON t.custid = f.CustId
+				WHERE 1 = CASE WHEN bettype = 20000 AND winlostdate > @BalanceUpDate THEN 0 --> new bal
 								WHEN winlostdate < @BalanceUpDate THEN 0 --> old data
 								ELSE 1 END
-				GROUP BY custid
-				) b ON #Member.custid = b.custid
+				GROUP BY t.custid
+			)
+			UPDATE #Member SET memberBalance = b.MemberBalance
+			FROM tmp b
+				INNER JOIN #Member m ON m.custid = b.custid
+			OPTION (FORCE ORDER)
 
 			UPDATE #Member
 			SET isProcessed = 2
