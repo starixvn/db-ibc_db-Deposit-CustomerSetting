@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust_Switch]     
 	@FirstName NVARCHAR(50),    
 	@LastName NVARCHAR(50),    
@@ -32,6 +32,7 @@ AS
 	 - 20220505@Tacy: Add @SubsidiaryID to Insert into DepositCustomer [Redmine: #171861]
 	 - 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	 - 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+	 - 20240404@Tacy: Return - Error when add Subsidiary [Redmine: #202273] 
 	 
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
@@ -241,6 +242,8 @@ BEGIN
 	BEGIN
 		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+
+		 RETURN
 	END
 
 	---------------------------------------------------------------------------------    
