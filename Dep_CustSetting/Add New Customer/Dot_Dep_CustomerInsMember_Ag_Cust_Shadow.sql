@@ -14,7 +14,8 @@ AS
 	Refer: Dot_Dep_CustomerInsMember_Ag_Cust_Main
 	    
 	Revisions:    
-	 - 20240404@Tacy: Deposit - Integrate Saba Coin Wallet [Redmine: #202273] 
+		 - 20240404@Tacy: Deposit - Integrate Saba Coin Wallet [Redmine: #202273] 
+		 - 20240604@Tacy: Change format Username [Redmine: #202273] 
 
 	Param's Explanation:    
 		* For TEST: Real Currency --> create shadow SBC
@@ -54,7 +55,8 @@ BEGIN
 			 @srecommend INT,     
 			 @site VARCHAR(30), 
 			 @Password VARCHAR(40),
-			 @pwdexpiry DATETIME
+			 @pwdexpiry DATETIME,
+			 @recommendUsername VARCHAR(30)
 	    
 	DECLARE	 @Aclosed bit,    
 			 @Asuspended bit,           
@@ -93,6 +95,7 @@ BEGIN
 		 @srecommend = ci.srecommend,    
 		 @mrecommend = ci.mrecommend,     
 		 @recommend = ci.custID,    
+		 @recommendUsername = ci.username,
 		 @currency = ci.currency,        
 		 @site    = c.site,    
 		 @Aclosed   = ci.closed,    
@@ -140,17 +143,20 @@ BEGIN
 		RETURN    
 	END    
 	    	
+	DECLARE @IsExistsUsername BIT = 0
+	
 	--Generate username    
 	BEGIN  
-		SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
+		SELECT @UserName = @recommendUsername + 'S' + CAST(@RealCustID AS varchar(30))  
 		
-		IF @UserName = ''    
+		EXEC Acc_Dep_CustomerCheckExists @username = @UserName, @IsExists = @IsExistsUsername OUTPUT
+
+		--Check the unique username
+		IF @IsExistsUsername = 1
 		BEGIN    
-			SELECT @ErrMsg = 'Can not generate username.'    
-			,@ErrCode = 11    
-	    
+			SELECT @ErrMsg = 'The username is not available.', @ErrCode = 11    
 			RETURN    
-		END    
+		END 
 	END  
 
 	--Generate @UserName2    
@@ -158,13 +164,12 @@ BEGIN
 
 	SELECT @UserName2 = @site  + '$' + CAST(@RealCustID AS varchar(30))    
 
-	DECLARE @IsExistsUsername BIT
 	EXEC Acc_Dep_CustomerCheckExists @username = @UserName2, @IsExists = @IsExistsUsername OUTPUT
 
 	--Check the unique username2
 	IF @IsExistsUsername = 1
 	BEGIN    
-		SELECT @ErrMsg = 'The username is not available.', @ErrCode = 11    
+		SELECT @ErrMsg = 'The username is not available.', @ErrCode = 12    
 		RETURN    
 	END 
 	
