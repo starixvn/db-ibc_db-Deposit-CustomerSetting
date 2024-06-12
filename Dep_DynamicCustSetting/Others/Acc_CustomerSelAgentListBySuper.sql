@@ -1,7 +1,8 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_CustomerSelAgentListBySuper]
 	@SRecommend VARCHAR(MAX) = ''
+	,@UserID INT = NULL
 AS
 /*
 	Created: 
@@ -11,6 +12,8 @@ AS
 	Revisions:
 		- 20180718@Winnie: Get agentlist by super
 		- 20220713@Winfred: NAP/NAP LM - Enhance to adjust PT for all currencies [RedmineID:#174815]
+		- 202400522@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
+
 	Parameter's Explanation:
 	@SRecommend : List srecommend
 */
@@ -36,6 +39,9 @@ BEGIN
 		INNER JOIN #Super su ON c.srecommend = su.CustID
 		LEFT JOIN [SiteConfig].[dbo].[Operator] s WITH(NOLOCK) ON c.Custid=s.AgentID
 	WHERE roleid = 2 AND mrecommend NOT IN (SELECT CustID FROM #tblmrecommend)
+	AND (@UserID IS NULL
+		OR (@UserID IS NOT NULL AND c.currency NOT IN (SELECT ExchangeId FROM NAP_UserControl.dbo.f_GetDeniedCurrencyByUser(@UserID)))
+		)
 	ORDER BY c.srecommend,username
 END
 GO
