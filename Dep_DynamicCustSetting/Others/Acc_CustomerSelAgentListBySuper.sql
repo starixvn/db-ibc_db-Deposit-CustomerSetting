@@ -12,7 +12,8 @@ AS
 	Revisions:
 		- 20180718@Winnie: Get agentlist by super
 		- 20220713@Winfred: NAP/NAP LM - Enhance to adjust PT for all currencies [RedmineID:#174815]
-		- 202400522@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
+		- 20240522@Tacy: NAP - Permission controls on real currency [redmineID: #202523]
+		- 20240621@Tacy: NAP - Licensee DCS Setting - Enhancement to display OperatorID for sub-agent [redmineID: #206790]
 
 	Parameter's Explanation:
 	@SRecommend : List srecommend
@@ -34,7 +35,12 @@ BEGIN
 	WHERE roleid=3 and (username LIKE '%Acc%' OR username LIKE '%LocalBank%' 
 						OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%')		
 
-	SELECT username, c.CustID, c.srecommend, CASE WHEN s.AgentID IS NOT NULL THEN 1 ELSE 0 END AS IsSub
+	SELECT
+		username + CASE WHEN NULLIF(s.OperatorID,'') IS NOT NULL THEN ' ('+s.OperatorID+')'
+					WHEN ISNULL(s.OperatorID,'') = '' AND s.AgentID IS NOT NULL THEN ' (sub)'
+					ELSE '' 
+		END AS username
+		, c.CustID, c.srecommend
 	FROM customer c WITH (NOLOCK) 
 		INNER JOIN #Super su ON c.srecommend = su.CustID
 		LEFT JOIN [SiteConfig].[dbo].[Operator] s WITH(NOLOCK) ON c.Custid=s.AgentID
