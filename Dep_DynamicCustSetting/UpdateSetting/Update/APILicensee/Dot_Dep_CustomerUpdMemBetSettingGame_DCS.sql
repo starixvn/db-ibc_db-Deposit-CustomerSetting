@@ -25,6 +25,7 @@ AS
 	Revisions:  
 		- 20220415@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20240318@Johnson: Write log by service broker [redmine: #199517]
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -289,7 +290,8 @@ BEGIN
 			MaxBet = @MaxBet,
 			MaxPerMatch = @MaxPerMatch,
 			MaxPerNumber = @MaxPerNumber,
-			MaxPayoutPerMatch = @MaxPayoutPerMatch
+			MaxPayoutPerMatch = @MaxPayoutPerMatch,
+			RepUpdateTime = SYSDATETIME()
 		WHERE custid = @CustID 
 			AND SportType = @Sporttype 
 			AND BetType = @Bettype
@@ -298,22 +300,23 @@ BEGIN
 	IF @IsGroupedBetLimit = 1 --> Break group
 	BEGIN
 		--insert sporttype bettyp with input param
-		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT @custID,@SportType,@BetType,@MinBet,@MaxBet,@MaxPerMatch,@MaxPerNumber,@MaxPayoutPerMatch
+		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+		SELECT @custID,@SportType,@BetType,@MinBet,@MaxBet,@MaxPerMatch,@MaxPerNumber,@MaxPayoutPerMatch, SYSDATETIME()
 		WHERE NOT EXISTS(	SELECT TOP 1 1 
 							FROM Dep_CustBetSettingGame_Member m WITH(NOLOCK) 
 							WHERE m.CustID = @CustID AND m.SportType = @SportType AND m.BetType = @BetType)
 
 		--Insert remain setting from group setting
-		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT @custID,gr.SportType,gr.BetType,gr.MinBet,gr.MaxBet,gr.MaxPerMatch,gr.MaxPerNumber,gr.MaxPayoutPerMatch
+		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+		SELECT @custID,gr.SportType,gr.BetType,gr.MinBet,gr.MaxBet,gr.MaxPerMatch,gr.MaxPerNumber,gr.MaxPayoutPerMatch,SYSDATETIME()
 		FROM Dep_CustBetSettingGameGroup_Member gr WITH(NOLOCK)
 			LEFT JOIN Dep_CustBetSettingGame_Member m WITH(NOLOCK) ON m.CustID = @CustID AND gr.SportType = m.SportType AND gr.BetType = m.BetType
 		WHERE m.CustID IS NULL
 			AND gr.AgentID = @recommend
 
 		UPDATE Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK) 
-		SET IsGroupedBetLimit = 0  
+		SET IsGroupedBetLimit = 0,
+			RepUpdateTime = SYSDATETIME()
 		WHERE custid = @CustID
 			AND IsGroupedBetLimit = 1
 	END	

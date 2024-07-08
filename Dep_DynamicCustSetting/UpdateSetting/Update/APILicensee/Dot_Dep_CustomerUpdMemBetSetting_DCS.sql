@@ -1,7 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,svc_tig,svc_tig" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerUpdMemBetSetting_DCS]  
 	@CustID INT, --MemberID  
 	@Sporttype SMALLINT,
@@ -28,6 +25,7 @@ AS
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
 		- 20240320@Johnson: Write log by service broker [redmine: #199517]
+		- 20240705@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -199,7 +197,8 @@ BEGIN
 	UPDATE dbo.Dep_CustBetSetting_Member WITH (ROWLOCK, UPDLOCK)  
 	SET MinBet = @MinBet,  
 		MaxBet = @MaxBet,
-		MaxPerMatch = CASE WHEN @IsNotMaxPerMatch = 0 THEN @MaxPerMatch ELSE MaxPerMatch END 
+		MaxPerMatch = CASE WHEN @IsNotMaxPerMatch = 0 THEN @MaxPerMatch ELSE MaxPerMatch END,
+		RepUpdateTime = SYSDATETIME()
 	OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 		INTO @History_BetSetting(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 	WHERE custid = @CustID AND SportType = @Sporttype AND BetType = @Bettype
@@ -237,7 +236,7 @@ BEGIN
 							FOR XML PATH ('r'), ROOT ('root')
 						)
 
-		EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+		EXECUTE Acc_Dep_CustSetting_BetLimitHistoryIns  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
 		IF @ErrMsg<>''
 			RETURN 

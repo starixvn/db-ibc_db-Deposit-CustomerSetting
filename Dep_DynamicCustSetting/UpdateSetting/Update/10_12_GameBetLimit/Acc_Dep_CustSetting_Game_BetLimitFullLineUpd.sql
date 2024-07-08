@@ -21,7 +21,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
-		
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 
 	@BetLimit	= '<ROOT>
@@ -172,6 +172,7 @@ BEGIN
 		, main.maxpermatch	= tmp.MaxperMatch
 		, main.MaxPerNumber		= tmp.MaxPerNumber
 		, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+		, main.RepUpdateTime = SYSDATETIME()
 	FROM dbo.Dep_CustBetSettingGame_Agent main WITH(ROWLOCK)
 		INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 	WHERE (
@@ -190,8 +191,8 @@ BEGIN
 	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
 	FROM #tempSMA t
 
-	INSERT INTO Dep_CustBetSettingGameGroup_Member(AgentID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-	SELECT @AgentID,t.SportType,t.BetType,t.MinBet,t.MaxBet,t.MaxPerMatch,t.MaxPerNumber,t.MaxPayoutPerMatch
+	INSERT INTO Dep_CustBetSettingGameGroup_Member(AgentID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+	SELECT @AgentID,t.SportType,t.BetType,t.MinBet,t.MaxBet,t.MaxPerMatch,t.MaxPerNumber,t.MaxPayoutPerMatch,SYSDATETIME()
 	FROM @NewBetLimitTbl t
 		LEFT JOIN Dep_CustBetSettingGameGroup_Member m WITH(NOLOCK) ON  m.AgentID = @AgentID AND t.SportType= m.SportType AND t.BetType = m.BetType
 	WHERE m.AgentID IS NULL
@@ -204,6 +205,7 @@ BEGIN
 			, main.maxpermatch	= tmp.MaxperMatch
 			, main.MaxPerNumber		= tmp.MaxPerNumber
 			, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+			, main.RepUpdateTime = SYSDATETIME()
 		FROM dbo.Dep_CustBetSettingGameGroup_Member main WITH(ROWLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE (
@@ -215,7 +217,7 @@ BEGIN
 				)
 				AND main.AgentID = @AgentID
 
-		EXEC Acc_Dep_DynamicCustSetting_02				
+		EXEC Acc_Dep_CustSetting_BetLimitDownlineUpd				
 				@CustID=@AgentID,
 				@BetLimit=@BetLimit,
 				@Mode = 'GameBetLimit'
@@ -226,8 +228,8 @@ BEGIN
 					INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
 					WHERE SettingType IN(10,12) AND CustID=@SuperID)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT @SuperID,ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT @SuperID,ProductSettingID,SYSDATETIME()
 			FROM Dep_ProductSetting WITH(NOLOCK)
 			WHERE ProductID=@ProductID AND SettingType IN (10,12)
 		END			

@@ -18,7 +18,7 @@ AS
 	Revision:
 		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
-
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -186,6 +186,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+			, main.RepUpdateTime = SYSDATETIME()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 			INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 		FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
@@ -218,7 +219,7 @@ BEGIN
 							 FOR XML PATH ('r'), ROOT ('root')
 							)
 
-			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+			EXECUTE Acc_Dep_CustSetting_BetLimitHistoryIns  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
 			IF @ErrMsg<>''
 				RETURN
@@ -242,6 +243,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+			, main.RepUpdateTime = SYSDATETIME()
 		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID

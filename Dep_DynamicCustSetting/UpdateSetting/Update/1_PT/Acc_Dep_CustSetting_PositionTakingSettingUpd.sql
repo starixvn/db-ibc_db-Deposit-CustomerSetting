@@ -22,6 +22,7 @@ AS
 		- 202202220@Elodie: Apply DCS for SB [RedmineID: #167898] 
 		- 20220912@Eden: Licensee DCS - Missing ProductSettingID for SB [RedmineID: #177703] 
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -104,11 +105,12 @@ BEGIN
 				   SuperPT  = t.PT
 				  ,MasterPT = t.PT
 				  ,AgentPT  = t.PT
+				  ,RepUpdateTime = SYSDATETIME()
 			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
 				INNER JOIN #tmpPT t ON a.CustID=@SuperID AND a.SportType=t.SportType AND a.BetType=t.BetType AND t.IsLive = a.IsLive
 		 ELSE
-			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-			SELECT @SuperID,SportType,BetType,IsLive,PT,PT,PT
+			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
+			SELECT @SuperID,SportType,BetType,IsLive,PT,PT,PT,SYSDATETIME()
 			FROM #tmpPT t
 
 		IF EXISTS (SELECT 1 
@@ -120,18 +122,19 @@ BEGIN
 					 SuperPT  = 0
 					,MasterPT = PT
 					,AgentPT  = 0
+					,RepUpdateTime = SYSDATETIME()
 			FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
 				INNER JOIN #tmpPT t ON a.CustID=@mrecommend AND a.SportType=t.SportType AND a.BetType=t.BetType AND t.IsLive = a.IsLive
 		 ELSE
-			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-			SELECT @mrecommend,SportType,BetType,IsLive,0,PT,0
+			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
+			SELECT @mrecommend,SportType,BetType,IsLive,0,PT,0,SYSDATETIME()
 			FROM #tmpPT t
 
 		IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)
 						WHERE ProductSettingID=@ProductSettingID AND CustID=@SuperID)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT @SuperID,ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT @SuperID,ProductSettingID,SYSDATETIME()
 			FROM Dep_ProductSetting WITH(NOLOCK)
 			WHERE ProductID=@ProductID AND SettingType = 1
 		END			
@@ -146,14 +149,15 @@ BEGIN
 		SET SuperPT   = 0
 			,MasterPT = 0
 			,AgentPT  = PT
+			,RepUpdateTime = SYSDATETIME()
 		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN #tmpPT t ON a.CustID=@AgentID AND a.SportType=t.SportType AND a.BetType=t.BetType AND t.IsLive = a.IsLive
 	ELSE
-		INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-		SELECT @AgentID,SportType,BetType,IsLive,0,0,PT
+		INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
+		SELECT @AgentID,SportType,BetType,IsLive,0,0,PT,SYSDATETIME()
 		FROM #tmpPT t
 	
-	EXEC Acc_Dep_DynamicCustSetting_01	
+	EXEC Acc_Dep_CustSetting_PTDownlineUpd	
 		@CustID=@AgentID,
 		@PT=@PT,					
 		@ProductID=@ProductID	
