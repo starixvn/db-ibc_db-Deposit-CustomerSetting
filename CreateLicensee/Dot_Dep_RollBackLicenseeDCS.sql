@@ -15,6 +15,7 @@ AS
 	- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20240506@Tacy: SiteBuilder - Integrate Exchange [Redmine: #201239]
+	- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 
  Param's Explanation: 
  */
@@ -25,35 +26,51 @@ BEGIN
 	FROM STRING_SPLIT(@ListCustID, ',') AS ss
 	WHERE value <> ''
 
-	DELETE d 
+	DELETE d
+	OUTPUT DELETED.custid, SYSDATETIME()
+	INTO Dep_CustProductStatus_Del_InHouse(custid,RepUpdateTime)
 	FROM Dep_CustProductStatus d WITH (ROWLOCK) 
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID
 
 	DELETE d
+	OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, DELETED.IsLive, SYSDATETIME()
+	INTO Dep_CustPTSetting_Agent_Del_InHouse(custid,SportType,BetType,IsLive,RepUpdateTime)
 	FROM Dep_CustPTSetting_Agent d WITH (ROWLOCK) 
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID
 
 	DELETE d
+	OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+	INTO Dep_CustBetSetting_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)	
 	FROM Dep_CustBetSetting_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 
 	DELETE d
+	OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, DELETED.IsLive, SYSDATETIME()
+	INTO Dep_CustPTGroupSetting_Member_Del_InHouse(AgentID,SportType,BetType,IsLive,RepUpdateTime)		
 	FROM Dep_CustPTGroupSetting_Member d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.AgentID=t.CustID	
 
 	DELETE d
+	OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+	INTO Dep_CustStakeLevel_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)		
 	FROM Dep_CustStakeLevel_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 	
 	DELETE d
+	OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+	INTO Dep_CustDiscountGroupSetting_Member_Del_InHouse(AgentID,SportType,BetType,RepUpdateTime)		
 	FROM Dep_CustDiscountGroupSetting_Member d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.AgentID=t.CustID	
 	
 	DELETE d
+	OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+	INTO Dep_CustDiscountSetting_Member_Del_InHouse(custid,SportType,BetType,RepUpdateTime)			
 	FROM Dep_CustDiscountSetting_Member d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID	
 
 	DELETE d
+	OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+	INTO Dep_CustBetSettingGame_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)			
 	FROM Dep_CustBetSettingGame_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID
 	
@@ -70,6 +87,8 @@ BEGIN
 
 	IF @SiteID IS NOT NULL
 		DELETE d
+		OUTPUT DELETED.StakeLevelID, SYSDATETIME()
+		INTO Dep_StakeLevel_Del_InHouse(StakeLevelID,RepUpdateTime)
 		FROM Dep_StakeLevel d WITH(ROWLOCK)
 		WHERE d.SiteID = @SiteID
 END

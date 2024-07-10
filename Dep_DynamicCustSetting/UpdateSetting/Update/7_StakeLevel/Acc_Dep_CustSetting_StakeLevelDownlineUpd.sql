@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_05]
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelDownlineUpd]
 		@StakeLevel	VARCHAR(MAX)
 	,   @ActionID	TINYINT =1
 AS

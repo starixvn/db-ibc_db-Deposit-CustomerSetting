@@ -33,7 +33,7 @@ AS
 	 - 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	 - 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	 - 20240404@Tacy: Return - Error when add Subsidiary [Redmine: #202273] 
-	 
+	 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -249,7 +249,7 @@ BEGIN
 	---------------------------------------------------------------------------------    
 	/*HELEN-CUSTOMER SETTING DCS DEPOSIT-START*/
 	DECLARE @DCSErrCode INT = 0
-	EXEC dbo.Acc_Dep_DynamicCustSetting_00
+	EXEC dbo.Acc_Dep_CustSetting_AllInfoIns
 			@CustID				= @CustID
 			, @SuperID			= @srecommend
 			, @MasterID			= @mrecommend

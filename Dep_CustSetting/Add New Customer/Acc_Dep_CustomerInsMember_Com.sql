@@ -50,7 +50,8 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20230303@Johnson: Return Basketball VR to its original state [redmine: #184339]
-
+	- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -126,14 +127,18 @@ BEGIN
 
 	IF @@ERROR <> 0
 	BEGIN
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM Dep_CustSuper WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, SYSDATETIME()
+		INTO Dep_CustSuper_Del_InHouse(custid,RepUpdateTime)
+		WHERE custId = @CustID
+		
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
  		RETURN 
 	END  
 	
 	--Insert ProductSetting of SportBooks for Super:
-	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
-	SELECT @custid, p.ProductSettingID
+	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID,RepUpdateTime)
+	SELECT @custid, p.ProductSettingID, SYSDATETIME()
 	FROM dbo.Dep_ProductSetting p WITH (NOLOCK) 
 		LEFT JOIN Dep_LicenseeProductSetting dp WITH(NOLOCK) 
 			ON p.ProductSettingID = dp.ProductSettingID 
@@ -145,9 +150,16 @@ BEGIN
 	IF @@ERROR <> 0
 	BEGIN
 		DELETE VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
+		DELETE FROM Dep_CustSuper WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, SYSDATETIME()
+		INTO Dep_CustSuper_Del_InHouse(custid,RepUpdateTime)
+		WHERE custId = @CustID
+		
 		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		DELETE Dep_LicenseeProductSetting WITH(ROWLOCK) WHERE custid = @custid
+		DELETE Dep_LicenseeProductSetting WITH(ROWLOCK) 
+		OUTPUT DELETED.custid, DELETED.ProductSettingID,SYSDATETIME()
+		INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+		WHERE custid = @custid
 		RETURN 
 	END  
 

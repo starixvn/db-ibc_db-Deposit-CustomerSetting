@@ -39,6 +39,7 @@ AS
 		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
 		- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
 		- 20240503@Johnson: Restructure Commission [redmine:#179088]
+		- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	Param's Explanation:
 	- @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
                     EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username"
@@ -156,28 +157,29 @@ BEGIN
 					CROSS APPLY dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus) f
 					WHERE d.ProductSettingID=f.ProductSettingID AND CustID=@CustID)
 		BEGIN
-			EXEC Acc_Dep_DynamicCustSetting_03
+			EXEC Acc_Dep_CustSetting_StatusDownlineUpd
 					@ActionID=1,
 					@CustID=@CustID,
 					@bitmapOrder=@bitmapOrder,					
 					@IsDisabled=@IsDisabled,
 					@IsDisabledDownline=@IsDisabledDownLine
+					
 			IF NOT EXISTS(SELECT  1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@CustID AND ProductSettingID=@ProductSettingID )
-				INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-				VALUES( @CustID,@ProductSettingID)
+				INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+				VALUES( @CustID,@ProductSettingID,SYSDATETIME())
 				
 		END
 		ELSE
 		BEGIN
-			EXEC Acc_Dep_DynamicCustSetting_03
+			EXEC Acc_Dep_CustSetting_StatusDownlineUpd
 					@ActionID=0,
 					@CustID=@CustID,
 					@bitmapOrder=@bitmapOrder,					
 					@IsDisabled=@IsDisabled,
 					@IsDisabledDownline=@IsDisabledDownLine
 			
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			VALUES( @CustID,@ProductSettingID)
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			VALUES( @CustID,@ProductSettingID,SYSDATETIME())
 		END
 	END
 	ELSE IF @RoleID=2
@@ -192,16 +194,19 @@ BEGIN
 					INSERT INTO dbo.Dep_CustProductStatus
 						(CustID
 						,bitmapIsDisabled
-						,bitmapIsHidden )
+						,bitmapIsHidden
+						,RepUpdateTime)
 		   			SELECT	@srecommend
 					, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,@IsDisabled) AS bitmapIsDisabled
 					, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden						
+					, SYSDATETIME()
 				END
 				ELSE
 				BEGIN
 				UPDATE d
 					SET d.bitmapIsDisabled=dbo.f_GenerateProductStatus (d.bitmapIsDisabled, @bitmapOrder,@IsDisabled) ,
-						d.bitmapIsHidden=dbo.f_GenerateProductStatus (d.bitmapIsHidden, @bitmapOrder,0) 
+						d.bitmapIsHidden=dbo.f_GenerateProductStatus (d.bitmapIsHidden, @bitmapOrder,0) ,
+						RepUpdateTime = SYSDATETIME()
 					FROM Dep_CustProductStatus d WITH(ROWLOCK) 
 					WHERE d.custid=@srecommend 
 				END
@@ -211,15 +216,18 @@ BEGIN
 					INSERT INTO dbo.Dep_CustProductStatus
 						(CustID
 						,bitmapIsDisabled
-						,bitmapIsHidden )
+						,bitmapIsHidden
+						,RepUpdateTime)
 		   			SELECT	@mrecommend
 					, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,@IsDisabled) AS bitmapIsDisabled
 					, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden						
+					, SYSDATETIME()
 				END
 				ELSE
 				UPDATE d
 					SET d.bitmapIsDisabled=dbo.f_GenerateProductStatus (d.bitmapIsDisabled, @bitmapOrder,@IsDisabled) ,
-						d.bitmapIsHidden=dbo.f_GenerateProductStatus (d.bitmapIsHidden, @bitmapOrder,0) 
+						d.bitmapIsHidden=dbo.f_GenerateProductStatus (d.bitmapIsHidden, @bitmapOrder,0) ,
+						RepUpdateTime = SYSDATETIME()
 					FROM Dep_CustProductStatus d WITH(ROWLOCK) 
 					WHERE d.custid=@mrecommend	
 			END
@@ -229,15 +237,18 @@ BEGIN
 				INSERT INTO dbo.Dep_CustProductStatus
 					(CustID
 					,bitmapIsDisabled
-					,bitmapIsHidden )
+					,bitmapIsHidden
+					,RepUpdateTime)
 		   		SELECT	@CustID
 				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,@IsDisabled) AS bitmapIsDisabled
 				, dbo.f_GenerateProductStatus (0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF, @bitmapOrder,0)  AS bitmapIsHidden						
+				, SYSDATETIME()
 			END
 			ELSE
 			UPDATE d
 				SET d.bitmapIsDisabled=dbo.f_GenerateProductStatus (d.bitmapIsDisabled, @bitmapOrder,@IsDisabled) ,
-					d.bitmapIsHidden=dbo.f_GenerateProductStatus (d.bitmapIsHidden, @bitmapOrder,0) 
+					d.bitmapIsHidden=dbo.f_GenerateProductStatus (d.bitmapIsHidden, @bitmapOrder,0),
+					RepUpdateTime = SYSDATETIME()
 				FROM Dep_CustProductStatus d WITH(ROWLOCK) 
 				WHERE d.custid=@CustID	
 
@@ -258,7 +269,7 @@ BEGIN
 			ELSE
 				SELECT @OldIsDisabledDownLine = 0	
 		END		
-			EXEC Acc_Dep_DynamicCustSetting_03
+			EXEC Acc_Dep_CustSetting_StatusDownlineUpd
 				@ActionID=2,
 				@CustID=@CustID,
 				@bitmapOrder=@bitmapOrder,					
@@ -266,8 +277,8 @@ BEGIN
 				@IsDisabledDownline=@IsDisabledDownLine
 
 		IF NOT EXISTS(SELECT 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@srecommend AND ProductSettingID=@ProductSettingID )
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			VALUES( @srecommend,@ProductSettingID)	
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			VALUES( @srecommend,@ProductSettingID,SYSDATETIME())	
 		
 	END
 	
@@ -278,7 +289,7 @@ BEGIN
 				AND SettingType = 9)
 		AND @IsDisabled = 0 
 	BEGIN
-		EXEC Acc_Dep_DynamicCustSetting_06
+		EXEC Acc_Dep_CustSetting_CommDownlineUpd
 			@CustID			= @CustID
 			,@RoleId		= @RoleID
 			,@srecommend	= @srecommend

@@ -16,7 +16,7 @@ AS
 	Revisions:    
 		 - 20240404@Tacy: Deposit - Integrate Saba Coin Wallet [Redmine: #202273] 
 		 - 20240604@Tacy: Change format Username [Redmine: #202273] 
-
+		 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:    
 		* For TEST: Real Currency --> create shadow SBC
 					UUS Currency  --> create shadow YNG
@@ -204,7 +204,7 @@ BEGIN
 	---------------------------------------------------------------------------------    
 	--SportBook Setting
 	DECLARE @DCSErrCode INT = 0
-	EXEC dbo.Acc_Dep_DynamicCustSetting_00
+	EXEC dbo.Acc_Dep_CustSetting_AllInfoIns
 			@CustID				= @CustID
 			, @SuperID			= @srecommend
 			, @MasterID			= @mrecommend
