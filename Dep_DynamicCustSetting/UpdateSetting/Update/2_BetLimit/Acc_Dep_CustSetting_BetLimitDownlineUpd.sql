@@ -103,7 +103,7 @@ BEGIN
 					UPDATE main
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
-						, main.maxpermatch	= tmp.MaxperMatch,
+						, main.maxpermatch	= tmp.MaxperMatch
 						, main.RepUpdateTime = SYSDATETIME()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 						INTO @History_BetLimitTbl

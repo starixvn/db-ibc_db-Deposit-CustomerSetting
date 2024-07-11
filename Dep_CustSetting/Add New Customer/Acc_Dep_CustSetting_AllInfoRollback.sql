@@ -2,6 +2,7 @@
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_AllInfoRollback] 
 	@CustID INT,
 	@RoleID	TINYINT
+AS
 /*
 	Created: 20240710@Johnson
 	Task : Insert All Settings Into DCS Structure
@@ -70,6 +71,30 @@ BEGIN
 		OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
 		INTO Dep_CustBetSettingGame_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)		
 		WHERE CustID = @CustID
+		
+		DELETE FROM Dep_CustDiscountSetting_Agent
+		OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+		INTO Dep_CustDiscountSetting_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)		
+		WHERE CustID = @CustID
+		
+		IF @roleid = 2
+		BEGIN
+			DELETE FROM Dep_CustDiscountGroupSetting_Member
+			OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+			INTO Dep_CustDiscountGroupSetting_Member_Del_InHouse(AgentID,SportType,BetType,RepUpdateTime)		
+			WHERE AgentID = @CustID
+			
+			DELETE FROM Dep_CustPTGroupSetting_Member
+			OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, DELETED.IsLive, SYSDATETIME()
+			INTO Dep_CustPTGroupSetting_Member_Del_InHouse(AgentID,SportType,BetType,IsLive,RepUpdateTime)		
+			WHERE AgentID = @CustID
+			
+			DELETE FROM Dep_CustBetSettingGameGroup_Member
+			OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+			INTO Dep_CustBetSettingGameGroup_Member_Del_InHouse(AgentID,SportType,BetType,RepUpdateTime)		
+			WHERE AgentID = @CustID
+		END
+		
 	END
 	
 	DELETE FROM Dep_CustProductStatus 
