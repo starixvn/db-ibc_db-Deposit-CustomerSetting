@@ -219,7 +219,7 @@ BEGIN
 							 FOR XML PATH ('r'), ROOT ('root')
 							)
 
-			EXECUTE Acc_Dep_CustSetting_BetLimitHistoryIns  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
 			IF @ErrMsg<>''
 				RETURN

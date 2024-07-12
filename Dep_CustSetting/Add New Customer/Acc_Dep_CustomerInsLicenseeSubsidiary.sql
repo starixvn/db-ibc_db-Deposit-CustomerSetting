@@ -73,7 +73,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 			
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -85,7 +85,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -112,7 +112,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -139,7 +139,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -166,7 +166,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -183,7 +183,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -203,7 +203,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -216,7 +216,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
@@ -228,7 +228,7 @@ BEGIN
 
 	IF @@ERROR<>0
 	BEGIN
-		EXEC Acc_Dep_CustSetting_AllInfoRollback @CustID = @CustID, @roleid = @roleid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
 		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'

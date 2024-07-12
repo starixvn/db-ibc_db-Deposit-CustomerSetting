@@ -186,7 +186,7 @@ BEGIN
 	
 	IF @ApplyExistedMem=1
 	BEGIN
-		EXEC Acc_Dep_CustSetting_BetLimitDownlineUpd				
+		EXEC Acc_Dep_DynamicCustSetting_02				
 				@CustID=@AgentID,
 				@BetLimit=@BetLimit,
 				@settingType = 11

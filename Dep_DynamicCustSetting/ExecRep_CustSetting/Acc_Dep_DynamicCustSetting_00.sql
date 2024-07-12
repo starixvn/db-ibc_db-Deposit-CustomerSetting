@@ -35,40 +35,10 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105] 
 		- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
+		- 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 */
 BEGIN
 	SELECT @ErrCode = 0
-		
-	IF(dbo.f_CheckRepTable('Dep_CustSettingMode') = 0
-		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Member') = 0
-		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0
-		OR dbo.f_CheckRepTable('Dep_CustPTGroupSetting_Member') = 0
-		
-		OR dbo.f_CheckRepTable('Dep_ProductSetting') = 0
-		OR dbo.f_CheckRepTable('Dep_ProductSettingDetail') = 0
-		OR dbo.f_CheckRepTable('Dep_LicenseeProductSetting') = 0 
-		
-		OR dbo.f_CheckRepTable('Dep_ProductStatusProfile') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustProductStatus') = 0 
-	
-		OR dbo.f_CheckRepTable('GameGroup') = 0
-		OR dbo.f_CheckRepTable('Dep_StakeLevel') = 0
-		OR dbo.f_CheckRepTable('Dep_CustStakeLevel_Agent') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 0 
-		
-		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustBetLimit_Special') = 0 
-
-		OR dbo.f_CheckRepTable('Dep_CustBetSettingGame_Agent') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustBetSettingGame_Member') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustBetSettingGameGroup_Member') = 0
-		
-		OR dbo.f_CheckRepTable('Dep_CustDiscountSetting_Member') = 0 
-		OR dbo.f_CheckRepTable('Dep_CustDiscountGroupSetting_Member') = 0 
-
-	   )
-		RETURN
 		
 	CREATE TABLE #ProductSettingDetail(
 		[SettingType] [tinyint] NOT NULL,
@@ -84,14 +54,14 @@ BEGIN
 	BEGIN
 		IF @ProductID IS NULL AND @ProductProfileList = '' -- ALL DCS PRODUCT
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID)
-			SELECT @CustID,ps.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID,RepUpdateTime)
+			SELECT @CustID,ps.ProductSettingID,SYSDATETIME()
 			FROM dbo.Dep_ProductSetting ps WITH (NOLOCK)
 		END
 		ELSE
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID)
-			SELECT @CustID, t.value
+			INSERT INTO Dep_LicenseeProductSetting (CustID,ProductSettingID,RepUpdateTime)
+			SELECT @CustID, t.value,SYSDATETIME()
 			FROM STRING_SPLIT(@ProductProfileList,',') t
 			WHERE t.value <> ''
 		END 
@@ -126,6 +96,7 @@ BEGIN
 					   ,[SuperPT]
 					   ,[MasterPT]
 					   ,[AgentPT]
+					   ,RepUpdateTime
 					  )
 					SELECT 
 						@CustID
@@ -133,6 +104,7 @@ BEGIN
 						,dtl.BetType
 						,dtl.IsLive
 						,@SuperPT,@SuperPT,@SuperPT
+						,SYSDATETIME()
 					FROM #ProductSettingDetail dtl WITH (NOLOCK)
 					WHERE dtl.SettingType = 1 
 						
@@ -149,6 +121,7 @@ BEGIN
 				   ,[SuperPT]
 				   ,[MasterPT]
 				   ,[AgentPT]
+				   ,RepUpdateTime
 				   )
 				SELECT 
 					@CustID
@@ -156,6 +129,7 @@ BEGIN
 					,BetType
 					,IsLive
 					,0,SuperPT,0
+					,SYSDATETIME()
 				FROM Dep_CustPTSetting_Agent  (NOLOCK)
 				WHERE CustID = @SuperID 
 				
@@ -170,10 +144,12 @@ BEGIN
 					   ,[SuperPT]
 					   ,[MasterPT]
 					   ,[AgentPT]
+					   ,RepUpdateTime
 					   )
 				SELECT @custid,SportType,BetType
 						,IsLive
 						,0,0,MasterPT
+						,SYSDATETIME()
 				FROM Dep_CustPTSetting_Agent WITH (NOLOCK) 
 				WHERE custid = @MasterID
 					
@@ -189,9 +165,10 @@ BEGIN
 				   ,[SuperPT]
 				   ,[MasterPT]
 				   ,[AgentPT]
+				   ,RepUpdateTime
 				   )
 				SELECT @AgentID,acs.SportType,acs.BetType,acs.IsLive,
-					   0,0,acs.AgentPT
+					   0,0,acs.AgentPT,SYSDATETIME()
 				FROM dbo.Dep_CustPTSetting_Agent acs WITH (NOLOCK)
 				WHERE acs.custid = @AgentID
 					AND NOT EXISTS (SELECT TOP 1 1 FROM dbo.Dep_CustPTGroupSetting_Member WITH (NOLOCK) WHERE AgentID = @AgentID AND SportType = acs.SportType AND BetType = acs.BetType)
@@ -219,37 +196,26 @@ BEGIN
 							,[SuperPT]
 							,[MasterPT]
 							,[AgentPT]
+							,RepUpdateTime
 							)
 					SELECT @CustID,pta.SportType,pta.BetType,IsLive,
-						0,0,pta.AgentPT
+						0,0,pta.AgentPT,SYSDATETIME()
 					FROM Dep_CustPTSetting_Agent pta WITH (NOLOCK)
 					WHERE pta.CustID = @AgentID
 					
-					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedPT)
-					SELECT @CustID,0
+					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedPT,RepUpdateTime)
+					SELECT @CustID,0,SYSDATETIME()
 				END
 				ELSE
 				BEGIN
-					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedPT)
-					SELECT @CustID,1
+					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedPT,RepUpdateTime)
+					SELECT @CustID,1,SYSDATETIME()
 				END
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 1
-			
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
-			END
-			
-			RETURN
-			
+			SELECT @ErrCode = 1						
+			RETURN			
 		END CATCH
 		
 	END
@@ -312,16 +278,17 @@ BEGIN
 						
 				END
 			
-				INSERT INTO [dbo].[Dep_CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden)
+				INSERT INTO [dbo].[Dep_CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,RepUpdateTime)
 				SELECT	@CustID
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
 						, (select bitmap from dbo.f_GenerateProductStatus_multiple (0, CONVERT(VARCHAR(MAX),@xmlStrHidden)))
+						, SYSDATETIME()
 		
 			END
 			ELSE IF @RoleID IN (3,2,1)
 			BEGIN
-				INSERT INTO [dbo].[Dep_CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden)
-				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden
+				INSERT INTO [dbo].[Dep_CustProductStatus]([CustID],bitmapIsDisabled,bitmapIsHidden,RepUpdateTime)
+				SELECT @CustID, cs.bitmapIsDisabled,cs.bitmapIsHidden, SYSDATETIME()
 				FROM [dbo].[Dep_CustProductStatus] cs WITH (NOLOCK)
 				WHERE cs.CustID = @UplineID
 				
@@ -329,20 +296,7 @@ BEGIN
 			
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 4
-
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
-			END
-		
-			DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-		
+			SELECT @ErrCode = 4		
 			RETURN
 		END CATCH
 	END
@@ -359,8 +313,8 @@ BEGIN
 		BEGIN TRY
 			IF @RoleID = 4
 			BEGIN
-				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList)
-				SELECT @CustID,T.SportType,t.BetType AS Bettype, STUFF(T1.StakeLevelList,1,1,'') AS StakeLevelListID
+				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+				SELECT @CustID,T.SportType,t.BetType AS Bettype, STUFF(T1.StakeLevelList,1,1,'') AS StakeLevelListID, SYSDATETIME()
 				FROM #ProductSettingDetail T
 					CROSS APPLY ( SELECT ',' + CONVERT(VARCHAR(20),sl.StakeLevelID)
 									FROM GameGroup G (NOLOCK) 
@@ -373,16 +327,16 @@ BEGIN
 			END
 			ELSE IF @RoleID IN (2,3)
 			BEGIN
-				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList)
-				SELECT @CustID,CS.SportType,CS.BetType,StakeLevelList
+				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+				SELECT @CustID,CS.SportType,CS.BetType,StakeLevelList, SYSDATETIME()
 				FROM Dep_CustStakeLevel_Agent CS WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail T ON CS.SportType = T.SportType AND CS.BetType = T.BetType AND T.SettingType = 8
 				WHERE CustID = @UplineID
 			END
 			ELSE IF @RoleID = 1
 			BEGIN
-				INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList)
-				SELECT @CustID,T.SportType,T.BetType,temp.list
+				INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+				SELECT @CustID,T.SportType,T.BetType,temp.list, SYSDATETIME()
 				FROM #ProductSettingDetail T
 					CROSS APPLY (SELECT TOP 1 ss.value list
 								FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH (NOLOCK)
@@ -399,21 +353,7 @@ BEGIN
 		
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 8
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_Agent WHERE CustID = @CustID
-			END
-		
-			DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-			
+			SELECT @ErrCode = 8						
 			RETURN
 		END CATCH	
 	END
@@ -425,8 +365,8 @@ BEGIN
 		BEGIN TRY
 			IF @RoleID = 4
 			BEGIN
-				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList)
-				SELECT @CustID,T.SportType,t.BetType AS Bettype, STUFF(T1.StakeLevelList,1,1,'') AS StakeLevelListID
+				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+				SELECT @CustID,T.SportType,t.BetType AS Bettype, STUFF(T1.StakeLevelList,1,1,'') AS StakeLevelListID, SYSDATETIME()
 				FROM #ProductSettingDetail T
 					CROSS APPLY ( SELECT ',' + CONVERT(VARCHAR(20),sl.StakeLevelID)
 								  FROM Dep_StakeLevel SL (NOLOCK) 
@@ -439,16 +379,16 @@ BEGIN
 			END
 			ELSE IF @RoleID IN (2,3)
 			BEGIN
-				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList)
-				SELECT @CustID,CS.SportType,CS.BetType,StakeLevelList
+				INSERT INTO Dep_CustStakeLevel_Agent (CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+				SELECT @CustID,CS.SportType,CS.BetType,StakeLevelList, SYSDATETIME()
 				FROM Dep_CustStakeLevel_Agent CS WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail T ON CS.SportType = T.SportType AND CS.BetType = T.BetType AND T.SettingType = 7
 				WHERE CustID = @UplineID
 			END
 			ELSE IF @RoleID = 1
 			BEGIN
-				INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList)
-				SELECT @CustID,T.SportType,T.BetType,temp.list
+				INSERT INTO Dep_CustStakeLevel_member (CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+				SELECT @CustID,T.SportType,T.BetType,temp.list, SYSDATETIME()
 				FROM #ProductSettingDetail T
 					CROSS APPLY (SELECT TOP 1 ss.value list
 								FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH (NOLOCK)
@@ -464,21 +404,7 @@ BEGIN
 		
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 9
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_Agent WHERE CustID = @CustID
-			END
-		
-			DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-			
+			SELECT @ErrCode = 9			
 			RETURN
 		END CATCH	
 	END	
@@ -510,12 +436,14 @@ BEGIN
 					,[BetType]
 					,[MinBet]
 					,[MaxBet]
-					,[MaxPerMatch])
+					,[MaxPerMatch]
+					,RepUpdateTime)
 					   	
 				SELECT @CustID, smcs.SportType,smcs.BetType,
 							ISNULL(t.MinBet,smcs.MinBet),
 							ISNULL(t.MaxBet,smcs.MaxBet),
-							ISNULL(t.MaxPerMatch,smcs.MaxPerMatch)
+							ISNULL(t.MaxPerMatch,smcs.MaxPerMatch),
+							SYSDATETIME()
 				FROM dbo.Dep_CustBetSetting_Agent smcs WITH (NOLOCK)
 					INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType IN(2,11)
 					LEFT JOIN #tmpDep_CustBetLimit_Special t ON smcs.SportType=t.Sporttype AND smcs.BetType=t.Bettype
@@ -531,6 +459,7 @@ BEGIN
 					,[MaxPerMatch]
 					,MaxPerNumber
 					,MaxPayoutPerMatch
+					,RepUpdateTime
 					)
 				SELECT @AgentID
 					,acs.SportType
@@ -540,6 +469,7 @@ BEGIN
 					,[MaxPerMatch]
 					,MaxPerNumber
 					,MaxPayoutPerMatch
+					,SYSDATETIME()
 				FROM dbo.[Dep_CustBetSettingGame_Agent] acs WITH (NOLOCK)
 				WHERE acs.custid = @AgentID
 					AND NOT EXISTS (SELECT TOP 1 1 
@@ -570,52 +500,36 @@ BEGIN
 						,[MaxPerMatch]
 						,MaxPerNumber
 						,MaxPayoutPerMatch
+						,RepUpdateTime
 						)
 					SELECT @CustID, smcs.SportType,smcs.BetType,
 								ISNULL(t.MinBet,smcs.MinBet),
 								ISNULL(t.MaxBet,smcs.MaxBet),
 								ISNULL(t.MaxPerMatch,smcs.MaxPerMatch),
 								ISNULL(t.MaxPerNumber,smcs.MaxPerNumber),
-								ISNULL(t.MaxPayoutPerMatch,smcs.MaxPayoutPerMatch)
+								ISNULL(t.MaxPayoutPerMatch,smcs.MaxPayoutPerMatch),
+								SYSDATETIME()
 					FROM dbo.Dep_CustBetSettingGame_Agent smcs WITH (NOLOCK)
 						INNER JOIN #ProductSettingDetail s ON s.SportType = smcs.SportType AND s.Bettype = smcs.BetType AND S.SettingType IN(10,12)
 						LEFT JOIN #tmpDep_CustBetLimit_Special t ON smcs.SportType=t.Sporttype AND smcs.BetType=t.Bettype
 					WHERE smcs.custid = @AgentID	
 					
 					UPDATE dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
-					SET IsGroupedBetLimit = 0
+					SET IsGroupedBetLimit = 0,
+						RepUpdateTime = SYSDATETIME()
 					WHERE CustID = @CustID
 				END
 				ELSE
 				BEGIN
 					UPDATE dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
-					SET IsGroupedBetLimit = 1
+					SET IsGroupedBetLimit = 1,
+						RepUpdateTime = SYSDATETIME()
 					WHERE CustID = @CustID
 				END
 			END
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 2
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSettingGame_Member WHERE CustID = @CustID
-				
-				
-			END
-			ELSE --SMA
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSetting_Agent WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSettingGame_Agent WHERE CustID = @CustID
-			END
-		
-			DELETE FROM Dep_CustProductStatus WHERE CustID = @CustID
-			
+			SELECT @ErrCode = 2			
 			RETURN
 			
 		END CATCH
@@ -635,6 +549,7 @@ BEGIN
 				,AgentDiscount
 				,MasterDiscount
 				,SuperDiscount
+				,RepUpdateTime
 			)
 			SELECT @AgentID
 				,ps.sporttype
@@ -643,6 +558,7 @@ BEGIN
 				,ISNULL(ag.Discount,0) AS AgentDiscount
 				,ISNULL(mag.Discount,0) AS MasterDiscount
 				,ISNULL(sag.Discount,0) AS SuperDiscount
+				,SYSDATETIME()
 			FROM #ProductSettingDetail ps
 				OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @AgentID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) ag
 				OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @MasterID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) mag
@@ -683,6 +599,7 @@ BEGIN
 					,AgentDiscount
 					,MasterDiscount
 					,SuperDiscount
+					,RepUpdateTime
 				)
 				SELECT @CustID
 					,ps.sporttype
@@ -691,6 +608,7 @@ BEGIN
 					,ISNULL(ag.Discount,0) AS AgentDiscount
 					,ISNULL(mag.Discount,0) AS MasterDiscount
 					,ISNULL(sag.Discount,0) AS SuperDiscount
+					,SYSDATETIME()
 				FROM #ProductSettingDetail ps
 					OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @AgentID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) ag
 					OUTER APPLY( SELECT a.Discount FROM Dep_CustDiscountSetting_Agent a WITH(NOLOCK) WHERE a.CustID = @MasterID AND a.SportType = ps.SportType AND a.BetType = ps.BetType) mag
@@ -700,13 +618,14 @@ BEGIN
 				IF EXISTS(SELECT 1 FROM dbo.Dep_CustSettingMode WITH(NOLOCK) WHERE custID = @CustID)
 				BEGIN
 					UPDATE dbo.Dep_CustSettingMode WITH(UPDLOCK,ROWLOCK)
-					SET isGroupedComm = 0
+					SET isGroupedComm = 0,
+						RepUpdateTime = SYSDATETIME()
 					WHERE CustID = @CustID AND isGroupedComm <> 0
 				END
 				ELSE
 				BEGIN
-					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedComm)
-					SELECT @CustID,0
+					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedComm,RepUpdateTime)
+					SELECT @CustID,0,SYSDATETIME()
 				END
 			END
 			ELSE 
@@ -715,27 +634,19 @@ BEGIN
 				IF EXISTS(SELECT 1 FROM dbo.Dep_CustSettingMode WITH(NOLOCK) WHERE custID = @CustID)
 				BEGIN
 					UPDATE dbo.Dep_CustSettingMode WITH(UPDLOCK,ROWLOCK)
-					SET isGroupedComm = 1
+					SET isGroupedComm = 1,
+						RepUpdateTime = SYSDATETIME()
 					WHERE CustID = @CustID AND isGroupedComm = 0
 				END
 				ELSE
 				BEGIN
-					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedComm)
-					SELECT @CustID,1
+					INSERT INTO dbo.Dep_CustSettingMode(CustID,IsGroupedComm,RepUpdateTime)
+					SELECT @CustID,1,SYSDATETIME ()
 				END
 			END	
 		END TRY
 		BEGIN CATCH
-			SELECT @ErrCode = 9
-			IF @RoleID = 1
-			BEGIN
-				DELETE FROM Dep_CustPTSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustSettingMode WHERE CustID = @CustID
-				DELETE FROM Dep_CustStakeLevel_member WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSetting_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustBetSettingGame_Member WHERE CustID = @CustID
-				DELETE FROM Dep_CustDiscountSetting_Member WHERE CustID = @CustID			
-			END
+			SELECT @ErrCode = 9			
 		END CATCH
 	END
 	

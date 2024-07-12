@@ -225,7 +225,7 @@ BEGIN
 										);
 					
 			-- Correct downlines via ExecRep
-			EXECUTE	Acc_Dep_CustSetting_StakeLevelDownlineUpd
+			EXECUTE	Acc_Dep_DynamicCustSetting_05
 						@StakeLevel	= @StakeLevel
 					,	@ActionID	= @ActionID
 			IF	@StopRow = @MaxRow 

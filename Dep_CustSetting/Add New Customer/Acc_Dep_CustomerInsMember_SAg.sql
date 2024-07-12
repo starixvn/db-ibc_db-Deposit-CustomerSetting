@@ -47,7 +47,7 @@ Revisions:
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]	
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
-
+	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 Param's Explanation:
 • @ErrCode:
     = 0: Create master successfully.
@@ -143,13 +143,10 @@ BEGIN
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
 
-	--Error Occurs
-	IF @ErrCode <> 0
-		return 
-
-	IF (@@ERROR <> 0)
+	--Error Occurs	
+	IF (@ErrCode > 0)
 	BEGIN 	
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
 		RETURN 
 	END  
 	 

@@ -20,6 +20,7 @@ AS
 	Revisions:
 		- 20210709@Johnson: initial sp [redmine:#157702]
 		- 20211101@Johnson: exclude BA members when update odds group[redmine:#163957]
+		- 20240715@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 */
 BEGIN	
@@ -59,9 +60,10 @@ BEGIN
 	WHEN MATCHED THEN UPDATE SET target.ugroup = @oddsGroup,
 							 target.IsActive = @IsActive,
 							 target.UserID = @UserID,
-							 target.UpdatedDate = GETDATE()
-	WHEN NOT MATCHED THEN INSERT(AgentID,Ugroup,UpdatedDate,UserId,IsActive)
-							VALUES(source.custid,@oddsGroup,GETDATE(),@userid,@IsActive);
+							 target.UpdatedDate = GETDATE(),
+							 target.RepUpdateTime = SYSDATETIME()
+	WHEN NOT MATCHED THEN INSERT(AgentID,Ugroup,UpdatedDate,UserId,IsActive,RepUpdateTime)
+							VALUES(source.custid,@oddsGroup,GETDATE(),@userid,@IsActive,SYSDATETIME());
 	
 	IF @ApplyExistingMember = 1
 	BEGIN

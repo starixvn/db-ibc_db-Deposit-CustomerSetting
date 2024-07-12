@@ -82,7 +82,7 @@ AS
 	- 20240719@Tacy: SiteBuilder - Quick Fix [f_Dep_CustSetting_SportBetTypeSettingSelect] - @SettingStatus=0 [Redmineid: #208203]
 	- 20240506@Tacy: Integrate Exchange [Redmine: #201239]
 	- 20240812@Tacy: Correct writelog [Redmine: #201239]
-
+	- 20240712@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @SpecialPlatform : SpecialPlatfrom=2 => Jollysports licensee
@@ -1333,7 +1333,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'PT Sportbooks.' +@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1379,7 +1384,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS Sportbooks sub licensees.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1424,7 +1434,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Status DCS Number Games.'
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1462,7 +1477,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'PT Number Games.' +@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1508,7 +1528,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS Number Games sub licensees.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1552,7 +1577,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Status DCS Keno.'
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1588,7 +1618,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'PT DCS Keno.' +@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1632,7 +1667,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS Keno sub licensees.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1676,7 +1716,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Status DCS Virtual Sports.'
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1712,7 +1757,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'PT DCS Virtual Sports.' +@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1756,7 +1806,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS Virtual Sports sub licensees.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1802,7 +1857,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Status DCS ' + @ProductName + '.' +@Super
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -1865,7 +1925,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Status DCS ' + @ProductName + '.' +@Super
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -1902,7 +1967,12 @@ BEGIN
 						IF @ErrCode<>0
 						BEGIN
 							SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName + '.' +@Super
-							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+							
+							DELETE FROM Dep_LicenseeProductSetting 
+							OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+							INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+							WHERE CustID=@SuperID
+							
 							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -1949,7 +2019,12 @@ BEGIN
 							IF @ErrCode<>0
 							BEGIN
 								SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName + ' sub licensees.'
-								DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+								
+								DELETE FROM Dep_LicenseeProductSetting 
+								OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+								INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+								WHERE CustID=@SuperID
+								
 								SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2104,7 +2179,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Status DCS Table Game.'
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -2140,7 +2220,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'PT DCS Table Game.' +@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -2185,7 +2270,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS Table Game sub licensees.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 													CAST(@MasterID AS VARCHAR(20))+','+
 													CAST(@AgentID AS VARCHAR(20))+','+
@@ -2238,7 +2328,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Status DCS '+ @ProductName +'.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2274,7 +2369,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName+'.' +@Agent
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2319,7 +2419,12 @@ BEGIN
 						IF @ErrCode<>0
 						BEGIN
 							SELECT @ErrMsg = @ErrMsg + 'PT DCS '+ @ProductName +' sub licensees.'
-							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+							
+							DELETE FROM Dep_LicenseeProductSetting 
+							OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+							INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+							WHERE CustID=@SuperID
+							
 							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2390,7 +2495,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Status DCS '+ @ProductName +'.'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2426,7 +2536,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'PT DCS ' + @ProductName+'.' +@Agent
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2471,7 +2586,12 @@ BEGIN
 						IF @ErrCode<>0
 						BEGIN
 							SELECT @ErrMsg = @ErrMsg + 'PT DCS '+ @ProductName +' sub licensees.'
-							DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+							
+							DELETE FROM Dep_LicenseeProductSetting 
+							OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+							INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+							WHERE CustID=@SuperID
+							
 							SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 														CAST(@MasterID AS VARCHAR(20))+','+
 														CAST(@AgentID AS VARCHAR(20))+','+
@@ -2562,7 +2682,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Betlimit DCS'+@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2600,7 +2725,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Betlimit DCS Sub licensees'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2642,7 +2772,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Betlimit DCS'+@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2680,7 +2815,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Betlimit DCS Sub licensees'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2717,7 +2857,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'New Betlimit DCS'+@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2753,7 +2898,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'New Betlimit DCS Sub licensees'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2800,7 +2950,12 @@ BEGIN
 				IF @ErrCode<>0
 				BEGIN
 					SELECT @ErrMsg = @ErrMsg + 'Stake Level DCS'+@Agent
-					DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+					
+					DELETE FROM Dep_LicenseeProductSetting 
+					OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+					INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+					WHERE CustID=@SuperID
+					
 					SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+
@@ -2843,7 +2998,12 @@ BEGIN
 					IF @ErrCode<>0
 					BEGIN
 						SELECT @ErrMsg = @ErrMsg + 'Stake Level DCS Sub licensees'
-						DELETE FROM Dep_LicenseeProductSetting WHERE CustID=@SuperID
+						
+						DELETE FROM Dep_LicenseeProductSetting 
+						OUTPUT DELETED.custid, DELETED.ProductSettingID, SYSDATETIME()
+						INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+						WHERE CustID=@SuperID
+						
 						SELECT @ListCustIDRollBack= CAST(@SuperID AS VARCHAR(20))+','+
 												CAST(@MasterID AS VARCHAR(20))+','+
 												CAST(@AgentID AS VARCHAR(20))+','+

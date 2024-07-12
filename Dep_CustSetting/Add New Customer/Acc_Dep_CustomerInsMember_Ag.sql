@@ -49,6 +49,7 @@ Revisions:
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.
@@ -136,7 +137,10 @@ BEGIN
 		@ErrMsg = @ErrMsg OUTPUT
 
 	if @ErrCode <> 0
+	BEGIN
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @custid = @custid
 		return
+	END	
 
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
@@ -172,5 +176,4 @@ BEGIN
 		@TrackingValue = @LogSPData,
 		@duration = @duration
 END
-GO
 GO

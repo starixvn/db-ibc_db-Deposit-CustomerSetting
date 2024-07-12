@@ -119,20 +119,12 @@ BEGIN
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
-	--Error occurs
-	IF @ErrCode <> 0
-		RETURN
-
+	
 	----------------------CHECK Error
 
-	IF @@ERROR <> 0
-	BEGIN
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) 
-		OUTPUT DELETED.custid, SYSDATETIME()
-		INTO Dep_CustSuper_Del_InHouse(custid,RepUpdateTime)
-		WHERE custId = @CustID
-		
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+	IF @@ERROR > 0
+	BEGIN		
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
  		RETURN 
 	END  
 	
@@ -148,18 +140,8 @@ BEGIN
 		AND dp.CustID IS NULL
 
 	IF @@ERROR <> 0
-	BEGIN
-		DELETE VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) 
-		OUTPUT DELETED.custid, SYSDATETIME()
-		INTO Dep_CustSuper_Del_InHouse(custid,RepUpdateTime)
-		WHERE custId = @CustID
-		
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		DELETE Dep_LicenseeProductSetting WITH(ROWLOCK) 
-		OUTPUT DELETED.custid, DELETED.ProductSettingID,SYSDATETIME()
-		INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
-		WHERE custid = @custid
+	BEGIN				
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID		
 		RETURN 
 	END  
 

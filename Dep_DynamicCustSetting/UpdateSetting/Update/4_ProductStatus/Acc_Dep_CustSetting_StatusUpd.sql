@@ -157,7 +157,7 @@ BEGIN
 					CROSS APPLY dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus) f
 					WHERE d.ProductSettingID=f.ProductSettingID AND CustID=@CustID)
 		BEGIN
-			EXEC Acc_Dep_CustSetting_StatusDownlineUpd
+			EXEC Acc_Dep_DynamicCustSetting_03
 					@ActionID=1,
 					@CustID=@CustID,
 					@bitmapOrder=@bitmapOrder,					
@@ -171,7 +171,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			EXEC Acc_Dep_CustSetting_StatusDownlineUpd
+			EXEC Acc_Dep_DynamicCustSetting_03
 					@ActionID=0,
 					@CustID=@CustID,
 					@bitmapOrder=@bitmapOrder,					
@@ -269,7 +269,7 @@ BEGIN
 			ELSE
 				SELECT @OldIsDisabledDownLine = 0	
 		END		
-			EXEC Acc_Dep_CustSetting_StatusDownlineUpd
+			EXEC Acc_Dep_DynamicCustSetting_03
 				@ActionID=2,
 				@CustID=@CustID,
 				@bitmapOrder=@bitmapOrder,					
@@ -289,7 +289,7 @@ BEGIN
 				AND SettingType = 9)
 		AND @IsDisabled = 0 
 	BEGIN
-		EXEC Acc_Dep_CustSetting_CommDownlineUpd
+		EXEC Acc_Dep_DynamicCustSetting_06
 			@CustID			= @CustID
 			,@RoleId		= @RoleID
 			,@srecommend	= @srecommend

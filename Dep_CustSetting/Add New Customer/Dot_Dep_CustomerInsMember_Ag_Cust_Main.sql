@@ -249,7 +249,7 @@ BEGIN
 	---------------------------------------------------------------------------------    
 	/*HELEN-CUSTOMER SETTING DCS DEPOSIT-START*/
 	DECLARE @DCSErrCode INT = 0
-	EXEC dbo.Acc_Dep_CustSetting_AllInfoIns
+	EXEC dbo.Acc_Dep_DynamicCustSetting_00
 			@CustID				= @CustID
 			, @SuperID			= @srecommend
 			, @MasterID			= @mrecommend
@@ -264,7 +264,7 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY     
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
-		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
+		 EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
 		 RETURN    
 	END
 	/*HELEN-CUSTOMER SETTING RENOVATION-END*/    

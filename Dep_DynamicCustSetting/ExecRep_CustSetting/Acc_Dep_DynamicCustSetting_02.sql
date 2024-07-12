@@ -18,7 +18,7 @@ AS
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220802@Tacy: Insert history of member bet setting for Number Game [RedmineID: 170739]
-
+		- 20240705@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	Param's Explanation:
 	-- @SettingType : 2 Bet Limit , 11  New Bet limit
 */
@@ -43,7 +43,7 @@ BEGIN
 			@Threshold	INT, 
 			@StopRow INT			
 	SET @StartRow=1
-	SET @Threshold=3000
+	SET @Threshold=2000
 
 	DECLARE @NewBetLimitTbl TABLE (
 		SportType			INT
@@ -68,13 +68,7 @@ BEGIN
 	DECLARE @iDoc INT
 
 	IF @Mode = 'BetLimit'
-	BEGIN
-		IF(dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0
-			OR dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0	
-			OR dbo.f_CheckRepTable('Customer') = 0	
-		   )
-		RETURN
-	
+	BEGIN		
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @BetLimit
 
@@ -116,6 +110,7 @@ BEGIN
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
 						, main.maxpermatch	= tmp.MaxperMatch
+						, main.RepUpdateTime = SYSDATETIME()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 						INTO @History_BetLimitTbl
 					FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK)
@@ -160,8 +155,8 @@ BEGIN
 					INNER JOIN Dep_CustBetSetting_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 						WHERE ID >= @StartRow AND ID <= @StopRow
 
-					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-					SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
+					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,RepUpdateTime)
+					SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,SYSDATETIME()
 					FROM #tempMem t
 					WHERE ID >= @StartRow AND ID <= @StopRow
 		
@@ -214,6 +209,7 @@ BEGIN
 					UPDATE main
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
+						, main.RepUpdateTime = SYSDATETIME()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 						INTO @History_BetLimitTbl
 					FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK)
@@ -257,8 +253,8 @@ BEGIN
 					INNER JOIN Dep_CustBetSetting_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 						WHERE ID >= @StartRow AND ID <= @StopRow
 
-					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet)
-					SELECT CustID,SportType,BetType,MinBet,MaxBet
+					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,RepUpdateTime)
+					SELECT CustID,SportType,BetType,MinBet,MaxBet,SYSDATETIME()
 					FROM #tempMem t
 					WHERE ID >= @StartRow AND ID <= @StopRow
 		
@@ -278,13 +274,6 @@ BEGIN
 	END
 	ELSE IF @Mode = 'GameBetLimit'
 	BEGIN
-		IF(dbo.f_CheckRepTable('Dep_CustBetSettingGame_Agent') = 0
-			OR dbo.f_CheckRepTable('Dep_CustBetSettingGame_Member') = 0	
-			OR dbo.f_CheckRepTable('Dep_CustBetSettingGameGroup_Member') = 0	
-			OR dbo.f_CheckRepTable('Customer') = 0	
-		   )
-			RETURN
-	
 		EXEC sp_xml_preparedocument @iDoc OUTPUT
 			, @BetLimit
 
@@ -331,6 +320,7 @@ BEGIN
 					, main.maxpermatch	= tmp.MaxperMatch
 					, main.MaxPerNumber		= tmp.MaxPerNumber
 					, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+					, main.RepUpdateTime = SYSDATETIME()
 				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 					INTO @History_BetLimitTbl
 				FROM dbo.Dep_CustBetSettingGame_Member main WITH(ROWLOCK)
@@ -379,8 +369,8 @@ BEGIN
 				INNER JOIN Dep_CustBetSettingGame_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 					WHERE ID >= @StartRow AND ID <= @StopRow
 
-				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-				SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+				SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,SYSDATETIME()
 				FROM #tempMem t
 				WHERE ID >= @StartRow AND ID <= @StopRow
 	
