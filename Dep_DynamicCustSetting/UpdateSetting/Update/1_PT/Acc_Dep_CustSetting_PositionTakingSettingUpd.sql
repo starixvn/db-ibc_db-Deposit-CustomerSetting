@@ -23,6 +23,7 @@ AS
 		- 20220912@Eden: Licensee DCS - Missing ProductSettingID for SB [RedmineID: #177703] 
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20240716@Winfred: NAP - Enhance performance when updating PT for all products and betlimit for SB  [redmine:#206698]
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -50,6 +51,7 @@ BEGIN
 	
 	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
 		 @custid = @AgentID
+		,@IsSetting = 2
 		,@Language = 'E'
 		,@ErrMsg = @ErrMsg OUTPUT
 		,@ErrCode= @ErrCode OUTPUT

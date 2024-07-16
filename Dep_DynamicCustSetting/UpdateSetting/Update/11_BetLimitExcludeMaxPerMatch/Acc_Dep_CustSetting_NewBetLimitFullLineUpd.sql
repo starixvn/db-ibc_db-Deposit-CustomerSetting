@@ -19,6 +19,7 @@ AS
 		- 20220218@Winfred: Licesee Management-Licensee setting - LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
 		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
 		- 20240705@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20240716@Winfred: NAP - Enhance performance when updating PT for all products and betlimit for SB  [redmine:#206698]
 	Param's Explanation:
 	� @BetLimit:
 		<ROOT>
@@ -73,9 +74,8 @@ BEGIN
 
 	IF @ApplyExistedMem=1
 	BEGIN	
-		EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
-		 @custid = @AgentID
-		,@IsSetting = 1
+		EXEC Acc_Dep_CustomerSelCheckAllowedDownlines 
+		@custid = @AgentID
 		,@Language = 'E'
 		,@ErrMsg = @ErrMsg OUTPUT
 		,@ErrCode= @ErrCode OUTPUT
