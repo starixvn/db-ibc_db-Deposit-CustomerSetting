@@ -1,7 +1,8 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170615@Helen
@@ -11,7 +12,7 @@ AS
 
 	Revision:
 		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
-		
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		
 	Param's Explanation:
 
@@ -26,7 +27,7 @@ BEGIN
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT  ps.ProductID ProductID, SportType,Bettype,IsLive
-	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,2) AS ps
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,2,@SettingStatus) AS ps
 	
 	IF EXISTS (SELECT 1 FROM #SportBettypeFilter)
 	BEGIN

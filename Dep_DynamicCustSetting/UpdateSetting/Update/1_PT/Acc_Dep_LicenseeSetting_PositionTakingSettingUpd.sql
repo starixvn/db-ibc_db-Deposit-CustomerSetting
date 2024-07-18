@@ -14,6 +14,7 @@ AS
 	Original:
 	Revision:		
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
+		- 20240429@Tacy: correct Log [RedmineID: #201239]
 	Param's Explanation:
 		*@UserName : Name user LA update
 		@InputPT:
@@ -243,7 +244,7 @@ BEGIN
 				SELECT	@SuperID						AS '@SuperID',
 						@creator						AS '@UserID',				
 						@IP								AS '@IP',				
-						@UserID							AS '@AdmiID',
+						@UserID							AS '@AdminID',
 						@UserName						AS '@AdminName',
 						(
 							SELECT DISTINCT	stb.ProductID			AS '@ProductID',
@@ -310,7 +311,7 @@ BEGIN
 				SELECT	@SuperID						AS '@SuperID',
 						@creator						AS '@UserID',				
 						@IP								AS '@IP',			
-						@UserID							AS '@AdmiID',
+						@UserID							AS '@AdminID',
 						@UserName						AS '@AdminName',
 						(
 							SELECT DISTINCT cs.ProductID			AS '@ProductID',

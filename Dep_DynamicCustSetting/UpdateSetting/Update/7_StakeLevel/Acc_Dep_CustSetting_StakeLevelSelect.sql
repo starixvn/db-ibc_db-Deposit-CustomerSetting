@@ -1,7 +1,8 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelSelect] 
 	@ProductID		INT
 	,@CustID		INT		
+	,@SettingStatus TINYINT = 0
 	,@ErrCode		INT				= 0		OUTPUT	
 	,@ErrMsg		NVARCHAR(200)	= ''	OUTPUT
 AS
@@ -14,6 +15,7 @@ AS
 		- 20171107@Winnie: select status of DCS product RedmineID:#85133
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 	Param's Explanation:
 */
 BEGIN
@@ -35,11 +37,12 @@ FROM Dep_CustStakeLevel_Agent a WITH(NOLOCK)
 WHERE a.CustID=@CustID
 
 INSERT INTO  #tempStakeLevel (Sporttype , Bettype,StakeLevelID ,StakeLevelName ,IsChecked ,MinStake,MaxStake)
-SELECT s.SportType,s.BetType,l.StakeLevelID, l.MinLabel+' - '+l.MaxLabel,0,l.MinStake,l.MaxStake
+SELECT ft.SportType,ft.BetType,l.StakeLevelID, l.MinLabel+' - '+l.MaxLabel,0,l.MinStake,l.MaxStake
 FROM Dep_StakeLevel l WITH(NOLOCK) 
-	INNER JOIN	Dep_ProductSettingDetail s WITH(NOLOCK) ON l.GameTypeID=s.BetType
-	INNER JOIN	Dep_ProductSetting  d WITH(NOLOCK) ON s.ProductSettingID=d.ProductSettingID
-WHERE l.ExchangeID=@Currency AND l.SiteID=@SiteID AND d.ProductID=@ProductID AND d.SettingType=7
+	CROSS APPLY (SELECT f.SportType, f.Bettype
+				FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,7,@SettingStatus) f
+				WHERE l.GameTypeID=f.BetType)ft
+WHERE l.ExchangeID=@Currency AND l.SiteID=@SiteID
 	
 IF(@@ROWCOUNT=0)
 BEGIN

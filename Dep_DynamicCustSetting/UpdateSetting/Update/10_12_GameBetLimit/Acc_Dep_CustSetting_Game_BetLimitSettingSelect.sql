@@ -1,8 +1,9 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_Game_BetLimitSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT
 	, @SettingType TINYINT = 10
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20220301@Eden
@@ -12,6 +13,7 @@ AS
 
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		
 	Param's Explanation:
 
@@ -24,7 +26,7 @@ BEGIN
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT  ps.ProductID ProductID, SportType,Bettype,IsLive
-	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType) AS ps
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus) AS ps
 	
 	IF EXISTS (SELECT 1 FROM #SportBettypeFilter)
 	BEGIN

@@ -1,9 +1,10 @@
-/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB,DBACC-bodb02" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSettingSelect] 
 	  @CustID		INT
 	, @ProductID	TINYINT = NULL
 	, @SettingType	SMALLINT = 4
 	, @RoleID INT = NULL
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20160405@Helen
@@ -14,6 +15,7 @@ AS
 	Revisions:
 		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 		- 20220615@Tacy: Hot modify Select Into statement to avoid dump [Redmine: #174035]
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 
 	Param's Explanation:
 	• @CustID: 
@@ -32,7 +34,7 @@ BEGIN
 	
 	INSERT INTO #SportBettypeFilter (ProductID, sporttype, bettype, IsLive, SettingType)
 	SELECT @ProductID AS ProductID,SportType,Bettype,IsLive, SettingType 
-	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType)
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,@SettingType,@SettingStatus)
 	
 	IF @RoleID = 4
 	BEGIN

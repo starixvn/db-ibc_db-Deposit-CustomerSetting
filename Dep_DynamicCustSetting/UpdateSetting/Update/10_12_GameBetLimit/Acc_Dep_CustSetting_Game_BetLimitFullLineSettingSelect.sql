@@ -1,8 +1,9 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE dbo.Acc_Dep_CustSetting_Game_BetLimitFullLineSettingSelect 
 	  @SuperID		INT
 	, @ProductID	TINYINT	
 	, @AgentID		INT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20220301@Eden
@@ -13,6 +14,7 @@ AS
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220921@Winfred: Licensee DCS setting - HF Get multiple bet limit . [Feature #178013]
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		
 	Param's Explanation:
 		
@@ -23,9 +25,10 @@ BEGIN
 
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT DISTINCT ProductID, SportType,Bettype,IsLive 
-	FROM Dep_ProductSetting ps WITH(NOLOCK) 
-		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-	WHERE ProductID = @ProductID AND SettingType IN (10,12)	
+	FROM f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,10,@SettingStatus)
+	UNION
+	SELECT DISTINCT ProductID, SportType,Bettype,IsLive 
+	FROM f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,12,@SettingStatus)
 
 	IF @AgentID = 0
 	BEGIN

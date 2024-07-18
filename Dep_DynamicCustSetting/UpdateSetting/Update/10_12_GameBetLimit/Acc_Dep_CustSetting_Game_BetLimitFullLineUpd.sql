@@ -1,10 +1,11 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_Game_BetLimitFullLineUpd] 
 	  @SuperID				INT
 	, @BetLimit				VARCHAR(MAX)
 	, @AgentID				INT
 	, @IsAgentOnly			BIT
 	, @ApplyExistedMem		BIT=0	
+	, @SettingStatus		TINYINT = 0
 	, @UserID				INT
 	, @IP					VARCHAR(50)		= ''
 	, @ErrCode				INT				= 0		OUTPUT	
@@ -19,6 +20,7 @@ AS
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		
 	Param's Explanation:
 
@@ -137,17 +139,14 @@ BEGIN
 	-- Select ProductID and SettingLevel
 	SELECT @ProductID = ProductID, @SettingLevel = SettingLevel
 	FROM (	SELECT TOP 1 ps.ProductID, ps.SettingLevel
-			FROM Dep_ProductSettingDetail AS psd WITH(NOLOCK)
-				INNER JOIN	@NewBetLimitTbl AS tmp ON	psd.SportType = tmp.SportType AND	psd.BetType = tmp.BetType
-				INNER JOIN Dep_ProductSetting AS ps WITH (NOLOCK) ON ps.ProductSettingID = psd.ProductSettingID
-			WHERE	ps.ProductID IS NOT NULL
-				AND	ps.SettingLevel IS NOT NULL
-				AND ps.SettingType IN(10,12)	-- Bet Limit
+			FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(NULL,NULL,@SettingStatus) ps
+				INNER JOIN	@NewBetLimitTbl AS tmp ON ps.SportType = tmp.SportType AND	ps.BetType = tmp.BetType
+			WHERE ps.SettingType IN (10,12)	-- Bet Limit
 		 ) iq
 
-	IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
-								INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
-							WHERE ProductID=@ProductID AND SettingType IN(10,12) AND CustID=@SuperID)
+	IF NOT EXISTS (SELECT 1 FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus) ps								
+					INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
+					WHERE SettingType IN(10,12) AND CustID=@SuperID)
 		SELECT @IsAgentOnly=0
 
 	IF(@IsAgentOnly=0)
@@ -223,8 +222,9 @@ BEGIN
 
 	END
 
-	IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
-									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType IN(10,12) AND CustID=@SuperID)
+	IF NOT EXISTS (SELECT 1 FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus) ps								
+					INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
+					WHERE SettingType IN(10,12) AND CustID=@SuperID)
 		BEGIN
 			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
 			SELECT @SuperID,ProductSettingID

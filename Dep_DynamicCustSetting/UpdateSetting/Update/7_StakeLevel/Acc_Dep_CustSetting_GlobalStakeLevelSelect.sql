@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 USE CustDB
 GO
 /****** Object:  StoredProcedure dbo.Acc_3rdProductSelSuperStatus    Script Date: 10/09/2017 09:05:41 ******/
@@ -11,6 +11,7 @@ GO
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_GlobalStakeLevelSelect] 
 	@ProductID		INT
 	,@CustID		INT		
+	,@SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20171107@Winne
@@ -19,6 +20,7 @@ AS
 	Original:
 	Revisions:
 		- 20171107@Winnie: select GlobalStakeLevel of DCS product RedmineID:#85133
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 	Param's Explanation:
 */
 BEGIN
@@ -31,11 +33,9 @@ FROM Dep_CustSuper d WITH(NOLOCK)
 	INNER JOIN Site s WITH(NOLOCK)	 ON d.site=s.site
 WHERE d.custid=@CustID
 
-SELECT DISTINCT ISNULL(l.StakeLevelID,0) AS StakeLevelID, s.BetType AS GameTypeID,ISNULL(l.MinLabel,0) AS MinLabel,ISNULL(l.MaxLabel,0) AS MaxLabel,ISNULL(l.MinStake,0) AS MinStake,ISNULL(l.MaxStake,0) AS MaxStake
-FROM Dep_ProductSettingDetail s WITH(NOLOCK) 
-	INNER JOIN	Dep_ProductSetting  d WITH(NOLOCK) ON s.ProductSettingID=d.ProductSettingID
-	LEFT JOIN Dep_StakeLevel l ON l.GameTypeID=s.BetType AND l.ExchangeID=@Currency AND l.SiteID=@SiteID
-WHERE  d.ProductID=@ProductID AND d.SettingType=7
-ORDER BY s.BetType ASC
+SELECT DISTINCT ISNULL(l.StakeLevelID,0) AS StakeLevelID, ft.BetType AS GameTypeID,ISNULL(l.MinLabel,0) AS MinLabel,ISNULL(l.MaxLabel,0) AS MaxLabel,ISNULL(l.MinStake,0) AS MinStake,ISNULL(l.MaxStake,0) AS MaxStake
+FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,7,@SettingStatus) ft
+	LEFT JOIN Dep_StakeLevel l ON l.GameTypeID=ft.BetType AND l.ExchangeID=@Currency AND l.SiteID=@SiteID
+ORDER BY ft.BetType ASC
 END
 GO
