@@ -8,6 +8,7 @@ ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_06]
 	,@ProductID		INT 
 	,@SportType		INT
 	,@BetType		INT
+	,@ChargeComm	DECIMAL(9,8) = 0
 	,@Mode			VARCHAR(50) = 'UpdateComm'
 )
 AS
@@ -25,17 +26,21 @@ AS
 BEGIN
 	IF(dbo.f_CheckRepTable('Dep_CustDiscountGroupSetting_Member') = 0
 		OR dbo.f_CheckRepTable('Dep_CustDiscountSetting_Member') = 0	
+		OR dbo.f_CheckRepTable('Dep_CustDiscountSetting_Agent') = 0	
 		OR dbo.f_CheckRepTable('Dep_LicenseeProductSetting') = 0	
 		OR dbo.f_CheckRepTable('Dep_CustSettingMode') = 0	
 		OR dbo.f_CheckRepTable('Dep_ProductSetting') = 0	
 		OR dbo.f_CheckRepTable('Customer') = 0	
 	   )
 		RETURN
-	
+
+	DECLARE	@SettingLevel		TINYINT
+				,@ProductSettingID	INT
+
 	IF @Mode = 'UpdateComm'
 	BEGIN
-		DECLARE	@SettingLevel		TINYINT
-				,@ProductSettingID	INT
+		--DECLARE	@SettingLevel		TINYINT
+		--		,@ProductSettingID	INT
 
 		CREATE TABLE #tmpMember (CustID INT, CustSettingModeType INT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
 		DECLARE @BatchMember TABLE (CustID INT, CustSettingModeType INT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
@@ -312,7 +317,60 @@ BEGIN
 			END
 		END
 		DROP TABLE #tmpMember
-	END		
+	END	
+	ELSE IF @Mode = 'UpdateChargeComm'
+	BEGIN
+		CREATE TABLE #tmpSMA (CustID INT PRIMARY KEY)
+
+		SELECT @ProductSettingID = ProductSettingID 
+		FROM Dep_ProductSetting WITH(NOLOCK) 
+		WHERE ProductID=@ProductID 
+			AND SettingType = 5	
+
+		IF @RoleId=4
+		BEGIN
+			INSERT INTO #tmpSMA (CustID)
+			SELECT c.custid
+			FROM Customer c WITH (NOLOCK)
+			WHERE roleid IN (2,3,4)
+				AND srecommend=@srecommend
+				AND mrecommend NOT IN (SELECT custid 
+								FROM dbo.custinfo WITH(NOLOCK)
+								WHERE srecommend=@srecommend 
+									AND (username LIKE '%Acc%' OR username LIKE '%LocalBank%' OR username LIKE '%AFF%' OR username LIKE 'AB88'+'CAS%')
+									AND roleid=3
+							)
+		END
+		IF @RoleId=2
+		BEGIN
+			INSERT INTO #tmpSMA (CustID)
+			SELECT @srecommend UNION ALL
+			SELECT @mrecommend UNION ALL
+			SELECT @CustID 
+		END
+
+		--Setting Charge Comm: Dep_CustDiscountSetting_Agent
+		UPDATE dcs
+		SET dcs.Discount=@ChargeComm
+		FROM #tmpSMA t 
+		INNER JOIN Dep_CustDiscountSetting_Agent dcs WITH (ROWLOCK, UPDLOCK)
+			ON t.CustID=dcs.CustID AND dcs.SportType=@SportType AND dcs.BetType=@BetType
+
+		INSERT INTO Dep_CustDiscountSetting_Agent (CustID, SportType, BetType, Discount)
+		SELECT t.CustID, @SportType, @BetType, @ChargeComm
+		FROM #tmpSMA t 
+		LEFT JOIN Dep_CustDiscountSetting_Agent dcs WITH (NOLOCK)
+			ON t.CustID=dcs.CustID AND dcs.SportType=@SportType AND dcs.BetType=@BetType
+		WHERE dcs.CustID IS NULL
+		
+		--Insert ProductSetting for Super: Dep_LicenseeProductSetting
+		IF NOT EXISTS (SELECT TOP (1) 1 FROM dbo.Dep_LicenseeProductSetting WITH (NOLOCK) WHERE CustID = @srecommend AND ProductSettingID = @ProductSettingID)
+			INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
+			VALUES(@srecommend, @ProductSettingID)
+
+		DROP TABLE #tmpSMA
+
+	END
 END	
 GO
 

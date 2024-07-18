@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusUpd] @ProductID INT
 	, @CustID				INT
 	, @IsDisabled			BIT
@@ -6,11 +6,13 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusUpd] @ProductID INT
 	, @SportType			INT
 	, @BetType				INT
 	, @bitmapOrder			TINYINT
+	, @SettingStatus		TINYINT = 0
 	, @UserID				INT
 	, @IP					VARCHAR(40)	
 	, @IsAgentOnly			BIT
 	, @ErrCode				INT				= 0		OUTPUT	
 	, @ErrMsg				NVARCHAR(200)	= ''	OUTPUT
+	, @InsBalExceptCustList	VARCHAR(200)	= ''	OUTPUT
 AS
 /*
 	Created: 20171009@Winne
@@ -35,8 +37,11 @@ AS
 		- 20230804@Tacy: LAP - Offer Player Commission to Yeebet, MG-RNG [redmine: #192203]
 		- 20230808@Tacy: LAP - Offer Player Commission to VS3 (new) [redmine: #192203]
 		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
+		- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
 
 	Param's Explanation:
+	- @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
+                    EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username"
 */
 BEGIN
 	SET NOCOUNT ON
@@ -85,8 +90,49 @@ BEGIN
 	FROM dbo.Dep_CustProductStatus stt WITH (NOLOCK)	
 	WHERE stt.CustID = @CustID	
 		
-	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType=4	
+	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID 
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 
+	--Exchange: Create dummy account
+	IF @ProductID=31 AND @IsDisabled=0
+	BEGIN
+		DECLARE @DumCustID INT, @DummyAgentID INT
+			,@DumUserName VARCHAR(30), @Pass VARCHAR(100)
+
+		SELECT	@DummyAgentID = c.recommend		--same line: Dummy3rd account
+			,@DumUserName = c.site + 'Exchange' + CONVERT(VARCHAR,e.currency)
+			,@Pass = '8058095B7DDB08A608811097E5DB8D'
+		FROM Customer c WITH (NOLOCK)
+		INNER JOIN exchange e WITH (NOLOCK) ON e.ExchangeId=c.currency
+		WHERE srecommend=@srecommend AND roleid=1
+			AND username=c.site + 'Dummy3rd' + CONVERT(VARCHAR,e.currency)
+			
+		DECLARE @IsExists BIT   
+		EXEC [Acc_Dep_CustomerCheckExists] @username = @DumUserName, @IsExists = @IsExists OUTPUT	
+			
+		IF @IsExists=0
+		BEGIN
+			EXEC Acc_Dep_CustomerInsMember_Ag 
+					@custid=@DumCustID OUTPUT
+					,@creator=@UserID
+					,@username=@DumUserName
+					,@userpwd=@Pass
+					,@recommend=@DummyAgentID
+					,@IP=@IP
+					,@ErrCode=@ErrCode OUTPUT
+					,@ErrMsg=@ErrMsg OUTPUT
+
+			IF @ErrCode<>0
+			BEGIN
+				EXEC [Acc_CustomerInsUserInfo_Rollback] @CustID=@DumCustID
+				RETURN
+			END
+
+			SELECT @InsBalExceptCustList = CONVERT(VARCHAR,@DumCustID) +  ';' + @DumUserName 
+		END
+	END
+
+	--Update Status
 	IF @RoleID=4
 	BEGIN		
 		IF EXISTS(SELECT 1 FROM dbo.Customer s WITH (NOLOCK)	WHERE s.srecommend= @CustID	AND s.Roleid=1)
@@ -106,8 +152,9 @@ BEGIN
 				SELECT @OldIsDisabledDownLine = 0		
 		END
 		
-		IF EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)
-									INNER JOIN Dep_ProductSetting s WITH(NOLOCK) ON d.ProductSettingID=s.ProductSettingID WHERE SettingType=4 AND CustID=@CustID)
+		IF EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH (NOLOCK) 
+					CROSS APPLY dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(NULL,4,@SettingStatus) f
+					WHERE d.ProductSettingID=f.ProductSettingID AND CustID=@CustID)
 		BEGIN
 			EXEC Acc_Dep_DynamicCustSetting_03
 					@ActionID=1,

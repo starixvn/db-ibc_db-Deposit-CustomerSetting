@@ -1,8 +1,9 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
 
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusSelect] 
 	@ProductID	INT
 	,@CustID	INT
+	,@SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20171009@Winne
@@ -13,6 +14,7 @@ AS
 		- 20171009@Winnie: select status of DCS product RedmineID:#82346
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
 		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199521]
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 	Param's Explanation:
 */
 BEGIN
@@ -37,14 +39,8 @@ BEGIN
 	SELECT @RoleID=RoleID,@srecommend=srecommend FROM Customer WITH(NOLOCK) WHERE custid=@CustID
 	
 	INSERT INTO #tbDep_ProductProfile(ProductSettingID, ProductID, SportType, BetType, bitmapOrder)
-	SELECT ps.ProductSettingID, ps.ProductID, d.SportType, d.BetType, p.bitmapOrder
-	FROM Dep_ProductSetting ps WITH(NOLOCK) 
-		INNER JOIN Dep_ProductSettingDetail d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID  
-		INNER JOIN f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,4) f 
-															ON f.ProductID=ps.ProductID
-															AND f.SportType=d.SportType
-															AND f.Bettype=d.BetType
-															AND f.SettingType=ps.SettingType
+	SELECT f.ProductSettingID, f.ProductID, f.SportType, f.BetType, p.bitmapOrder
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus) f 
 		INNER JOIN dbo.Dep_ProductStatusProfile p WITH(NOLOCK) ON f.SportType=p.Sporttype AND f.BetType=p.Bettype
 
 	--Get bitmapOrder:

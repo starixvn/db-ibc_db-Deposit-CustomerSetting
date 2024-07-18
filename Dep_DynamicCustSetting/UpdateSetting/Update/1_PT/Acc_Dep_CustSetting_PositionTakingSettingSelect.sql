@@ -2,6 +2,7 @@
 CREATE PROCEDURE dbo.Acc_Dep_CustSetting_PositionTakingSettingSelect 
 	  @CustID		INT
 	, @ProductID	TINYINT
+	, @SettingStatus TINYINT = 0
 AS
 /*
 	Created: 20170925@Winnie
@@ -10,6 +11,8 @@ AS
 	Original:
 	Revision:
 		- 20180719@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee - Redmine: 88700
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+
 	Param's Explanation:
 	
 	*/
@@ -18,7 +21,7 @@ BEGIN
 	
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)
 	SELECT ProductID, SportType,Bettype,IsLive 
-	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus)
 	
 	IF EXISTS (SELECT 1 
 			FROM 	#SportBettypeFilter ft 

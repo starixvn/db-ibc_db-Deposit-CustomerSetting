@@ -1,9 +1,10 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StakeLevelUpd] 
 		@CustID			INT
 	,	@ProductID		TINYINT
 	,	@StakeLevel		VARCHAR(MAX)	
 	,	@IsAgentOnly	BIT
+	,	@SettingStatus	TINYINT = 0
 	,	@UserID			INT
 	,	@IP				VARCHAR(50)		= ''
 	,	@ErrCode		INT				= 0		OUTPUT
@@ -20,6 +21,7 @@ AS
 		- 20171113@Winnie: Update Customer's Stake Level Settings - [Redmine: #85113]	
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
+		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -94,7 +96,10 @@ BEGIN
 		,	@ErrMsg			= '';
 
 	SET	@startRun = GETDATE();
-	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID from Dep_ProductSetting WITH(NOLOCK) WHERE ProductID=@ProductID AND SettingType IN(7,8)
+
+	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID 
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,NULL,@SettingStatus)
+	WHERE SettingType IN (7,8)
 
 	--Check downline
 	EXEC Acc_Dep_CustomerSelCheckAllowedDownlines
