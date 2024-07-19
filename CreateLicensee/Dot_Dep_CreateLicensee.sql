@@ -76,6 +76,7 @@ AS
 	- 20231115@Tacy: Remove Bet Limit setting of RNG Slot [Redmine: #194331]
 	- 20240103@Winfred: Sitebuilder - Bitcoin/SLT - Enhance the settings when creating a new licensee [#196704]
 	- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199521]
+	- 20240719@Tacy: SiteBuilder - Quick Fix [f_Dep_CustSetting_SportBetTypeSettingSelect] - @SettingStatus=0 [Redmineid: #208203]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -479,7 +480,8 @@ SELECT @ErrorCode,@Errmsg,@InsBalCustList,@InsBalExceptCustList
 BEGIN  
 	SET NOCOUNT ON  
 	DECLARE @InsBalCustList_s		varchar(MAX) = '',
-			@InsBalExceptCustList_s varchar(MAX) = ''
+			@InsBalExceptCustList_s varchar(MAX) = '',
+			@SettingStatus			TINYINT = 0
 
 	SET @InsBalCustList = ''
 	SET @InsBalExceptCustList = ''
@@ -1301,7 +1303,7 @@ BEGIN
 										,Bettype AS 'BetType'
 										,IsLive AS 'IsLive'
 										,@PT_Sportsbook AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(1,1) 
+									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(1,1,@SettingStatus) 
 									FOR XML RAW('PT')) + '</ROOT>')
 				
 				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=1,@UserID=@CreatorID,@IP=@IP,
@@ -1347,7 +1349,7 @@ BEGIN
 										,Bettype AS 'BetType'
 										,IsLive AS 'IsLive'
 										,@PT_Sportsbook AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(1,1) 
+									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(1,1,@SettingStatus) 
 									FOR XML RAW('PT')) + '</ROOT>')
 				
 						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=1,@UserID=@CreatorID,@IP=@IP,
@@ -1430,7 +1432,7 @@ BEGIN
 										,Bettype AS 'BetType'
 										,IsLive AS 'IsLive'
 										,@PT_NumberGame AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(3,1) 
+									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(3,1,@SettingStatus) 
 									FOR XML RAW('PT')) + '</ROOT>')
 				
 				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=3,@UserID=@CreatorID,@IP=@IP,
@@ -1476,7 +1478,7 @@ BEGIN
 										,Bettype AS 'BetType'
 										,IsLive AS 'IsLive'
 										,@PT_NumberGame AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(3,1) 
+									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(3,1,@SettingStatus) 
 									FOR XML RAW('PT')) + '</ROOT>')
 				
 						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=3,@UserID=@CreatorID,@IP=@IP,
@@ -1557,7 +1559,7 @@ BEGIN
 								,Bettype AS 'BetType'
 								,IsLive AS 'IsLive'
 								,@PT_Keno AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(8,1) 
+							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(8,1,@SettingStatus) 
 							FOR XML RAW('PT')) + '</ROOT>')
 				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=8,@UserID=@CreatorID,@IP=@IP,
 						@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
@@ -1601,7 +1603,7 @@ BEGIN
 								,Bettype AS 'BetType'
 								,IsLive AS 'IsLive'
 								,@PT_Keno AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(8,1)
+							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(8,1,@SettingStatus)
 							FOR XML RAW('PT')) + '</ROOT>')
 						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=8,@UserID=@CreatorID,@IP=@IP,
 							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
@@ -1681,7 +1683,7 @@ BEGIN
 								,Bettype AS 'BetType'
 								,IsLive AS 'IsLive'
 								,@PT_VirtualSports1 AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(5,1) 
+							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(5,1,@SettingStatus) 
 							FOR XML RAW('PT')) + '</ROOT>')
 				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=5,@UserID=@CreatorID,@IP=@IP,
 						@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
@@ -1725,7 +1727,7 @@ BEGIN
 								,Bettype AS 'BetType'
 								,IsLive AS 'IsLive'
 								,@PT_VirtualSports1 AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(5,1)
+							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(5,1,@SettingStatus)
 							FOR XML RAW('PT')) + '</ROOT>')
 						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=5,@UserID=@CreatorID,@IP=@IP,
 							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
@@ -1871,7 +1873,7 @@ BEGIN
 										,Bettype AS 'BetType'
 										,IsLive AS 'IsLive'
 										,@PT_TEMP AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus)
 									FOR XML RAW('PT')) + '</ROOT>')
 						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
 								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
@@ -1916,7 +1918,7 @@ BEGIN
 												,Bettype AS 'BetType'
 												,IsLive AS 'IsLive'
 												,@PT_TEMP AS 'PT'
-											FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1) 
+											FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus) 
 											FOR XML RAW('PT')) + '</ROOT>')		
 								EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
 									@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT													
@@ -2001,7 +2003,7 @@ BEGIN
 								,Bettype AS 'BetType'
 								,IsLive AS 'IsLive'
 								,@PT_TableGame AS 'PT'
-							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(40,1)
+							FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(40,1,@SettingStatus)
 							FOR XML RAW('PT')) + '</ROOT>')	
 				EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=40,@UserID=@CreatorID,@IP=@IP,
 						@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
@@ -2046,7 +2048,7 @@ BEGIN
 										,Bettype AS 'BetType'
 										,IsLive AS 'IsLive'
 										,@PT_TableGame AS 'PT'
-									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(40,1)
+									FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(40,1,@SettingStatus)
 									FOR XML RAW('PT')) + '</ROOT>') 
 						EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=40,@UserID=@CreatorID,@IP=@IP,
 							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
@@ -2135,7 +2137,7 @@ BEGIN
 											,Bettype AS 'BetType'
 											,IsLive AS 'IsLive'
 											,@PT_TEMP AS 'PT'
-										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus)
 										FOR XML RAW('PT')) + '</ROOT>')
 					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
 							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
@@ -2180,7 +2182,7 @@ BEGIN
 													,Bettype AS 'BetType'
 													,IsLive AS 'IsLive'
 													,@PT_TEMP AS 'PT'
-												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)  
+												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus)  
 												FOR XML RAW('PT')) + '</ROOT>')
 							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
 								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
@@ -2289,7 +2291,7 @@ BEGIN
 											,Bettype AS 'BetType'
 											,IsLive AS 'IsLive'
 											,CASE WHEN Bettype IN (4297,4599) THEN 100 ELSE @PT_TEMP END AS 'PT'
-										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)
+										FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus)
 										FOR XML RAW('PT')) + '</ROOT>')
 					EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@AgentID,@IsAgentOnly=0,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
 							@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT
@@ -2334,7 +2336,7 @@ BEGIN
 													,Bettype AS 'BetType'
 													,IsLive AS 'IsLive'
 													,CASE WHEN Bettype IN (4297,4599) THEN 100 ELSE @PT_TEMP END AS 'PT'
-												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1)  
+												FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,1,@SettingStatus)  
 												FOR XML RAW('PT')) + '</ROOT>')
 							EXEC Acc_Dep_CustSetting_PositionTakingSettingUpd @SuperID=@SuperID,@AgentID=@tmpSubCustID,@IsAgentOnly=1,@PT=@PT_XML,@ProductID=@ProductID,@UserID=@CreatorID,@IP=@IP,
 								@ErrCode=@ErrCode OUTPUT,@ErrMsg=@ErrMsg OUTPUT						
