@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_NewBetLimitUpd] 
 	  @CustID		INT
 	, @BetLimit VARCHAR(MAX)
@@ -18,7 +18,7 @@ AS
 	Revision:
 		- 20220218@Winfred: LG VS3  - Licensee DCS setting for new BetLimit  [Redmine: 168395]
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
-		- 20240705@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+
 	Param's Explanation:
 	• @BetLimit:
 		<ROOT>
@@ -181,7 +181,6 @@ BEGIN
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
-			, main.RepUpdateTime = SYSDATETIME()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, GETDATE()
 			INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, UpdateTime)
 		FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK,UPDLOCK)
@@ -212,7 +211,7 @@ BEGIN
 							FOR XML PATH ('r'), ROOT('root')
 							)
 
-			EXECUTE Acc_Dep_CustSetting_BetLimitHistoryIns  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
 			IF @ErrMsg<>''
 				RETURN
@@ -234,7 +233,6 @@ BEGIN
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
-			, main.RepUpdateTime = SYSDATETIME()
 		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID

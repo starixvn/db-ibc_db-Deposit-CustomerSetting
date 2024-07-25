@@ -1,4 +1,7 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
+USE CustDB
+GO
+
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_NewBetLimitFullLineUpd] 
 	  @SuperID				INT
 	, @BetLimit				VARCHAR(MAX)
@@ -18,7 +21,6 @@ AS
 	Revision:	
 		- 20220218@Winfred: Licesee Management-Licensee setting - LG VS3  - Licensee DCS setting for new BetLimit  - Redmine: 168395
 		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
-		- 20240705@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	� @BetLimit:
 		<ROOT>
@@ -167,7 +169,6 @@ BEGIN
 		UPDATE main
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
-			, main.RepUpdateTime = SYSDATETIME()
 		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK)
 			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE (
@@ -179,8 +180,8 @@ BEGIN
 		 FROM #tempSMA t 
 		 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 
-		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,RepUpdateTime)
-		 SELECT CustID,SportType,BetType,MinBet,MaxBet,SYSDATETIME()
+		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet)
+		 SELECT CustID,SportType,BetType,MinBet,MaxBet
 		 FROM #tempSMA t
 
 	
@@ -195,8 +196,8 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM Dep_ProductSetting ps WITH(NOLOCK) 
 									INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID WHERE ProductID=@ProductID AND SettingType = 11 AND CustID=@SuperID)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
-			SELECT @SuperID,ProductSettingID,SYSDATETIME()
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
+			SELECT @SuperID,ProductSettingID
 			FROM Dep_ProductSetting WITH(NOLOCK)
 			WHERE ProductID=@ProductID AND SettingType = 11
 		END			
