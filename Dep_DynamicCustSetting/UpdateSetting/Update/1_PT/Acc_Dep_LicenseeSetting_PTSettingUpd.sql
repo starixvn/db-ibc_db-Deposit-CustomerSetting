@@ -159,7 +159,7 @@ BEGIN
 		SET  SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
-			,RepUpdateTime = SYSDATETIME()
+			,RepUpdateTime = dbo.f_GetDateTime2()
 		FROM #tmpSMATemp t
 			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND t.Currency = stb.Currency 
 			CROSS APPLY (
@@ -173,7 +173,7 @@ BEGIN
 		SET  SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
-			,RepUpdateTime = SYSDATETIME()
+			,RepUpdateTime = dbo.f_GetDateTime2()
 		FROM #tmpSMATemp t
 			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND stb.Currency = 0 
 			CROSS APPLY (

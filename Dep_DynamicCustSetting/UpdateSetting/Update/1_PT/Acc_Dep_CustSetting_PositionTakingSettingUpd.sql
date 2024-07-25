@@ -157,7 +157,7 @@ BEGIN
 		SELECT @AgentID,SportType,BetType,IsLive,0,0,PT,SYSDATETIME()
 		FROM #tmpPT t
 	
-	EXEC Acc_Dep_CustSetting_PTDownlineUpd	
+	EXEC Acc_Dep_DynamicCustSetting_01	
 		@CustID=@AgentID,
 		@PT=@PT,					
 		@ProductID=@ProductID	

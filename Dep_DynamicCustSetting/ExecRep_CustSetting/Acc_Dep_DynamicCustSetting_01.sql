@@ -155,7 +155,7 @@ BEGIN
 			BEGIN				
 				UPDATE s
 				SET s.AgentPT=v.PT,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
 					INNER JOIN #tempMemNoGrouped c	ON s.CustID=c.CustID
 					INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive
@@ -163,7 +163,7 @@ BEGIN
 				WHERE ID >= @StartRow AND ID <= @StopRow	
 				
 				INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT,RepUpdateTime)
-				SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT, SYSDATETIME()
+				SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT, dbo.f_GetDateTime2()
 				FROM #tempMemNoGrouped c		
 					CROSS APPLY @SportBettypeFilter t
 					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive		
@@ -199,7 +199,7 @@ BEGIN
 				
 				UPDATE s
 				SET s.AgentPT=v.PT,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
 					INNER JOIN #tempMemNoGrouped c	ON s.CustID=c.CustID
 					INNER JOIN @SportBettypeFilter t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive	
@@ -208,7 +208,7 @@ BEGIN
 					AND ID >= @StartRow AND ID <= @StopRow	
 				
 				INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT,RepUpdateTime)
-				SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT,SYSDATETIME()
+				SELECT c.CustID,t.SportType,t.BetType,t.IsLive,0,0,v.PT,dbo.f_GetDateTime2()
 				FROM #tempMemNoGrouped c		
 					CROSS APPLY @SportBettypeFilter t
 					INNER JOIN #ValuePT v ON t.SportType=v.SportType AND t.BetType=v.BetType AND t.IsLive=v.IsLive				
@@ -218,7 +218,7 @@ BEGIN
 						
 				UPDATE s
 				SET s.AgentPT=0,
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
 					INNER JOIN Dep_CustBAActive BA ON s.CustID=BA.CustId
 					INNER JOIN #tempMemNoGrouped c	ON s.CustID=c.CustID
@@ -227,7 +227,7 @@ BEGIN
 					AND t.IsApplyBA=1						
 				
 				INSERT INTO [dbo].[Dep_CustPTSetting_Member](CustID,[SportType],[BetType],[IsLive],SuperPT,MasterPT,AgentPT,RepUpdateTime)
-				SELECT c.CustID,SportType,BetType,IsLive,0,0,0,SYSDATETIME()
+				SELECT c.CustID,SportType,BetType,IsLive,0,0,0,dbo.f_GetDateTime2()
 				FROM #tempMemNoGrouped c		
 					CROSS APPLY @SportBettypeFilter t	
 				WHERE ID >= @StartRow AND ID <= @StopRow	

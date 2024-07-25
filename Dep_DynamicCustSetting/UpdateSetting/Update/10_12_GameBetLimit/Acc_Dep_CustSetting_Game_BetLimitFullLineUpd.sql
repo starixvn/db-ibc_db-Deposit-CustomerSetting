@@ -172,7 +172,7 @@ BEGIN
 		, main.maxpermatch	= tmp.MaxperMatch
 		, main.MaxPerNumber		= tmp.MaxPerNumber
 		, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
-		, main.RepUpdateTime = SYSDATETIME()
+		, main.RepUpdateTime = dbo.f_GetDateTime2()
 	FROM dbo.Dep_CustBetSettingGame_Agent main WITH(ROWLOCK)
 		INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 	WHERE (
@@ -187,12 +187,12 @@ BEGIN
 	FROM #tempSMA t 
 	INNER JOIN Dep_CustBetSettingGame_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 
-	INSERT INTO dbo.Dep_CustBetSettingGame_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch
+	INSERT INTO dbo.Dep_CustBetSettingGame_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+	SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch, dbo.f_GetDateTime2()
 	FROM #tempSMA t
 
 	INSERT INTO Dep_CustBetSettingGameGroup_Member(AgentID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
-	SELECT @AgentID,t.SportType,t.BetType,t.MinBet,t.MaxBet,t.MaxPerMatch,t.MaxPerNumber,t.MaxPayoutPerMatch,SYSDATETIME()
+	SELECT @AgentID,t.SportType,t.BetType,t.MinBet,t.MaxBet,t.MaxPerMatch,t.MaxPerNumber,t.MaxPayoutPerMatch,dbo.f_GetDateTime2()
 	FROM @NewBetLimitTbl t
 		LEFT JOIN Dep_CustBetSettingGameGroup_Member m WITH(NOLOCK) ON  m.AgentID = @AgentID AND t.SportType= m.SportType AND t.BetType = m.BetType
 	WHERE m.AgentID IS NULL
@@ -205,7 +205,7 @@ BEGIN
 			, main.maxpermatch	= tmp.MaxperMatch
 			, main.MaxPerNumber		= tmp.MaxPerNumber
 			, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
-			, main.RepUpdateTime = SYSDATETIME()
+			, main.RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.Dep_CustBetSettingGameGroup_Member main WITH(ROWLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE (

@@ -110,7 +110,7 @@ BEGIN
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
 						, main.maxpermatch	= tmp.MaxperMatch
-						, main.RepUpdateTime = SYSDATETIME()
+						, main.RepUpdateTime = dbo.f_GetDateTime2()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 						INTO @History_BetLimitTbl
 					FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK)
@@ -156,7 +156,7 @@ BEGIN
 						WHERE ID >= @StartRow AND ID <= @StopRow
 
 					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,RepUpdateTime)
-					SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,SYSDATETIME()
+					SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,dbo.f_GetDateTime2()
 					FROM #tempMem t
 					WHERE ID >= @StartRow AND ID <= @StopRow
 		
@@ -209,7 +209,7 @@ BEGIN
 					UPDATE main
 					SET main.minbet			= tmp.MinBet
 						, main.maxbet		= tmp.MaxBet
-						, main.RepUpdateTime = SYSDATETIME()
+						, main.RepUpdateTime = dbo.f_GetDateTime2()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 						INTO @History_BetLimitTbl
 					FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK)
@@ -254,7 +254,7 @@ BEGIN
 						WHERE ID >= @StartRow AND ID <= @StopRow
 
 					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,RepUpdateTime)
-					SELECT CustID,SportType,BetType,MinBet,MaxBet,SYSDATETIME()
+					SELECT CustID,SportType,BetType,MinBet,MaxBet,dbo.f_GetDateTime2()
 					FROM #tempMem t
 					WHERE ID >= @StartRow AND ID <= @StopRow
 		
@@ -320,7 +320,7 @@ BEGIN
 					, main.maxpermatch	= tmp.MaxperMatch
 					, main.MaxPerNumber		= tmp.MaxPerNumber
 					, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
-					, main.RepUpdateTime = SYSDATETIME()
+					, main.RepUpdateTime = dbo.f_GetDateTime2()
 				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 					INTO @History_BetLimitTbl
 				FROM dbo.Dep_CustBetSettingGame_Member main WITH(ROWLOCK)
@@ -370,7 +370,7 @@ BEGIN
 					WHERE ID >= @StartRow AND ID <= @StopRow
 
 				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
-				SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,SYSDATETIME()
+				SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,dbo.f_GetDateTime2()
 				FROM #tempMem t
 				WHERE ID >= @StartRow AND ID <= @StopRow
 	

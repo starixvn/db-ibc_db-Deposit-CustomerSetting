@@ -76,7 +76,7 @@ BEGIN
 			SET  SuperPT  = 0
 				,MasterPT = 0
 				,AgentPT  = v.PT
-				,RepUpdateTime = SYSDATETIME()
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				INNER JOIN #ValuePT v ON IsApplyBA=0
 				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
@@ -88,7 +88,7 @@ BEGIN
 			SET  SuperPT  = 0
 				,MasterPT = 0
 				,AgentPT  = 0
-				,RepUpdateTime = SYSDATETIME()
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				INNER JOIN #ValuePT v ON IsApplyBA=1
 				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
@@ -102,7 +102,7 @@ BEGIN
 			SET  SuperPT  = 0
 				,MasterPT = 0
 				,AgentPT  = v.PT
-				,RepUpdateTime = SYSDATETIME()
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				CROSS APPLY #ValuePT v 
 				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
@@ -128,8 +128,9 @@ BEGIN
 	
 				IF @@ROWCOUNT = 0 BREAK
 
-					UPDATE a
-					SET AgentPT = v.PT
+				UPDATE s
+				SET s.AgentPT=v.PT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 					FROM #tmpCustTemp t
 						CROSS APPLY #ValuePT v 
 						CROSS APPLY (	SELECT TOP 1 AgentPT
@@ -158,8 +159,9 @@ BEGIN
 	
 				IF @@ROWCOUNT = 0 BREAK
 
-					UPDATE a
-					SET AgentPT  = v.PT
+				UPDATE s
+				SET s.AgentPT=v.PT,
+					RepUpdateTime = dbo.f_GetDateTime2()
 					FROM #tmpCustTemp t
 						INNER JOIN #ValuePT v ON v.IsApplyBA = 0
 						CROSS APPLY (	SELECT TOP 1 AgentPT
@@ -168,8 +170,9 @@ BEGIN
 											AND BetType=v.BetType AND IsLive=v.IsLive
 									) a	
 						
-					UPDATE a
-					SET AgentPT = 0
+				UPDATE s
+				SET s.AgentPT=0,
+					RepUpdateTime = dbo.f_GetDateTime2()
 					FROM #tmpCustTemp t
 						INNER JOIN #ValuePT v ON v.IsApplyBA = 1
 						CROSS APPLY (	SELECT TOP 1 AgentPT

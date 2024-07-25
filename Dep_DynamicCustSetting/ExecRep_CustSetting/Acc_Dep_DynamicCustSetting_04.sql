@@ -111,7 +111,7 @@ BEGIN
 		BEGIN			
 			UPDATE T 
 				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 			FROM  dbo.Dep_CustProductStatus T
 				INNER JOIN #tempCust CI ON T.CustID = CI.custid	
 			WHERE ID >= @StartRow AND ID <= @StopRow
@@ -121,7 +121,7 @@ BEGIN
 			
 				UPDATE T 
 					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						RepUpdateTime = SYSDATETIME()
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.Dep_CustProductStatus T 
 					INNER JOIN #tempCust CI WITH (NOLOCK) ON T.CustID = CI.custid	
 				WHERE ID >= @StartRow AND ID <= @StopRow
@@ -165,7 +165,7 @@ BEGIN
 		BEGIN			
 			UPDATE T 
 				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 			FROM  dbo.Dep_CustProductStatus T
 				INNER JOIN #tempCust CI ON T.CustID = CI.custid	
 			WHERE ID >= @StartRow AND ID <= @StopRow
@@ -175,7 +175,7 @@ BEGIN
 			
 				UPDATE T WITH (UPDLOCK,ROWLOCK)
 					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						RepUpdateTime = SYSDATETIME()
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.Dep_CustProductStatus T 
 					INNER JOIN #tempCust CI ON T.CustID = CI.custid	
 				WHERE ID >= @StartRow AND ID <= @StopRow				
@@ -217,7 +217,7 @@ BEGIN
 		BEGIN			
 			UPDATE T 
 				SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (T.bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled))),
-					RepUpdateTime = SYSDATETIME()
+					RepUpdateTime = dbo.f_GetDateTime2()
 			FROM  dbo.Dep_CustProductStatus T
 				INNER JOIN #tempCust CI ON T.CustID = CI.custid	
 			WHERE ID >= @StartRow AND ID <= @StopRow
@@ -226,7 +226,7 @@ BEGIN
 			BEGIN
 				UPDATE T 
 					SET bitmapIsHidden = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
-						RepUpdateTime = SYSDATETIME()
+						RepUpdateTime = dbo.f_GetDateTime2()
 				FROM dbo.Dep_CustProductStatus T 
 					INNER JOIN #tempCust CI ON T.CustID = CI.custid	
 				WHERE ID >= @StartRow AND ID <= @StopRow

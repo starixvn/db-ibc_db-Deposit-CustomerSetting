@@ -159,7 +159,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
-			, main.RepUpdateTime = SYSDATETIME()
+			, main.RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK)
 			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE (
@@ -173,7 +173,7 @@ BEGIN
 		 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 
 		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,RepUpdateTime)
-		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,SYSDATETIME()
+		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,dbo.f_GetDateTime2()
 		 FROM #tempSMA t
 
 	

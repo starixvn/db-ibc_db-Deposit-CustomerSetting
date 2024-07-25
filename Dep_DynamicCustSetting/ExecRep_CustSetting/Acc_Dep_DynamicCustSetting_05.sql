@@ -79,7 +79,7 @@ BEGIN
 	BEGIN
 		UPDATE cslm
 		SET cslm.LastUpdated=GETDATE(),cslm.StakeLevelList=tv.MemberStakeLevel,
-			RepUpdateTime = SYSDATETIME()
+			RepUpdateTime = dbo.f_GetDateTime2()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
 			INTO #History_StakeLevel
 		FROM	dbo.Dep_CustStakeLevel_Member AS cslm WITH(ROWLOCK,UPDLOCK)
@@ -94,7 +94,7 @@ BEGIN
 
 		UPDATE csla
 		SET	csla.StakeLevelList = sl.StakeLevelList,
-			RepUpdateTime = SYSDATETIME()
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN	#StakeLevel AS sl	ON	csla.CustID=sl.CustID	AND sl.SportType = csla.SportType	AND	sl.BetType = csla.BetType
 		WHERE sl.RoleID IN(2,3,4)
@@ -108,12 +108,12 @@ BEGIN
 			INNER JOIN Dep_CustStakeLevel_Member a WITH(NOLOCK) ON t.CustID=a.CustID AND t.SportType=a.SportType AND t.BetType=a.BetType
 
 		INSERT INTO dbo.Dep_CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated,RepUpdateTime)
-		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE(),SYSDATETIME()	
+		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE(),dbo.f_GetDateTime2()	
 		FROM #StakeLevel tv	
 		WHERE tv.RoleID =1
 	
 		INSERT INTO dbo.Dep_CustStakeLevel_Agent(CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
-		SELECT CustID,SportType,BetType,StakeLevelList,SYSDATETIME()
+		SELECT CustID,SportType,BetType,StakeLevelList,dbo.f_GetDateTime2()
 		FROM #StakeLevel
 		WHERE RoleID IN(2,3,4)
 		
@@ -142,22 +142,26 @@ BEGIN
 	BEGIN
 		--Delete redudant data before insert
 		DELETE a
+		OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
+		INTO [Dep_CustStakeLevel_Agent_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 		FROM #StakeLevel t 
 			INNER JOIN Dep_CustStakeLevel_Agent a WITH(ROWLOCK,UPDLOCK) 
 				ON t.CustID=a.CustID AND t.SportType=a.SportType AND t.BetType=a.BetType
 
 		DELETE a
+		OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
+		INTO [Dep_CustStakeLevel_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 		FROM #StakeLevel t
 			INNER JOIN Dep_CustStakeLevel_Member a WITH(ROWLOCK,UPDLOCK) 
 				ON t.CustID=a.CustID AND t.SportType=a.SportType AND t.BetType=a.BetType
 
 		INSERT INTO dbo.Dep_CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated,RepUpdateTime)
-		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE(),SYSDATETIME()	
+		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE(),dbo.f_GetDateTime2()	
 		FROM #StakeLevel tv	
 		WHERE tv.RoleID =1
 	
 		INSERT INTO dbo.Dep_CustStakeLevel_Agent(CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
-		SELECT CustID,SportType,BetType,StakeLevelList,SYSDATETIME()
+		SELECT CustID,SportType,BetType,StakeLevelList,dbo.f_GetDateTime2()
 		FROM #StakeLevel
 		WHERE RoleID IN(2,3,4)
 	END
