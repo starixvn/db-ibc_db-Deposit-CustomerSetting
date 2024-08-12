@@ -1,5 +1,5 @@
 /*<info serverAlias="DBCust-CustDB,DBACC-bodb02" selecters="wsv_nap,wsv_alp,wsv_alpv,wsv_xnap,wsv_lap" viewers="" isFunction="1" isNested="1"></info>*/
-ALTER FUNCTION [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] (@ProductID TINYINT, @SettingType SMALLINT, @SettingStatus TINYINT = 0) 
+ALTER FUNCTION [dbo].[f_Dep_CustSetting_SportBetTypeSettingSelect] (@ProductID SMALLINT, @SettingType SMALLINT, @SettingStatus TINYINT = 0) 
 RETURNS TABLE 
 /*
 	Created by: 10191212
@@ -10,6 +10,7 @@ RETURNS TABLE
 	Revisions:
 		- 20191212@Eden: Add revision [Redmine: #123750]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20240807@Tacy: change @ProductID datatype [RedmineID: #201239]
 	Explanation's Param:
 		
 */   
