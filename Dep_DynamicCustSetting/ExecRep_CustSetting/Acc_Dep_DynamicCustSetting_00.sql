@@ -38,6 +38,9 @@ AS
 		- 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 */
 BEGIN
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	SELECT @ErrCode = 0
 		
 	CREATE TABLE #ProductSettingDetail(

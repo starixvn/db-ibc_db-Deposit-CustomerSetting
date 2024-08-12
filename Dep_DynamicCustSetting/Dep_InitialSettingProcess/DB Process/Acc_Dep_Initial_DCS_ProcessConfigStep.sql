@@ -12,7 +12,7 @@ AS
 
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
-
+	- 20240916@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Parameter Definition
 		StepID = :
 			3: Insert setting for new customer
@@ -226,8 +226,8 @@ BEGIN
 		AND ci.custid > @MaxCustID AND ci.custid <= @MaxCustID2
 
 	DECLARE @CurrentDTS DATETIME = GETDATE()
-	DECLARE @MaxBatch INT = 5000
-	DECLARE @BatchNum INT = 5000
+	DECLARE @MaxBatch INT = 2000
+	DECLARE @BatchNum INT = 2000
 	DECLARE @BitMapOrder TINYINT
 	DECLARE @IsDisabled BIT
 	
@@ -248,6 +248,8 @@ BEGIN
 				WHERE tc.SettingName = 'Position Taking'
 
 				DELETE s
+				OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, DELETED.IsLive, dbo.f_GetDateTime2()
+				INTO Dep_CustPTSetting_Agent_Del_InHouse(CustID,SportType,BetType,IsLive,RepUpdateTime)
 				FROM Dep_CustPTSetting_Agent s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmp t 
 						ON s.CustID = t.CustID
@@ -256,6 +258,8 @@ BEGIN
 						AND s.IsLive = t.IsLive
 
 				DELETE s
+				OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, DELETED.IsLive, dbo.f_GetDateTime2()
+				INTO Dep_CustPTGroupSetting_Member_Del_InHouse(AgentID,SportType,BetType,IsLive,RepUpdateTime)
 				FROM Dep_CustPTGroupSetting_Member s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmp t 
 						ON s.AgentID = t.CustID
@@ -291,6 +295,8 @@ BEGIN
 						BREAK
 
 					DELETE s
+					OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, DELETED.IsLive, dbo.f_GetDateTime2()
+					INTO Dep_CustPTSetting_Member_Del_InHouse(CustID,SportType,BetType,IsLive,RepUpdateTime)
 					FROM Dep_CustPTSetting_Member s WITH(ROWLOCK,UPDLOCK)
 						INNER JOIN #CustSettingTmpBatch t 
 							ON s.CustID = t.CustID
@@ -314,6 +320,8 @@ BEGIN
 				WHERE tc.SettingName = 'Bet Setting'
 
 				DELETE s
+				OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+				INTO Dep_CustBetSetting_Agent_Del_InHouse(CustID,SportType,BetType,RepUpdateTime)
 				FROM Dep_CustBetSetting_Agent s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmp t 
 						ON s.CustID = t.CustID
@@ -347,6 +355,8 @@ BEGIN
 						BREAK
 
 					DELETE s
+					OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+					INTO Dep_CustBetSetting_Member_Del_InHouse(CustID,SportType,BetType,RepUpdateTime)
 					FROM Dep_CustBetSetting_Member s WITH(ROWLOCK,UPDLOCK)
 						INNER JOIN #CustSettingTmpBatch t 
 							ON s.CustID = t.CustID
@@ -369,6 +379,8 @@ BEGIN
 				WHERE tc.SettingName = 'Bet Setting Game'
 
 				DELETE s
+				OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+				INTO Dep_CustBetSettingGame_Agent_Del_InHouse(CustID,SportType,BetType,RepUpdateTime)
 				FROM Dep_CustBetSettingGame_Agent s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmp t 
 						ON s.CustID = t.CustID
@@ -376,6 +388,8 @@ BEGIN
 						AND s.BetType = t.BetType
 
 				DELETE s
+				OUTPUT DELETED.AgentID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+				INTO Dep_CustBetSettingGameGroup_Member_Del_InHouse(AgentID,SportType,BetType,RepUpdateTime)
 				FROM Dep_CustBetSettingGameGroup_Member s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmp t 
 						ON s.AgentID = t.CustID
@@ -409,6 +423,8 @@ BEGIN
 						BREAK
 
 					DELETE s
+					OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+					INTO Dep_CustBetSettingGame_Member_Del_InHouse(CustID,SportType,BetType,RepUpdateTime)
 					FROM Dep_CustBetSettingGame_Member s WITH(ROWLOCK,UPDLOCK)
 						INNER JOIN #CustSettingTmpBatch t 
 							ON s.CustID = t.CustID
@@ -431,6 +447,8 @@ BEGIN
 				WHERE tc.SettingName IN ('Stake Level','Stake Level Group')
 
 				DELETE s
+				OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+				INTO Dep_CustStakeLevel_Agent_Del_InHouse(CustID,SportType,BetType,RepUpdateTime)
 				FROM Dep_CustStakeLevel_Agent s WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #CustSettingTmp t 
 						ON s.CustID = t.CustID
@@ -464,6 +482,8 @@ BEGIN
 						BREAK
 
 					DELETE s
+					OUTPUT DELETED.CustID, DELETED.SportType, DELETED.BetType, dbo.f_GetDateTime2()
+					INTO Dep_CustStakeLevel_Member_Del_InHouse(CustID,SportType,BetType,RepUpdateTime)
 					FROM Dep_CustStakeLevel_Member s WITH(ROWLOCK,UPDLOCK)
 						INNER JOIN #CustSettingTmpBatch t 
 							ON s.CustID = t.CustID
@@ -478,8 +498,8 @@ BEGIN
 		-----------------------PT--------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Position Taking' AND IsDefault = 1)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT DISTINCT t.CustID,d.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT DISTINCT t.CustID,d.ProductSettingID, dbo.f_GetDateTime2()
 			FROM Dep_ProductSetting d WITH(NOLOCK)
 				CROSS JOIN #SMATemp t 
 				INNER JOIN #TempConfig cf 
@@ -493,19 +513,21 @@ BEGIN
 				AND t.RoleID = 4
 				AND dl.CustID IS NULL
 
-			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+			INSERT INTO dbo.Dep_CustPTSetting_Agent(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
 			SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive
 				,CASE WHEN t.RoleID = 4 THEN tc.DefaultValueSuper ELSE 0 END
 				,CASE WHEN t.RoleID IN(3, 4) THEN tc.DefaultValueSuper ELSE 0 END
 				,CASE WHEN t.RoleID IN(2, 4) THEN tc.DefaultValueSuper ELSE 0 END
+				,dbo.f_GetDateTime2()
 			FROM #SMATemp t
 				CROSS JOIN #TempConfig tc 
 			WHERE tc.SettingName = 'Position Taking'
 				AND tc.IsDefault = 1
 
-			INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+			INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
 			SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0
 				,AgentPT = CASE WHEN t.Site='asiabet88' AND t.Currency IN(3,6) AND tc.IsApplyBA = 1 THEN 0 ELSE tc.DefaultValueSuper END
+				,dbo.f_GetDateTime2()
 			FROM #SMATemp t
 				CROSS JOIN #TempConfig tc 
 			WHERE tc.SettingName = 'Position Taking'
@@ -541,8 +563,8 @@ BEGIN
 
 				IF @IsBA_PTLogic = 0
 				BEGIN
-					INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
-					SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0,tc.DefaultValueSuper
+					INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
+					SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0,tc.DefaultValueSuper,dbo.f_GetDateTime2()
 					FROM #CustTempBatch t
 						CROSS JOIN #TempConfig tc 
 						INNER JOIN Dep_CustSettingMode m WITH(NOLOCK) 
@@ -553,9 +575,10 @@ BEGIN
 				END
 				ELSE
 				BEGIN
-					INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT)
+					INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
 					SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0
 						,CASE WHEN tc.IsApplyBA = 1 AND ba.CustId IS NOT NULL THEN 0 ELSE tc.DefaultValueSuper END
+						,dbo.f_GetDateTime2()
 					FROM #CustTempBatch t
 						CROSS JOIN #TempConfig tc 
 						INNER JOIN Dep_CustSettingMode m WITH(NOLOCK) 
@@ -572,8 +595,8 @@ BEGIN
 		-----------------------Bet Setting--------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Bet Setting' AND IsDefault = 1)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT DISTINCT t.CustID,d.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT DISTINCT t.CustID,d.ProductSettingID,dbo.f_GetDateTime2()
 			FROM Dep_ProductSetting d WITH(NOLOCK)
 				CROSS JOIN #SMATemp t 
 				INNER JOIN #TempConfig cf 
@@ -587,8 +610,8 @@ BEGIN
 				AND t.RoleID = 4
 				AND dl.CustID IS NULL
 
-			INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-			SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch
+			INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, RepUpdateTime)
+			SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch,dbo.f_GetDateTime2()
 			FROM #SMATemp c
 				CROSS JOIN #TempConfig t 
 				INNER JOIN #TempBetSetting bs 
@@ -618,8 +641,8 @@ BEGIN
 				IF @@ROWCOUNT = 0
 					BREAK
 
-				INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch)
-				SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch
+				INSERT INTO dbo.Dep_CustBetSetting_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, RepUpdateTime)
+				SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch,dbo.f_GetDateTime2()
 				FROM #CustTempBatch c
 					CROSS JOIN #TempConfig t 
 					INNER JOIN #TempBetSetting bs 
@@ -634,8 +657,8 @@ BEGIN
 		-----------------------Bet Setting Game--------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Bet Setting Game' AND IsDefault = 1)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT DISTINCT t.CustID,d.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT DISTINCT t.CustID,d.ProductSettingID,dbo.f_GetDateTime2()
 			FROM Dep_ProductSetting d WITH(NOLOCK)
 				CROSS JOIN #SMATemp t 
 				INNER JOIN #TempConfig cf 
@@ -649,8 +672,8 @@ BEGIN
 				AND t.RoleID = 4
 				AND dl.CustID IS NULL
 
-			INSERT INTO dbo.Dep_CustBetSettingGame_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
-			SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch, bs.MaxPerNumber, bs.MaxPayoutPerMatch
+			INSERT INTO dbo.Dep_CustBetSettingGame_Agent(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch,RepUpdateTime)
+			SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch, bs.MaxPerNumber, bs.MaxPayoutPerMatch,dbo.f_GetDateTime2()
 			FROM #SMATemp c
 				CROSS JOIN #TempConfig t 
 				INNER JOIN #TempBetSetting bs 
@@ -660,8 +683,8 @@ BEGIN
 			WHERE t.SettingName = 'Bet Setting Game'
 				AND t.IsDefault = 1
 
-			INSERT INTO dbo.Dep_CustBetSettingGameGroup_Member(AgentID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
-			SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch, bs.MaxPerNumber, bs.MaxPayoutPerMatch
+			INSERT INTO dbo.Dep_CustBetSettingGameGroup_Member(AgentID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch,RepUpdateTime)
+			SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch, bs.MaxPerNumber, bs.MaxPayoutPerMatch,dbo.f_GetDateTime2()
 			FROM #SMATemp c
 				CROSS JOIN #TempConfig t 
 				INNER JOIN #TempBetSetting bs 
@@ -698,8 +721,8 @@ BEGIN
 				IF @@ROWCOUNT = 0
 					BREAK
 
-				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch)
-				SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch, bs.MaxPerNumber, bs.MaxPayoutPerMatch
+				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID, SportType, BetType, MinBet, MaxBet, MaxPerMatch, MaxPerNumber, MaxPayoutPerMatch,RepUpdateTime)
+				SELECT c.CustID, t.SportType, t.BetType, bs.MinBet, bs.MaxBet, bs.MaxPerMatch, bs.MaxPerNumber, bs.MaxPayoutPerMatch,dbo.f_GetDateTime2()
 				FROM #CustTempBatch c
 					INNER JOIN Dep_CustSettingMode m WITH(NOLOCK) 
 						ON c.CustID = m.CustID 
@@ -717,8 +740,8 @@ BEGIN
 		-----------------------Stake Level-------------------------------------------------------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Stake Level Group' AND IsDefault = 1)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT DISTINCT t.CustID,d.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT DISTINCT t.CustID,d.ProductSettingID,dbo.f_GetDateTime2()
 			FROM Dep_ProductSetting d WITH(NOLOCK)
 				CROSS JOIN #SMATemp t 
 				INNER JOIN #TempConfig cf 
@@ -753,8 +776,8 @@ BEGIN
 			WHERE t.SettingName = 'Stake Level Group' AND t.IsDefault = 1
 			
 			--SMA Level
-			INSERT INTO dbo.Dep_CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList]) 
-			SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList
+			INSERT INTO dbo.Dep_CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList],RepUpdateTime) 
+			SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList,dbo.f_GetDateTime2()
 			FROM  #tmpSTList tb
 				INNER JOIN  #SMATemp t ON tb.currency = t.Currency
 
@@ -779,8 +802,8 @@ BEGIN
 					BREAK
 
 				--Member Level
-				INSERT INTO dbo.Dep_CustStakeLevel_Member ([CustID],[SportType],[BetType],[StakeLevelList],LastUpdated) 
-				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.Min_StakeLevel,@CurrentDTS
+				INSERT INTO dbo.Dep_CustStakeLevel_Member ([CustID],[SportType],[BetType],[StakeLevelList],LastUpdated,RepUpdateTime) 
+				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.Min_StakeLevel,@CurrentDTS,dbo.f_GetDateTime2()
 				FROM  #tmpSTList tb
 					INNER JOIN  #CustTempBatch t ON tb.currency = t.Currency
 			END		
@@ -788,8 +811,8 @@ BEGIN
 
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Stake Level' AND IsDefault = 1)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT DISTINCT t.CustID,d.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT DISTINCT t.CustID,d.ProductSettingID,dbo.f_GetDateTime2()
 			FROM Dep_ProductSetting d WITH(NOLOCK)
 				CROSS JOIN #SMATemp t 
 				INNER JOIN #TempConfig cf 
@@ -825,8 +848,8 @@ BEGIN
 			WHERE t.SettingName = 'Stake Level' AND t.IsDefault = 1
 			
 			--SMA Level
-			INSERT INTO dbo.Dep_CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList]) 
-			SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList
+			INSERT INTO dbo.Dep_CustStakeLevel_Agent ([CustID],[SportType],[BetType],[StakeLevelList],RepUpdateTime) 
+			SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.StakeLevelList,dbo.f_GetDateTime2()
 			FROM  #tmpSTList tb
 				INNER JOIN  #SMATemp t ON tb.currency = t.Currency AND t.Site = tb.Site
 
@@ -851,8 +874,8 @@ BEGIN
 					BREAK
 
 				--Member Level
-				INSERT INTO dbo.Dep_CustStakeLevel_Member ([CustID],[SportType],[BetType],[StakeLevelList],LastUpdated) 
-				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.Min_StakeLevel,@CurrentDTS
+				INSERT INTO dbo.Dep_CustStakeLevel_Member ([CustID],[SportType],[BetType],[StakeLevelList],LastUpdated,RepUpdateTime) 
+				SELECT t.custid, tb.Sporttype, tb.BettypeID, tb.Min_StakeLevel,@CurrentDTS,dbo.f_GetDateTime2()
 				FROM  #tmpSTList tb
 					INNER JOIN  #CustTempBatch t ON tb.currency = t.Currency AND t.Site = tb.Site
 			END		
@@ -863,8 +886,8 @@ BEGIN
 		------------------Update Status--------------------------------------------------
 		IF EXISTS( SELECT 1 FROM #TempConfig WHERE SettingName = 'Product Status' AND IsDefault = 1)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT DISTINCT t.CustID,d.ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT DISTINCT t.CustID,d.ProductSettingID,dbo.f_GetDateTime2()
 			FROM Dep_ProductSetting d WITH(NOLOCK)
 				CROSS JOIN #SMATemp t 
 				INNER JOIN #TempConfig cf 
@@ -901,14 +924,15 @@ BEGIN
 				--SMA level
 				UPDATE cs
 				SET cs.bitmapIsHidden = hid.NewBitmap,
-					bitmapIsDisabled = dis.NewBitmap	
+					bitmapIsDisabled = dis.NewBitmap,
+					RepUpdateTime = dbo.f_GetDateTime2()
 				FROM [dbo].[Dep_CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 					INNER JOIN #SMATemp ci ON cs.CustID = ci.CustID
 					CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitMapOrder,0) as Hid
 					CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitMapOrder,@IsDisabled) as Dis
 
-				INSERT INTO Dep_CustProductStatus (CustID,bitmapIsDisabled,bitmapIsHidden)
-				SELECT	ci.custid, dis.NewBitmap, hid.NewBitmap
+				INSERT INTO Dep_CustProductStatus (CustID,bitmapIsDisabled,bitmapIsHidden,RepUpdateTime)
+				SELECT	ci.custid, dis.NewBitmap, hid.NewBitmap,dbo.f_GetDateTime2()
 				FROM #SMATemp ci
 					CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(@Bitmap0,@BitMapOrder,0) as Hid
 					CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(@Bitmap0,@BitMapOrder,@IsDisabled) as Dis
@@ -931,15 +955,16 @@ BEGIN
 					--Member level
 					UPDATE cs
 					SET cs.bitmapIsHidden = hid.NewBitmap,
-						bitmapIsDisabled = dis.NewBitmap	
+						bitmapIsDisabled = dis.NewBitmap,
+						RepUpdateTime = dbo.f_GetDateTime2()
 					FROM [dbo].[Dep_CustProductStatus] cs WITH(ROWLOCK,UPDLOCK)
 						INNER JOIN #CustTempBatch ci ON cs.CustID = ci.CustID
 						CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsHidden,@BitMapOrder,0) as Hid
 						CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(cs.bitmapIsDisabled,@BitMapOrder,@IsDisabled) as Dis
 				END
 
-				INSERT INTO Dep_CustProductStatus (CustID,bitmapIsDisabled,bitmapIsHidden)
-				SELECT	ci.custid, dis.NewBitmap, hid.NewBitmap
+				INSERT INTO Dep_CustProductStatus (CustID,bitmapIsDisabled,bitmapIsHidden,RepUpdateTime)
+				SELECT	ci.custid, dis.NewBitmap, hid.NewBitmap, dbo.f_GetDateTime2()
 				FROM #MemberTemp ci
 					CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(@Bitmap0,@BitMapOrder,0) as Hid
 					CROSS APPLY dbo.f_CustSetting_GenerateProductStatus(@Bitmap0,@BitMapOrder,@IsDisabled) as Dis

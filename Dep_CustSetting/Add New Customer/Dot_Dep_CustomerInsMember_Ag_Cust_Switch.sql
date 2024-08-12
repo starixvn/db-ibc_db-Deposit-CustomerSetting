@@ -34,6 +34,7 @@ AS
 	 - 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	 - 20240404@Tacy: Return - Error when add Subsidiary [Redmine: #202273] 
 	 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+	 - 20240911@Tacy: OddsBoostAdj dummy customers [redmine:#210621]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -175,7 +176,9 @@ BEGIN
 	END    
 	    	
 	--20140812: Change rule generate username    
-	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%' AND  @UserName NOT LIKE '%01OddsAdj%') OR @UserName IS NULL
+	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%' 
+		AND  @UserName NOT LIKE '%01OddsAdj%' AND  @UserName NOT LIKE '%01OddsBoostAdj%') 
+		OR @UserName IS NULL
 	BEGIN  
 	SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
 	IF @UserName = ''    

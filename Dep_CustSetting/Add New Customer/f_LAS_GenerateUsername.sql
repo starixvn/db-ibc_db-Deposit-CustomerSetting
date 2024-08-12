@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,bodbDownlineNet,wsv_lap,svc_tig" viewers="vnteam" isFunction="1"></info>*/
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,wsv_lap,svc_tig" viewers="vnteam" isFunction="1"></info>*/
 
 ALTER FUNCTION [dbo].[f_LAS_GenerateUsername]  
 (  
@@ -21,6 +21,7 @@ AS
   - 20201005@Winfred: Add new OddsAdj dummy customers [redmine:#142952]
   - 20231110@Elodie: Fix error username generation [Redmine: #196742]
   - 20231114@Johnson: change format username by adding 'S' (SystemID) [redmine: #196742]
+  - 20240911@Tacy: OddsBoostAdj dummy customers [redmine:#210621]
  Parameters Explanation:  
 */  
   
@@ -30,17 +31,15 @@ BEGIN
 		RETURN ''  
 	END  
   
-	DECLARE @LimitLoop INT, @Index INT, @Username VARCHAR(50), @IsExists BIT,@Currency INT,@UsernameOddAdj VARCHAR(30),
+	DECLARE @LimitLoop INT, @Index INT, @Username VARCHAR(50), @IsExists BIT, @UsernameDummy VARCHAR(30),
 			@NumTmp VARCHAR(10), @NumOfMem INT, @NumOfMem2 INT, @recommendUsername VARCHAR(50)  
 	SELECT @LimitLoop = 1000, @Index = 0, @Username = ''  
   
-	SELECT @recommendUsername = username , @Currency = currency
-	FROM dbo.custInfo WITH(NOLOCK)  
-	WHERE custid = @recommend AND roleid = 2  
-  
-		SET @UsernameOddAdj = isnull((SELECT  currency
-		FROM exchange with(nolock)
-		WHERE ExchangeId = @Currency),'') + '01OddsAdj'  
+	SELECT @recommendUsername = username 
+		, @UsernameDummy = Isnull(ci.site,'') + Isnull(e.currency,'')
+	FROM Customer as ci with (NOLOCK) 
+		LEFT JOIN exchange e with(nolock) on ci.currency = e.ExchangeId
+	WHERE ci.custid = @Recommend AND ci.roleid = 2 
   
 	SELECT @NumOfMem = ISNULL(CAST(CASE WHEN CHARINDEX('S',REPLACE(username, @recommendUsername, '')) = 0 
 										THEN REPLACE(username, @recommendUsername, '')
@@ -56,7 +55,8 @@ BEGIN
 		AND username NOT LIKE @recommendUsername+'%'+'BetTrade'  
 		AND username NOT LIKE @recommendUsername+'%'+'CashOut'
 		AND username NOT LIKE @recommendUsername+'%'+'ClearBal'  
-		AND username NOT LIKE Isnull(site,'') + Isnull(@UsernameOddAdj,'')  
+		AND username NOT LIKE Isnull(@UsernameDummy,'')  + '01OddsAdj'
+		AND username NOT LIKE Isnull(@UsernameDummy,'')  + '01OddsBoostAdj'
 		AND recommend = @recommend
 		AND RoleId = 1)  
 

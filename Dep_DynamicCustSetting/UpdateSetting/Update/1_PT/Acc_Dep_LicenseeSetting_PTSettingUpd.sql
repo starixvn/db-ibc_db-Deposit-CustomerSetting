@@ -163,7 +163,7 @@ BEGIN
 		FROM #tmpSMATemp t
 			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND t.Currency = stb.Currency 
 			CROSS APPLY (
-							SELECT TOP 1 SuperPT, MasterPT, AgentPT
+							SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 							FROM dbo.Dep_CustPTSetting_Agent WITH(ROWLOCK,UPDLOCK)
 							WHERE CustID = t.CustID AND SportType=stb.SportType AND BetType=stb.BetType
 						) a
@@ -177,7 +177,7 @@ BEGIN
 		FROM #tmpSMATemp t
 			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND stb.Currency = 0 
 			CROSS APPLY (
-							SELECT TOP 1 SuperPT, MasterPT, AgentPT
+							SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 							FROM dbo.Dep_CustPTSetting_Agent WITH(ROWLOCK,UPDLOCK)
 							WHERE CustID = t.CustID AND SportType = stb.SportType AND BetType = stb.BetType
 						) a

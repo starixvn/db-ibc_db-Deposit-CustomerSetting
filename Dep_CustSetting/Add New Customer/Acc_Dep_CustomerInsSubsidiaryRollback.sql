@@ -1,7 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsSubsidiaryRollback] 
-	@CustID INT,
-	@RoleID	TINYINT
+	@CustID INT
 AS
 /*
 	Created: 20240710@Johnson

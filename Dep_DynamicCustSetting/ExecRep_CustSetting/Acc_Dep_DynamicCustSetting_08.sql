@@ -15,7 +15,7 @@ AS
 
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
-
+	- 20240916@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Parameter Definition
 		StepID = :
 			1: Delete existing customer setting
@@ -31,7 +31,8 @@ BEGIN
 
 	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
 	IF dbo.f_CheckRepTable('Customer') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0 RETURN
+	
+	/*IF dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0 RETURN
 	IF dbo.f_CheckRepTable('Dep_CustPTGroupSetting_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('Dep_CustPTSetting_Member') = 0 RETURN
 	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 RETURN
@@ -45,7 +46,7 @@ BEGIN
 	IF dbo.f_CheckRepTable('Dep_ProductSetting') = 0 RETURN
 	IF dbo.f_CheckRepTable('Dep_LicenseeProductSetting') = 0 RETURN
 	IF dbo.f_CheckRepTable('Dep_ProductStatusProfile') = 0 RETURN
-
+*/
 	CREATE TABLE #TempConfig(
 		[SportType] [smallint],
 		[BetType] [smallint],

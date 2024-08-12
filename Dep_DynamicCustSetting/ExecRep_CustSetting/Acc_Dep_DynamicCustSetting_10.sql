@@ -26,6 +26,9 @@ AS
 		</ROOT>
 */
 BEGIN
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	DECLARE @Threshold	INT, 
 			@xml		XML, 
 			@iDoc		INT		
@@ -79,7 +82,7 @@ BEGIN
 				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				INNER JOIN #ValuePT v ON IsApplyBA=0
-				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
 								WHERE AgentID = t.CustID AND SportType=v.SportType AND BetType=v.BetType AND IsLive=v.IsLive
 							) a
@@ -91,7 +94,7 @@ BEGIN
 				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				INNER JOIN #ValuePT v ON IsApplyBA=1
-				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
 								WHERE AgentID = t.CustID AND SportType=v.SportType AND BetType=v.BetType
 							) a
@@ -105,7 +108,7 @@ BEGIN
 				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				CROSS APPLY #ValuePT v 
-				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
 								WHERE AgentID = t.CustID AND SportType=v.SportType 
 									AND BetType=v.BetType AND IsLive=v.IsLive
@@ -128,16 +131,16 @@ BEGIN
 	
 				IF @@ROWCOUNT = 0 BREAK
 
-				UPDATE s
-				SET s.AgentPT=v.PT,
+				UPDATE a
+				SET a.AgentPT=v.PT,
 					RepUpdateTime = dbo.f_GetDateTime2()
-					FROM #tmpCustTemp t
-						CROSS APPLY #ValuePT v 
-						CROSS APPLY (	SELECT TOP 1 AgentPT
-										FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
-										WHERE CustID = t.CustID AND SportType=v.SportType 
-											AND BetType=v.BetType AND IsLive=v.IsLive
-									) a			
+				FROM #tmpCustTemp t
+					CROSS APPLY #ValuePT v 
+					CROSS APPLY (	SELECT TOP 1 AgentPT, RepUpdateTime
+									FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
+									WHERE CustID = t.CustID AND SportType=v.SportType 
+										AND BetType=v.BetType AND IsLive=v.IsLive
+								) a			
 				
 				TRUNCATE TABLE #tmpCustTemp					
 			END;
@@ -159,28 +162,28 @@ BEGIN
 	
 				IF @@ROWCOUNT = 0 BREAK
 
-				UPDATE s
-				SET s.AgentPT=v.PT,
+				UPDATE a
+				SET a.AgentPT=v.PT,
 					RepUpdateTime = dbo.f_GetDateTime2()
-					FROM #tmpCustTemp t
-						INNER JOIN #ValuePT v ON v.IsApplyBA = 0
-						CROSS APPLY (	SELECT TOP 1 AgentPT
-										FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
-										WHERE CustID = t.CustID AND SportType=v.SportType 
-											AND BetType=v.BetType AND IsLive=v.IsLive
-									) a	
+				FROM #tmpCustTemp t
+					INNER JOIN #ValuePT v ON v.IsApplyBA = 0
+					CROSS APPLY (	SELECT TOP 1 AgentPT, RepUpdateTime
+									FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
+									WHERE CustID = t.CustID AND SportType=v.SportType 
+										AND BetType=v.BetType AND IsLive=v.IsLive
+								) a	
 						
-				UPDATE s
-				SET s.AgentPT=0,
+				UPDATE a
+				SET a.AgentPT=0,
 					RepUpdateTime = dbo.f_GetDateTime2()
-					FROM #tmpCustTemp t
-						INNER JOIN #ValuePT v ON v.IsApplyBA = 1
-						CROSS APPLY (	SELECT TOP 1 AgentPT
-										FROM dbo.Dep_CustPTSetting_Member m WITH(ROWLOCK,UPDLOCK)	
-											 INNER JOIN Dep_CustBAActive BA WITH(NOLOCK) ON m.CustID=BA.CustId
-										WHERE m.CustID = t.CustID AND m.SportType=v.SportType 
-											AND m.BetType=v.BetType AND m.IsLive=v.IsLive
-									) a	
+				FROM #tmpCustTemp t
+					INNER JOIN #ValuePT v ON v.IsApplyBA = 1
+					CROSS APPLY (	SELECT TOP 1 AgentPT, m.RepUpdateTime
+									FROM dbo.Dep_CustPTSetting_Member m WITH(ROWLOCK,UPDLOCK)	
+										 INNER JOIN Dep_CustBAActive BA WITH(NOLOCK) ON m.CustID=BA.CustId
+									WHERE m.CustID = t.CustID AND m.SportType=v.SportType 
+										AND m.BetType=v.BetType AND m.IsLive=v.IsLive
+								) a	
 									
 			END;
 		END;		

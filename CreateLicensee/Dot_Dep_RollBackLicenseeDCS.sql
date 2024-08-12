@@ -76,6 +76,8 @@ BEGIN
 	
 	--Exchange: charge comm
 	DELETE d
+	OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
+	INTO Dep_CustDiscountSetting_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)				
 	FROM Dep_CustDiscountSetting_Agent d WITH(ROWLOCK)
 		INNER JOIN #tblCustomer t ON d.custid=t.CustID
 

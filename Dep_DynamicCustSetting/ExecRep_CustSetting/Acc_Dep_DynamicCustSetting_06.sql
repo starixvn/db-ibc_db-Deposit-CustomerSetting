@@ -23,6 +23,9 @@ AS
 	Param's Explanation:
 */
 BEGIN	
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	DECLARE	@SettingLevel		TINYINT
 				,@ProductSettingID	INT
 				

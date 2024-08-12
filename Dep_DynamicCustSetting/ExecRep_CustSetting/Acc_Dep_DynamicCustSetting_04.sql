@@ -13,7 +13,9 @@ AS
 		- 20240712@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]	
 */
 BEGIN
-	
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	SET NOCOUNT ON 
 	
 	--Check if XML is null or empty

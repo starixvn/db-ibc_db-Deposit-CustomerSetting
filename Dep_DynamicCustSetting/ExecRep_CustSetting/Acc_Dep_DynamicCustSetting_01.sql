@@ -30,6 +30,9 @@ AS
 		</ROOT>
 */
 BEGIN
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	DECLARE @StartRow INT, @StopRow	INT, @MaxRow INT, @Threshold INT, 
 			@Currency INT, @Site VARCHAR(10),
 			@xml XML, @iDoc INT				
