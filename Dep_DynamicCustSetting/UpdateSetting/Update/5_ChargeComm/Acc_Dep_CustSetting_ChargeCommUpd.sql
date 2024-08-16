@@ -17,6 +17,7 @@ AS
 
 	Revision:
 		- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
+		- 20240812@Tacy: Correct writelog [Redmine: #201239]
 
 	Param's Explanation:
 		• @Discount:
@@ -258,7 +259,7 @@ BEGIN
 					SELECT	SportType			AS '@SportType',
 							cs.Discount				AS '@Discount'	
 					FROM	@NewDiscountTbl AS cs	
-					FOR XML PATH('PT'),
+					FOR XML PATH('Discount'),
 					TYPE
 				)
 		FOR XML PATH('Acc_Dep_CustSetting_ChargeCommUpd'),
@@ -277,7 +278,7 @@ BEGIN
 					SELECT	BetType				AS '@BetType',
 							cs.Discount				AS '@Discount'	
 					FROM	@NewDiscountTbl AS cs	
-					FOR XML PATH('PT'),
+					FOR XML PATH('Discount'),
 					TYPE
 				)
 		FOR XML PATH('Acc_Dep_CustSetting_ChargeCommUpd'),
@@ -297,7 +298,7 @@ BEGIN
 							BetType				AS '@BetType',
 							cs.Discount				AS '@Discount'	
 					FROM	@NewDiscountTbl AS cs	
-					FOR XML PATH('PT'),
+					FOR XML PATH('Discount'),
 					TYPE
 				)
 		FOR XML PATH('Acc_Dep_CustSetting_ChargeCommUpd'),

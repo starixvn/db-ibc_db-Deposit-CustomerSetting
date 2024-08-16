@@ -81,6 +81,7 @@ AS
 	- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199521]
 	- 20240719@Tacy: SiteBuilder - Quick Fix [f_Dep_CustSetting_SportBetTypeSettingSelect] - @SettingStatus=0 [Redmineid: #208203]
 	- 20240506@Tacy: Integrate Exchange [Redmine: #201239]
+	- 20240812@Tacy: Correct writelog [Redmine: #201239]
 
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
@@ -3147,6 +3148,12 @@ BEGIN
 							TYPE
 							),
 							(
+								SELECT	31 															AS '@ID'
+										,  CAST(@Comm_Exchange AS VARCHAR(50))						AS '@ChargeComm'										
+							FOR XML PATH ('Product'),ROOT ('ChargeComm'),
+							TYPE
+							),
+							(
 								SELECT CASE WHEN  bs1.Sporttype = 1 AND bs1.bettype = 9 THEN 1999
 											WHEN  bs1.Sporttype = 99 AND bs1.bettype = 9 THEN 999
 										ELSE bs1.Sporttype END															AS [@ID]
@@ -3182,7 +3189,7 @@ BEGIN
 											,  dbo.f_CS_FomatNumber (CAST(st1.MaxStake		AS VARCHAR(50)))					AS [@MaxStake]
 										FROM @tmpStakeLevel st1 
 											CROSS APPLY (SELECT ft.ProductID
-												 FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect (@ProductID,7,@SettingStatus) ft
+												 FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect (NULL,7,@SettingStatus) ft
 												 WHERE ft.Bettype=st1.GameTypeID) ds1
 										WHERE st1.Currency = @Currency
 											AND ds1.ProductID = ds.ProductID 
@@ -3191,7 +3198,7 @@ BEGIN
 									) 
 								FROM @tmpStakeLevel st 
 									CROSS APPLY (SELECT ft.ProductID
-												 FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect (@ProductID,7,@SettingStatus) ft
+												 FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect (NULL,7,@SettingStatus) ft
 												 WHERE ft.Bettype=st.GameTypeID) ds
 								WHERE st.Currency = @Currency
 								GROUP BY ds.ProductID
