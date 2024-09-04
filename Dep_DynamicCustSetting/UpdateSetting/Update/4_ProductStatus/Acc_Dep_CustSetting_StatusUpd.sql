@@ -38,7 +38,7 @@ AS
 		- 20230808@Tacy: LAP - Offer Player Commission to VS3 (new) [redmine: #192203]
 		- 20241101@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
 		- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
-
+		- 20240503@Johnson: Restructure Commission [redmine:#179088]
 	Param's Explanation:
 	- @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
                     EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username"
@@ -272,11 +272,10 @@ BEGIN
 	END
 	
 	-----------Setting Comm-------------
-	IF @ProductID IN (22,32,24,45,36,28,5
-					,40, 38,34,42,39,55,21 ,51,57,56,59,61,66,6
-					,62,67,68,3,8,60,70,75
-					,73,76	-- MG_RnG, YeeBet
-					) 
+	IF EXISTS (SELECT 1 FROM Dep_ProductSettingDetail p 
+				INNER JOIN Dep_ProductSetting d on p.ProductSettingID = d.ProductSettingID
+			WHERE d.ProductID = @ProductID
+				AND SettingType = 9)
 		AND @IsDisabled = 0 
 	BEGIN
 		EXEC Acc_Dep_DynamicCustSetting_06

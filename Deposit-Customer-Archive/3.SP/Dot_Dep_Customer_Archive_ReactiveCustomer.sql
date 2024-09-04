@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig,Dot_Evolution" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig,Dot_Evolution" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer]
 	@CustID int = 0,  
 	@ReinitOldBalance BIT = 1,
