@@ -15,6 +15,7 @@ AS
 	Revision:		
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
 		- 20240429@Tacy: correct Log [RedmineID: #201239]
+		- 20240814@Winfred: Enhance Update PT in NAP[RedmineID:#201477]
 	Param's Explanation:
 		*@UserName : Name user LA update
 		@InputPT:
@@ -39,12 +40,13 @@ BEGIN
 
 	CREATE TABLE #PTProduct(ProductID INT,Currency INT,PT SMALLMONEY, PRIMARY KEY(ProductID ,Currency ))
 	CREATE TABLE #SportTypeBetType(ProductID INT,SportType INT,Bettype INT,BettypeName NVARCHAR(128),Currency INT,IsLive BIT,PT SMALLMONEY,
-								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,IsApplyBA BIT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductID,Sporttype ,Bettype,Currency))
+								   ProductName VARCHAR(50),SettingLevel TINYINT,ProductSettingID INT,IsApplyBA BIT,isfinished BIT DEFAULT(0),PRIMARY KEY(ProductSettingID,Sporttype ,Bettype,Currency))
 	CREATE TABLE #tmpSMA (CustID INT ,RoleID INT,Currency INT,srecommend INT,  ProductSettingID INT, isfinished BIT DEFAULT(0),PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #Dummy (CustID INT PRIMARY KEY)	
 	CREATE TABLE #tmpSMATemp (CustID INT,RoleID INT,Currency INT,srecommend INT, ProductSettingID INT,PRIMARY KEY(CustID ,ProductSettingID ))
 	CREATE TABLE #tmpPT_Old (CustID INT ,SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY, PRIMARY KEY(CustID ,Sporttype ,Bettype ))
 	CREATE TABLE #tmpAdjPT (SportType INT,Bettype INT,IsLive BIT,IsApplyBA BIT, PT SMALLMONEY,ProductID INT,ProductName VARCHAR(50),SettingLevel TINYINT, PRIMARY KEY(Sporttype ,Bettype ))
+	CREATE NONCLUSTERED INDEX  NIX_tmpSMA ON #tmpSMA (isfinished) 
 
 	SET @startRun = GETDATE()
 	SELECT	@ErrCode = 0, @ErrMsg = ''
@@ -104,14 +106,17 @@ BEGIN
 
 	INSERT INTO	#tmpPT_Old (CustID,SportType, BetType, Islive, PT)
 	SELECT DISTINCT	a.CustID	
-		,	a.SportType
-		,	a.BetType
-		,	a.IsLive
-		,	a.SuperPT			
-	FROM dbo.Dep_CustPTSetting_Agent a WITH(NOLOCK)
-			INNER JOIN #tmpSMA t ON a.CustID=t.CustID
-			INNER JOIN #SportTypeBetType stb ON a.SportType=stb.SportType AND a.BetType=stb.BetType 
-												AND a.IsLive = stb.IsLive  AND t.ProductSettingID = stb.ProductSettingID
+		,	stb.SportType
+		,	stb.BetType
+		,	stb.IsLive
+		,	a.SuperPT
+	FROM #tmpSMA t
+			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID
+			CROSS APPLY (
+							SELECT TOP 1 CustID, SuperPT
+							FROM dbo.Dep_CustPTSetting_Agent WITH(NOLOCK)
+							WHERE CustID = t.CustID AND SportType=stb.SportType AND BetType=stb.BetType AND IsLive = stb.IsLive
+						) a
 
 	INSERT INTO #Dummy(CustID)
 	SELECT CustID FROM Customer WITH(NOLOCK) 
@@ -121,7 +126,7 @@ BEGIN
 		AND srecommend IN (SELECT CustID FROM  #tmpSMA)
 	
 	INSERT INTO #tmpSMA(CustID,Currency,RoleID,ci.srecommend,ProductSettingID)
-	SELECT  DISTINCT ci.CustID, ci.currency,ci.roleid,ci.srecommend, sa.ProductSettingID 
+	SELECT  DISTINCT ci.CustID, ci.currency ,ci.roleid, ci.srecommend, sa.ProductSettingID 
 	FROM custInfo ci WITH(NOLOCK) 
 	INNER JOIN #tmpSMA sa ON ci.srecommend = sa.CustID AND sa.RoleID = 4
 	WHERE Enabled=1 AND ci.Roleid in (2,3)  
@@ -129,7 +134,7 @@ BEGIN
 		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = ci.currency)
 		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
 	UNION ALL 
-	SELECT  DISTINCT ci.CustID, ci.currency,ci.roleid,ci.srecommend, sa.ProductSettingID 
+	SELECT  DISTINCT ci.CustID, ci.currency, ci.roleid, ci.srecommend, sa.ProductSettingID 
 	FROM custInfo ci WITH(NOLOCK) 
 	INNER JOIN #tmpSMA sa ON ci.srecommend = sa.CustID AND sa.RoleID = 4
 	WHERE Enabled=1 AND ci.Roleid in (2,3)  
@@ -150,26 +155,30 @@ BEGIN
 		IF @@ROWCOUNT = 0 BREAK
 		-- exists currency
 		UPDATE a
-		SET
-			 SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
+		SET  SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
-		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID 
-			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND a.SportType=stb.SportType 
-												AND a.BetType=stb.BetType AND t.Currency = stb.Currency 
+		FROM #tmpSMATemp t
+			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND t.Currency = stb.Currency 
+			CROSS APPLY (
+							SELECT TOP 1 SuperPT, MasterPT, AgentPT
+							FROM dbo.Dep_CustPTSetting_Agent WITH(ROWLOCK,UPDLOCK)
+							WHERE CustID = t.CustID AND SportType=stb.SportType AND BetType=stb.BetType
+						) a
 		
 		-- all currency
 		UPDATE a
-		SET
-			 SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
+		SET  SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
-		FROM dbo.Dep_CustPTSetting_Agent a WITH(ROWLOCK,UPDLOCK)
-			INNER JOIN #tmpSMATemp t ON a.CustID=t.CustID
-			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND a.SportType=stb.SportType 
-												AND a.BetType=stb.BetType AND stb.Currency = 0
-		WHERE  NOT EXISTS (SELECT TOP 1 1 FROM #SportTypeBetType WHERE Currency = t.Currency AND a.SportType=SportType AND a.BetType=BetType )
+		FROM #tmpSMATemp t
+			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND stb.Currency = 0 
+			CROSS APPLY (
+							SELECT TOP 1 SuperPT, MasterPT, AgentPT
+							FROM dbo.Dep_CustPTSetting_Agent WITH(ROWLOCK,UPDLOCK)
+							WHERE CustID = t.CustID AND SportType = stb.SportType AND BetType = stb.BetType
+						) a
+		WHERE  NOT EXISTS (SELECT TOP 1 1 FROM #SportTypeBetType WHERE Currency = t.Currency AND stb.SportType=SportType AND stb.BetType=BetType )
 		
 		TRUNCATE TABLE #tmpSMATemp
 	END
@@ -204,10 +213,10 @@ BEGIN
 			INNER JOIN #tmpSMA sa on stb.ProductSettingID = sa.ProductSettingID
 			WHERE sa.CustID = @SuperID AND sa.RoleID = 4 AND stb.Currency = 0 AND 
 					NOT EXISTS( SELECT 1 
-					FROM #SportTypeBetType 
-					WHERE Currency = sa.Currency 
-					AND SportType = stb.SportType 
-					AND Bettype = stb.Bettype )
+								FROM #SportTypeBetType 
+								WHERE Currency = sa.Currency 
+								AND SportType = stb.SportType 
+								AND Bettype = stb.Bettype )
 
 			SET @NumProduct = (SELECT COUNT(1) FROM #tmpAdjPT)
 

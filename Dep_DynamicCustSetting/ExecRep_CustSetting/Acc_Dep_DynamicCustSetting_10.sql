@@ -13,6 +13,7 @@ AS
 	Original:
 	Revision
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
+		- 20240814@Winfred: Enhance Update PT in NAP[RedmineID:#201477]
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -55,9 +56,12 @@ BEGIN
 		INSERT INTO #tempMemNoGrouped(CustID)
 		SELECT c.CustID
 		FROM dbo.Customer c WITH(NOLOCK)
-			INNER JOIN 	dbo.Dep_CustSettingMode m WITH(NOLOCK) ON c.custid=m.CustID	
+			CROSS APPLY ( SELECT TOP 1 IsGroupedPT
+								FROM dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
+								WHERE custid=c.CustID AND IsGroupedPT=0
+							) m
 			INNER JOIN #Agent a ON c.recommend=a.CustID
-		WHERE c.roleid =1 AND m.IsGroupedPT=0
+		WHERE c.roleid =1
 
 		--Parse XML
 		EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @PT
@@ -78,35 +82,40 @@ BEGIN
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
 		BEGIN
 			UPDATE a
-				SET
-					SuperPT  = 0
-					,MasterPT = 0
-					,AgentPT  = v.PT
-			FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-				INNER JOIN #Agent ag ON a.AgentID=ag.CustID
-				INNER JOIN #ValuePT v ON a.SportType=v.SportType AND a.BetType=v.BetType AND a.IsLive=v.IsLive
-			WHERE v.IsApplyBA=0
+			SET  SuperPT  = 0
+				,MasterPT = 0
+				,AgentPT  = v.PT
+			FROM #Agent t
+				INNER JOIN #ValuePT v ON IsApplyBA=0
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
+								WHERE AgentID = t.CustID AND SportType=v.SportType AND BetType=v.BetType AND IsLive=v.IsLive
+							) a
 			
 			UPDATE a
-				SET
-					SuperPT  = 0
-					,MasterPT = 0
-					,AgentPT  = 0
-			FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-				CROSS APPLY #Agent ag 
-				INNER JOIN #ValuePT t ON a.AgentID=ag.CustID AND a.SportType=t.SportType AND a.BetType=t.BetType
-			WHERE t.IsApplyBA=1
+			SET  SuperPT  = 0
+				,MasterPT = 0
+				,AgentPT  = 0
+			FROM #Agent t
+				INNER JOIN #ValuePT v ON IsApplyBA=1
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
+								WHERE AgentID = t.CustID AND SportType=v.SportType AND BetType=v.BetType
+							) a
 		END
 		ELSE
 		BEGIN
 			UPDATE a
-				SET
-					SuperPT  = 0
-					,MasterPT = 0
-					,AgentPT  = v.PT
-			FROM dbo.Dep_CustPTGroupSetting_Member a WITH(ROWLOCK)
-				INNER JOIN #Agent ag ON a.AgentID=ag.CustID
-				INNER JOIN #ValuePT v ON a.SportType=v.SportType AND a.BetType=v.BetType AND a.IsLive=v.IsLive			
+			SET  SuperPT  = 0
+				,MasterPT = 0
+				,AgentPT  = v.PT
+			FROM #Agent t
+				CROSS APPLY #ValuePT v 
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
+								WHERE AgentID = t.CustID AND SportType=v.SportType 
+									AND BetType=v.BetType AND IsLive=v.IsLive
+							) a			
 		END
 		
 		IF(@Site='asiabet88' AND @Currency IN(3,6))
@@ -125,11 +134,15 @@ BEGIN
 		
 					IF @@ROWCOUNT = 0 BREAK
 
-					UPDATE s
-					SET s.AgentPT=v.PT
-					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
-						INNER JOIN #tmpCustTemp c	ON s.CustID=c.CustID
-						INNER JOIN #ValuePT v ON s.SportType=v.SportType AND s.BetType=v.BetType AND s.IsLive=v.IsLive			
+					UPDATE a
+					SET AgentPT = v.PT
+					FROM #tmpCustTemp t
+						CROSS APPLY #ValuePT v 
+						CROSS APPLY (	SELECT TOP 1 AgentPT
+										FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
+										WHERE CustID = t.CustID AND SportType=v.SportType 
+											AND BetType=v.BetType AND IsLive=v.IsLive
+									) a			
 					
 					TRUNCATE TABLE #tmpCustTemp					
 				END;
@@ -151,20 +164,26 @@ BEGIN
 		
 					IF @@ROWCOUNT = 0 BREAK
 
-					UPDATE s
-					SET s.AgentPT=v.PT
-					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
-						INNER JOIN #tmpCustTemp c	ON s.CustID=c.CustID
-						INNER JOIN #ValuePT v ON s.SportType=v.SportType AND s.BetType=v.BetType AND s.IsLive=v.IsLive							
-					WHERE v.IsApplyBA=0
+					UPDATE a
+					SET AgentPT  = v.PT
+					FROM #tmpCustTemp t
+						INNER JOIN #ValuePT v ON v.IsApplyBA = 0
+						CROSS APPLY (	SELECT TOP 1 AgentPT
+										FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
+										WHERE CustID = t.CustID AND SportType=v.SportType 
+											AND BetType=v.BetType AND IsLive=v.IsLive
+									) a	
 							
-					UPDATE s
-					SET s.AgentPT=0
-					FROM [Dep_CustPTSetting_Member] s WITH(ROWLOCK)
-						INNER JOIN Dep_CustBAActive BA ON s.CustID=BA.CustId
-						INNER JOIN #tmpCustTemp c	ON s.CustID=c.CustID
-						INNER JOIN #ValuePT t ON s.SportType=t.SportType AND s.BetType=t.Bettype AND s.IsLive=t.IsLive
-					WHERE t.IsApplyBA=1
+					UPDATE a
+					SET AgentPT = 0
+					FROM #tmpCustTemp t
+						INNER JOIN #ValuePT v ON v.IsApplyBA = 1
+						CROSS APPLY (	SELECT TOP 1 AgentPT
+										FROM dbo.Dep_CustPTSetting_Member m WITH(ROWLOCK,UPDLOCK)	
+											 INNER JOIN Dep_CustBAActive BA WITH(NOLOCK) ON m.CustID=BA.CustId
+										WHERE m.CustID = t.CustID AND m.SportType=v.SportType 
+											AND m.BetType=v.BetType AND m.IsLive=v.IsLive
+									) a	
 										
 				END;
 			END;		
