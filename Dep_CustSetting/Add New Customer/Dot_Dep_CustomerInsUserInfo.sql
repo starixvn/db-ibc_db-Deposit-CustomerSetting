@@ -55,6 +55,7 @@ AS
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]  
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240830@Johnson: Apply Inhouse for BLC [redmine:#209892]
 		- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 		- @ErrCode:
@@ -143,12 +144,13 @@ BEGIN
 			END
 		END
 
-		INSERT INTO [BetLimitControlCustSetting]([CustID],[BetLimitTypeID],[MaxBet],[MaxPerMatch])
-		SELECT @custid, BetLimitTypeID, MIN(MaxBet), MIN(MaxPerMatch)
-		FROM BetLimitControlDefaultSetting WITH(NOLOCK,FORCESEEK) 
-		WHERE CustID IN (@srecommend,@mrecommend,@recommend)
-		GROUP BY BetLimitTypeID
+	INSERT INTO [BetLimitControlCustSetting]([CustID],[BetLimitTypeID],[MaxBet],[MaxPerMatch],RepUpdateTime)
+	SELECT @custid, BetLimitTypeID, MIN(MaxBet), MIN(MaxPerMatch), dbo.f_GetDateTime2()
+	FROM BetLimitControlDefaultSetting WITH(NOLOCK,FORCESEEK) 
+	WHERE CustID IN (@srecommend,@mrecommend,@recommend)
+	GROUP BY BetLimitTypeID
 
+		
 		DECLARE @DangerLevel BIGINT = NULL
 
 		--get DangerLevel
