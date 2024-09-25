@@ -20,10 +20,11 @@ AS
 	Revision:
 		- 20200432@Max: LAP - Support commission for 3rd party products [Redmine: #131774]
 		- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 	Param's Explanation:
 */
 BEGIN	
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	DECLARE	@SettingLevel		TINYINT

@@ -15,6 +15,7 @@ AS
 		- 20220511@Eden: Arcadia Gaming - Fix duplicated data [RedmineID:#172588]
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
 		- 20240709@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 	Param's Explanation:
 	@Action=1: Update and insert
 	@Action=0: Insert new
@@ -28,7 +29,7 @@ AS
 		</ROOT>
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	SET NOCOUNT ON;
