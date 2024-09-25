@@ -15,6 +15,7 @@ AS
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
 		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 		- 20240814@Winfred: Enhance Update PT in NAP[RedmineID:#201477]
+		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -26,7 +27,7 @@ AS
 		</ROOT>
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	DECLARE @Threshold	INT, 

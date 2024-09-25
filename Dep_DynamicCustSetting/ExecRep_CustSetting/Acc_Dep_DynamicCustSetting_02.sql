@@ -19,11 +19,12 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220802@Tacy: Insert history of member bet setting for Number Game [RedmineID: 170739]
 		- 20240705@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 	Param's Explanation:
 	-- @SettingType : 2 Bet Limit , 11  New Bet limit
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	SET NOCOUNT ON

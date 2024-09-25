@@ -36,9 +36,10 @@ AS
 		- 20230224@Winfred: NAP LM - Enhance Bet Setting function for AM to use [redmine:#178105] 
 		- 20240111@Tacy: LAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #199523]
 		- 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	SELECT @ErrCode = 0

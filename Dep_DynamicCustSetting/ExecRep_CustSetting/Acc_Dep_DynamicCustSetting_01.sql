@@ -18,6 +18,7 @@ AS
 		- 20200718@Elodie: Support level sporttype/bettype [RedmineID:#135872]
 		- 202202220@Elodie: Apply DCS for SB [RedmineID: #167898] 
 		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -30,7 +31,7 @@ AS
 		</ROOT>
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	DECLARE @StartRow INT, @StopRow	INT, @MaxRow INT, @Threshold INT, 
