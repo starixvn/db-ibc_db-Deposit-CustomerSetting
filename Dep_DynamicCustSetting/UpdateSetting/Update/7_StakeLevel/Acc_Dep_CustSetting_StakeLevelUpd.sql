@@ -224,8 +224,8 @@ BEGIN
 											FOR XML RAW ('StakeLevel'), ROOT ('ROOT') 
 										);
 					
-			-- Correct downlines via ExecRep
-			EXECUTE	Acc_Dep_DynamicCustSetting_05
+			-- Correct downlines 
+			EXECUTE	Acc_Dep_CustSetting_StakeLevelUpdDownlines
 						@StakeLevel	= @StakeLevel
 					,	@ActionID	= @ActionID
 			IF	@StopRow = @MaxRow 
