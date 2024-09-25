@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_DisableStatUpd] 
 	  @CustID			INT
 	, @IsDisabled	VARCHAR(MAX)
@@ -16,7 +16,7 @@ AS
 	Original:
 
 	Revisions:
-
+		- 20240712@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	• @IsDisabled
 		<ROOT>
@@ -300,7 +300,8 @@ BEGIN
 	
 			
 	UPDATE Dep_CustProductStatus
-		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	
+		SET bitmapIsDisabled = (SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsDisabled, CONVERT(VARCHAR(MAX),@xmlStrDisabled)))	,
+			RepUpdateTime = SYSDATETIME()
 	WHERE CustID = @CustID
 	
 	
@@ -323,7 +324,8 @@ BEGIN
 				, TYPE
 			)
 		UPDATE Dep_CustProductStatus WITH (ROWLOCK,UPDLOCK)
-		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden)))	
+		SET bitmapIsHidden =(SELECT bitmap FROM dbo.f_GenerateProductStatus_multiple (bitmapIsHidden, CONVERT(VARCHAR(MAX),@xmlStrHidden))),
+			RepUpdateTime = SYSDATETIME()
 		WHERE CustID = @CustID
 		
 	END
@@ -342,7 +344,7 @@ BEGIN
 		
 		EXEC dbo.[Acc_Dep_DynamicCustSetting_04] @CustID = @CustID
 						, @RoleID			= @RoleID
-						, @IsDisabled_XML	= @IsDisabled
+						, @IsDisabled_XML	= @IsDisabled						
 	
 	END
 	
@@ -566,10 +568,3 @@ BEGIN
 END
 
 GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO [wsv_nap]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO [bodbDownlineNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO [bodbExtAccNet]
-GO
-GRANT EXECUTE ON [dbo].[Acc_Dep_CustSetting_DisableStatUpd] TO  [wsv_lap]

@@ -19,29 +19,18 @@ AS
 	Original:
 	Revision:
 		- 20200432@Max: LAP - Support commission for 3rd party products [Redmine: #131774]
-		
+		- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	Param's Explanation:
 */
-
-BEGIN
-	IF(dbo.f_CheckRepTable('Dep_CustDiscountGroupSetting_Member') = 0
-		OR dbo.f_CheckRepTable('Dep_CustDiscountSetting_Member') = 0	
-		OR dbo.f_CheckRepTable('Dep_CustDiscountSetting_Agent') = 0	
-		OR dbo.f_CheckRepTable('Dep_LicenseeProductSetting') = 0	
-		OR dbo.f_CheckRepTable('Dep_CustSettingMode') = 0	
-		OR dbo.f_CheckRepTable('Dep_ProductSetting') = 0	
-		OR dbo.f_CheckRepTable('Customer') = 0	
-	   )
-		RETURN
-
+BEGIN	
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	DECLARE	@SettingLevel		TINYINT
 				,@ProductSettingID	INT
-
+				
 	IF @Mode = 'UpdateComm'
 	BEGIN
-		--DECLARE	@SettingLevel		TINYINT
-		--		,@ProductSettingID	INT
-
 		CREATE TABLE #tmpMember (CustID INT, CustSettingModeType INT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
 		DECLARE @BatchMember TABLE (CustID INT, CustSettingModeType INT, GroupPlayerComm DECIMAL(9,8), GroupAgentComm DECIMAL(9,8), GroupMasterComm DECIMAL(9,8), GroupSuperComm DECIMAL(9,8))
 
@@ -136,8 +125,8 @@ BEGIN
 
 		--Insert ProductSetting for Super: Dep_LicenseeProductSetting
 		IF NOT EXISTS (SELECT TOP (1) 1 FROM dbo.Dep_LicenseeProductSetting WITH (NOLOCK) WHERE CustID = @srecommend AND ProductSettingID = @ProductSettingID)
-		INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
-		VALUES(@srecommend, @ProductSettingID)
+		INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID,RepUpdateTime)
+		VALUES(@srecommend, @ProductSettingID,SYSDATETIME())
 
 		-------------------------------------
 		---------COMM SETTING----------------
@@ -154,6 +143,7 @@ BEGIN
 						,AgentDiscount
 						,MasterDiscount
 						,SuperDiscount
+						,RepUpdateTime
 					)
 				SELECT c.CustId
 					,@SportType
@@ -162,6 +152,7 @@ BEGIN
 					,0
 					,0
 					,0
+					,SYSDATETIME()
 				FROM dbo.Customer c WITH (NOLOCK)
 					LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member d WITH (NOLOCK) ON d.AgentID = c.custid AND d.SportType = @SportType AND d.BetType = @BetType
 				WHERE custid = @CustID
@@ -179,6 +170,7 @@ BEGIN
 						,AgentDiscount
 						,MasterDiscount
 						,SuperDiscount
+						,RepUpdateTime
 					)
 				SELECT c.CustId
 					,@SportType
@@ -187,6 +179,7 @@ BEGIN
 					,0
 					,0
 					,0
+					,dbo.f_GetDateTime2()
 				FROM dbo.Customer c WITH (NOLOCK)
 					LEFT JOIN dbo.Dep_CustDiscountGroupSetting_Member d WITH (NOLOCK) ON d.AgentID = c.custid AND d.SportType = @SportType AND d.BetType = @BetType
 				WHERE roleid = 2
@@ -201,7 +194,7 @@ BEGIN
 		BEGIN
 			WHILE (0 = 0)
 			BEGIN
-				DELETE TOP (3000) t
+				DELETE TOP (2000) t
 				OUTPUT deleted.custid , deleted.CustSettingModeType, deleted.GroupPlayerComm, deleted.GroupAgentComm, deleted.GroupMasterComm, deleted.GroupSuperComm INTO @BatchMember
 				FROM #tmpMember t
 
@@ -220,6 +213,7 @@ BEGIN
 						,AgentDiscount
 						,MasterDiscount
 						,SuperDiscount
+						,RepUpdateTime
 					)
 					SELECT t.CustId
 						,@SportType
@@ -228,6 +222,7 @@ BEGIN
 						,0
 						,0
 						,0
+						,dbo.f_GetDateTime2()
 					FROM @BatchMember t
 						LEFT JOIN Dep_CustDiscountSetting_Member cd WITH (NOLOCK) ON t.CustId = cd.CustID AND cd.SportType = @SportType AND cd.BetType = @BetType
 					WHERE t.CustSettingModeType = 1
@@ -247,8 +242,8 @@ BEGIN
 							OR t.GroupSuperComm <> 0)
 						)
 					BEGIN
-						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
-						SELECT CustId, 0			
+						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm,RepUpdateTime)
+						SELECT CustId, 0, dbo.f_GetDateTime2()		
 						FROM @BatchMember t
 						WHERE t.CustSettingModeType = 2
 							AND (t.GroupPlayerComm <> 0
@@ -264,6 +259,7 @@ BEGIN
 							,AgentDiscount
 							,MasterDiscount
 							,SuperDiscount
+							,RepUpdateTime
 						)
 						SELECT CustId
 							,@SportType
@@ -272,6 +268,7 @@ BEGIN
 							,0
 							,0
 							,0
+							,dbo.f_GetDateTime2()
 						FROM @BatchMember t
 						WHERE t.CustSettingModeType = 2
 							AND (t.GroupPlayerComm <> 0
@@ -290,8 +287,8 @@ BEGIN
 						)
 					BEGIN
 							
-						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm)
-						SELECT CustId, 1			
+						INSERT INTO dbo.Dep_CustSettingMode(CustID, IsGroupedComm,RepUpdateTime)
+						SELECT CustId, 1, dbo.f_GetDateTime2()			
 						FROM @BatchMember t
 						WHERE t.CustSettingModeType = 2
 							AND t.GroupPlayerComm = 0
@@ -305,7 +302,8 @@ BEGIN
 				IF EXISTS (SELECT TOP (1) 1 FROM @BatchMember WHERE CustSettingModeType = 3)
 				BEGIN
 					UPDATE m 
-						SET IsGroupedComm = 1	
+						SET IsGroupedComm = 1,
+							RepUpdateTime = dbo.f_GetDateTime2()
 					FROM dbo.Dep_CustSettingMode m		
 						INNER JOIN @BatchMember t ON m.CustID = t.CustID
 					WHERE t.CustSettingModeType = 3
@@ -351,13 +349,14 @@ BEGIN
 
 		--Setting Charge Comm: Dep_CustDiscountSetting_Agent
 		UPDATE dcs
-		SET dcs.Discount=@ChargeComm
+		SET dcs.Discount=@ChargeComm,
+			dcs.RepUpdateTime = dbo.f_GetDateTime2()
 		FROM #tmpSMA t 
 		INNER JOIN Dep_CustDiscountSetting_Agent dcs WITH (ROWLOCK, UPDLOCK)
 			ON t.CustID=dcs.CustID AND dcs.SportType=@SportType AND dcs.BetType=@BetType
 
-		INSERT INTO Dep_CustDiscountSetting_Agent (CustID, SportType, BetType, Discount)
-		SELECT t.CustID, @SportType, @BetType, @ChargeComm
+		INSERT INTO Dep_CustDiscountSetting_Agent (CustID, SportType, BetType, Discount, RepUpdateTime)
+		SELECT t.CustID, @SportType, @BetType, @ChargeComm, dbo.f_GetDateTime2()
 		FROM #tmpSMA t 
 		LEFT JOIN Dep_CustDiscountSetting_Agent dcs WITH (NOLOCK)
 			ON t.CustID=dcs.CustID AND dcs.SportType=@SportType AND dcs.BetType=@BetType
@@ -365,13 +364,11 @@ BEGIN
 		
 		--Insert ProductSetting for Super: Dep_LicenseeProductSetting
 		IF NOT EXISTS (SELECT TOP (1) 1 FROM dbo.Dep_LicenseeProductSetting WITH (NOLOCK) WHERE CustID = @srecommend AND ProductSettingID = @ProductSettingID)
-			INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
-			VALUES(@srecommend, @ProductSettingID)
+			INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID,RepUpdateTime)
+			VALUES(@srecommend, @ProductSettingID,SYSDATETIME())
 
 		DROP TABLE #tmpSMA
 
 	END
 END	
 GO
-
-

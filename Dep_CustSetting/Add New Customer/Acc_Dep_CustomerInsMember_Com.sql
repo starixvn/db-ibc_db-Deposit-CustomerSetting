@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 (
 	@custid INT OUTPUT,
@@ -50,7 +50,8 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20230303@Johnson: Return Basketball VR to its original state [redmine: #184339]
-
+	- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	
 Param's Explanation:
 • @ErrCode:
     = 0: Create super successfully.
@@ -118,22 +119,18 @@ BEGIN
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
-	--Error occurs
-	IF @ErrCode <> 0
-		RETURN
-
+	
 	----------------------CHECK Error
 
-	IF @@ERROR <> 0
-	BEGIN
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+	IF @@ERROR > 0
+	BEGIN		
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
  		RETURN 
 	END  
 	
 	--Insert ProductSetting of SportBooks for Super:
-	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID)
-	SELECT @custid, p.ProductSettingID
+	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID,RepUpdateTime)
+	SELECT @custid, p.ProductSettingID, SYSDATETIME()
 	FROM dbo.Dep_ProductSetting p WITH (NOLOCK) 
 		LEFT JOIN Dep_LicenseeProductSetting dp WITH(NOLOCK) 
 			ON p.ProductSettingID = dp.ProductSettingID 
@@ -143,11 +140,8 @@ BEGIN
 		AND dp.CustID IS NULL
 
 	IF @@ERROR <> 0
-	BEGIN
-		DELETE VRCustSetting WITH (ROWLOCK) WHERE custId  =@custid
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
-		DELETE Dep_LicenseeProductSetting WITH(ROWLOCK) WHERE custid = @custid
+	BEGIN				
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID		
 		RETURN 
 	END  
 

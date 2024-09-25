@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_Game_BetLimitUpd] 
 	  @CustID		INT
 	, @BetLimit VARCHAR(MAX)
@@ -18,7 +18,7 @@ AS
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220802@Tacy: Insert history of member bet setting (Number Game only) [RedmineID: #170739]
-		
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	@BetLimit	= '<ROOT>
 				<BetLimit SportType="1" BetType="1" MinBet="10" MaxBet="100" MaxPerMatch="1000" MaxPayoutPerMatch="10000" />
@@ -205,7 +205,8 @@ BEGIN
 		END
 		
 		UPDATE Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK) 
-		SET IsGroupedBetLimit = 0  
+		SET IsGroupedBetLimit = 0,
+			RepUpdateTime = SYSDATETIME()
 		WHERE custid = @CustID
 			AND IsGroupedBetLimit = 1
 
@@ -216,6 +217,7 @@ BEGIN
 			, main.maxpermatch	= tmp.MaxperMatch
 			, main.MaxPerNumber		= tmp.MaxPerNumber
 			, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+			, main.RepUpdateTime = SYSDATETIME()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
 			INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 		FROM dbo.Dep_CustBetSettingGame_Member main WITH(ROWLOCK,UPDLOCK)
@@ -230,15 +232,15 @@ BEGIN
 				)
 
 		--update new settings
-		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT @custID,tmp.SportType,tmp.BetType,tmp.MinBet,tmp.MaxBet,tmp.MaxPerMatch,tmp.MaxPerNumber,tmp.MaxPayoutPerMatch
+		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+		SELECT @custID,tmp.SportType,tmp.BetType,tmp.MinBet,tmp.MaxBet,tmp.MaxPerMatch,tmp.MaxPerNumber,tmp.MaxPayoutPerMatch,SYSDATETIME()
 		FROM @NewBetLimitTbl tmp
 			LEFT JOIN Dep_CustBetSettingGame_Member m WITH(NOLOCK) ON m.CustID = @CustID AND tmp.SportType = m.SportType AND tmp.BetType = m.BetType
 		WHERE m.CustID IS NULL
 
 		--Insert remain setting from group setting
-		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT @custID,gr.SportType,gr.BetType,gr.MinBet,gr.MaxBet,gr.MaxPerMatch,gr.MaxPerNumber,gr.MaxPayoutPerMatch
+		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+		SELECT @custID,gr.SportType,gr.BetType,gr.MinBet,gr.MaxBet,gr.MaxPerMatch,gr.MaxPerNumber,gr.MaxPayoutPerMatch,SYSDATETIME()
 		FROM Dep_CustBetSettingGameGroup_Member gr WITH(NOLOCK)
 			LEFT JOIN Dep_CustBetSettingGame_Member m WITH(NOLOCK) ON m.CustID = @CustID AND gr.SportType = m.SportType AND gr.BetType = m.BetType
 		WHERE m.CustID IS NULL
@@ -269,7 +271,7 @@ BEGIN
 							 FOR XML PATH ('r'), ROOT ('root')
 							)
 
-			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+			EXECUTE Acc_Dep_CustSetting_BetLimitHistoryIns  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
 			IF @ErrMsg<>''
 				RETURN
@@ -297,6 +299,7 @@ BEGIN
 			, main.maxpermatch	= tmp.MaxperMatch
 			, main.MaxPerNumber		= tmp.MaxPerNumber
 			, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
+			, main.RepUpdateTime = SYSDATETIME()
 		FROM dbo.Dep_CustBetSettingGame_Agent main WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN @NewBetLimitTbl tmp	ON tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE main.custid = @CustID

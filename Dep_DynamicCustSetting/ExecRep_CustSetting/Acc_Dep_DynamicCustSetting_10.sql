@@ -13,6 +13,7 @@ AS
 	Original:
 	Revision
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 		- 20240814@Winfred: Enhance Update PT in NAP[RedmineID:#201477]
 	Param's Explanation:
 		@PT:
@@ -25,174 +26,173 @@ AS
 		</ROOT>
 */
 BEGIN
-	IF(dbo.f_CheckRepTable('Dep_CustPTGroupSetting_Member') = 0
-		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0	
-		OR dbo.f_CheckRepTable('Dep_CustPTSetting_Member') = 0	
-		OR dbo.f_CheckRepTable('Dep_CustSettingMode') = 0	
-		OR dbo.f_CheckRepTable('Dep_ProductSetting') = 0	
-		OR dbo.f_CheckRepTable('Dep_ProductSettingDetail') = 0	
-		OR dbo.f_CheckRepTable('Customer') = 0	
-	   )
-		RETURN
-
-		DECLARE @Threshold	INT, 
-				@xml		XML, 
-				@iDoc		INT		
-
-		SET @Threshold=5000	/ @NumProduct
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
 		
-		CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY,IsApplyBA BIT)
-		CREATE TABLE #tempMemNoGrouped(CustID INT PRIMARY KEY CLUSTERED,isfinished BIT DEFAULT(0))	
-		CREATE TABLE #tmpCustTemp	(CustID INT PRIMARY KEY)
-		CREATE TABLE #Agent (CustID INT PRIMARY KEY CLUSTERED)	
+	DECLARE @Threshold	INT, 
+			@xml		XML, 
+			@iDoc		INT		
 
-		CREATE NONCLUSTERED INDEX IDX_tempMemNoGrouped ON #tempMemNoGrouped(CustID)
-		
-		INSERT INTO #Agent (CustID)
-		SELECT ss.value
-		FROM STRING_SPLIT(@CustIDList, ',') AS ss
-		WHERE value <> ''
-		
-		INSERT INTO #tempMemNoGrouped(CustID)
-		SELECT c.CustID
-		FROM dbo.Customer c WITH(NOLOCK)
+	SET @Threshold=2000	/ @NumProduct
+	
+	CREATE TABLE #ValuePT (SportType INT,Bettype INT,IsLive BIT, PT SMALLMONEY,IsApplyBA BIT)
+	CREATE TABLE #tempMemNoGrouped(CustID INT PRIMARY KEY CLUSTERED,isfinished BIT DEFAULT(0))	
+	CREATE TABLE #tmpCustTemp	(CustID INT PRIMARY KEY)
+	CREATE TABLE #Agent (CustID INT PRIMARY KEY CLUSTERED)	
+
+	CREATE NONCLUSTERED INDEX IDX_tempMemNoGrouped ON #tempMemNoGrouped(CustID)
+	
+	INSERT INTO #Agent (CustID)
+	SELECT ss.value
+	FROM STRING_SPLIT(@CustIDList, ',') AS ss
+	WHERE value <> ''
+	
+	INSERT INTO #tempMemNoGrouped(CustID)
+	SELECT c.CustID
+	FROM dbo.Customer c WITH(NOLOCK)
 			CROSS APPLY ( SELECT TOP 1 IsGroupedPT
 								FROM dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
 								WHERE custid=c.CustID AND IsGroupedPT=0
 							) m
-			INNER JOIN #Agent a ON c.recommend=a.CustID
+		INNER JOIN #Agent a ON c.recommend=a.CustID
 		WHERE c.roleid =1
 
-		--Parse XML
-		EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @PT
+	--Parse XML
+	EXECUTE	sp_xml_preparedocument @iDoc OUTPUT, @PT
 
-		INSERT INTO #ValuePT (SportType, BetType, Islive, PT, IsApplyBA)
-		SELECT	ox.SportType, ox.BetType, ox.Islive, ox.PT, ox.IsApplyBA
-		FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
-		WITH (
-			SportType		SMALLINT
-		,	BetType			SMALLINT
-		,	IsLive			BIT
-		,	PT				SMALLMONEY	
-		,	IsApplyBA		BIT
-		) AS ox;
+	INSERT INTO #ValuePT (SportType, BetType, Islive, PT, IsApplyBA)
+	SELECT	ox.SportType, ox.BetType, ox.Islive, ox.PT, ox.IsApplyBA
+	FROM OPENXML (@iDoc, '/ROOT/PT', 1) 
+	WITH (
+		SportType		SMALLINT
+	,	BetType			SMALLINT
+	,	IsLive			BIT
+	,	PT				SMALLMONEY	
+	,	IsApplyBA		BIT
+	) AS ox;
 
-		EXECUTE sp_xml_removedocument @iDoc;
-		
-		IF(@Site='asiabet88' AND @Currency IN(3,6))
-		BEGIN
-			UPDATE a
+	EXECUTE sp_xml_removedocument @iDoc;
+	
+	IF(@Site='asiabet88' AND @Currency IN(3,6))
+	BEGIN
+		UPDATE a
 			SET  SuperPT  = 0
 				,MasterPT = 0
 				,AgentPT  = v.PT
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				INNER JOIN #ValuePT v ON IsApplyBA=0
-				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
 								WHERE AgentID = t.CustID AND SportType=v.SportType AND BetType=v.BetType AND IsLive=v.IsLive
 							) a
-			
-			UPDATE a
+		
+		UPDATE a
 			SET  SuperPT  = 0
 				,MasterPT = 0
 				,AgentPT  = 0
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				INNER JOIN #ValuePT v ON IsApplyBA=1
-				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
 								WHERE AgentID = t.CustID AND SportType=v.SportType AND BetType=v.BetType
 							) a
-		END
-		ELSE
-		BEGIN
-			UPDATE a
+	END
+	ELSE
+	BEGIN
+		UPDATE a
 			SET  SuperPT  = 0
 				,MasterPT = 0
 				,AgentPT  = v.PT
+				,RepUpdateTime = dbo.f_GetDateTime2()
 			FROM #Agent t
 				CROSS APPLY #ValuePT v 
-				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT
+				CROSS APPLY (	SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 								FROM dbo.Dep_CustPTGroupSetting_Member WITH(ROWLOCK,UPDLOCK)
 								WHERE AgentID = t.CustID AND SportType=v.SportType 
 									AND BetType=v.BetType AND IsLive=v.IsLive
 							) a			
-		END
-		
-		IF(@Site='asiabet88' AND @Currency IN(3,6))
+	END
+	
+	IF(@Site='asiabet88' AND @Currency IN(3,6))
+	BEGIN
+		IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
 		BEGIN
-			IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
-			BEGIN
-			
-				WHILE (0 = 0)
-				BEGIN				
-					
-					UPDATE TOP (@Threshold) c WITH (ROWLOCK)
-					SET c.isfinished = 1
-					OUTPUT DELETED.CustID INTO #tmpCustTemp(CustID)
-					FROM #tempMemNoGrouped c 
-					WHERE isfinished = 0
 		
-					IF @@ROWCOUNT = 0 BREAK
+			WHILE (0 = 0)
+			BEGIN				
+				
+				UPDATE TOP (@Threshold) c WITH (ROWLOCK)
+				SET c.isfinished = 1
+				OUTPUT DELETED.CustID INTO #tmpCustTemp(CustID)
+				FROM #tempMemNoGrouped c 
+				WHERE isfinished = 0
+	
+				IF @@ROWCOUNT = 0 BREAK
 
-					UPDATE a
-					SET AgentPT = v.PT
-					FROM #tmpCustTemp t
-						CROSS APPLY #ValuePT v 
-						CROSS APPLY (	SELECT TOP 1 AgentPT
-										FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
-										WHERE CustID = t.CustID AND SportType=v.SportType 
-											AND BetType=v.BetType AND IsLive=v.IsLive
-									) a			
-					
-					TRUNCATE TABLE #tmpCustTemp					
-				END;
-			END;		
-		END
-		ELSE
+				UPDATE a
+				SET a.AgentPT=v.PT,
+					RepUpdateTime = dbo.f_GetDateTime2()
+				FROM #tmpCustTemp t
+					CROSS APPLY #ValuePT v 
+					CROSS APPLY (	SELECT TOP 1 AgentPT, RepUpdateTime
+									FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
+									WHERE CustID = t.CustID AND SportType=v.SportType 
+										AND BetType=v.BetType AND IsLive=v.IsLive
+								) a			
+				
+				TRUNCATE TABLE #tmpCustTemp					
+			END;
+		END;		
+	END
+	ELSE
+	BEGIN
+		IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
 		BEGIN
-			IF EXISTS(SELECT 1 FROM #tempMemNoGrouped)
-			BEGIN
 
-				WHILE (0 = 0)
-				BEGIN				
-					
-					UPDATE TOP (@Threshold) c WITH (ROWLOCK)
-					SET c.isfinished = 1
-					OUTPUT DELETED.CustID INTO #tmpCustTemp(CustID)
-					FROM #tempMemNoGrouped c 
-					WHERE isfinished = 0
-		
-					IF @@ROWCOUNT = 0 BREAK
+			WHILE (0 = 0)
+			BEGIN				
+				
+				UPDATE TOP (@Threshold) c WITH (ROWLOCK)
+				SET c.isfinished = 1
+				OUTPUT DELETED.CustID INTO #tmpCustTemp(CustID)
+				FROM #tempMemNoGrouped c 
+				WHERE isfinished = 0
+	
+				IF @@ROWCOUNT = 0 BREAK
 
-					UPDATE a
-					SET AgentPT  = v.PT
-					FROM #tmpCustTemp t
-						INNER JOIN #ValuePT v ON v.IsApplyBA = 0
-						CROSS APPLY (	SELECT TOP 1 AgentPT
-										FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
-										WHERE CustID = t.CustID AND SportType=v.SportType 
-											AND BetType=v.BetType AND IsLive=v.IsLive
-									) a	
-							
-					UPDATE a
-					SET AgentPT = 0
-					FROM #tmpCustTemp t
-						INNER JOIN #ValuePT v ON v.IsApplyBA = 1
-						CROSS APPLY (	SELECT TOP 1 AgentPT
-										FROM dbo.Dep_CustPTSetting_Member m WITH(ROWLOCK,UPDLOCK)	
-											 INNER JOIN Dep_CustBAActive BA WITH(NOLOCK) ON m.CustID=BA.CustId
-										WHERE m.CustID = t.CustID AND m.SportType=v.SportType 
-											AND m.BetType=v.BetType AND m.IsLive=v.IsLive
-									) a	
-										
-				END;
-			END;		
-		END
+				UPDATE a
+				SET a.AgentPT=v.PT,
+					RepUpdateTime = dbo.f_GetDateTime2()
+				FROM #tmpCustTemp t
+					INNER JOIN #ValuePT v ON v.IsApplyBA = 0
+					CROSS APPLY (	SELECT TOP 1 AgentPT, RepUpdateTime
+									FROM dbo.Dep_CustPTSetting_Member WITH(ROWLOCK,UPDLOCK)
+									WHERE CustID = t.CustID AND SportType=v.SportType 
+										AND BetType=v.BetType AND IsLive=v.IsLive
+								) a	
+						
+				UPDATE a
+				SET a.AgentPT=0,
+					RepUpdateTime = dbo.f_GetDateTime2()
+				FROM #tmpCustTemp t
+					INNER JOIN #ValuePT v ON v.IsApplyBA = 1
+					CROSS APPLY (	SELECT TOP 1 AgentPT, m.RepUpdateTime
+									FROM dbo.Dep_CustPTSetting_Member m WITH(ROWLOCK,UPDLOCK)	
+										 INNER JOIN Dep_CustBAActive BA WITH(NOLOCK) ON m.CustID=BA.CustId
+									WHERE m.CustID = t.CustID AND m.SportType=v.SportType 
+										AND m.BetType=v.BetType AND m.IsLive=v.IsLive
+								) a	
+									
+			END;
+		END;		
+	END
 
-		DROP TABLE #ValuePT
-		DROP TABLE #tempMemNoGrouped	
-		DROP TABLE #tmpCustTemp
-		DROP TABLE #Agent 
+	DROP TABLE #ValuePT
+	DROP TABLE #tempMemNoGrouped	
+	DROP TABLE #tmpCustTemp
+	DROP TABLE #Agent 
 END	
 
 GO

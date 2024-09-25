@@ -63,7 +63,7 @@ Revisions:
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
-	
+	- 20240712@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -99,10 +99,7 @@ BEGIN
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END,
 		@ErrCode = 111
-		
-	-- ROLLBACK MANUALLY
-	DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-		
+			
 	RETURN
 END
 
@@ -117,8 +114,8 @@ BEGIN
 	SET @srecommend = @custid 
 	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
 
-	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier,SiteDBGroupID)
-	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier, @SiteDBGroupID)
+	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier,SiteDBGroupID,RepUpdateTime)
+	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier, @SiteDBGroupID, SYSDATETIME())
 
 	IF @CurrencyModifier <> 1
 	BEGIN
@@ -202,19 +199,6 @@ BEGIN
 						END,
 		@ErrCode = 112
 		
-	-- ROLLBACK MANUALLY
-	IF @RoleID = 4
-	BEGIN
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-	END
-	ELSE IF @RoleID = 3
-		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-	ELSE IF @RoleID = 2
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-		
-	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-			
 	RETURN
 END
 
@@ -240,20 +224,6 @@ BEGIN
 						END,
 		@ErrCode = 112
 		
-	-- ROLLBACK MANUALLY
-	IF @RoleID = 4
-	BEGIN
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-	END
-	ELSE IF @RoleID = 3
-		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-	ELSE IF @RoleID = 2
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-		
-	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-	DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-			
 	RETURN
 END
 
@@ -275,22 +245,7 @@ BEGIN
 							WHEN 'E' THEN 'Create customer failed. Please try again.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 						END,
-				@ErrCode = 113
-				
-	-- ROLLBACK MANUALLY
-	IF @RoleID = 4
-	BEGIN
-		DELETE FROM Dep_CustSuper WITH(ROWLOCK) WHERE custId = @CustID
-	END
-	ELSE IF @RoleID = 3
-		DELETE FROM CustMaster WITH(ROWLOCK) WHERE custId = @CustID
-	ELSE IF @RoleID = 2
-		DELETE FROM CustAgent WITH(ROWLOCK) WHERE custId = @CustID
-		
-	DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-	DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-	
+				@ErrCode = 113			
 	RETURN
 END
 GO

@@ -1,7 +1,4 @@
 ﻿/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
-USE CustDB
-GO
-
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_BetLimitFullLineUpd] 
 	  @SuperID				INT
 	, @BetLimit				VARCHAR(MAX)
@@ -25,6 +22,7 @@ AS
 		- 20190412@Winnie: Licesee Management-Licensee setting - Cannot update betting limit SMA only for big line  - Redmine: 96951
 		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20240705@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	� @BetLimit:
 		<ROOT>
@@ -161,6 +159,7 @@ BEGIN
 		SET main.minbet			= tmp.MinBet
 			, main.maxbet		= tmp.MaxBet
 			, main.maxpermatch	= tmp.MaxperMatch
+			, main.RepUpdateTime = dbo.f_GetDateTime2()
 		FROM dbo.Dep_CustBetSetting_Agent main WITH(ROWLOCK)
 			INNER JOIN #tempSMA tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 		WHERE (
@@ -173,8 +172,8 @@ BEGIN
 		 FROM #tempSMA t 
 		 INNER JOIN Dep_CustBetSetting_Agent cs WITH(NOLOCK) ON t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
 
-		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch)
-		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch
+		 INSERT INTO dbo.Dep_CustBetSetting_Agent(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,RepUpdateTime)
+		 SELECT CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,dbo.f_GetDateTime2()
 		 FROM #tempSMA t
 
 	
@@ -189,8 +188,8 @@ BEGIN
 						INNER JOIN Dep_LicenseeProductSetting d WITH(NOLOCK) ON ps.ProductSettingID=d.ProductSettingID 
 					WHERE CustID=@SuperID)
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			SELECT @SuperID,ProductSettingID
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			SELECT @SuperID,ProductSettingID,SYSDATETIME()
 			FROM Dep_ProductSetting WITH(NOLOCK)
 			WHERE ProductID=@ProductID AND SettingType=2
 		END			

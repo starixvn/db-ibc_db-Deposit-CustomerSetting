@@ -22,6 +22,7 @@ AS
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
 		- 20220614@Eden: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831] 
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20240709@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 		@StakeLevel:
 		<ROOT>
@@ -152,8 +153,8 @@ BEGIN
 	BEGIN
 		IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@CustID AND ProductSettingID=@ProductSettingID )
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			VALUES( @CustID,@ProductSettingID)
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			VALUES( @CustID,@ProductSettingID,SYSDATETIME())
 
 			SELECT @ActionID=0
 		END
@@ -172,8 +173,8 @@ BEGIN
 	BEGIN
 		IF NOT EXISTS(SELECT TOP 1 1 FROM Dep_LicenseeProductSetting WITH(NOLOCK) WHERE Custid=@srecommend AND ProductSettingID=@ProductSettingID )
 		BEGIN
-			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-			VALUES( @srecommend,@ProductSettingID)
+			INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+			VALUES( @srecommend,@ProductSettingID,SYSDATETIME())
 			SELECT @IsAgentOnly=0
 			SELECT @ActionID=0
 		END
@@ -194,7 +195,7 @@ BEGIN
 		 WHERE recommend=@CustID
 	END
 
-	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 3000, @StopRow INT;
+	DECLARE @StartRow INT = 1, @MaxRow INT,@Threshold INT = 2000, @StopRow INT;
 			
 	SET @MaxRow = (SELECT MAX(ID) FROM #CustStakeLevelDownlines);
 			

@@ -1,6 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbExtAccNet,bodbDownlineNet,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
-USE CustDB
-GO
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_GlobalStakeLevelUpdate] 
 	@StakeLevel					VARCHAR(MAX)	= ''	
 	,@CustID					INT
@@ -17,7 +15,8 @@ AS
 	Revisions:
 		- 20171107@Winnie: select GlobalStakeLevel of DCS product RedmineID:#85133
 		- 20220517@Tacy: Insert history of update global stake level
-
+		- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+		
 	Param's Explanation:
 		- @StakeLevel = '<ROOT>
 									<StakeLevel StakeLevelID="0" GameTypeID="2401" MinLabel="10" MaxLabel="100" MinStake="10" MaxStake="100"/>	
@@ -132,7 +131,8 @@ BEGIN
 
 	-- Update global stakelevel
 	UPDATE d
-	SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake,d.MaxStake=t.MaxStake
+	SET d.MinLabel=t.MinLabel,d.MaxLabel=t.MaxLabel,d.MinStake=t.MinStake,d.MaxStake=t.MaxStake,
+		RepUpdateTime = SYSDATETIME()
 		OUTPUT 	 DELETED.StakeLevelID	
 				,DELETED.GameTypeID								
 				,DELETED.MinLabel		
@@ -177,7 +177,7 @@ BEGIN
 	END
 
 	-- Insert global stakelevel
-	INSERT INTO Dep_StakeLevel([StakeLevelID],[GameTypeID],[GameGroupID],[MinLabel],[MaxLabel],[MinStake],[MaxStake],[ExchangeID],[SiteID])
+	INSERT INTO Dep_StakeLevel([StakeLevelID],[GameTypeID],[GameGroupID],[MinLabel],[MaxLabel],[MinStake],[MaxStake],[ExchangeID],[SiteID],RepUpdateTime)
 	SELECT	StakeLevelID+@MaxStakeLevelID
 		,GameTypeID		
 		,0						
@@ -187,6 +187,7 @@ BEGIN
 		,MaxStake
 		,@Currency
 		,@SiteID
+		,SYSDATETIME()
 	FROM @tmpStakeLevelInsert
 
 	-- Write log

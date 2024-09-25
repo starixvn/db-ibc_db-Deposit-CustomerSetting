@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_05]
 		@StakeLevel	VARCHAR(MAX)
 	,   @ActionID	TINYINT =1
@@ -14,7 +14,7 @@ AS
 		- 20180824@Winnie: Licensee DCS setting - Support insert/edit setting for sub_licensee RedmineID:#88700
 		- 20220511@Eden: Arcadia Gaming - Fix duplicated data [RedmineID:#172588]
 		- 20220517@Tacy: Insert history of member bet setting [RedmineID: 170739]
-
+		- 20240709@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	@Action=1: Update and insert
 	@Action=0: Insert new
@@ -28,17 +28,13 @@ AS
 		</ROOT>
 */
 BEGIN
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+		RETURN;
+		
 	SET NOCOUNT ON;
 
 	DECLARE @CustList VARCHAR(MAX),
 			@ErrMsg NVARCHAR(MAX)
-
-	IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Agent') = 0
-		RETURN;
-	IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 0
-		RETURN;
-	IF dbo.f_CheckRepTable('Dep_StakeLevel') = 0
-		RETURN;
 
 	IF @StakeLevel IS NULL OR @StakeLevel=''
 		RETURN;
@@ -85,7 +81,8 @@ BEGIN
 	IF (@ActionID=1)
 	BEGIN
 		UPDATE cslm
-		SET cslm.LastUpdated=GETDATE(),cslm.StakeLevelList=tv.MemberStakeLevel
+		SET cslm.LastUpdated=GETDATE(),cslm.StakeLevelList=tv.MemberStakeLevel,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.StakeLevelList, inserted.LastUpdated
 			INTO #History_StakeLevel
 		FROM	dbo.Dep_CustStakeLevel_Member AS cslm WITH(ROWLOCK,UPDLOCK)
@@ -99,7 +96,8 @@ BEGIN
 		WHERE his.StakeLevelList=TV.StakeLevelList
 
 		UPDATE csla
-		SET	csla.StakeLevelList = sl.StakeLevelList
+		SET	csla.StakeLevelList = sl.StakeLevelList,
+			RepUpdateTime = dbo.f_GetDateTime2()
 		FROM	dbo.Dep_CustStakeLevel_Agent AS csla WITH(ROWLOCK,UPDLOCK)
 			INNER JOIN	#StakeLevel AS sl	ON	csla.CustID=sl.CustID	AND sl.SportType = csla.SportType	AND	sl.BetType = csla.BetType
 		WHERE sl.RoleID IN(2,3,4)
@@ -112,13 +110,13 @@ BEGIN
 		FROM #StakeLevel t 
 			INNER JOIN Dep_CustStakeLevel_Member a WITH(NOLOCK) ON t.CustID=a.CustID AND t.SportType=a.SportType AND t.BetType=a.BetType
 
-		INSERT INTO dbo.Dep_CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated)
-		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE()	
+		INSERT INTO dbo.Dep_CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated,RepUpdateTime)
+		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE(),dbo.f_GetDateTime2()	
 		FROM #StakeLevel tv	
 		WHERE tv.RoleID =1
 	
-		INSERT INTO dbo.Dep_CustStakeLevel_Agent(CustID,SportType,BetType,StakeLevelList)
-		SELECT CustID,SportType,BetType,StakeLevelList
+		INSERT INTO dbo.Dep_CustStakeLevel_Agent(CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+		SELECT CustID,SportType,BetType,StakeLevelList,dbo.f_GetDateTime2()
 		FROM #StakeLevel
 		WHERE RoleID IN(2,3,4)
 		
@@ -147,22 +145,26 @@ BEGIN
 	BEGIN
 		--Delete redudant data before insert
 		DELETE a
+		OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
+		INTO [Dep_CustStakeLevel_Agent_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 		FROM #StakeLevel t 
 			INNER JOIN Dep_CustStakeLevel_Agent a WITH(ROWLOCK,UPDLOCK) 
 				ON t.CustID=a.CustID AND t.SportType=a.SportType AND t.BetType=a.BetType
 
 		DELETE a
+		OUTPUT DELETED.[CustID],DELETED.[Sporttype],DELETED.[Bettype],dbo.f_GetDateTime2()
+		INTO [Dep_CustStakeLevel_Member_Del_InHouse]([CustID],[Sporttype],[Bettype],[RepUpdateTime])
 		FROM #StakeLevel t
 			INNER JOIN Dep_CustStakeLevel_Member a WITH(ROWLOCK,UPDLOCK) 
 				ON t.CustID=a.CustID AND t.SportType=a.SportType AND t.BetType=a.BetType
 
-		INSERT INTO dbo.Dep_CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated)
-		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE()	
+		INSERT INTO dbo.Dep_CustStakeLevel_Member(CustID,SportType,BetType,StakeLevelList,LastUpdated,RepUpdateTime)
+		SELECT CustID,SportType,BetType,tv.MemberStakeLevel,GETDATE(),dbo.f_GetDateTime2()	
 		FROM #StakeLevel tv	
 		WHERE tv.RoleID =1
 	
-		INSERT INTO dbo.Dep_CustStakeLevel_Agent(CustID,SportType,BetType,StakeLevelList)
-		SELECT CustID,SportType,BetType,StakeLevelList
+		INSERT INTO dbo.Dep_CustStakeLevel_Agent(CustID,SportType,BetType,StakeLevelList,RepUpdateTime)
+		SELECT CustID,SportType,BetType,StakeLevelList,dbo.f_GetDateTime2()
 		FROM #StakeLevel
 		WHERE RoleID IN(2,3,4)
 	END

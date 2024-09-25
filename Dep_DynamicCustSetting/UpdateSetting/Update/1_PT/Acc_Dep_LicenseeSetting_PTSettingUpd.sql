@@ -15,6 +15,7 @@ AS
 	Revision:		
 		- 20220623@Winfred: Licensee Setting - Automate the PT adjustment when the charge rate is changed [RedmineID:#171705]
 		- 20240429@Tacy: correct Log [RedmineID: #201239]
+		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 		- 20240814@Winfred: Enhance Update PT in NAP[RedmineID:#201477]
 	Param's Explanation:
 		*@UserName : Name user LA update
@@ -143,7 +144,7 @@ BEGIN
 		AND mrecommend NOT IN (SELECT custid FROM #Dummy)	
 		AND EXISTS (SELECT 1 FROM #PTProduct WHERE Currency = 0)
 	
-	SET @Threshold = 5000 
+	SET @Threshold = 2000 
 	WHILE(1 =1)
 	BEGIN
 		UPDATE TOP (@Threshold) c WITH (ROWLOCK)
@@ -158,10 +159,11 @@ BEGIN
 		SET  SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
+			,RepUpdateTime = dbo.f_GetDateTime2()
 		FROM #tmpSMATemp t
 			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND t.Currency = stb.Currency 
 			CROSS APPLY (
-							SELECT TOP 1 SuperPT, MasterPT, AgentPT
+							SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 							FROM dbo.Dep_CustPTSetting_Agent WITH(ROWLOCK,UPDLOCK)
 							WHERE CustID = t.CustID AND SportType=stb.SportType AND BetType=stb.BetType
 						) a
@@ -171,10 +173,11 @@ BEGIN
 		SET  SuperPT  = CASE WHEN t.RoleID = 4 THEN stb.PT ELSE 0 END
 			,MasterPT = CASE WHEN t.RoleID IN (3,4) THEN stb.PT ELSE 0 END
 			,AgentPT  = CASE WHEN t.RoleID IN (2,4) THEN stb.PT ELSE 0 END
+			,RepUpdateTime = dbo.f_GetDateTime2()
 		FROM #tmpSMATemp t
 			INNER JOIN #SportTypeBetType stb ON t.ProductSettingID = stb.ProductSettingID AND stb.Currency = 0 
 			CROSS APPLY (
-							SELECT TOP 1 SuperPT, MasterPT, AgentPT
+							SELECT TOP 1 SuperPT, MasterPT, AgentPT, RepUpdateTime
 							FROM dbo.Dep_CustPTSetting_Agent WITH(ROWLOCK,UPDLOCK)
 							WHERE CustID = t.CustID AND SportType = stb.SportType AND BetType = stb.BetType
 						) a

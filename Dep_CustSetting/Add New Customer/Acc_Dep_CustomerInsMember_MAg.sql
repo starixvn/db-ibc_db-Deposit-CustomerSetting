@@ -59,7 +59,7 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
-
+	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 Param's Explanation:
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -168,13 +168,10 @@ BEGIN
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
 
-	if @ErrCode <> 0
-		return
-
 	----------------------CHECK Error
-	 IF @@ERROR <> 0 
+	 IF @ErrCode > 0 
 	 BEGIN 	
-		EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
  		RETURN 
 	 END  
 

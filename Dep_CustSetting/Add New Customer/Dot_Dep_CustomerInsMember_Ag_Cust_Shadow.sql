@@ -16,7 +16,7 @@ AS
 	Revisions:    
 		 - 20240404@Tacy: Deposit - Integrate Saba Coin Wallet [Redmine: #202273] 
 		 - 20240604@Tacy: Change format Username [Redmine: #202273] 
-
+		 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:    
 		* For TEST: Real Currency --> create shadow SBC
 					UUS Currency  --> create shadow YNG
@@ -219,6 +219,7 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY     
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
+		 EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
 		 RETURN    
 	END
 	    

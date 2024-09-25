@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] 
 	@ProductID INT
 	, @CustID INT
@@ -26,7 +26,8 @@ AS
 		- 20180924@Elodie: Migrate bodb_Licensee to DBCUST [Redmine:#99855]
 		- 20190901@Elodie: Remove Inactive product [Redmine:#118699]
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
-
+		- 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		
 	Param's Explanation:
 		- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
                     EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID1/@CustID2
@@ -60,7 +61,8 @@ BEGIN
 			
 	BEGIN
 		UPDATE dbo.Dep_SupperProductSetting WITH (ROWLOCK)
-		SET IsEnabled = @IsEnable
+		SET IsEnabled = @IsEnable,
+			RepUpdateTime = SYSDATETIME()
 		WHERE CustID = @CustID
 			AND ProductId = @ProductId
 
@@ -73,8 +75,8 @@ BEGIN
 	END
 	ELSE 
 	BEGIN
-		INSERT INTO dbo.Dep_SupperProductSetting (CustID, ProductId, IsEnabled)
-		VALUES (@CustID, @ProductId, @IsEnable)
+		INSERT INTO dbo.Dep_SupperProductSetting (CustID, ProductId, IsEnabled, RepUpdateTime)
+		VALUES (@CustID, @ProductId, @IsEnable, SYSDATETIME())
 
 		IF (@@ERROR <> 0)
 		BEGIN
@@ -110,7 +112,8 @@ BEGIN
 		WHILE (@CurrRow <= @RowCount)
 		BEGIN
 			UPDATE dbo.Dep_CustProductSetting WITH (ROWLOCK, UPDLOCK)
-			SET IsEnabled = @IsEnable
+			SET IsEnabled = @IsEnable,
+				RepUpdateTime = SYSDATETIME()
 			WHERE ProductId = @ProductId
 				AND CustID IN (
 					SELECT CustID
@@ -126,8 +129,8 @@ BEGIN
 				RETURN
 			END
 
-			INSERT INTO dbo.Dep_CustProductSetting (CustID, ProductId, IsEnabled)
-			SELECT c.CustID, @ProductId, @IsEnable
+			INSERT INTO dbo.Dep_CustProductSetting (CustID, ProductId, IsEnabled, RepUpdateTime)
+			SELECT c.CustID, @ProductId, @IsEnable, SYSDATETIME()
 			FROM #CustList c
 			WHERE NOT EXISTS (
 					SELECT 1

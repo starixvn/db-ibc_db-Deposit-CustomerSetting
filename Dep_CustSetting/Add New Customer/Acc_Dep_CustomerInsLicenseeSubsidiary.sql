@@ -28,7 +28,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
-
+		- 20240711@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:
 	- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
                     EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID 
@@ -40,7 +40,7 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DECLARE @mrecommend INT
+	DECLARE @mrecommend INT, @roleid TINYINT = 2
 			
 	SELECT @ExistedCustID=CustID,@mrecommend=mrecommend FROM custInfo WITH (NOLOCK) WHERE Username=@ExistedUsername AND Enabled=1
 	
@@ -67,25 +67,26 @@ BEGIN
 	IF @ErrCode<>0
 		RETURN
 
-	INSERT INTO Dep_CustBetSetting_Agent([CustID],[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch])
-	SELECT @custid,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch]
+	INSERT INTO Dep_CustBetSetting_Agent([CustID],[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],RepUpdateTime)
+	SELECT @custid,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],SYSDATETIME()
 	FROM Dep_CustBetSetting_Agent WITH(NOLOCK) WHERE CustID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+			
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
 
-	INSERT INTO [Dep_CustDiscountSetting_Agent]([CustID],[SportType],[BetType],[Discount])
-	SELECT @custid,[SportType],[BetType],[Discount]
+	INSERT INTO [Dep_CustDiscountSetting_Agent]([CustID],[SportType],[BetType],[Discount],RepUpdateTime)
+	SELECT @custid,[SportType],[BetType],[Discount],SYSDATETIME()
 	FROM [Dep_CustDiscountSetting_Agent] WITH(NOLOCK) WHERE CustID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
@@ -97,7 +98,8 @@ BEGIN
 		   ,[PlayerDiscount]
 		   ,[AgentDiscount]
 		   ,[MasterDiscount]
-		   ,[SuperDiscount])
+		   ,[SuperDiscount]
+		   ,RepUpdateTime)
 	SELECT @custid
 		   ,[SportType]
 		   ,[BetType]
@@ -105,13 +107,13 @@ BEGIN
 		   ,[AgentDiscount]
 		   ,[MasterDiscount]
 		   ,[SuperDiscount]
+		   ,SYSDATETIME()
 	FROM [Dep_CustDiscountGroupSetting_Member] WITH(NOLOCK) WHERE AgentID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
@@ -123,7 +125,8 @@ BEGIN
 		   ,[IsLive]
 		   ,[SuperPT]
 		   ,[MasterPT]
-		   ,[AgentPT])
+		   ,[AgentPT]
+		   ,RepUpdateTime)
 	SELECT @custid
 		   ,[SportType]
 		   ,[BetType]
@@ -131,14 +134,13 @@ BEGIN
 		   ,[SuperPT]
 		   ,[MasterPT]
 		   ,[AgentPT]
+		   ,SYSDATETIME()
 	FROM [Dep_CustPTSetting_Agent]  WHERE CustID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTSetting_Agent] WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
@@ -150,7 +152,8 @@ BEGIN
 		   ,[IsLive]
 		   ,[SuperPT]
 		   ,[MasterPT]
-		   ,[AgentPT])
+		   ,[AgentPT]
+		   ,RepUpdateTime)
 	SELECT @custid
 		   ,[SportType]
 		   ,[BetType]
@@ -158,15 +161,13 @@ BEGIN
 		   ,[SuperPT]
 		   ,[MasterPT]
 		   ,[AgentPT]
+		   ,SYSDATETIME()
 	FROM [Dep_CustPTGroupSetting_Member] WITH(NOLOCK) WHERE AgentID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTSetting_Agent] WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
@@ -175,17 +176,15 @@ BEGIN
 		   ([CustID]
 		   ,[SportType]
 		   ,[BetType]
-		   ,[StakeLevelList])
-	SELECT @custid,[SportType],[BetType],[StakeLevelList] FROM [Dep_CustStakeLevel_Agent] WITH(NOLOCK) WHERE CustID=@Existedcustid
+		   ,[StakeLevelList]
+		   ,RepUpdateTime)
+	SELECT @custid,[SportType],[BetType],[StakeLevelList],SYSDATETIME() 
+	FROM [Dep_CustStakeLevel_Agent] WITH(NOLOCK) WHERE CustID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTSetting_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustStakeLevel_Agent] WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
@@ -193,60 +192,44 @@ BEGIN
 	INSERT INTO [dbo].[Dep_CustProductStatus]
 		   ([CustID]
 		   ,[bitmapIsHidden]
-		   ,[bitmapIsDisabled])
+		   ,[bitmapIsDisabled]
+		   ,RepUpdateTime)
 	SELECT 
 			@custid
 		   ,[bitmapIsHidden]
 		   ,[bitmapIsDisabled]
+		   ,SYSDATETIME()
 	FROM [Dep_CustProductStatus] WITH(NOLOCK) WHERE Custid=@ExistedCustID
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTSetting_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustStakeLevel_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustProductStatus] WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
 
 	------
-	INSERT INTO Dep_CustBetSettingGame_Agent([CustID],[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch)
-	SELECT @custid,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch
+	INSERT INTO Dep_CustBetSettingGame_Agent([CustID],[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+	SELECT @custid,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch,SYSDATETIME()
 	FROM Dep_CustBetSettingGame_Agent WITH(NOLOCK) WHERE CustID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM Dep_CustBetSettingGame_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTSetting_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustStakeLevel_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustProductStatus] WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END
 
-	INSERT INTO Dep_CustBetSettingGameGroup_Member(AgentID,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch)
-	SELECT @custid,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch
+	INSERT INTO Dep_CustBetSettingGameGroup_Member(AgentID,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
+	SELECT @custid,[SportType],[BetType],[MinBet],[MaxBet],[MaxPerMatch],MaxPerNumber,MaxPayoutPerMatch,SYSDATETIME()
 	FROM Dep_CustBetSettingGameGroup_Member WITH(NOLOCK) WHERE AgentID=@Existedcustid
 
 	IF @@ERROR<>0
 	BEGIN
-		DELETE FROM Dep_CustBetSettingGameGroup_Member WHERE AgentID=@custid
-		DELETE FROM Dep_CustBetSettingGame_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountSetting_Agent] WHERE CustID=@custid
-		DELETE FROM Dep_CustBetSetting_Agent WHERE CustID=@custid
-		DELETE FROM [Dep_CustDiscountGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTGroupSetting_Member] WHERE AgentID=@custid
-		DELETE FROM [Dep_CustPTSetting_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustStakeLevel_Agent] WHERE CustID=@custid
-		DELETE FROM [Dep_CustProductStatus] WHERE CustID=@custid
+		EXEC Acc_Dep_CustomerInsSubsidiaryRollback @CustID = @CustID
+		
 		SELECT @ErrCode=100
 		SELECT @ErrMsg='Create Licensee Subsidiary failled'
 	END

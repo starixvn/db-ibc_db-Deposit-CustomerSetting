@@ -29,7 +29,7 @@ AS
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 		- 20220907@Tacy: NAP - Set Dangerous Level of member following upline (Agent) [Redmine: #176518]
 		- 20220930@Eden: Reactive - write balance info to log [redmine: #178439]
-
+		- 20240711@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	Param's Explanation:    
 	? @CustID: return old deposit member CustID    
 	? @ReinitOldBalance: flag to reinit old balance   
@@ -410,8 +410,8 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY      
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID   
-		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-
+		 EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+		 
 		 EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @CustID
 				, @Action='REACTIVATION'
 				, @Status='Failed'
@@ -501,8 +501,12 @@ BEGIN
 	 @ErrMsg = @ErrMsg OUTPUT    
  
 	 --Update Dep_Customer_Archived.status = reactivation
-	EXEC dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=4    
-
+	--EXEC dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=4    
+	UPDATE Dep_Customer_Archived WITH(ROWLOCK)
+	SET status= 'reactivation',
+		RepUpdateTime = SYSDATETIME()				
+	WHERE CustID = @custid
+	
 	DECLARE @LogMsg VARCHAR(200) = 'Finish reactivating customer'
 	
 	SET @LogMsg = @LogMsg + ' (ClosingBalance =  ' + CONVERT(VARCHAR(20),ISNULL(@ClosingBalance,0),2) + ')'

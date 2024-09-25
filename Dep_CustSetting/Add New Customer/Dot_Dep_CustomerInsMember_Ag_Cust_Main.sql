@@ -33,7 +33,8 @@ AS
 	 - 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	 - 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	 - 20240404@Tacy: Return - Error when add Subsidiary [Redmine: #202273] 
-
+	 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]	
+	 - 20240911@Tacy: OddsBoostAdj dummy customers [redmine:#210621]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -175,7 +176,9 @@ BEGIN
 	END    
 	    	
 	--20140812: Change rule generate username    
-	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%' AND  @UserName NOT LIKE '%01OddsAdj%') OR @UserName IS NULL
+	IF (@UserName NOT LIKE '%BetTrade%' AND  @UserName NOT LIKE '%CashOut%' AND  @UserName NOT LIKE '%ClearBal%' 
+		AND  @UserName NOT LIKE '%01OddsAdj%' AND  @UserName NOT LIKE '%01OddsBoostAdj%') 
+		OR @UserName IS NULL
 	BEGIN  
 	SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
 	IF @UserName = ''    
@@ -264,7 +267,7 @@ BEGIN
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY     
 		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
-		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
+		 EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
 		 RETURN    
 	END
 	/*HELEN-CUSTOMER SETTING RENOVATION-END*/    

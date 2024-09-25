@@ -21,6 +21,7 @@ AS
 	Revisions:
 		- 20150916@Winnie: Add AGCasino
 		- 20220613@Elodie: DBCUST - modify sp syntax to adapt with the SQL Server upgrade to 2019 [Redmine: #171831]  
+		- 20240716@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	Param's Explanation:
 */
 BEGIN
@@ -120,7 +121,8 @@ BEGIN
 			BEGIN		
 			
 			UPDATE dbo.Dep_SuperSetting_AGCasino WITH(ROWLOCK, UPDLOCK)
-			SET CheckedGroup = @CheckedGroup
+			SET CheckedGroup = @CheckedGroup,
+				RepUpdateTime = SYSDATETIME()
 			WHERE CustID = @CustID
 
 			IF(LEN( @DeletedGroup)=1)
@@ -129,12 +131,13 @@ BEGIN
 			SET a.CheckedGroup= CASE WHEN LEFT(
 										(REPLACE(a.CheckedGroup,@DeletedGroup,''))
 										,1)=',' THEN
-			SUBSTRING(
-			REPLACE((REPLACE(a.CheckedGroup,@DeletedGroup,'')),',,',',')
-			,2,
-			LEN(REPLACE(a.CheckedGroup,@DeletedGroup,'')))
+					SUBSTRING(
+					REPLACE((REPLACE(a.CheckedGroup,@DeletedGroup,'')),',,',',')
+					,2,
+					LEN(REPLACE(a.CheckedGroup,@DeletedGroup,'')))
 
-			ELSE REPLACE((REPLACE(a.CheckedGroup,@DeletedGroup,'')),',,',',') END
+					ELSE REPLACE((REPLACE(a.CheckedGroup,@DeletedGroup,'')),',,',',') END,
+				RepUpdateTime = SYSDATETIME()
 			FROM Dep_SuperSetting_AGCasino a
 			INNER JOIN #DownlineList b ON a.CustID=b.CustID
 			END
@@ -151,12 +154,13 @@ BEGIN
 					SET a.CheckedGroup= CASE WHEN LEFT(
 												(REPLACE(a.CheckedGroup,@vardelGroup,''))
 												,1)=',' THEN
-					SUBSTRING(
-					REPLACE((REPLACE(a.CheckedGroup,@vardelGroup,'')),',,',',')
-					,2,
-					LEN(REPLACE(a.CheckedGroup,@vardelGroup,'')))
+							SUBSTRING(
+							REPLACE((REPLACE(a.CheckedGroup,@vardelGroup,'')),',,',',')
+							,2,
+							LEN(REPLACE(a.CheckedGroup,@vardelGroup,'')))
 
-					ELSE REPLACE((REPLACE(a.CheckedGroup,@vardelGroup,'')),',,',',') END
+							ELSE REPLACE((REPLACE(a.CheckedGroup,@vardelGroup,'')),',,',',') END,
+						RepUpdateTime = SYSDATETIME()
 					FROM Dep_SuperSetting_AGCasino a
 					INNER JOIN #DownlineList b ON a.CustID=b.CustID
 					DELETE FROM #tmpDeletedGroup WHERE delGroup=@vardelGroup
@@ -170,13 +174,15 @@ BEGIN
 			IF(@RoleId=2 AND @DefaultGroup_Old<>@DefaultGroup )
 			BEGIN		
 			UPDATE dbo.Dep_SuperSetting_AGCasino WITH(ROWLOCK, UPDLOCK)
-			SET DefaultGroup = @DefaultGroup
+			SET DefaultGroup = @DefaultGroup,
+				RepUpdateTime = SYSDATETIME()
 			WHERE CustID = @CustID
 			END
 			ELSE
 			BEGIN
 			UPDATE a WITH(ROWLOCK, UPDLOCK)
-			SET a.DefaultGroup= LEFT(CheckedGroup,1)
+			SET a.DefaultGroup= LEFT(CheckedGroup,1),
+				RepUpdateTime = SYSDATETIME()
 			FROM Dep_SuperSetting_AGCasino a
 			INNER JOIN #DownlineList b ON a.CustID=b.CustID
 			WHERE b.RoleId=2 AND @DeletedGroup LIKE '%'+ a.DefaultGroup +'%'
@@ -184,8 +190,8 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			INSERT INTO dbo.Dep_SuperSetting_AGCasino (CustID, CheckedGroup, DefaultGroup, IsEnabled)
-			VALUES (@CustID, @CheckedGroup, @DefaultGroup, 0)
+			INSERT INTO dbo.Dep_SuperSetting_AGCasino (CustID, CheckedGroup, DefaultGroup, IsEnabled, RepUpdateTime)
+			VALUES (@CustID, @CheckedGroup, @DefaultGroup, 0, SYSDATETIME())
 		END
 
 		-- Update Setting for all downline members (that has no setting)
@@ -215,10 +221,11 @@ BEGIN
 					  ) AS src (CustID)
 				ON (dest.CustID = src.CustID)
 				WHEN MATCHED THEN
-					UPDATE SET dest.AGGroup = @ApplyGroupToMember
+					UPDATE SET dest.AGGroup = @ApplyGroupToMember,
+								RepUpdateTime = SYSDATETIME()
 				WHEN NOT MATCHED THEN
-					INSERT (CustID, AGGroup, IsEnabled)
-					VALUES (src.CustID, @ApplyGroupToMember, 0);
+					INSERT (CustID, AGGroup, IsEnabled, RepUpdateTime)
+					VALUES (src.CustID, @ApplyGroupToMember, 0, SYSDATETIME());
 			
 				SELECT @CurrRow = @CurrRow + @RowPerBatch
 				WAITFOR DELAY '00:00:00.300'
@@ -230,7 +237,8 @@ BEGIN
 	BEGIN
 	--update member here
 	UPDATE dbo.Dep_CustSetting_AGCasino WITH (ROWLOCK, UPDLOCK)
-	SET AGGroup = @CheckedGroup
+	SET AGGroup = @CheckedGroup,
+		RepUpdateTime= SYSDATETIME()
 	WHERE CustID=@Custid
 	
 	END
