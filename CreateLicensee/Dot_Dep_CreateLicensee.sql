@@ -83,6 +83,7 @@ AS
 	- 20240506@Tacy: Integrate Exchange [Redmine: #201239]
 	- 20240812@Tacy: Correct writelog [Redmine: #201239]
 	- 20240712@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+	- 20240923@Tacy: Add new OddsBoostAdj dummy customers [RedmineID: #210621]
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @SpecialPlatform : SpecialPlatfrom=2 => Jollysports licensee
@@ -554,7 +555,7 @@ BEGIN
 	SELECT @Pass='8058095B7DDB08A608811097E5DB8D'		
 
 	DECLARE @Super VARCHAR(30),@Master VARCHAR(30),@Agent VARCHAR(30),@AccMaster VARCHAR(30),@AccAgent VARCHAR(30),@Transf VARCHAR(30),@Charge VARCHAR(30),@Bonus01 VARCHAR(30)
-			,@Bonus02 VARCHAR(30),@Dummy3rd VARCHAR(30),@ClearBal VARCHAR(30)
+			,@Bonus02 VARCHAR(30),@Dummy3rd VARCHAR(30),@ClearBal VARCHAR(30),@OddsBoost VARCHAR(30)
 			,@Withdraw VARCHAR(30),@Currency INT					
 			,@MinBet MONEY,@MaxBet MONEY,@MaxPerMatch MONEY
 			,@MaxPerNumber MONEY,@MaxPayoutPerMatch MONEY
@@ -673,7 +674,7 @@ BEGIN
 	CREATE TABLE #Product(ProductID INT, Currency INT, MinBet MONEY, MaxBet MONEY, MaxPerMatch MONEY, MaxPerNumber MONEY, MaxPayoutPerMatch MONEY, Sporttype INT, Bettype INT, 
 							StakeLevelID INT, PT SMALLMONEY, ProductName VARCHAR(100))
 	CREATE TABLE #Username(Super VARCHAR(30),Master VARCHAR(30),Agent VARCHAR(30),AccMaster VARCHAR(30),AccAgent VARCHAR(30),Transf VARCHAR(30),Charge VARCHAR(30),
-							Bonus01 VARCHAR(30),Bonus02 VARCHAR(30),Withdraw VARCHAR(30),Dummy3rd VARCHAR(30),Currency INT,ClearBal VARCHAR(30),				
+							Bonus01 VARCHAR(30),Bonus02 VARCHAR(30),Withdraw VARCHAR(30),Dummy3rd VARCHAR(30),Currency INT,ClearBal VARCHAR(30),OddsBoost VARCHAR(30),				
 							isfinished BIT DEFAULT(0) )
 	CREATE TABLE #StakelevelInput(ProductID INT, StakeLevelXML VARCHAR(MAX), isfinished BIT DEFAULT(0), PRIMARY KEY(ProductID))
 	CREATE TABLE #tempProduct (ProductID INT, PT SMALLMONEY , ProductName VARCHAR(100),isfinished BIT DEFAULT(0))
@@ -1019,11 +1020,12 @@ BEGIN
 	IF @ErrCode <> 0
 		RETURN
 
-	INSERT INTO #Username(Super,Master,Agent,AccMaster,AccAgent,Transf,Charge ,Bonus01,Bonus02,Withdraw,Dummy3rd,Currency,ClearBal)
+	INSERT INTO #Username(Super,Master,Agent,AccMaster,AccAgent,Transf,Charge ,Bonus01,Bonus02,Withdraw,Dummy3rd,Currency,ClearBal,OddsBoost)
 	SELECT DISTINCT @sitename+'Super'+e.currency,@sitename+e.currency,@sitename+e.currency+'01'
 			,@sitename+'ACC'+e.currency,@sitename+'ACC'+e.currency+'01',@sitename+'Transfer'+e.currency,
 			@sitename+'Charges'+e.currency,@sitename+'Bonus'+e.currency,@sitename+'Bonus02'+e.currency,
 			@sitename+'Withdrawal'+e.currency,@sitename+'Dummy3rd'+e.currency,t.Currency,@sitename+e.currency+'01ClearBal'
+			,@sitename+e.currency+'01OddsBoostAdj'
 	FROM #Product t
 		INNER JOIN exchange e WITH(NOLOCK) ON t.Currency=e.exchangeid
 	WHERE t.ProductID=1
@@ -1034,7 +1036,7 @@ BEGIN
 		UPDATE TOP (1) #Username
 		SET isfinished = 1
 			,@Super=Super,@Master=Master,@Agent=Agent,@AccMaster=AccMaster,@AccAgent=AccAgent,@Transf=Transf,@Charge=Charge ,@Bonus01=Bonus01,@Withdraw=Withdraw 
-			,@Bonus02=Bonus02,@Dummy3rd=Dummy3rd,@ClearBal=ClearBal
+			,@Bonus02=Bonus02,@Dummy3rd=Dummy3rd,@ClearBal=ClearBal,@OddsBoost=OddsBoost
 			,@Currency=Currency
 		WHERE isfinished = 0	
 
@@ -1145,6 +1147,9 @@ BEGIN
 			SELECT @Withdraw
 			UNION ALL
 			SELECT @Dummy3rd
+			UNION ALL
+			SELECT @OddsBoost
+
 			WHILE (1 = 1)
 			BEGIN		
 				UPDATE TOP (1) #tempDumUserName
@@ -1155,6 +1160,7 @@ BEGIN
 				IF @@ROWCOUNT = 0 OR @ErrCode<>0 BREAK 
 
 				IF @tmpDumUserName LIKE '%ClearBal'
+				OR @tmpDumUserName LIKE '%OddsBoostAdj'
 					SET @DummyAgentID = @AgentID
 				ELSE 
 					SET @DummyAgentID = @AccAgentID
