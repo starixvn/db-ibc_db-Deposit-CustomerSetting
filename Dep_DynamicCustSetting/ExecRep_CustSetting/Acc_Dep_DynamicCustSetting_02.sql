@@ -20,11 +20,12 @@ AS
 		- 20220802@Tacy: Insert history of member bet setting for Number Game [RedmineID: 170739]
 		- 20240705@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
+		- 20241001@Johnson: Enhance sp [redmine: #211130]
 	Param's Explanation:
 	-- @SettingType : 2 Bet Limit , 11  New Bet limit
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBKLC1','DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	SET NOCOUNT ON
@@ -156,7 +157,7 @@ BEGIN
 
 					DELETE t 
 					FROM #tempMem t 
-					INNER JOIN Dep_CustBetSetting_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
+					CROSS APPLY (SELECT TOP 1 cs.custid FROM Dep_CustBetSetting_Member cs WITH(NOLOCK,INDEX(PK_Dep_CustBetSetting_Member)) WHERE t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype) cs
 						WHERE ID >= @StartRow AND ID <= @StopRow
 
 					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,RepUpdateTime)
@@ -254,7 +255,7 @@ BEGIN
 					
 					DELETE t 
 					FROM #tempMem t 
-					INNER JOIN Dep_CustBetSetting_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
+					CROSS APPLY (SELECT TOP 1 cs.custid FROM Dep_CustBetSetting_Member cs WITH(NOLOCK,INDEX(PK_Dep_CustBetSetting_Member)) WHERE t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype) cs
 						WHERE ID >= @StartRow AND ID <= @StopRow
 
 					INSERT INTO dbo.Dep_CustBetSetting_Member(CustID,SportType,BetType,MinBet,MaxBet,RepUpdateTime)
@@ -370,7 +371,7 @@ BEGIN
 				
 				DELETE t 
 				FROM #tempMem t 
-				INNER JOIN Dep_CustBetSettingGame_Member cs on t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype
+				CROSS APPLY (SELECT TOP 1 cs.custid FROM Dep_CustBetSettingGame_Member cs WITH(NOLOCK,INDEX(PK_Dep_CustBetSettingGame_Member)) WHERE t.custid = cs.custid AND cs.sporttype = t.Sporttype AND cs.bettype = t.Bettype) cs				
 					WHERE ID >= @StartRow AND ID <= @StopRow
 
 				INSERT INTO dbo.Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
