@@ -20,7 +20,7 @@ AS
 	
 	Revisions: 
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]  
-		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474]    
+		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474] 
 	Param's Explanation: 
 		@RetryNumber: 0 Normal, <> 0 Retry
 	Examples:
@@ -184,18 +184,14 @@ BEGIN
 	END   
 	-----------Insert to CustInfoMini-------------
 	BEGIN TRY
-		SELECT @custid = NEXT VALUE FOR dbo.seq_CustinfoMini
-
-		INSERT INTO dbo.CustInfoMini(custid,username,username2,recommend, mrecommend,srecommend,roleid,SiteDBGroupID, Site, Currency)
-		SELECT @CustID, @Username, @UserName2, @recommend,@mrecommend, @srecommend, 1, @SiteDBGroupID, @Site, @Currency
-
-		/* --Code for production version
+	
+		--Code for production version
 		INSERT INTO dbo.CustInfoMini(username,username2,recommend, mrecommend,srecommend,roleid,SiteDBGroupID, Site, Currency)
 		SELECT @Username, @UserName2, @recommend,@mrecommend, @srecommend, 1, @SiteDBGroupID, @Site, @Currency
 
 		
 		SET @custid = SCOPE_IDENTITY()  
-		*/
+		
 	END TRY
 	BEGIN CATCH  
 		SELECT @ErrCode = 911 ,
