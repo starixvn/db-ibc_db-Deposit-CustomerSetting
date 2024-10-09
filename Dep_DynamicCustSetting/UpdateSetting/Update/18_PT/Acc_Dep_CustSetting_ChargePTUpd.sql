@@ -16,6 +16,7 @@ AS
 
 	Revision:
 		- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
+		- 20241007@Helios: HF_Missing 'RepUpdateTime' in the 'Dep_LicenseeProductSetting','Dep_ChargeInfoSetting' table [RedmineID: #211908] 
 
 	Param's Explanation:
 		@PT:
@@ -103,20 +104,20 @@ BEGIN
 			INNER JOIN #tmpPT t ON ds.CustID=@CustID AND ds.SportType=t.SportType
 		WHERE @curDate < ToDate AND ds.isDeleted=0
 
-		INSERT INTO dbo.Dep_ChargeInfoSetting(CustID,SportType,PT,FromDate)
-		SELECT @CustID,SportType,PT,DATEADD(DAY, 1, @curDate)
+		INSERT INTO dbo.Dep_ChargeInfoSetting(CustID,SportType,PT,FromDate,RepUpdateTime)
+		SELECT @CustID,SportType,PT,DATEADD(DAY, 1, @curDate),SYSDATETIME ()
 		FROM #tmpPT t
 	END
 	ELSE
-		INSERT INTO dbo.Dep_ChargeInfoSetting(CustID,SportType,PT)
-		SELECT @CustID,SportType,PT
+		INSERT INTO dbo.Dep_ChargeInfoSetting(CustID,SportType,PT,RepUpdateTime)
+		SELECT @CustID,SportType,PT,SYSDATETIME ()
 		FROM #tmpPT t
 
 	IF NOT EXISTS (SELECT 1 FROM Dep_LicenseeProductSetting d WITH(NOLOCK)
 					WHERE ProductSettingID=@ProductSettingID AND CustID=@CustID)
 	BEGIN
-		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID)
-		SELECT @CustID,@ProductSettingID
+		INSERT INTO Dep_LicenseeProductSetting(CustID,ProductSettingID,RepUpdateTime)
+		SELECT @CustID,@ProductSettingID,SYSDATETIME ()
 	END			
 
 	SELECT @ErrMsg='Update Position Taking successfully'

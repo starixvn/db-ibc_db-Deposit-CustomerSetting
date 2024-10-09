@@ -1,2 +1,2 @@
-CreateLicensee\Dot_Dep_CreateLicensee.sql
+CreateLicensee\Dot_Dep_CreateLicensee.sql 
 CreateLicensee\Dot_Dep_CreateCurrencyLicensee.sql
