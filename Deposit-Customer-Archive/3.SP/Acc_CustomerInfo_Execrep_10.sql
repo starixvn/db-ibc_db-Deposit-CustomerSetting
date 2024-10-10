@@ -16,6 +16,7 @@ AS
 		- 20220104@Eden: Archive_Dormant_Members_of_Licensee - Enhance_to_archive_periodically [#RM:125823]
 		- 20230616@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230612@Eden: Enhance for Scale Out , move ActionID = 7 to sp Acc_Dep_DynamicCustSetting_11 [#179092]
+		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
 	Parameter:
 		@ActionID: 
 				1: Update Dep_Customer_Archived.status = archived
@@ -58,9 +59,11 @@ BEGIN
 		END
 		ELSE IF @ActionID = 8 
 			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS')  
-				   OR  @@SERVERNAME LIKE '%SITEDB%'   
-				   OR  @@SERVERNAME LIKE 'DBGRP%'   
-				   OR  @@SERVERNAME LIKE 'SITDBGRP%'  
+				   OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
+				   OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
+				   OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
+				   OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
+				   OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local  
 				   )  -- @DBTRANS => delete balance tables
 		BEGIN
 		
@@ -114,6 +117,8 @@ BEGIN
 			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
 				   OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
 				   OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
+				   OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
+				   OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
 				   OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local
 				   )  -- @DBTRANS => delete balance tables
 		BEGIN
