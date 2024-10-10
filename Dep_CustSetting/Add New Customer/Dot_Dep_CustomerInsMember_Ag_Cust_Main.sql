@@ -34,7 +34,9 @@ AS
 	 - 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	 - 20240404@Tacy: Return - Error when add Subsidiary [Redmine: #202273] 
 	 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]	
+	 - 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
 	 - 20240911@Tacy: OddsBoostAdj dummy customers [redmine:#210621]
+
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
@@ -230,9 +232,12 @@ BEGIN
 		@Language = 'E',    
 		@ErrCode = @ErrCode OUTPUT,    
 		@ErrMsg = @ErrMsg OUTPUT    
-
-	IF @ErrCode <> 0    
-		RETURN    
+		
+	IF @ErrCode <> 0
+	BEGIN
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
+ 		RETURN 
+	END       
 
 	--Insert SubsidiaryID
 	IF @SubsidiaryID<>0
