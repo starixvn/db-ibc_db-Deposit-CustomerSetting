@@ -51,7 +51,8 @@ AS
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230303@Johnson: Return Basketball VR to its original state [redmine:#184339]
-		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083] 
+		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083]
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]  
 	Param's Explanation:
 		• @ErrCode:
 			= 0: Insert successfully.
@@ -101,8 +102,8 @@ BEGIN
 	    RETURN
     END
 	
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-	SELECT @Custid, seqNo, bitmapVirtual
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+	SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 	FROM CustVirtualSetting WITH(NOLOCK)
 	WHERE custid = @recommend  
 
@@ -116,13 +117,20 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+		--Inhouse Tables
+		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+		FROM CustVirtualSetting c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
 	    RETURN
     END	
 
 	--Virtual rate lock status
-	INSERT INTO VRCustLockStatus(CustID,Type)
-	SELECT @custid,Type
+	INSERT INTO VRCustLockStatus(CustID,Type,RepUpdateTime)
+	SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime 
 	FROM VRCustLockStatus v (NOLOCK) 
 	WHERE CustID = @recommend
 		AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
@@ -137,8 +145,21 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+		--Inhouse Tables
+		--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+		FROM CustVirtualSetting c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+		INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+		FROM VRCustLockStatus c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
 	    RETURN
     END	
 	
@@ -153,7 +174,7 @@ BEGIN
 	BEGIN
 		IF  @licensee IN('haifa','IBO','ManBetX','Athena000') -- for soccer + Other sport
 		BEGIN
-			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(100, @custid, 1)
+			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status],RepUpdateTime) VALUES(100, @custid, 1, [dbo].[f_GetDateTime2]() )
 			IF @@ERROR <> 0
 			BEGIN
 				SELECT @ErrMsg = CASE @Language 
@@ -164,15 +185,34 @@ BEGIN
 
 				-- ROLLBACK MANUALLY
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-				DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+				--Inhouse Tables
+				--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+				--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+				--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+
+				DELETE c
+				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+				FROM CustVirtualSetting c WITH(ROWLOCK) 
+				WHERE CustID = @CustID
+
+				DELETE c
+				OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+				INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+				FROM VRCustLockStatus c WITH(ROWLOCK) 
+				WHERE CustID = @CustID
+				
+				DELETE c
+				OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
+				INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
+				FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
+				WHERE CustID = @CustID AND Sporttype IN(100,99)
 				RETURN
 			END
 		END
 		ELSE -- for Other sport
 		BEGIN
-			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status]) VALUES(99, @custid, 1)
+			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status],RepUpdateTime) VALUES(99, @custid, 1, [dbo].[f_GetDateTime2]() )
 			IF @@ERROR <> 0
 			BEGIN
 				SELECT @ErrMsg = CASE @Language 
@@ -183,9 +223,28 @@ BEGIN
 
 				-- ROLLBACK MANUALLY
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-				DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-				DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+				--Inhouse Tables
+				--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+				--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+				--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+
+				DELETE c
+				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+				FROM CustVirtualSetting c WITH(ROWLOCK) 
+				WHERE CustID = @CustID
+
+				DELETE c
+				OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+				INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+				FROM VRCustLockStatus c WITH(ROWLOCK) 
+				WHERE CustID = @CustID
+
+				DELETE c
+				OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
+				INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
+				FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
+				WHERE CustID = @CustID AND Sporttype IN(100,99)
 				RETURN
 			END
 		END
@@ -208,10 +267,29 @@ BEGIN
 
 		-- ROLLBACK MANUALLY
 		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
+		--Inhouse Tables
+		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+		--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+		--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+		FROM CustVirtualSetting c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+		INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+		FROM VRCustLockStatus c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
+		INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
+		FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
+		WHERE CustID = @CustID AND Sporttype IN(100,99)
 		RETURN
 	END
 
@@ -264,11 +342,30 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
-		DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
+		--Inhouse Tables
+		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+		--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+		--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+		FROM CustVirtualSetting c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+		INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+		FROM VRCustLockStatus c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
+
+		DELETE c
+		OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
+		INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
+		FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
+		WHERE CustID = @CustID AND Sporttype IN(100,99)
 	    RETURN
     END  
 
@@ -286,11 +383,30 @@ BEGIN
 					,@ErrCode = 114
 
 			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
-			DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
 			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
 			DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
+			--Inhouse Tables
+			--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
+			--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+			--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+
+			DELETE c
+			OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+			INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+			FROM CustVirtualSetting c WITH(ROWLOCK) 
+			WHERE CustID = @CustID
+
+			DELETE c
+			OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+			INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+			FROM VRCustLockStatus c WITH(ROWLOCK) 
+			WHERE CustID = @CustID
+
+			DELETE c
+			OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
+			INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
+			FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
+			WHERE CustID = @CustID AND Sporttype IN(100,99)
 			RETURN
 		END
 	END

@@ -48,8 +48,9 @@ Revisions:
 	- 20220112@Eden: LAP - RNG Casino - Implement DCS Settings [Redmine: #166217] 
 	- 20220617@Johnson: define temp table to avoid dump db [redmine:#174035]
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
-	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
+	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]  
 	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 Param's Explanation:
 • @ErrCode:
     = 0: Create member successfully.

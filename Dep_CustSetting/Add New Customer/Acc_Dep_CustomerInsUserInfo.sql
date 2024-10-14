@@ -64,6 +64,7 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20240712@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 Param's Explanation:
 • @ErrCode:
     = 0: Insert successfully.
@@ -123,13 +124,14 @@ BEGIN
 		SELECT @CustId, @CurrencyModifier, @CreateDate, '9999-12-31 0:00:00.000'
 	END
 
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
 	SELECT	@CustID, 
 			seqNo,
 			(
 				SELECT TOP 1 bitmap
 				FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
-			) AS bitmapVirtual
+			) AS bitmapVirtual,
+			[dbo].[f_GetDateTime2]() AS RepUpdateTime
 	FROM (
 		SELECT DISTINCT seqNo
 		FROM ProfileVirtualSetting WITH(NOLOCK)
@@ -163,8 +165,8 @@ BEGIN
 	VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
 
 	--Virtual rate
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-	SELECT @CustID, seqNo, bitmapVirtual
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+	SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 	FROM CustVirtualSetting WITH(NOLOCK)
 	WHERE custid = @srecommend
 END
@@ -177,16 +179,16 @@ BEGIN
 	VALUES(@CustID,@site, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
 
 	--Virtual rate
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-	SELECT @CustID, seqNo, bitmapVirtual
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+	SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 	FROM CustVirtualSetting WITH(NOLOCK)
 	WHERE custid = @mrecommend
 END
 ELSE IF @roleid = 1
 BEGIN	
 	--Virtual rate
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-	SELECT @CustID, seqNo, bitmapVirtual
+	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+	SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 	FROM CustVirtualSetting WITH(NOLOCK)
 	WHERE custid = @recommend
 END
@@ -210,8 +212,8 @@ SELECT @UplineID = CASE WHEN @roleid = 3 THEN @srecommend
 					END
 
 --VR lock status
-INSERT INTO VRCustLockStatus(CustID,Type)
-SELECT @custid,Type
+INSERT INTO VRCustLockStatus(CustID,Type, RepUpdateTime)
+SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 FROM VRCustLockStatus v (NOLOCK) 
 WHERE CustID = @UplineID
 	AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)

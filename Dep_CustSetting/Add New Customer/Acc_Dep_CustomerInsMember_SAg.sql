@@ -48,6 +48,7 @@ Revisions:
 	- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 Param's Explanation:
 • @ErrCode:
     = 0: Create master successfully.
@@ -143,12 +144,12 @@ BEGIN
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
 
-	--Error Occurs	
+		--Error occurs 	----------------------CHECK Error
 	IF (@ErrCode > 0)
-	BEGIN 	
+	BEGIN
 		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
-		RETURN 
-	END  
+ 		RETURN 
+	END 
 	 
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)

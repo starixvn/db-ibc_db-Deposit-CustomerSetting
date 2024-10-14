@@ -10,6 +10,7 @@ AS
 
 	Revisions:
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		
 	Param's Explanation:
 
@@ -43,10 +44,26 @@ BEGIN
 		DELETE FROM CustMaster WITH (ROWLOCK)  WHERE CustID = @CustID
 	ELSE IF @RoleID = 2
 		DELETE FROM CustAgent WITH (ROWLOCK)  WHERE CustID = @CustID
-	
-	DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-	DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
+
 	DELETE FROM custinfo WITH (ROWLOCK)  WHERE custid = @CustID  
-	DELETE FROM customer WITH (ROWLOCK)  WHERE CustID = @CustID  	
+	DELETE FROM customer WITH (ROWLOCK)  WHERE CustID = @CustID 
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+	INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+	FROM CustVirtualSetting c WITH(ROWLOCK) 
+	WHERE CustID = @CustID
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+	INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+	FROM VRCustLockStatus c WITH(ROWLOCK) 
+	WHERE CustID = @CustID 	
+	
+	DELETE c
+	OUTPUT deleted.custid, deleted.LevelID, [dbo].[f_GetDateTime2]() 
+	INTO VRCustSetting_Del_Inhouse(custid,LevelID,RepUpdateTime)
+	FROM VRCustSetting c WITH(ROWLOCK) 
+	WHERE CustID = @CustID
 		
 END
