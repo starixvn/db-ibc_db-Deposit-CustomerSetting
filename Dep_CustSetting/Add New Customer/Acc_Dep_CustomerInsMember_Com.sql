@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 (
 	@custid INT OUTPUT,
@@ -51,6 +51,7 @@ Revisions:
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20230303@Johnson: Return Basketball VR to its original state [redmine: #184339]
 	- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
 	
 Param's Explanation:
 • @ErrCode:
@@ -119,14 +120,11 @@ BEGIN
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
 		@ErrMsg = @ErrMsg OUTPUT
-	
-	----------------------CHECK Error
-
 	IF @@ERROR > 0
 	BEGIN		
 		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
  		RETURN 
-	END  
+	END 
 	
 	--Insert ProductSetting of SportBooks for Super:
 	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID,RepUpdateTime)

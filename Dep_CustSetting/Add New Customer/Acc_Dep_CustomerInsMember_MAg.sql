@@ -60,6 +60,7 @@ Revisions:
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 Param's Explanation:
 	- @ErrCode:
 		= 0: Create agent successfully.
