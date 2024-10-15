@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,bodbDownlineNet,bodbExtAccNet,svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@custid INT,
 	@firstname NVARCHAR(50),
@@ -82,6 +82,7 @@ AS
 		- 20220913@Tacy: Customer Setting - Set Danger level (Saba Sports) for newly created members [RedmineID: #177464]
 		- 20220930@Eden: Reactive - Enhance to prevent lacking settings [redmine: #178439]
 		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
+		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 
 	Param's Explanation:
 	• @ErrCode:
@@ -147,8 +148,8 @@ BEGIN
 
 	IF @roleid = 1
 	BEGIN		
-		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual)
-		SELECT @Custid, seqNo, bitmapVirtual
+		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
+		SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime
 		FROM CustVirtualSetting WITH(NOLOCK)
 		WHERE custid = @recommend  
 	END
@@ -162,7 +163,11 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+		DELETE c
+		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+		FROM CustVirtualSetting c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 	    RETURN
     END	
@@ -190,7 +195,11 @@ BEGIN
 						,@ErrCode = 115
 
 				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID
+				DELETE c
+				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+				FROM CustVirtualSetting c WITH(ROWLOCK) 
+				WHERE CustID = @CustID
 				EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 				RETURN
 			END
@@ -243,7 +252,11 @@ BEGIN
 
 	    -- ROLLBACK MANUALLY
 	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custid = @CustID	
+		DELETE c
+		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+		FROM CustVirtualSetting c WITH(ROWLOCK) 
+		WHERE CustID = @CustID
 		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
 	    RETURN
     END
