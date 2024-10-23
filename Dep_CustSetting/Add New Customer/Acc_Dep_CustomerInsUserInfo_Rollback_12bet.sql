@@ -23,7 +23,7 @@ BEGIN
 	DECLARE @RoleID tinyint  
 	SELECT @RoleID = RoleID FROM customer (NOLOCK) WHERE CustID = @CustID  
   	
-	EXEC Acc_CustomerIns_Rollback @CustID = @CustID
+	EXEC GlobCustDB.dbo.Acc_CustomerIns_Rollback @CustID = @CustID
 
 	IF @RoleID BETWEEN 2 AND 4
 		DELETE FROM CustLoginInfo WITH (ROWLOCK) WHERE CustID = @CustID 
