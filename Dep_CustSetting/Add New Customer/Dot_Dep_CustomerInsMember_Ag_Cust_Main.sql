@@ -36,7 +36,7 @@ AS
 	 - 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]	
 	 - 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
 	 - 20240911@Tacy: OddsBoostAdj dummy customers [redmine:#210621]
-
+	 - 20241023@Elodie: Support 12bet [RedmineID: #212624]
 	Param's Explanation:    
 	? @CustID: return new 12bet Player Cust ID    
 	? @Username: return new 12bet Player User name    
