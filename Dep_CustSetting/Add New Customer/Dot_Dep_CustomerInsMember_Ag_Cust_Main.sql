@@ -182,35 +182,52 @@ BEGIN
 		AND  @UserName NOT LIKE '%01OddsAdj%' AND  @UserName NOT LIKE '%01OddsBoostAdj%') 
 		OR @UserName IS NULL
 	BEGIN  
-	SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
-	IF @UserName = ''    
-	BEGIN    
-	 SELECT @ErrMsg = 'Can not generate username.'    
-	  ,@ErrCode = 11    
+		--SELECT @UserName = dbo.f_LAS_GenerateUsername(@recommend)    
+		--IF @UserName = ''    
+		--BEGIN    
+		--	 SELECT @ErrMsg = 'Can not generate username.'    
+		--	  ,@ErrCode = 11    
 	    
-	 RETURN    
-	END    
+		--	 RETURN    
+		--END    
+		EXEC GlobCustDB.dbo.API_CustomerIns_Generate 
+			@Username2 = @DepositUserName,
+			@recommend=@AgentID,
+			@SiteDBGroupID = 0,
+			@Site = @site,
+			@CurrencyName = @currency,
+			@ErrCode = @ErrCode OUTPUT,
+			@ErrMsg = @ErrMsg OUTPUT,
+			@CustID = @CustID OUTPUT,
+			@Username = @Username OUTPUT
+
+		IF @ErrCode <> 0 
+		BEGIN    
+			 SELECT @ErrMsg = 'Can not generate username.'    
+			  ,@ErrCode = 11    
+			 RETURN    
+		END  
 	END  
 	--20080623: Add sitename prefix to the DepositUsername    
 	SELECT @DepositUserName = @site + '$' + @DepositUserName    
 	     
-	DECLARE @IsExistsUsername BIT
-	EXEC Acc_Dep_CustomerCheckExists @username = @DepositUserName, @IsExists = @IsExistsUsername OUTPUT
+	--DECLARE @IsExistsUsername BIT
+	--EXEC Acc_Dep_CustomerCheckExists @username = @DepositUserName, @IsExists = @IsExistsUsername OUTPUT
 
-	--Check the unique username2
-	IF @IsExistsUsername = 1
-	BEGIN    
-		SELECT @ErrMsg = 'The username is not available.', @ErrCode = 11    
-		RETURN    
-	END    
+	----Check the unique username2
+	--IF @IsExistsUsername = 1
+	--BEGIN    
+	--	SELECT @ErrMsg = 'The username is not available.', @ErrCode = 11    
+	--	RETURN    
+	--END    
 	-----------------------------------------------    
 	--reset the @site param    
 	select @site=case when @ugroup like 'indo_' then 'INDO' else '' end,    
 	 @ugroup = case when @ugroup like 'indo_' then right(@ugroup,1) else @ugroup end    
 	    
 	--Insert general data     
-	EXEC dbo.Dot_Dep_CustomerInsUserInfo
-		@custid = @custid OUTPUT,    
+	EXEC dbo.Dot_Dep_CustomerInsUserInfo_12bet
+		@custid = @custid,    
 		@firstname = @firstname,    
 		@lastname = @lastname,    
 		@creator = @recommend,    
@@ -235,7 +252,7 @@ BEGIN
 		
 	IF @ErrCode <> 0
 	BEGIN
-		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback_12bet @CustID = @CustID
  		RETURN 
 	END       
 
@@ -249,7 +266,7 @@ BEGIN
 	IF @@ERROR <> 0
 	BEGIN
 		 DELETE DepositCustomer	WITH(ROWLOCK,UPDLOCK) WHERE CustID = @CustID
-		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID
+		 EXEC Acc_Dep_CustomerInsUserInfo_Rollback_12bet @CustID = @CustID
 
 		 RETURN
 	END
@@ -271,7 +288,7 @@ BEGIN
 		 --Error occur
 		 SET @ErrCode = 911
 		 -- ROLLBACK MANUALLY     
-		 EXEC Acc_CustomerInsUserInfo_Rollback @CustID = @CustID  
+		 EXEC Acc_Dep_CustomerInsUserInfo_Rollback_12bet @CustID = @CustID  
 		 EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
 		 RETURN    
 	END
