@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig,ow_12bet" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust]     
 	@FirstName NVARCHAR(50),    
 	@LastName NVARCHAR(50),    
