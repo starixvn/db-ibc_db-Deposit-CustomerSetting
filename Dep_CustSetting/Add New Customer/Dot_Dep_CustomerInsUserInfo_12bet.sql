@@ -27,7 +27,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo_12bet]
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT
-) WITH EXECUTE AS OWNER
+) 
 AS
 /*
 	Created: 20190919@Elodie
@@ -79,32 +79,49 @@ BEGIN
 		WHERE cus.custid = @recommend
 	END
 
-	SET IDENTITY_INSERT Customer ON
+	
+	EXEC Acc_CustomerIns
+			@CustID	= @CustID
+		,@UserName	= @UserName	
+		,@FirstName	= ''	
+		,@LastName	= ''	
+		,@phone			= ''			
+		,@mobilephone	= ''
+		,@fax			= ''
+		,@email			= ''			
+		,@address		= ''		
+		,@city			= ''			
+		,@state			= ''			
+		,@country		= ''		
+		,@postal		= ''	
+		,@UserPwd	= @UserPwd	 
+		,@roleid	= @roleid	
+		,@srecommend	= @srecommend	
+		,@mrecommend	= @mrecommend	
+		,@recommend		= @recommend	
+		,@currency	= @currency		
+		,@pwdexpiry = @pwdexpiry
+		,@creator	= @creator	
+		,@site			= @site			
+		,@ugroup		= @ugroup
+		,@UserName2		= ''
+		,@refcode2 = ''
+		,@ErrCode = @ErrCode OUTPUT
+		,@ErrMsg  = @ErrMsg OUTPUT
 
-    INSERT INTO Customer   			
-	(custid, username, firstname, lastname, phone, mobilephone, fax, email, address,
-	city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
-	currency, pwdexpiry, creator, Site, creatdate, ugroup
-	) 
- 	VALUES (@custid, @username, @firstname, @lastname, '', '', '', '', '', 
-	'', '', @country, '', @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-	@currency, @pwdexpiry, @creator, @site, GETDATE(), @ugroup
-	)
-    
-    IF @@ERROR <> 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END,
-		    @ErrCode = 111
-    		
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-    		
-	    RETURN
-    END
-	SET IDENTITY_INSERT Customer OFF
+	IF @ErrCode <> 0
+	BEGIN
+		SELECT @ErrMsg = CASE @Language 
+							WHEN 'E' THEN 'Create customer failed. Please try again.'
+							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							END
+				, @ErrCode = 911
+
+		-- ROLLBACK MANUALLY
+		EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback_12bet @CustID = @CustID
+		RETURN
+	END
 
 	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
 	SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
