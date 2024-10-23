@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_MAg]
 	@custid int OUTPUT,
 	@creator int,
@@ -10,11 +10,8 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_MAg]
 	@SubAccID int = 0, --Sub-AccountID
 	@ErrCode int = 0 OUTPUT,
 	@ErrMsg nvarchar(4000) = '' OUTPUT,
-	@InsBalCustList varchar(MAX) = '' OUTPUT,
-	@InsBalExceptCustList varchar(MAX) = '' OUTPUT
-
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 AS
---@Source Control
 /*
 Created: 20120322@Dom
 Task : Master create Agent
@@ -61,6 +58,8 @@ Revisions:
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+
 Param's Explanation:
 	- @ErrCode:
 		= 0: Create agent successfully.
@@ -68,27 +67,13 @@ Param's Explanation:
   
 	- @ErrMsg: Error description.
 
-    - @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
-                    EXEC bodb02.dbo.Dot_BalanceInsCredit @CustID = @CustID 
-                    EXEC bodb02.dbo.Dot_BalanceInsDebit @CustID = @CustID
-    - @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
-                    EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username"
-
 */
 BEGIN
 	SET NOCOUNT ON
-	SET @InsBalCustList = ''
-	SET @InsBalExceptCustList = ''
 	declare @startRun datetime
 	declare @endRun datetime
 	declare @duration int
 	set @startRun = getdate()
-
-	CREATE TABLE #tempCashOut(
-		UserName varchar(30), recommend INT, mrecommend INT, currency TINYINT, site VARCHAR(10), refcode1 nvarchar(100)  
-		, refcode2 nvarchar(100), ugroup varchar(3), [closed] bit, [MatchLimit] smallmoney, [VirtualMultiplier] smallmoney, [Enabled] bit, [danger] TINYINT  
-		, [danger2] TINYINT, [danger3] TINYINT, [DisableOutright] BIT  
-		, [Abnormal] TINYINT, [DoubleCommLosing] BIT)
 
 	--Check an account disabled or not 
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @mrecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
@@ -116,22 +101,7 @@ BEGIN
 	where CustID = @mrecommend
 
 
-	Select @ErrCode = 0
-
-	SELECT @username = rtrim(ltrim(@username))
-
-	DECLARE @IsExists BIT 
-	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
-
-	IF @IsExists = 1
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'This username is not available.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						END
-		SELECT @ErrCode = 101		
-		RETURN
-	END
+	SELECT @ErrCode = 0
 	SELECT @pwdexpiry = dateadd(dd, 30, getdate())
 
 	--Dom@20120322
@@ -167,222 +137,11 @@ BEGIN
 		@TransferOption_dec = @TransferOption_dec,
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
+		@ErrMsg = @ErrMsg OUTPUT,
+		@ErrExtraInfo = @ErrExtraInfo OUTPUT
 
-	----------------------CHECK Error
-	 IF @ErrCode > 0 
-	 BEGIN 	
-		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
- 		RETURN 
-	 END  
-
-	-------Check & Insert for CashOut  
-	IF EXISTS (SELECT TOP 1 1 FROM TradeComm t WITH(NOLOCK) 
-				INNER JOIN custInfo c WITH(NOLOCK) ON t.AgentID=c.custid
-				WHERE srecommend=@srecommend)
-	BEGIN  
-		INSERT INTO #tempCashOut(
-					UserName, recommend, mrecommend, currency, site, refcode1  
-				 , refcode2, ugroup, [closed], [MatchLimit], [VirtualMultiplier], [Enabled], [danger]  
-				 , [danger2], [danger3], [DisableOutright]  
-				 , [Abnormal], [DoubleCommLosing]
-				)  
-		SELECT a.userName + 'CashOut' AS UserName, a.custid AS recommend, a.mrecommend, a.currency, a.site, a.refcode1
-				, a.refcode2, a.ugroup, b.[closed], b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
-				, b.[danger2], b.[danger3], b.[DisableOutright]					
-				, b.[Abnormal], b.[DoubleCommLosing]
-		FROM Customer a(NOLOCK)
-			INNER JOIN custInfo b(NOLOCK)
-			ON a.custid = b.custid
-		WHERE a.custid = @CustID
-				
-		INSERT INTO [dbo].[Customer] ([username], [username2], creatdate, creator, currency, roleid, srecommend, mrecommend
-				, recommend, site, refcode1, refcode2, ugroup)
-		SELECT [username], b.site + '$' + [username], GETDATE(), @creator, b.Currency, 1, @srecommend, b.mrecommend, b.recommend
-			, b.site, refcode1, refcode2, ugroup
-		FROM #tempCashOut b
-				
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert customer '
-
-			RETURN
-		END
-
-		INSERT INTO [dbo].[custInfo] ([username], [custid], [currency], [roleid], [srecommend], [mrecommend], [recommend], [closed]
-			, [MatchLimit], [VirtualMultiplier], [Enabled], [danger]
-			, [danger2], [danger3], [DisableOutright]					
-			, [Abnormal], [DoubleCommLosing], credit)
-		SELECT a.[username], a.[custid], a.[currency], a.[roleid], a.[srecommend], a.[mrecommend], a.[recommend], b.[closed]
-			, b.[MatchLimit], b.[VirtualMultiplier], b.[Enabled], b.[danger]
-			, b.[danger2], b.[danger3], b.[DisableOutright]
-			, b.[Abnormal], b.[DoubleCommLosing], 0
-		FROM Customer(NOLOCK) a
-			INNER JOIN #tempCashOut b
-			ON a.username = b.username
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert custinfo'
-			DELETE a
-			FROM Customer a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM custInfo a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-			RETURN
-		END
-
-		INSERT INTO [dbo].[TradeCust] ([Custid],VendorID)
-		SELECT b.[Custid],14
-		FROM #tempCashOut a
-			INNER JOIN Customer(NOLOCK) b
-			ON a.username = b.username
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert TradeCust'
-
-			DELETE a
-			FROM Customer a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM custInfo a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM [TradeCust] a(NOLOCK)
-				INNER JOIN Customer(NOLOCK) c
-				ON a.custid = c.Custid
-				INNER JOIN #tempCashOut b
-				ON c.username = b.username
-			RETURN
-		END
-
-		INSERT INTO [dbo].[TradeComm] ([Agentid], [IsBA], [TradeComm], [Licenseecomm],HouseDeductionRate,HousePT,VendorID)
-		SELECT a.recommend, 0, 0.03, 0.03,0.03,1,14
-		FROM #tempCashOut a
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert TradeComm'
-
-			DELETE a
-			FROM Customer a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM custInfo a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM [TradeCust] a(NOLOCK)
-				INNER JOIN Customer(NOLOCK) c
-				ON a.custid = c.Custid
-				INNER JOIN #tempCashOut b
-				ON c.username = b.username
-
-			DELETE a
-			FROM [TradeComm] a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.AgentId = b.recommend
-			WHERE IsBA = 0
-
-			RETURN
-		END
-
-		INSERT INTO [dbo].[TradeComm] ([Agentid], [IsBA], [TradeComm], [Licenseecomm],HouseDeductionRate,HousePT,VendorID)
-		SELECT a.recommend, 1, 0.03, 0,0.03,1,14
-		FROM #tempCashOut a
-
-		IF (@@ERROR <> 0)
-		BEGIN
-			SELECT @ErrMsg = 'Could not insert TradeComm'
-
-			DELETE a
-			FROM Customer a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM custInfo a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.username = b.username
-
-			DELETE a
-			FROM [TradeCust] a(NOLOCK)
-				INNER JOIN Customer(NOLOCK) c
-				ON a.custid = c.Custid
-				INNER JOIN #tempCashOut b
-				ON c.username = b.username
-
-			DELETE a
-			FROM [TradeComm] a(NOLOCK)
-				INNER JOIN #tempCashOut b
-				ON a.AgentId = b.recommend
-
-			RETURN
-		END
-
-		DECLARE @tradeUserName VARCHAR(50), @tradeCustId INT, @tradeAgentId INT, @tradeCurrency INT
-		, @tradeSite VARCHAR(100), @tradeErrCode VARCHAR(100)
-
-		SELECT TOP 1 @tradeUserName = a.UserName, @tradeCustId = b.custid, @tradeAgentId = b.recommend
-				, @tradeCurrency = b.currency, @tradeSite = b.site
-		FROM #tempCashOut a
-			INNER JOIN Customer b WITH (NOLOCK)
-			ON a.username = b.username			
-
-		--Set default player comm  
-		EXEC bodb_Licensee.dbo.Lrf_CustomerSetDefaultComm @LicenseeName = @tradesite
-			, @CustID = @tradeCustID, @ErrCode = @tradeErrCode OUTPUT, @ErrMsg = @ErrMsg OUTPUT
-
-		DELETE
-		FROM #tempCashOut
-		WHERE UserName = @tradeUserName
-		--end Cashout	
-
-		SELECT @InsBalCustList = @InsBalCustList + ISNULL(',' + CONVERT(VARCHAR,@tradeCustID), '')
-	END
-
-	---- check site offer OddAdj
-	DECLARE @IsSiteOffer BIT,@PTDummy SMALLMONEY = 0,@CustIdOddAdj INT,@UsernameOddAdj VARCHAR(30)
-	EXEC Acc_Dep_CustomerCheckOddsAdj @Site = @Site, @IsOffer = @IsSiteOffer OUTPUT
-	IF @IsSiteOffer = 1
-	BEGIN 
-		
-		SELECT @UsernameOddAdj = @Site + currency + '01OddsAdj'  
-		FROM exchange with(nolock)
-		WHERE ExchangeId = @Currency
-		SET @IsExists = 0
-		EXEC Age_CustomerCheckExists @username = @UsernameOddAdj, @IsExists = @IsExists OUTPUT
-
-		IF @IsExists = 0
-		BEGIN
-			EXEC Acc_Dep_CustomerInsMember_Ag 
-			@custid			=	@CustIdOddAdj output,
-			@creator		=	@Creator,
-			@username		=	@UsernameOddAdj,
-			@userpwd		=	@Userpwd,
-			@recommend		=	@Custid,
-			@IP				=	@IP,
-			@Language		=	@Language,
-			@SubAccID		=	@SubAccID,
-			@ErrCode		=	@ErrCode output,
-			@ErrMsg			=	@ErrMsg output
-		
-			SELECT @InsBalExceptCustList = @InsBalExceptCustList + ISNULL(',' + CONVERT(VARCHAR,@CustIdOddAdj) +  ';' + @UsernameOddAdj,'')
-		END
-		  
-	END 
+	IF @ErrCode <> 0
+		RETURN
 	
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)
@@ -417,10 +176,5 @@ BEGIN
 		@ActionID = 2204,
 		@TrackingValue = @LogSPData,
 		@duration = @duration
-
-	SET @InsBalCustList = STUFF(@InsBalCustList,1,1,'')
-	SET @InsBalExceptCustList = STUFF(@InsBalExceptCustList,1,1,'')
-
-	DROP TABLE #tempCashOut
 END
 GO

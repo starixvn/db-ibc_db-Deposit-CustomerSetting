@@ -1,7 +1,7 @@
-/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,wsv_alp,wsv_xnap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 (
-	@custid INT OUTPUT,
+	@custid INT,
 	@creator INT,
 	@username VARCHAR(30),
 	@userpwd VARCHAR(40) = '123qwe',
@@ -10,7 +10,8 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Com]
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(2000) = '' OUTPUT
+	@ErrMsg NVARCHAR(2000) = '' OUTPUT,
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 )	
 AS
 --@Source Control
@@ -52,13 +53,14 @@ Revisions:
 	- 20230303@Johnson: Return Basketball VR to its original state [redmine: #184339]
 	- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]	
+	- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 	
 Param's Explanation:
-• @ErrCode:
+- @ErrCode:
     = 0: Create super successfully.
     > 0: Specific Error.
   
-• @ErrMsg: Error description.
+- @ErrMsg: Error description.
 
 */
 BEGIN
@@ -68,33 +70,19 @@ BEGIN
 
 	SELECT @ErrCode = 0
 
-	If Not Exists(Select 1 From Exchange (nolock) Where ExchangeID = @Currency)
-	Begin
+	IF NOT EXISTS(SELECT 1 FROM Exchange (nolock) WHERE ExchangeID = @Currency)
+	BEGIN
 		Select @ErrCode = 5
 		Select @ErrMsg = 	case @Language 
 							when 'E' then 'Invalid currency.'
 							ELSE [dbo].[f_Get_MsgNamebyMsgID](40015,@Language)
 					end
 		return
-	End
-
-	
-	DECLARE @IsExists BIT 
-	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
-
-	IF @IsExists = 1
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'This username is not available.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						END
-		SELECT @ErrCode = 101		
-		RETURN
 	END
 
 	--Insert general info
 	EXEC dbo.Acc_Dep_CustomerInsUserInfo
-		@custid = @custid OUTPUT,
+		@custid = @custid,
 		@creator = @creator,
 		@username = @username,
 		@userpwd = @userpwd,
@@ -119,31 +107,12 @@ BEGIN
 		@TransferOption_dec = NULL,
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
-	IF @@ERROR > 0
-	BEGIN		
-		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
- 		RETURN 
-	END 
-	
-	--Insert ProductSetting of SportBooks for Super:
-	INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID,RepUpdateTime)
-	SELECT @custid, p.ProductSettingID, SYSDATETIME()
-	FROM dbo.Dep_ProductSetting p WITH (NOLOCK) 
-		LEFT JOIN Dep_LicenseeProductSetting dp WITH(NOLOCK) 
-			ON p.ProductSettingID = dp.ProductSettingID 
-			AND dp.CustID = @custid
-	WHERE p.ProductID = 1 
-		AND p.SettingType = 9
-		AND dp.CustID IS NULL
+		@ErrMsg = @ErrMsg OUTPUT,
+		@ErrExtraInfo = @ErrExtraInfo OUTPUT
 
-	IF @@ERROR <> 0
-	BEGIN				
-		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID		
-		RETURN 
-	END  
-
-	----------------------------END INSERT------------------------------------
+	--Error occurs
+	IF @ErrCode <> 0
+		RETURN
 		
 	SET @endRun = GETDATE()
 	SET @duration  = DATEDIFF (millisecond,@startRun,@endRun)

@@ -29,7 +29,8 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsUserInfo]
 	@TransferOption_dec TINYINT,
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT
+	@ErrMsg NVARCHAR(4000) = '' OUTPUT,
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 AS
 
 /*
@@ -65,189 +66,189 @@ Revisions:
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 	- 20240712@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	- 20240705@Eden : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 Param's Explanation:
-• @ErrCode:
-    = 0: Insert successfully.
-    > 0: Specific Error.
+	-@ErrCode:
+		= 0: Insert successfully.
+		> 0: Specific Error.
   
-• @ErrMsg: Error description.
+	-@ErrMsg: Error description.
 */
-DECLARE @CreateDate DATETIME = GETDATE()
-
-IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
 BEGIN
-	SELECT @site = cus.[site]
-	FROM Customer cus WITH (NOLOCK)
-	WHERE cus.custid = @recommend
-END
+	BEGIN TRY
+		EXEC Acc_CustomerIns
+			 @CustID	= @CustID
+			,@UserName	= @UserName	
+			,@FirstName	= ''	
+			,@LastName	= ''	
+			,@phone			= ''			
+			,@mobilephone	= ''
+			,@fax			= ''
+			,@email			= ''			
+			,@address		= ''		
+			,@city			= ''			
+			,@state			= ''			
+			,@country		= ''		
+			,@postal		= ''	
+			,@UserPwd	= @UserPwd	 
+			,@roleid	= @roleid	
+			,@srecommend	= @srecommend	
+			,@mrecommend	= @mrecommend	
+			,@recommend		= @recommend	
+			,@currency	= @currency		
+			,@pwdexpiry = @pwdexpiry
+			,@creator	= @creator	
+			,@site		= @site			
+			,@ugroup	= @ugroup
+			,@ErrCode = @ErrCode OUTPUT
+			,@ErrMsg  = @ErrMsg OUTPUT
 
-INSERT INTO Customer   			
-			(username, firstname, lastname, phone, mobilephone, fax, email, address,
-			city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
-			currency, pwdexpiry, creator, Site, creatdate, ugroup
-			) 
- 		 VALUES (@username, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-			NULL, NULL, NULL, NULL, @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-			@currency, @pwdexpiry, @creator, @site, @CreateDate, @ugroup
-			)
-
-SELECT @custid=@@IDENTITY
-
-IF @@ERROR <> 0
-BEGIN
-	SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END,
-		@ErrCode = 111
+		IF @ErrCode <> 0
+		BEGIN
+			SELECT @ErrExtraInfo = @ErrMsg
+				 , @ErrMsg = CASE @Language 
+							   WHEN 'E' THEN 'Create customer failed. Please try again.'
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							 END
+				 , @ErrCode = 111
 			
-	RETURN
-END
+			-- ROLLBACK MANUALLY
+			EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+			EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END
 
-IF @roleid = 4
-BEGIN
-	DECLARE @CurrencyModifier SMALLMONEY
-	DECLARE @SiteDBGroupID SMALLINT
-	EXEC @CurrencyModifier = f_GetCurrencyModifier @currency
+		IF @roleid = 4
+		BEGIN
+			DECLARE @CurrencyModifier SMALLMONEY
+			DECLARE @SiteDBGroupID SMALLINT
+			EXEC @CurrencyModifier = f_GetCurrencyModifier @currency
 
-	SELECT @SiteDBGroupID = SiteDBGroupID FROM Site WITH(NOLOCK) WHERE site = @site
+			SELECT @SiteDBGroupID = SiteDBGroupID FROM Site WITH(NOLOCK) WHERE site = @site
 
-	SET @srecommend = @custid 
-	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
+			SET @srecommend = @custid 
+			UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
 
-	INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier,SiteDBGroupID,RepUpdateTime)
-	VALUES (@CustID, @currency, @username, @site, @CurrencyModifier, @SiteDBGroupID, SYSDATETIME())
+			INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier,SiteDBGroupID,RepUpdateTime)
+			VALUES (@CustID, @currency, @username, @site, @CurrencyModifier, @SiteDBGroupID, SYSDATETIME())
 
-	IF @CurrencyModifier <> 1
-	BEGIN
-		INSERT INTO CurrencyModifier_History(CustId, CurrencyModifier, FromDate, ToDate)
-		SELECT @CustId, @CurrencyModifier, @CreateDate, '9999-12-31 0:00:00.000'
-	END
-
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
-	SELECT	@CustID, 
-			seqNo,
-			(
-				SELECT TOP 1 bitmap
-				FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+			SELECT	@CustID, 
+					seqNo,
+					(
+						SELECT TOP 1 bitmap
+						FROM dbo.f_GenerateVirtualSetting_multiple(0x00, CONVERT(VARCHAR(MAX), virtualXML))
 			) AS bitmapVirtual,
 			[dbo].[f_GetDateTime2]() AS RepUpdateTime
-	FROM (
-		SELECT DISTINCT seqNo
-		FROM ProfileVirtualSetting WITH(NOLOCK)
-	) pvs
-	CROSS APPLY (
-		SELECT (
-			SELECT	(
-						SELECT ipvs.profileID AS '@p',
-							CASE WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 1 THEN 0.12 
-								WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 0 THEN 0.1 
-								WHEN ipvs.bettype IN (3,8) THEN 0.08
-								ELSE 0.15
-							END AS '@v'
-						FROM ProfileVirtualSetting AS ipvs WITH(NOLOCK)
-						WHERE	ipvs.seqNo = pvs.seqNo
-						FOR XML PATH ('r'), 
-						TYPE
-					)
-			FOR XML PATH ('root'), 
-			TYPE
-		) AS virtualXML
-	) p	
+			FROM (
+				SELECT DISTINCT seqNo
+				FROM ProfileVirtualSetting WITH(NOLOCK)
+			) pvs
+			CROSS APPLY (
+				SELECT (
+					SELECT	(
+								SELECT ipvs.profileID AS '@p',
+									CASE WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 1 THEN 0.12 
+										WHEN ipvs.bettype IN (1,7) AND ipvs.Islive = 0 THEN 0.1 
+										WHEN ipvs.bettype IN (3,8) THEN 0.08
+										ELSE 0.15
+									END AS '@v'
+								FROM ProfileVirtualSetting AS ipvs WITH(NOLOCK)
+								WHERE	ipvs.seqNo = pvs.seqNo
+								FOR XML PATH ('r'), 
+								TYPE
+							)
+					FOR XML PATH ('root'), 
+					TYPE
+				) AS virtualXML
+			) p	
 
-END
-ELSE IF @roleid = 3
-BEGIN
-	SET @mrecommend = @custid 
-	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
+			INSERT INTO dbo.Dep_LicenseeProductSetting(CustID, ProductSettingID, RepUpdateTime)
+			SELECT @custid, p.ProductSettingID, [dbo].[f_GetDateTime2]()
+			FROM dbo.Dep_ProductSetting p WITH (NOLOCK) 
+				LEFT JOIN Dep_LicenseeProductSetting dp WITH(NOLOCK) 
+					ON p.ProductSettingID = dp.ProductSettingID 
+					AND dp.CustID = @custid
+			WHERE p.ProductID = 1 
+				AND p.SettingType = 9
+				AND dp.CustID IS NULL
+		END
+		ELSE IF @roleid = 3
+		BEGIN
+			SET @mrecommend = @custid 
+			UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
 
-	INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)
-	VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+			INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)
+			VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
 
-	--Virtual rate
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
-	SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
-	FROM CustVirtualSetting WITH(NOLOCK)
-	WHERE custid = @srecommend
-END
-ELSE IF @roleid = 2
-BEGIN
-	SET @recommend = @custid
-	UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET recommend = @custid WHERE custId = @CustID
+			--Virtual rate
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+			SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
+			FROM CustVirtualSetting WITH(NOLOCK)
+			WHERE custid = @srecommend
+		END
+		ELSE IF @roleid = 2
+		BEGIN
+			SET @recommend = @custid
+			UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET recommend = @custid WHERE custId = @CustID
 
-	INSERT INTO CustAgent(custId,site, MaxCredit, IsInternal, TransferOption)
-	VALUES(@CustID,@site, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+			INSERT INTO CustAgent(custId,site, MaxCredit, IsInternal, TransferOption)
+			VALUES(@CustID,@site, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
 
-	--Virtual rate
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
-	SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
-	FROM CustVirtualSetting WITH(NOLOCK)
-	WHERE custid = @mrecommend
-END
-ELSE IF @roleid = 1
-BEGIN	
-	--Virtual rate
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
-	SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
-	FROM CustVirtualSetting WITH(NOLOCK)
-	WHERE custid = @recommend
-END
+			--Virtual rate
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+			SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
+			FROM CustVirtualSetting WITH(NOLOCK)
+			WHERE custid = @mrecommend
+		END
+		ELSE IF @roleid = 1
+		BEGIN	
+			--Virtual rate
+			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+			SELECT @CustID, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
+			FROM CustVirtualSetting WITH(NOLOCK)
+			WHERE custid = @recommend
+		END
 
-IF @@ERROR <> 0
-BEGIN
-	SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END,
-		@ErrCode = 112
-		
-	RETURN
-END
+		DECLARE @UplineID INT
 
-DECLARE @UplineID INT
+		SELECT @UplineID = CASE WHEN @roleid = 3 THEN @srecommend 
+								WHEN @roleid = 2 THEN @mrecommend
+								WHEN @roleid = 1 THEN @recommend
+							END
 
-SELECT @UplineID = CASE WHEN @roleid = 3 THEN @srecommend 
-						WHEN @roleid = 2 THEN @mrecommend
-						WHEN @roleid = 1 THEN @recommend
-					END
+		--VR lock status
+		INSERT INTO VRCustLockStatus(CustID,Type, RepUpdateTime)
+		SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime
+		FROM VRCustLockStatus v (NOLOCK) 
+		WHERE CustID = @UplineID
+			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
 
---VR lock status
-INSERT INTO VRCustLockStatus(CustID,Type, RepUpdateTime)
-SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime
-FROM VRCustLockStatus v (NOLOCK) 
-WHERE CustID = @UplineID
-	AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+		INSERT INTO [dbo].[custinfo](
+			[custId], [currency]
+			,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
+			,DisableOutright
+			,danger,danger2,danger3)
+		VALUES(
+			@custid, @currency
+			,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
+			,@DisableOutright
+			,@danger,@danger2,@danger3)
+	END TRY
+	BEGIN CATCH
+			SELECT @ErrMsg = CASE @Language 
+							   WHEN 'E' THEN 'Create customer failed. Please try again.'
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							 END
+				 , @ErrCode = 111
+				 , @ErrExtraInfo = ERROR_MESSAGE ()
 
-IF @@ERROR <> 0
-BEGIN
-	SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END,
-		@ErrCode = 112
-		
-	RETURN
-END
+			--SELECT ERROR_MESSAGE() ErrorMessage ,ERROR_LINE() AS ErrorLine
 
-INSERT INTO [dbo].[custinfo](
-	[custId], [currency]
-	,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
-	,DisableOutright
-	,danger,danger2,danger3)
-VALUES(
-	@custid, @currency
-	,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
-	,@DisableOutright
-	,@danger,@danger2,@danger3)
-
-IF @@ERROR <> 0
-BEGIN 
---	DELETE customer with (ROWLOCK) where custid =  @custid
-	SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-						END,
-				@ErrCode = 113			
-	RETURN
+			-- ROLLBACK MANUALLY
+			EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = @roleid
+			EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+	END	CATCH
 END
 GO

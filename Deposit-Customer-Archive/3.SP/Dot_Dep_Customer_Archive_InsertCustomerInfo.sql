@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@custid INT,
 	@firstname NVARCHAR(50),
@@ -62,7 +62,10 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@SystemID	TINYINT=1,
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT
+	@ErrMsg NVARCHAR(4000) = '' OUTPUT,
+	@SubsidiaryID INT = 0, 
+	@BonusWalletFlag BIT = 0,
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 AS
 
 /*
@@ -83,183 +86,154 @@ AS
 		- 20220930@Eden: Reactive - Enhance to prevent lacking settings [redmine: #178439]
 		- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified BEGIN TRY - CATCH [redmine: #207474]
 
 	Param's Explanation:
-	• @ErrCode:
+	- @ErrCode:
 		= 0: Insert successfully.
 		> 0: Specific Error.
   
-	• @ErrMsg: Error description.
+	- @ErrMsg: Error description.
 */
 BEGIN
     SET NOCOUNT ON 
 	
-	DECLARE @NotificationInfo VARCHAR(MAX)
+	BEGIN TRY
 
-	EXEC Dep_Customer_Archive_InsCustomer_WithCustID 
-				@custid=@custid,
-				@firstname=@firstname,
-				@lastname=@lastname,
-				@creator=@creator,
-				@username=@username,
-				@userpwd=@userpwd,
-				@pwdexpiry=@pwdexpiry,
-				@currency=@currency,
-				@site=@site,
-				@ugroup=@ugroup,
-				@createDate=@createDate,
-				@birthday=@birthday,
-				@refcode1=@refcode1,
-				@remark=@remark,
-				@refcode2=@refcode2,
-				@username2=@username2,
-				@srecommend=@srecommend,
-				@mrecommend=@mrecommend,
-				@recommend=@recommend,
-				@roleid=@roleid,
-				@phone=@phone,
-				@mobilephone=@mobilephone,
-				@email=@email,
-				@fax=@fax,
-				@address=@address,
-				@city=@city,
-				@state=@state,
-				@country=@country,
-				@postal=@postal,
-				@ErrCode = @ErrCode OUTPUT,    
-				@ErrMsg = @ErrMsg OUTPUT
+		EXEC  Acc_CustomerIns 
+			@custid=@custid,
+			@firstname=@firstname,
+			@lastname=@lastname,
+			@creator=@creator,
+			@username=@username,
+			@userpwd=@userpwd,
+			@pwdexpiry=@pwdexpiry,
+			@currency=@currency,
+			@site=@site,
+			@ugroup=@ugroup,
+			@createDate=@createDate,
+			@birthday=@birthday,
+			@refcode1=@refcode1,
+			@remark=@remark,
+			@refcode2=@refcode2,
+			@username2=@username2,
+			@srecommend=@srecommend,
+			@mrecommend=@mrecommend,
+			@recommend=@recommend,
+			@roleid=@roleid,
+			@phone=@phone,
+			@mobilephone=@mobilephone,
+			@email=@email,
+			@fax=@fax,
+			@address=@address,
+			@city=@city,
+			@state=@state,
+			@country=@country,
+			@postal=@postal,
+			@ErrCode = @ErrCode OUTPUT,    
+			@ErrMsg = @ErrMsg OUTPUT
 	
-    IF @ErrCode <> 0
-    BEGIN
-			SELECT @ErrMsg = CASE	WHEN @ErrCode = 22 THEN @ErrMsg
-									WHEN @Language = 'E' THEN 'Create customer failed. Please try again.'
-									ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END,
-		    @ErrCode = 111
+	    IF @ErrCode <> 0
+	    BEGIN
+				SELECT   @ErrExtraInfo = @ErrMsg
+						,@ErrMsg = CASE @Language 
+							 WHEN 'E' THEN 'Create customer failed. Please try again.'
+							 ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+						     END
+						,@ErrCode = 111
     		
-	    RETURN
-    END
+				RETURN
+	    END
+	END TRY
+
+	BEGIN CATCH
+				SELECT   @ErrExtraInfo = @ErrMsg
+							,@ErrMsg = CASE @Language 
+								 WHEN 'E' THEN 'Create customer failed. Please try again.'
+								 ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							     END
+							,@ErrCode = 111
+    		
+				RETURN
+	END CATCH
 	
-    DECLARE	@UplineSecurityCode			 VARCHAR(50)
-	      , @isForcedChangeSecurityCode BIT
-
-    SELECT @UplineSecurityCode		 = NULL
-	     , @isForcedChangeSecurityCode = 0
-
-	IF @roleid = 1
-	BEGIN		
+	BEGIN TRY
+		DECLARE	@DangerLevel BIGINT = NULL	 
+	
 		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual,RepUpdateTime)
 		SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() as RepUpdateTime
 		FROM CustVirtualSetting WITH(NOLOCK)
 		WHERE custid = @recommend  
-	END
-    IF @@ERROR <> 0
-    BEGIN
+		
+		IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
+		BEGIN
+			INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate])
+			VALUES(@custid,NULL,@IP,@creator,GETDATE())
+		END
+
+		--Set DangerLevel
+		SELECT	@DangerLevel=DangerLevel
+		FROM dbo.f_Dep_CustSetting_DangerLevel(@site, @currency)
+    
+		INSERT INTO [dbo].[custinfo]
+		(
+			custid, currency
+		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
+		  , MatchLimit, VirtualMultiplier
+		  , DisableOutright
+		  , danger, danger2, danger3, Danger4, Danger5
+		  , Abnormal	 
+		  , DoubleCommLosing	
+		  , DisableSuperLive
+		  , DangerLevel
+		  , BonusWalletFlag
+		  )
+		VALUES
+		(
+			@custid, @currency
+		  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), 0, ISNULL(@closed, 0), @username
+		  , @matchlimit, @virtualmultiplier
+		  , @DisableOutright
+		  , @danger, @danger2, @danger3, @Danger4, @Danger5
+		  , @Abnormal
+		  , 0
+		  , @DisableSuperLive
+		  , @DangerLevel
+		  , @BonusWalletFlag
+		)
+
+		IF @SubsidiaryID<>0
+		BEGIN
+			IF EXISTS (SELECT 1 FROM dbo.DepositCustomer WITH (NOLOCK) WHERE custid=@CustID)
+			BEGIN
+				UPDATE dbo.DepositCustomer WITH (ROWLOCK, UPDLOCK)
+				SET SubsidiaryID=@SubsidiaryID
+				WHERE custid=@CustID
+			END
+			ELSE
+			BEGIN
+				INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)
+				VALUES (@CustID, @SubsidiaryID)
+			END
+		END
+
+	END TRY
+    BEGIN CATCH
 	    SELECT @ErrMsg = CASE @Language 
 					       WHEN 'E' THEN 'Create customer failed. Please try again.'
 					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
 					     END
 		     , @ErrCode = 112
+			 , @ErrExtraInfo = ERROR_MESSAGE ()
+
+		--SELECT ERROR_MESSAGE() ErrorMessage ,ERROR_LINE() AS ErrorLine
 
 	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE c
-		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-		FROM CustVirtualSetting c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
+	    EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
 	    RETURN
-    END	
-
-	DECLARE @ClosedReason TINYINT 
-	IF(@SystemID=1 AND @closed=1)
-		SELECT @ClosedReason=1
-	ELSE IF(@SystemID<>1 AND @closed=1)
-		SELECT @ClosedReason=2
-	ELSE 
-		SELECT @ClosedReason=0
-
-	IF @roleid=1
-	BEGIN		
-		IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
-		BEGIN
-			INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-			VALUES(@custid,NULL,@IP,@creator,GETDATE(),@ClosedReason)
-			IF @@ERROR <> 0
-			BEGIN
-				SELECT	@ErrMsg = CASE @Language
-										WHEN 'E' THEN 'Create customer failed. Please try again.'
-										ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-									END
-						,@ErrCode = 115
-
-				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				DELETE c
-				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-				FROM CustVirtualSetting c WITH(ROWLOCK) 
-				WHERE CustID = @CustID
-				EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
-				RETURN
-			END
-		END
-	END
-
-	--Set DangerLevel
-	DECLARE @DangerLevel BIGINT = NULL
-
-	IF @roleid=1
-	BEGIN
-		SELECT	@DangerLevel=DangerLevel
-		FROM dbo.f_Dep_CustSetting_DangerLevel(@site, @currency)
-	END
-    
-	INSERT INTO [dbo].[custinfo]
-    (
-	    custid, currency
-	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
-	  , MatchLimit, VirtualMultiplier
-	  , DisableOutright
-	  , danger, danger2, danger3, Danger4, Danger5
-	  , Abnormal	 
-	  , DoubleCommLosing	
-	  , DisableSuperLive
-	  , DangerLevel
-	  )
-    VALUES
-    (
-	    @custid, @currency
-	  , @roleid, @srecommend, @mrecommend, @recommend, 0, @autosuspend, @autosuspend2, ISNULL(@suspended, 0), 0, ISNULL(@closed, 0), @username
-	  , @matchlimit, @virtualmultiplier
-	  , @DisableOutright
-	  , @danger, @danger2, @danger3, @Danger4, @Danger5
-	  , @Abnormal
-	  , 0
-	  , @DisableSuperLive
-	  , @DangerLevel
-    )
-
-	
-    IF @@ERROR <> 0
-    BEGIN 
-    --	DELETE customer with (ROWLOCK) where custid =  @custid
-	    SELECT @ErrMsg = CASE @Language
-					       WHEN 'E' THEN 'Create customer failed. Please try again.'
-					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					     END,
-		       @ErrCode = 113
-
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE c
-		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-		FROM CustVirtualSetting c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-		EXEC DBMSG.bodb_Message.dbo.Age_MsgCustReadStatus_Del  @custid
-	    RETURN
-    END
+    END	CATCH
 END
 
 

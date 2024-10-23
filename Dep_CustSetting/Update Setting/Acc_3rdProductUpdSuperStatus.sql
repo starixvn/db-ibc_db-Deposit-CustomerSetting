@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig,asv_cust" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_3rdProductUpdSuperStatus] 
 	@ProductID INT
 	, @CustID INT
@@ -27,6 +27,7 @@ AS
 		- 20190901@Elodie: Remove Inactive product [Redmine:#118699]
 		- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 		- 20240710@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20240705@Eden: Scale out DBCUST - Remove create dummy Cashout [redmine: #207474]
 		
 	Param's Explanation:
 		- @InsBalCustList  --> cutsid list will call 2 sp insert balance on DBTRANS SiteDB: (ex: 'CustID1,CustID2')
@@ -45,7 +46,7 @@ BEGIN
 	SET @startRun = GETDATE()
 
 	SELECT @ProductName = ProductName
-	FROM bodb_Licensee.dbo.Product3rd WITH (NOLOCK)
+	FROM dbo.Products WITH (NOLOCK)
 	WHERE ProductID = @ProductID
 
 	SELECT @IsEnabled_Old = ISNULL(IsEnabled, 0)
@@ -86,11 +87,11 @@ BEGIN
 		END
 	END
 		
-	EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
-									,@CustID	=@CustID
-									,@UserID	=@UserID
-									,@ErrMsg	=@ErrMsg
-									,@InsBalCustList = @InsBalCustList OUTPUT
+	--EXEC Acc_CustomerInsDummyTrade	@ProductID	=@ProductID	
+	--								,@CustID	=@CustID
+	--								,@UserID	=@UserID
+	--								,@ErrMsg	=@ErrMsg
+	--								,@InsBalCustList = @InsBalCustList OUTPUT
 
 	IF @IsEnable = 0
 		SET @ApplyToMember = 1

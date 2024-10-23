@@ -3,7 +3,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CheckExistedAccount]
 (
 	@username	varchar(30),
 	@RoleID		TINYINT = NULL,
-	@CustID		INT = NULL OUTPUT
+	@CustID		INT = NULL OUTPUT,
+	@srecommend INT = NULL OUTPUT,
+	@mrecommend INT = NULL OUTPUT,
+	@recommend INT = NULL OUTPUT
 )	
 AS
 /*
@@ -18,12 +21,13 @@ Revisions:
 Param's Explanation:
 
 Examples:
-	DECLARE @CustID INT
-	EXEC [Acc_Dep_CheckExistedAccount] 
+	DECLARE @CustID INT,@mrecommend INT
+	EXEC [Acc_Dep_CheckExistedAccount_UAT2] 
 		@username = '12BETUUS01'
 		,@RoleID = 2
 		,@CustID = @CustID OUT
-	SELECT @CustID
+		,@mrecommend = @mrecommend OUT
+	SELECT @CustID, @mrecommend
 
 */
 BEGIN
@@ -39,7 +43,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		SELECT @CustID = c.custid
+		SELECT @CustID = c.custid, @srecommend = c.srecommend, @mrecommend = c.mrecommend, @recommend = c.recommend
 		FROM custinfo c WITH(NOLOCK)
 			INNER JOIN Dep_CustSuper s WITH(NOLOCK) ON c.srecommend = s.custid
 		WHERE c.username = @username

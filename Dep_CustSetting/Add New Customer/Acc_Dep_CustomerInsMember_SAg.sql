@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_SAg]
 	@custid int OUTPUT,
 	@creator int,
@@ -8,10 +8,10 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_SAg]
 	@Language varchar(2)= 'E',
 	@IP varchar(15)='',
 	@ErrCode int = 0 OUTPUT,
-	@ErrMsg nvarchar(4000) = '' OUTPUT
+	@ErrMsg nvarchar(4000) = '' OUTPUT,
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 	
 AS
---@Source Control
 /*
 Created: 20120320@Dom
 Task : Super creates Master
@@ -49,27 +49,28 @@ Revisions:
 	- 20221207@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 Param's Explanation:
-• @ErrCode:
+- @ErrCode:
     = 0: Create master successfully.
     > 0: Specific Error.
   
-• @ErrMsg: Error description.
+- @ErrMsg: Error description.
 
 */
 BEGIN
 	SET NOCOUNT ON
-	declare @startRun datetime
-	declare @endRun datetime
-	declare @duration int
-	set @startRun = getdate()
+	DECLARE @STARTRUN DATETIME
+	DECLARE @ENDRUN DATETIME
+	DECLARE @DURATION INT
+	SET @STARTRUN = GETDATE()
 
 	--Check an account disabled or not 
 	EXEC dbo.Acc_CustomerSelCheckEnable @custid = @srecommend, @ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output 
 	if @ErrCode <>0		
 		return 
 
-	declare @currency int, @pwdexpiry datetime,
+	DECLARE @currency int, @pwdexpiry datetime,
 		@matchlimit smallmoney,
 		@TransferOption_dec tinyint,
 		@DisableOutright bit,
@@ -77,42 +78,30 @@ BEGIN
 		@site varchar(50),
 		@VirtualMultiplier SMALLMONEY
 
-	select @username = rtrim(ltrim(@username))
+	SELECT @username = rtrim(ltrim(@username))
 
-	select 
+	SELECT 
 		@currency = currency,
 		@UplineClosed = closed,
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
 		@VirtualMultiplier = ci.VirtualMultiplier
-	from CustInfo as ci with (NOLOCK) 
-	where CustID = @srecommend
-	
-	DECLARE @IsExists BIT 
-	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
-
-	IF @IsExists = 1
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'This username is not available.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						END
-		SELECT @ErrCode = 101		
-		RETURN
-	END
+	FROM CustInfo as ci with (NOLOCK) 
+	WHERE CustID = @srecommend
 
 	SELECT @pwdexpiry = dateadd(dd, 30, getdate())
 
 	--Dom@20120322
-	select @site = site from customer with (nolock) where CustID = @srecommend
+	SELECT @site = site FROM customer with (nolock) where CustID = @srecommend
 
 	--Vinh@20080213: get transfer option from super
-	select @TransferOption_dec = TransferOption 
-	from custsuper with (nolock) where CustID = @srecommend
+	SELECT @TransferOption_dec = TransferOption 
+	FROM custsuper WITH (NOLOCK) 
+	WHERE CustID = @srecommend
 
 	--Insert general info
 	EXEC dbo.Acc_Dep_CustomerInsUserInfo
-		@custid = @custid OUTPUT,
+		@custid = @custid,
 		@creator = @creator,
 		@username = @username,
 		@userpwd = @userpwd,
@@ -126,37 +115,30 @@ BEGIN
 		@TransferOption = NULL,
 		@suspended = 0,
 		@closed = @UplineClosed,
-	
 		@DisableOutright = @DisableOutright,
 		@matchlimit = @matchlimit,
-		
 		@virtualmultiplier = @VirtualMultiplier,		
-		
 		@DisableAutoMPT = 0,
-		
 		@IsInternal = 0,
 		@credit = 0,
 		@maxcredit = null,
-		
 		@IP = @IP,
 		@TransferOption_dec = @TransferOption_dec,
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
+		@ErrMsg = @ErrMsg OUTPUT,
+		@ErrExtraInfo = @ErrExtraInfo OUTPUT
 
 		--Error occurs 	----------------------CHECK Error
 	IF (@ErrCode > 0)
-	BEGIN
-		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
  		RETURN 
-	END 
 	 
-	set @endRun = getdate()
-	set @duration  = datediff (millisecond,@startRun,@endRun)
+	SET @endRun = getdate()
+	SET @duration  = datediff (millisecond,@startRun,@endRun)
 
 	Declare @LogSPData varchar(MAX)
 	--Log customer info
-	Select @LogSPData = '<Acc_Dep_CustomerInsMember_SAg custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
+	SELECT @LogSPData = '<Acc_Dep_CustomerInsMember_SAg custid="'+ coalesce(cast(@custid as varchar(50)),space(1)) + '" ' +
 	'creator="'+ coalesce(cast(@creator as varchar(50)),space(1)) + '" ' +
 	'username="'+ coalesce(cast(@username as varchar(30)),space(1)) + '" ' +
 	'Language="'+ coalesce(cast(@Language as varchar(2)),space(1)) + '" ' +

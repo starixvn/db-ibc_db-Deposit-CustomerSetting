@@ -1,18 +1,21 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,svc_tig" viewers="" isFunction="0"></info>*/
-ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusUpd] @ProductID INT
+ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_StatusUpd]
+	  @ProductID			INT
 	, @CustID				INT
 	, @IsDisabled			BIT
-	, @IsDisabledDownLine	BIT = 0		
+	, @IsDisabledDownLine		BIT = 0		
 	, @SportType			INT
 	, @BetType				INT
 	, @bitmapOrder			TINYINT
-	, @SettingStatus		TINYINT = 0
+	, @SettingStatus			TINYINT = 0
 	, @UserID				INT
 	, @IP					VARCHAR(40)	
 	, @IsAgentOnly			BIT
 	, @ErrCode				INT				= 0		OUTPUT	
-	, @ErrMsg				NVARCHAR(200)	= ''	OUTPUT
-	, @InsBalExceptCustList	VARCHAR(200)	= ''	OUTPUT
+	, @ErrMsg				NVARCHAR(200)		= ''		OUTPUT
+	, @DummyAgentID			INT				= NULL	OUTPUT		-- @DummyAgentID
+	, @DumUserName			VARCHAR(30)			= NULL	OUTPUT		-- @username
+	, @IsCreateDummyExchange	BIT				= 0		OUTPUT		-- is need create dummy exchange or not
 AS
 /*
 	Created: 20171009@Winne
@@ -40,6 +43,7 @@ AS
 		- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
 		- 20240503@Johnson: Restructure Commission [redmine:#179088]
 		- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+		- 20240812@Helios: Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474] 
 	Param's Explanation:
 	- @InsBalExceptCustList -->  cutsid and username  list will call sp insert exception balance on SiteDB : (ex: 'CustID1;username1,CustID2;username2,...' )
                     EXEC bodb02.dbo.Task_Cust_CheckBalance_Exception_Ins @custid = @custid, @username = @username"
@@ -94,42 +98,26 @@ BEGIN
 	SELECT  @SettingLevel=SettingLevel,@ProductSettingID=ProductSettingID 
 	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(@ProductID,4,@SettingStatus)
 
+	SELECT @IsCreateDummyExchange = 0
+
 	--Exchange: Create dummy account
 	IF @ProductID=31 AND @IsDisabled=0
 	BEGIN
-		DECLARE @DumCustID INT, @DummyAgentID INT
-			,@DumUserName VARCHAR(30), @Pass VARCHAR(100)
-
-		SELECT	@DummyAgentID = c.recommend		--same line: Dummy3rd account
-			,@DumUserName = c.site + 'Exchange' + CONVERT(VARCHAR,e.currency)
-			,@Pass = '8058095B7DDB08A608811097E5DB8D'
+		
+		SELECT
+			  @DummyAgentID = c.recommend		--same line: Dummy3rd account
+			, @DumUserName = c.site + 'Exchange' + CONVERT(VARCHAR,e.currency)
 		FROM Customer c WITH (NOLOCK)
 		INNER JOIN exchange e WITH (NOLOCK) ON e.ExchangeId=c.currency
 		WHERE srecommend=@srecommend AND roleid=1
 			AND username=c.site + 'Dummy3rd' + CONVERT(VARCHAR,e.currency)
 			
-		DECLARE @IsExists BIT   
+		DECLARE @IsExists			BIT   
 		EXEC [Acc_Dep_CustomerCheckExists] @username = @DumUserName, @IsExists = @IsExists OUTPUT	
 			
 		IF @IsExists=0
 		BEGIN
-			EXEC Acc_Dep_CustomerInsMember_Ag 
-					@custid=@DumCustID OUTPUT
-					,@creator=@UserID
-					,@username=@DumUserName
-					,@userpwd=@Pass
-					,@recommend=@DummyAgentID
-					,@IP=@IP
-					,@ErrCode=@ErrCode OUTPUT
-					,@ErrMsg=@ErrMsg OUTPUT
-
-			IF @ErrCode<>0
-			BEGIN
-				EXEC [Acc_CustomerInsUserInfo_Rollback] @CustID=@DumCustID
-				RETURN
-			END
-
-			SELECT @InsBalExceptCustList = CONVERT(VARCHAR,@DumCustID) +  ';' + @DumUserName 
+			SELECT @IsCreateDummyExchange = 1
 		END
 	END
 

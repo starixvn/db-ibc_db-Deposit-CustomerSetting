@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="wsv_nap" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,asv_cust,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].Acc_Dep_CustomerInsSetting_Rollback 
 	  @CustID INT,
 	  @RoleID TINYINT 
@@ -22,6 +22,24 @@ BEGIN
 	
 	DELETE FROM BetLimitControlCustSetting	WITH (ROWLOCK) WHERE CustID = @CustID
 	DELETE FROM DepositCustomer				WITH (ROWLOCK) WHERE CustID = @CustID
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
+	INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
+	FROM CustVirtualSetting c WITH(ROWLOCK) 
+	WHERE CustID = @CustID
+
+	DELETE c
+	OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
+	INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
+	FROM VRCustLockStatus c WITH(ROWLOCK) 
+	WHERE CustID = @CustID
+
+	DELETE c
+	OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
+	INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
+	FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
+	WHERE CustID = @CustID AND Sporttype IN(100,99)
 	
 	DELETE FROM Dep_CustProductStatus WITH (ROWLOCK)
 	OUTPUT DELETED.custid, SYSDATETIME()
@@ -54,6 +72,14 @@ BEGIN
 		OUTPUT DELETED.custid, DELETED.SportType, DELETED.BetType, SYSDATETIME()
 		INTO Dep_CustStakeLevel_Agent_Del_InHouse(custid,SportType,BetType,RepUpdateTime)		
 		WHERE CustID = @CustID
+
+		IF @RoleID = 4
+		BEGIN
+			DELETE Dep_LicenseeProductSetting WITH(ROWLOCK) 
+			OUTPUT DELETED.custid, DELETED.ProductSettingID,SYSDATETIME()
+			INTO Dep_LicenseeProductSetting_Del_InHouse(custid,ProductSettingID,RepUpdateTime)
+			WHERE custid = @custid
+		END
 		
 		IF @roleid = 2
 		BEGIN
