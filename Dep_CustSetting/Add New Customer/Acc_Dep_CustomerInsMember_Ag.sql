@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,asv_cust" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 (
 	@custid		int OUTPUT,
@@ -6,11 +6,12 @@ ALTER PROCEDURE [dbo].[Acc_Dep_CustomerInsMember_Ag]
 	@username	varchar(30),
 	@userpwd	varchar(40) = '123qwe',
 	@recommend	int, -- Agent ID
-	@IP										varchar(15)='',
-	@Language								varchar(2)= 'E',
-	@SubAccID								int = 0, --Sub-AccountID
-	@ErrCode								int = 0 OUTPUT,
-	@ErrMsg									nvarchar(4000) = '' OUTPUT
+	@IP			varchar(15)='',
+	@Language	varchar(2)= 'E',
+	@SubAccID	int = 0, --Sub-AccountID
+	@ErrCode	int = 0 OUTPUT,
+	@ErrMsg		nvarchar(4000) = '' OUTPUT,
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 )	
 AS
 
@@ -51,12 +52,13 @@ Revisions:
 	- 20220722@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]  
 	- 20240715@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
+	- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 Param's Explanation:
-• @ErrCode:
+- @ErrCode:
     = 0: Create member successfully.
     > 0: Specific Error.
   
-• @ErrMsg: Error description.
+- @ErrMsg: Error description.
 
 */
 BEGIN
@@ -72,15 +74,16 @@ BEGIN
 	if @ErrCode <>0		
 		return 
 
-	declare 
+	DECLARE 
 		@currency int, @pwdexpiry datetime,
 		@srecommend int, @mrecommend int,	 
 		@matchlimit smallmoney,
 		@UplineClosed bit,
 		@DisableOutright bit,
-		@VirtualMultiplier SMALLMONEY
+		@VirtualMultiplier SMALLMONEY,
+		@site NVARCHAR(50)
 
-	select 
+	SELECT 
 		@currency = currency, 
 		@UplineClosed = closed,
 		@srecommend = srecommend,
@@ -88,36 +91,26 @@ BEGIN
 		@matchlimit = matchlimit,
 		@DisableOutright = DisableOutright,
 		@VirtualMultiplier = ci.VirtualMultiplier
-	from CustInfo as ci with (NOLOCK) 
-	where CustID = @recommend
+	FROM CustInfo ci WITH (NOLOCK) 
+	WHERE CustID = @recommend
 
-	Select @ErrCode = 0
+	SELECT @site = site
+	FROM customer WITH (NOLOCK) 
+	WHERE CustID = @recommend
 
-	SELECT @username = rtrim(ltrim(@username))
+	SELECT @ErrCode = 0
 
-	DECLARE @IsExists BIT 
-	EXEC Age_CustomerCheckExists @username = @username, @IsExists = @IsExists OUTPUT
-
-	IF @IsExists = 1
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-								WHEN 'E' THEN 'This username is not available.'
-								ELSE [dbo].[f_Get_MsgNamebyMsgID](40001,@Language)
-						END,
-			@ErrCode = 101		
-		RETURN
-	END
-	SELECT @pwdexpiry = dateadd(dd, 30, getdate())
+	SELECT @pwdexpiry = DATEADD(DD, 30, GETDATE())
 
 	--Insert general data 
 	EXEC dbo.Acc_Dep_CustomerInsUserInfo
-		@custid = @custid OUTPUT,
+		@custid = @custid,
 		@creator = @creator,
 		@username = @username,
 		@userpwd = @userpwd,
 		@pwdexpiry = @pwdexpiry,
 		@currency = @currency,
-		@site = NULL,
+		@site = @site,
 		@srecommend = @srecommend,
 		@mrecommend = @mrecommend,
 		@recommend = @recommend,
@@ -135,13 +128,11 @@ BEGIN
 		@TransferOption_dec = 0,
 		@Language = @Language,
 		@ErrCode = @ErrCode OUTPUT,
-		@ErrMsg = @ErrMsg OUTPUT
+		@ErrMsg = @ErrMsg OUTPUT,
+		@ErrExtraInfo = @ErrExtraInfo OUTPUT
 
 	if @ErrCode <> 0
-	BEGIN
-		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @custid = @custid
 		return
-	END	
 
 	set @endRun = getdate()
 	set @duration  = datediff (millisecond,@startRun,@endRun)

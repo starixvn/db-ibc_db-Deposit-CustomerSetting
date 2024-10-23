@@ -1,8 +1,6 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@custid INT OUTPUT,
-	@firstname NVARCHAR(50),
-	@lastname NVARCHAR(50),
 	@creator INT,
 	@username VARCHAR(30),
 	@userpwd VARCHAR(40),
@@ -15,17 +13,20 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo]
 	@mrecommend INT,
 	@recommend INT,
 	@roleid INT,
-		
-	@country NVARCHAR(50),
-	@suspended BIT = NULL,
 
+	@country NVARCHAR(50),
 	@matchlimit SMALLMONEY,
 	@virtualmultiplier SMALLMONEY,
 	
 	@IP VARCHAR(15)='',
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
-	@ErrMsg NVARCHAR(4000) = '' OUTPUT
+	@ErrMsg NVARCHAR(4000) = '' OUTPUT,
+	@SubsidiaryID INT = 0, 
+	@UserName2 VARCHAR(50) = '',
+	@refcode2 INT = 0,
+	@BonusWalletFlag BIT = 0,
+	@ErrExtraInfo VARCHAR(MAX) = '' OUTPUT -- Log DB
 AS
 /*
 	Created: 20190919@Elodie
@@ -53,12 +54,13 @@ AS
 		- 20230303@Johnson: Return Basketball VR to its original state [redmine:#184339]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]  
+		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 	Param's Explanation:
-		• @ErrCode:
+		- @ErrCode:
 			= 0: Insert successfully.
 			> 0: Specific Error.
   
-		• @ErrMsg: Error description.
+		- @ErrMsg: Error description.
 */
 BEGIN
     SET NOCOUNT ON 
@@ -69,237 +71,88 @@ BEGIN
 			@danger4	TINYINT=0,	--E-sports
 			@danger5	TINYINT=0	--Other Sports
 
-	IF (@roleid = 1 AND ISNULL(@site,'') = '') --role member and @site does not have value
-	BEGIN
-		SELECT @site = cus.[site]
-		FROM Customer cus WITH (NOLOCK)
-		WHERE cus.custid = @recommend
-	END
-	
-    INSERT INTO Customer   			
-	(username, firstname, lastname, phone, mobilephone, fax, email, address,
-	city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
-	currency, pwdexpiry, creator, Site, creatdate, ugroup
-	) 
- 	VALUES (@username, @firstname, @lastname, '', '', '', '', '', 
-	'', '', @country, '', @userpwd, @roleid, @srecommend, @mrecommend, @recommend, 
-	@currency, @pwdexpiry, @creator, @site, GETDATE(), @ugroup
-	)
-    
-	SELECT @custid=@@IDENTITY
-	
-    IF @@ERROR <> 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-							    WHEN 'E' THEN 'Create customer failed. Please try again.'
-							    ELSE [dbo].[f_Get_MsgNamebyMsgID](40004, @Language)
-						    END,
-		    @ErrCode = 111
-    		
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH (ROWLOCK) WHERE custId = @CustID
-    		
-	    RETURN
-    END
-	
-	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
-	SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
-	FROM CustVirtualSetting WITH(NOLOCK)
-	WHERE custid = @recommend  
+	BEGIN TRY
+		EXEC Acc_CustomerIns
+			 @CustID	= @CustID
+			,@UserName	= @UserName	
+			,@FirstName	= ''	
+			,@LastName	= ''	
+			,@phone			= ''			
+			,@mobilephone	= ''
+			,@fax			= ''
+			,@email			= ''			
+			,@address		= ''		
+			,@city			= ''			
+			,@state			= ''			
+			,@country		= ''		
+			,@postal		= ''	
+			,@UserPwd	= @UserPwd	 
+			,@roleid	= @roleid	
+			,@srecommend	= @srecommend	
+			,@mrecommend	= @mrecommend	
+			,@recommend		= @recommend	
+			,@currency	= @currency		
+			,@pwdexpiry = @pwdexpiry
+			,@creator	= @creator	
+			,@site			= @site			
+			,@ugroup		= @ugroup
+			,@UserName2		= @UserName2
+			,@refcode2 = @refcode2
+			,@ErrCode = @ErrCode OUTPUT
+			,@ErrMsg  = @ErrMsg OUTPUT
 
-    IF @@ERROR <> 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-					       WHEN 'E' THEN 'Create customer failed. Please try again.'
-					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					     END
-		     , @ErrCode = 112
-
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		--Inhouse Tables
-		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-		FROM CustVirtualSetting c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-	    RETURN
-    END	
-
-	--Virtual rate lock status
-	INSERT INTO VRCustLockStatus(CustID,Type,RepUpdateTime)
-	SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime 
-	FROM VRCustLockStatus v (NOLOCK) 
-	WHERE CustID = @recommend
-		AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
-
-	IF @@ERROR <> 0
-    BEGIN
-	    SELECT @ErrMsg = CASE @Language 
-					       WHEN 'E' THEN 'Create customer failed. Please try again.'
-					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					     END
-		     , @ErrCode = 112
-
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		--Inhouse Tables
-		--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-		FROM CustVirtualSetting c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
-		INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
-		FROM VRCustLockStatus c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-	    RETURN
-    END	
-	
-	DECLARE @licensee NVARCHAR(50)
-	
-	SELECT @licensee = site
-	FROM customer WITH(NOLOCK)
-	WHERE custid = @recommend
-
-	IF @licensee IN('haifa','IBO','mansion88','Athena000','Happy8','ManBetX') 
-		AND @currency IN (13,20) --RMB
-	BEGIN
-		IF  @licensee IN('haifa','IBO','ManBetX','Athena000') -- for soccer + Other sport
+		IF @ErrCode <> 0
 		BEGIN
-			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status],RepUpdateTime) VALUES(100, @custid, 1, [dbo].[f_GetDateTime2]() )
-			IF @@ERROR <> 0
+			SELECT @ErrExtraInfo = @ErrMsg
+				 , @ErrMsg = CASE @Language 
+							   WHEN 'E' THEN 'Create customer failed. Please try again.'
+							   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+							 END
+				 , @ErrCode = 911
+
+			-- ROLLBACK MANUALLY
+			EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+			EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
+			RETURN
+		END
+
+		INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
+		SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
+		FROM CustVirtualSetting WITH(NOLOCK)
+		WHERE custid = @recommend  
+
+		INSERT INTO VRCustLockStatus(CustID,Type,RepUpdateTime)
+		SELECT @custid,Type, [dbo].[f_GetDateTime2]() AS RepUpdateTime 
+		FROM VRCustLockStatus v (NOLOCK) 
+		WHERE CustID = @recommend
+			AND NOT EXISTS( SELECT 1 FROM VRCustLockStatus(NOLOCK) WHERE CustID = @custid AND type = v.Type)
+
+		IF @site IN('haifa','IBO','mansion88','Athena000','Happy8','ManBetX') 	
+			AND @currency IN (13,20) --RMB
+		BEGIN
+			IF  @site IN('haifa','IBO','ManBetX','Athena000') -- for soccer + Other sport
 			BEGIN
-				SELECT @ErrMsg = CASE @Language 
-								   WHEN 'E' THEN 'Create customer failed. Please try again.'
-								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-								 END
-					 , @ErrCode = 112
-
-				-- ROLLBACK MANUALLY
-				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				--Inhouse Tables
-				--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-				--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-				--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
-
-				DELETE c
-				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-				FROM CustVirtualSetting c WITH(ROWLOCK) 
-				WHERE CustID = @CustID
-
-				DELETE c
-				OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
-				INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
-				FROM VRCustLockStatus c WITH(ROWLOCK) 
-				WHERE CustID = @CustID
-				
-				DELETE c
-				OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
-				INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
-				FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
-				WHERE CustID = @CustID AND Sporttype IN(100,99)
-				RETURN
+				INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status],RepUpdateTime) 
+				VALUES(100, @custid, 1, [dbo].[f_GetDateTime2]() )
+			END
+			ELSE -- for Other sport
+			BEGIN
+				INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status],RepUpdateTime) 
+				VALUES(99, @custid, 1, [dbo].[f_GetDateTime2]() )
 			END
 		END
-		ELSE -- for Other sport
-		BEGIN
-			INSERT INTO [dbo].[VRCustAutoAdjustment](SportType, CustID, [Status],RepUpdateTime) VALUES(99, @custid, 1, [dbo].[f_GetDateTime2]() )
-			IF @@ERROR <> 0
-			BEGIN
-				SELECT @ErrMsg = CASE @Language 
-								   WHEN 'E' THEN 'Create customer failed. Please try again.'
-								   ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-								 END
-					 , @ErrCode = 112
 
-				-- ROLLBACK MANUALLY
-				DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-				--Inhouse Tables
-				--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-				--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-				--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
+		INSERT INTO [BetLimitControlCustSetting]([CustID],[BetLimitTypeID],[MaxBet],[MaxPerMatch])
+		SELECT @custid, BetLimitTypeID, MIN(MaxBet), MIN(MaxPerMatch)
+		FROM BetLimitControlDefaultSetting WITH(NOLOCK,FORCESEEK) 
+		WHERE CustID IN (@srecommend,@mrecommend,@recommend)
+		GROUP BY BetLimitTypeID
 
-				DELETE c
-				OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-				INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-				FROM CustVirtualSetting c WITH(ROWLOCK) 
-				WHERE CustID = @CustID
+		DECLARE @DangerLevel BIGINT = NULL
 
-				DELETE c
-				OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
-				INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
-				FROM VRCustLockStatus c WITH(ROWLOCK) 
-				WHERE CustID = @CustID
-
-				DELETE c
-				OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
-				INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
-				FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
-				WHERE CustID = @CustID AND Sporttype IN(100,99)
-				RETURN
-			END
-		END
-	END
-	
-	--#139701
-	INSERT INTO [BetLimitControlCustSetting]([CustID],[BetLimitTypeID],[MaxBet],[MaxPerMatch])
-	SELECT @custid, BetLimitTypeID, MIN(MaxBet), MIN(MaxPerMatch)
-	FROM BetLimitControlDefaultSetting WITH(NOLOCK,FORCESEEK) 
-	WHERE CustID IN (@srecommend,@mrecommend,@recommend)
-	GROUP BY BetLimitTypeID
-
-	IF @@ERROR <> 0
-	BEGIN
-		SELECT @ErrMsg = CASE @Language 
-							WHEN 'E' THEN 'Create customer failed. Please try again.'
-							ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-							END
-				, @ErrCode = 112
-
-		-- ROLLBACK MANUALLY
-		DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
-		--Inhouse Tables
-		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-		--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-		FROM CustVirtualSetting c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
-		INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
-		FROM VRCustLockStatus c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-
-		DELETE c
-		OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
-		INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
-		FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
-		WHERE CustID = @CustID AND Sporttype IN(100,99)
-		RETURN
-	END
-
-	DECLARE @DangerLevel BIGINT = NULL
-
-	IF @roleid=1
-	BEGIN
 		--get DangerLevel
-		SELECT @DangerLevel=DangerLevel
-		FROM f_Dep_CustSetting_DangerLevel(@site, @currency)
+		SELECT @DangerLevel = DangerLevel
+		FROM dbo.f_Dep_CustSetting_DangerLevel(@site, @currency)
 
 		--get dangerous setting's upline:
 		SELECT @danger=danger
@@ -309,106 +162,52 @@ BEGIN
 			, @danger5=Danger5
 		FROM custInfo ci WITH (NOLOCK)
 		WHERE custid=@recommend
-	END
 
-	INSERT INTO [dbo].[custinfo]
-    (
-	    custid, currency
-	  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
-	  , MatchLimit, VirtualMultiplier
-	  , DisableOutright
-	  , danger, danger2, danger3, Danger4, Danger5
-	  , Abnormal, DoubleCommLosing, DisableSuperLive
-	  , DangerLevel, autosuspend3
-	  )
-    VALUES
-    (
-	    @custid, @currency
-	  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, ISNULL(@suspended, 0), 0, 0, @username
-	  , @matchlimit, @virtualmultiplier
-	  , 0
-	  , @danger, @danger2, @danger3, @danger4, @danger5
-	  , 0, 0, 0
-	  , @DangerLevel, 0
-    )
-	
-    IF @@ERROR <> 0
-    BEGIN 
-	    SELECT @ErrMsg = CASE @Language
-					       WHEN 'E' THEN 'Create customer failed. Please try again.'
-					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-					     END,
-		       @ErrCode = 113
+		INSERT INTO [dbo].[custinfo]
+		(
+			custid, currency
+		  , roleid, srecommend, mrecommend, recommend, dangercust, autosuspend, autosuspend2, reject, credit, closed, username
+		  , MatchLimit, VirtualMultiplier
+		  , DisableOutright
+		  , danger, danger2, danger3, Danger4, Danger5
+		  , Abnormal, DoubleCommLosing, DisableSuperLive
+		  , DangerLevel, autosuspend3
+		  , BonusWalletFlag
+		  )
+		VALUES
+		(
+			@custid, @currency
+		  , @roleid, @srecommend, @mrecommend, @recommend, 0, 0, 0, 0, 0, 0, @username
+		  , @matchlimit, @virtualmultiplier
+		  , 0
+		  , @danger, @danger2, @danger3, @danger4, @danger5
+		  , 0, 0, 0
+		  , @DangerLevel, 0
+		  , @BonusWalletFlag
+		)
 
-	    -- ROLLBACK MANUALLY
-	    DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-		DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
-		--Inhouse Tables
-		--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-		--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-		--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-		INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-		FROM CustVirtualSetting c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-
-		DELETE c
-		OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
-		INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
-		FROM VRCustLockStatus c WITH(ROWLOCK) 
-		WHERE CustID = @CustID
-
-		DELETE c
-		OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
-		INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
-		FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
-		WHERE CustID = @CustID AND Sporttype IN(100,99)
-	    RETURN
-    END  
-
-	IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
-	BEGIN
 		INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
 		VALUES(@custid,NULL,@IP,@creator,GETDATE(),0)
 
-		IF @@ERROR <> 0
+		IF @SubsidiaryID <> 0
+			AND NOT EXISTS (SELECT 1 FROM dbo.DepositCustomer WITH(NOLOCK) WHERE custid = @custid)
 		BEGIN
-			SELECT	@ErrMsg = CASE @Language
-									WHEN 'E' THEN 'Create customer failed. Please try again.'
-									ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
-								END
-					,@ErrCode = 114
-
-			DELETE FROM Customer WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM custinfo WITH(ROWLOCK) WHERE custId = @CustID
-			DELETE FROM BetLimitControlCustSetting WITH(ROWLOCK) WHERE custid = @CustID
-			--Inhouse Tables
-			--DELETE FROM CustVirtualSetting WITH(ROWLOCK) WHERE custId = @CustID
-			--DELETE FROM VRCustLockStatus WITH(ROWLOCK) WHERE custid = @CustID
-			--DELETE FROM VRCustAutoAdjustment WITH(ROWLOCK) WHERE custid = @CustID AND Sporttype IN(100,99)
-
-			DELETE c
-			OUTPUT deleted.custid, deleted.seqNo, [dbo].[f_GetDateTime2]() 
-			INTO CustVirtualSetting_Del_Inhouse(custid,seqNo,RepUpdateTime)
-			FROM CustVirtualSetting c WITH(ROWLOCK) 
-			WHERE CustID = @CustID
-
-			DELETE c
-			OUTPUT deleted.custid, deleted.Type, [dbo].[f_GetDateTime2]() 
-			INTO VRCustLockStatus_Del_Inhouse(custid,Type,RepUpdateTime)
-			FROM VRCustLockStatus c WITH(ROWLOCK) 
-			WHERE CustID = @CustID
-
-			DELETE c
-			OUTPUT deleted.SportType, deleted.CustID, [dbo].[f_GetDateTime2]() 
-			INTO VRCustAutoAdjustment_Del_Inhouse(SportType,CustID,RepUpdateTime)
-			FROM VRCustAutoAdjustment c WITH(ROWLOCK) 
-			WHERE CustID = @CustID AND Sporttype IN(100,99)
-			RETURN
+			INSERT INTO dbo.DepositCustomer (custid, SubsidiaryID)  
+			VALUES (@CustID, @SubsidiaryID)  
 		END
-	END
+	END TRY
+    BEGIN CATCH
+	    SELECT @ErrMsg = CASE @Language 
+					       WHEN 'E' THEN 'Create customer failed. Please try again.'
+					       ELSE [dbo].[f_Get_MsgNamebyMsgID](40004,@Language)
+					     END
+		     , @ErrCode = 911
+			 , @ErrExtraInfo = ERROR_MESSAGE ()
+
+		-- ROLLBACK MANUALLY
+		EXEC Acc_Dep_CustomerInsSetting_Rollback @CustID = @CustID, @RoleID = 1
+		EXEC Acc_Dep_CustomerInsUserInfo_Rollback @CustID = @CustID
+	    RETURN
+    END	CATCH
 END
 GO

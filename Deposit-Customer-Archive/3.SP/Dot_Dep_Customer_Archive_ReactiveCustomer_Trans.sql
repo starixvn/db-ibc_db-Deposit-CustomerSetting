@@ -1,4 +1,4 @@
-/*<info serverAlias="DBTXN-bodb02" executers="svc_tig,Dot_Evolution" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBSID-bodb02" executers="asv_cust" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_ReactiveCustomer_Trans]
 	@CustID int = 0,  
 	@CustIDBalanceDummy INT = NULL,
@@ -14,6 +14,7 @@ AS
 	Revisions:    
 		- 20220829@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 		- 20221227@Eden: Add waiting time before reinit balance  [redmine: #182048]
+		- 20240705@Eden: Scale out DBCUST [redmine: #207474]
 
 	Param's Explanation:    
 	- @CustID: return old deposit member CustID    
@@ -29,7 +30,7 @@ AS
 BEGIN
 	SET NOCOUNT ON    
 	--Add waiting 2s before reinit Balance in Reactivate process (wait tranfer done to avoid duplicate error)
-	WAITFOR DELAY '00:00:02'
+	--WAITFOR DELAY '00:00:02'
 	
 	IF NOT EXISTS( SELECT TOP 1 1 FROM dbo.BalCreditSports WITH(NOLOCK) WHERE custid = @CustID)
 	BEGIN
@@ -93,7 +94,12 @@ BEGIN
 	IF @ErrCode <> 0
 	BEGIN
 		SET @ErrMsg = @ErrMsg + ' (@CustIDBalanceDummy = ' + CONVERT(VARCHAR(15),@CustIDBalanceDummy) +', @ClosingBalance =  ' + CONVERT(VARCHAR(20),@ClosingBalance,2) + ')'
-	END
+
+		SELECT @custID as CustID, 
+				'REACTIVATION' as Action, 
+				'Failed' as Status,
+				@ErrMsg as Message
+	END		
 END
 GO 
 

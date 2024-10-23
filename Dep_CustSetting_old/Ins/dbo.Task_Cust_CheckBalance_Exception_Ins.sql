@@ -1,4 +1,5 @@
-﻿ ALTER PROCEDURE [dbo].[Task_Cust_CheckBalance_Exception_Ins] 
+﻿ /*<info serverAlias="DBTXN-bodb02" executers="asv_cust,wsv_nap" viewers="" isFunction="0"></info>*/
+ ALTER PROCEDURE [dbo].[Task_Cust_CheckBalance_Exception_Ins] 
 	@custid		INT,
 	@username	VARCHAR(30)
 AS
@@ -9,19 +10,11 @@ AS
 	Original:
 	
 	Revisions:
+		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 	
 	Param's explanation:
 */
 BEGIN		
 	INSERT INTO dbo.Task_Cust_CheckBalance_Exception(custid, remark) values(@custid, @username)
 END
-
-
 GO
-GRANT EXECUTE ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [wsv_nap] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [bodbDownlineNet] AS [dbo]
-GO
-GRANT EXECUTE ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [bodbExtAccNet] AS [dbo]
-GO
-GRANT VIEW DEFINITION ON [dbo].[Task_Cust_CheckBalance_Exception_Ins] TO [vnteam] AS [dbo]

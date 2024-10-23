@@ -1,11 +1,13 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_lap" viewers="vnteam" isFunction="0"></info>*/
+/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap,wsv_alp,wsv_xnap,wsv_lap,asv_cust" viewers="vnteam" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_CustSetting_GlobalStakeLevelUpdate] 
-	@StakeLevel					VARCHAR(MAX)	= ''	
-	,@CustID					INT
-	,@UserID					INT  
-	,@IP						VARCHAR(15)		= ''	
-	,@ErrCode					INT				= 0			OUTPUT 
-	,@ErrMsg					NVARCHAR(4000)	= ''		OUTPUT  
+	@StakeLevel		VARCHAR(MAX)	= ''	
+	,@CustID		INT
+	,@UserID		INT  
+	,@IP			VARCHAR(15)		= ''	
+	,@Currency		INT = NULL
+	,@SiteID		INT = NULL
+	,@ErrCode		INT				= 0			OUTPUT 
+	,@ErrMsg		NVARCHAR(4000)	= ''		OUTPUT  
 AS
 /*
 	Created: 20171107@Winne
@@ -16,6 +18,7 @@ AS
 		- 20171107@Winnie: select GlobalStakeLevel of DCS product RedmineID:#85133
 		- 20220517@Tacy: Insert history of update global stake level
 		- 20240710@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
+		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		
 	Param's Explanation:
 		- @StakeLevel = '<ROOT>
@@ -61,8 +64,6 @@ BEGIN
 			,@MaxLabel		NVARCHAR(50)
 			,@MinStake		DECIMAL(19,8)
 			,@MaxStake		DECIMAL(19,8)
-			,@Currency		INT
-			,@SiteID		INT
 			,@DocHandler	INT
 			,@LogSPData		NVARCHAR(MAX) = ''
 			,@LogSPData_OLD	NVARCHAR(MAX) = ''
@@ -73,10 +74,13 @@ BEGIN
 
 	SELECT @MaxStakeLevelID=MAX(StakeLevelID) FROM Dep_StakeLevel WITH(NOLOCK)
 
-	SELECT @Currency=d.currency,@SiteID=s.siteid
-	FROM Dep_CustSuper d WITH(NOLOCK)
-		INNER JOIN Site s WITH(NOLOCK)	ON d.site=s.site
-	WHERE d.custid=@CustID
+	IF @Currency IS NULL OR @SiteID IS NULL -- get from @CustID
+	BEGIN
+		SELECT @Currency=d.currency,@SiteID=s.siteid
+		FROM Dep_CustSuper d WITH(NOLOCK)
+			INNER JOIN Site s WITH(NOLOCK)	ON d.site=s.site
+		WHERE d.custid=@CustID
+	END
 
 	IF @StakeLevel IS NULL OR @StakeLevel = ''
 	BEGIN
