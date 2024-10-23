@@ -20,7 +20,7 @@ AS
 	
 	Revisions: 
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
-		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Apply In house table Dep_ [redmine: #207474] 
+		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Open Code Released [redmine: #207474]
 
 	Param's Explanation: 
 	Examples:
@@ -92,8 +92,7 @@ BEGIN
 	END
 	-----------Insert to CustInfoMini-------------
 	BEGIN TRY
-		SELECT @custid = NEXT VALUE FOR dbo.seq_CustinfoMini
-
+	
 		IF @roleid = 4   
 			SET @srecommend = @CustID
 		ELSE IF @roleid = 3
@@ -101,10 +100,7 @@ BEGIN
 		ELSE IF @roleid = 2
 			SET @recommend = @CustID
 
-		INSERT INTO dbo.CustInfoMini(custid,username,username2,recommend, mrecommend,srecommend,roleid,SiteDBGroupID,Site, Currency)
-		SELECT @CustID, @Username, @UserName2, @recommend,@mrecommend, @srecommend, @roleid, @SiteDBGroupID, @site, @Currency
-
-		/* --Code for production version
+		--Code for production version
 		INSERT INTO dbo.CustInfoMini(username,username2,recommend, mrecommend,srecommend,roleid,SiteDBGroupID,Site, Currency)
 		SELECT @Username, @UserName2, @recommend,@mrecommend, @srecommend, @roleid, @SiteDBGroupID, @site, @Currency
 		
@@ -131,7 +127,7 @@ BEGIN
 			,	RepUpdateTime = SYSDATETIME ()
 			WHERE custid = @CustID
 		END
-		*/
+		
 	END TRY
 	BEGIN CATCH  
 		SELECT @ErrCode = 911 ,
