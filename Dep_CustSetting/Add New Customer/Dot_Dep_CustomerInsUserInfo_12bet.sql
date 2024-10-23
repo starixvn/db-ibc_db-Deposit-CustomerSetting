@@ -1,5 +1,6 @@
 /*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo_12bet]
+(
 	@custid INT,
 	@firstname NVARCHAR(50),
 	@lastname NVARCHAR(50),
@@ -26,6 +27,7 @@ ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsUserInfo_12bet]
 	@Language VARCHAR(2)= 'E',
 	@ErrCode INT = 0 OUTPUT,
 	@ErrMsg NVARCHAR(4000) = '' OUTPUT
+) WITH EXECUTE AS OWNER
 AS
 /*
 	Created: 20190919@Elodie
@@ -76,7 +78,9 @@ BEGIN
 		FROM Customer cus WITH (NOLOCK)
 		WHERE cus.custid = @recommend
 	END
-	
+
+	SET IDENTITY_INSERT Customer ON
+
     INSERT INTO Customer   			
 	(custid, username, firstname, lastname, phone, mobilephone, fax, email, address,
 	city, state, country, postal, userpwd, roleid, srecommend, mrecommend, recommend, 
@@ -100,7 +104,8 @@ BEGIN
     		
 	    RETURN
     END
-	
+	SET IDENTITY_INSERT Customer OFF
+
 	INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
 	SELECT @Custid, seqNo, bitmapVirtual, [dbo].[f_GetDateTime2]() AS RepUpdateTime
 	FROM CustVirtualSetting WITH(NOLOCK)

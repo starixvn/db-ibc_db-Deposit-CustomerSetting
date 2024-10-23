@@ -190,6 +190,9 @@ BEGIN
 	    
 		--	 RETURN    
 		--END    
+		--20080623: Add sitename prefix to the DepositUsername    
+		SELECT @DepositUserName = @site + '$' + @DepositUserName   
+
 		BEGIN TRY
 			EXEC GlobCustDB.dbo.API_CustomerIns_Generate 
 				@Username2 = @DepositUserName,
@@ -214,10 +217,7 @@ BEGIN
 			,@ErrCode = 11    
 			RETURN    		  
 		END CATCH
-	END  
-	--20080623: Add sitename prefix to the DepositUsername    
-	SELECT @DepositUserName = @site + '$' + @DepositUserName    
-	     
+	END   
 	--DECLARE @IsExistsUsername BIT
 	--EXEC Acc_Dep_CustomerCheckExists @username = @DepositUserName, @IsExists = @IsExistsUsername OUTPUT
 
