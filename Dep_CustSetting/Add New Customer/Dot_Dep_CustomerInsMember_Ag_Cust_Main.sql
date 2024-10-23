@@ -190,23 +190,30 @@ BEGIN
 	    
 		--	 RETURN    
 		--END    
-		EXEC GlobCustDB.dbo.API_CustomerIns_Generate 
-			@Username2 = @DepositUserName,
-			@recommend=@AgentID,
-			@SiteDBGroupID = 0,
-			@Site = @site,
-			@CurrencyName = @currency,
-			@ErrCode = @ErrCode OUTPUT,
-			@ErrMsg = @ErrMsg OUTPUT,
-			@CustID = @CustID OUTPUT,
-			@Username = @Username OUTPUT
+		BEGIN TRY
+			EXEC GlobCustDB.dbo.API_CustomerIns_Generate 
+				@Username2 = @DepositUserName,
+				@recommend=@AgentID,
+				@SiteDBGroupID = 0,
+				@Site = @site,
+				@CurrencyName = @currency,
+				@ErrCode = @ErrCode OUTPUT,
+				@ErrMsg = @ErrMsg OUTPUT,
+				@CustID = @CustID OUTPUT,
+				@Username = @Username OUTPUT
 
-		IF @ErrCode <> 0 
-		BEGIN    
-			 SELECT @ErrMsg = 'Can not generate username.'    
-			  ,@ErrCode = 11    
-			 RETURN    
-		END  
+			IF @ErrCode <> 0 
+			BEGIN    
+				 SELECT @ErrMsg = 'Can not generate username.'    
+				  ,@ErrCode = 11    
+				 RETURN    
+			END  
+		END TRY
+		BEGIN CATCH			 
+			SELECT @ErrMsg = 'Can not generate username.'    
+			,@ErrCode = 11    
+			RETURN    		  
+		END CATCH
 	END  
 	--20080623: Add sitename prefix to the DepositUsername    
 	SELECT @DepositUserName = @site + '$' + @DepositUserName    
