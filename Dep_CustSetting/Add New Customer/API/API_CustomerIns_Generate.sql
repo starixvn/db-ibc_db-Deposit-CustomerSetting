@@ -1,4 +1,4 @@
-/*<info serverAlias="DBGLOB-GlobCustDB" executers="asv_cust" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBGLOB-GlobCustDB" executers="asv_cust,ow_12bet" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[API_CustomerIns_Generate]
 	@UserName2 VARCHAR(50) ,
 	@recommend INT,

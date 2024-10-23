@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,asv_cust,wsv_lap" viewers="" isFunction="0" isNested="1"></info>*/
+/*<info serverAlias="DBCust-CustDB" executers="wsv_nap,asv_cust,wsv_lap,ow_12bet" viewers="" isFunction="0" isNested="1"></info>*/
 ALTER PROCEDURE [dbo].Acc_Dep_CustomerInsUserInfo_Rollback_12bet
 	  @CustID INT 
 AS
