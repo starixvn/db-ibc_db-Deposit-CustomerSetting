@@ -10,7 +10,7 @@ AS
 	Original:
 
 	Revisions:
-		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]  
 		
 	Param's Explanation:
 
