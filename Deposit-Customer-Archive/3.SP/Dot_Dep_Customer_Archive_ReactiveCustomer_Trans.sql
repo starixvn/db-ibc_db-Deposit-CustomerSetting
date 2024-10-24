@@ -29,8 +29,8 @@ AS
 */ 
 BEGIN
 	SET NOCOUNT ON    
-	--Add waiting 2s before reinit Balance in Reactivate process (wait tranfer done to avoid duplicate error)
-	--WAITFOR DELAY '00:00:02'
+	--Add waiting 3s before reinit Balance in Reactivate process (wait tranfer done to avoid duplicate error)
+	WAITFOR DELAY '00:00:03'
 	
 	IF NOT EXISTS( SELECT TOP 1 1 FROM dbo.BalCreditSports WITH(NOLOCK) WHERE custid = @CustID)
 	BEGIN
