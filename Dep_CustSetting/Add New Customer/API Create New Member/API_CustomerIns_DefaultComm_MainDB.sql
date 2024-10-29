@@ -16,7 +16,7 @@ AS
 	Revisions: 
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240705@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Apply code in house [redmine: #207474] 
-
+		- 20241029@Johnson: fix grouped comm when set default group for licensee [redmine: #212793]
 	Param's Explanation: 
 		@DefaultComms:	[
 						{"SportType":1,"BetType":1,"Discount":0.05000000},
@@ -70,49 +70,70 @@ BEGIN
 
 		IF @IsGroupedComm = 1
 		BEGIN
-			--move to individual setting  
-			INSERT INTO dbo.Dep_CustDiscountSetting_Member (
-				CustID  
-				,SportType  
-				,BetType  
-				,PlayerDiscount  
-				,AgentDiscount  
-				,MasterDiscount  
-				,SuperDiscount
-				,RepUpdateTime
-			)  
-			SELECT @CustID  
-				,grp.SportType  
-				,grp.BetType  
-				,grp.PlayerDiscount
-				,grp.AgentDiscount  
-				,grp.MasterDiscount  
-				,grp.SuperDiscount  
-				,SYSDATETIME ()
-			FROM dbo.Dep_CustDiscountGroupSetting_Member grp WITH(NOLOCK)  
-				LEFT JOIN dbo.Dep_CustDiscountSetting_Member cs WITH(NOLOCK) 
-					ON cs.custid = @custid  
-					AND cs.sporttype = grp.sporttype  
-					AND cs.bettype = grp.bettype  
-			WHERE AgentID = @Recommend  
-				AND cs.custid IS NULL 
-
-			UPDATE dbo.Dep_CustSettingMode WITH(UPDLOCK,ROWLOCK)  
-			SET 
-				  IsGroupedComm = 0  
-				, RepUpdateTime = SYSDATETIME ()
-			WHERE CustID = @CustID  
+			IF EXISTS (SELECT 1
+				FROM Dep_CustDiscountGroupSetting_Member cs WITH(NOLOCK)
+					INNER JOIN @tblSettingDCS t ON cs.SportType = t.SportType
+												AND cs.Bettype = t.Bettype
+				WHERE cs.AgentID = @Recommend
+					AND cs.playerdiscount <> t.Discount
+				)
+			BEGIN	
+				--move to individual setting  
+				INSERT INTO dbo.Dep_CustDiscountSetting_Member (
+					CustID  
+					,SportType  
+					,BetType  
+					,PlayerDiscount  
+					,AgentDiscount  
+					,MasterDiscount  
+					,SuperDiscount
+					,RepUpdateTime
+				)  
+				SELECT @CustID  
+					,grp.SportType  
+					,grp.BetType  
+					,grp.PlayerDiscount
+					,grp.AgentDiscount  
+					,grp.MasterDiscount  
+					,grp.SuperDiscount  
+					,SYSDATETIME ()
+				FROM dbo.Dep_CustDiscountGroupSetting_Member grp WITH(NOLOCK)  
+					LEFT JOIN dbo.Dep_CustDiscountSetting_Member cs WITH(NOLOCK) 
+						ON cs.custid = @custid  
+						AND cs.sporttype = grp.sporttype  
+						AND cs.bettype = grp.bettype  
+				WHERE AgentID = @Recommend  
+					AND cs.custid IS NULL 
+				
+				UPDATE c
+				SET 
+					  c.PlayerDiscount = t.Discount  
+					, c.RepUpdateTime = SYSDATETIME ()
+				FROM dbo.Dep_CustDiscountSetting_Member c WITH(UPDLOCK,ROWLOCK)  
+					INNER JOIN @tblSettingDCS t 
+						ON c.SportType = t.sporttype
+						AND c.BetType = t.Bettype
+				WHERE CustID = @CustID  
+				
+				UPDATE dbo.Dep_CustSettingMode WITH(UPDLOCK,ROWLOCK)  
+				SET 
+					  IsGroupedComm = 0  
+					, RepUpdateTime = SYSDATETIME ()
+				WHERE CustID = @CustID  
+			END	
 		END
-
-		UPDATE c
-		SET 
-			  c.PlayerDiscount = t.Discount  
-			, c.RepUpdateTime = SYSDATETIME ()
-		FROM dbo.Dep_CustDiscountSetting_Member c WITH(UPDLOCK,ROWLOCK)  
-			INNER JOIN @tblSettingDCS t 
-				ON c.SportType = t.sporttype
-				AND c.BetType = t.Bettype
-		WHERE CustID = @CustID   
+		ELSE
+		BEGIN
+			UPDATE c
+			SET 
+				  c.PlayerDiscount = t.Discount  
+				, c.RepUpdateTime = SYSDATETIME ()
+			FROM dbo.Dep_CustDiscountSetting_Member c WITH(UPDLOCK,ROWLOCK)  
+				INNER JOIN @tblSettingDCS t 
+					ON c.SportType = t.sporttype
+					AND c.BetType = t.Bettype
+			WHERE CustID = @CustID  
+		END	
 	END TRY
 	BEGIN CATCH
 		SELECT @ErrCode	= 950
