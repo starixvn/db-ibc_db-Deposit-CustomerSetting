@@ -17,8 +17,9 @@ Revisions:
   -20180801@Winnie: Create SP
   - 20200114@Johnson: set threshold = 500k for normal [redmine: #126572]
   - 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
+  - 20240716@Winfred: NAP - Enhance performance when updating PT for all products and betlimit for SB  [redmine:#206698]
 Param's Explanation: 
-	+ @IsSetting: 1: Bet Limit , 0 : Other 
+	+ @IsSetting: 1: Bet Limit , 2 : PT , 0 : Other 
    
 */    
     
@@ -39,21 +40,9 @@ BEGIN
 
  SELECT @RoleID=RoleID FROM Customer WITH(NOLOCK) WHERE Custid=@custid
 
- IF @IsSetting <> 1
+ IF @IsSetting = 1
  BEGIN
 	 IF(@RoleID=4)     
-		 SELECT  @TotalDownlines = count(1)     
-		 FROM Custinfo WITH (NOLOCK)    
-		 WHERE srecommend=@custID     
- 
-	 IF(@RoleID=2)     
-		 SELECT  @TotalDownlines = count(1)     
-		 FROM Custinfo WITH (NOLOCK)    
-		 WHERE recommend=@custID     
- END   
- ELSE
- BEGIN
-	IF(@RoleID=4)     
 		 SELECT  @TotalDownlines = count(1)     
 		 FROM Custinfo t WITH (NOLOCK)  
 			CROSS APPLY (SELECT TOP 1 CustID FROM Dep_CustSettingMode cm WHERE custid = t.CustID AND IsGroupedBetLimit = 0) q  
@@ -63,8 +52,36 @@ BEGIN
 		 SELECT  @TotalDownlines = count(1)     
 		 FROM Custinfo t WITH (NOLOCK)   
 			CROSS APPLY (SELECT TOP 1 CustID FROM Dep_CustSettingMode cm WHERE custid = t.CustID AND IsGroupedBetLimit = 0) q 
+		 WHERE recommend=@custID AND roleid = 1     
+ END   
+ ELSE IF @IsSetting = 2
+ BEGIN
+	IF(@RoleID=4)     
+		 SELECT  @TotalDownlines = count(1)     
+		 FROM Custinfo t WITH (NOLOCK)  
+			CROSS APPLY (SELECT TOP 1 CustID FROM Dep_CustSettingMode cm WHERE custid = t.CustID AND IsGroupedPT = 0) q  
+		 WHERE srecommend=@custID AND roleid = 1    
+ 
+	 IF(@RoleID=2)     
+		 SELECT  @TotalDownlines = count(1)     
+		 FROM Custinfo t WITH (NOLOCK)   
+			CROSS APPLY (SELECT TOP 1 CustID FROM Dep_CustSettingMode cm WHERE custid = t.CustID AND IsGroupedPT = 0) q 
 		 WHERE recommend=@custID AND roleid = 1    
- END
+ END 
+ ELSE
+ BEGIN
+	IF(@RoleID=4)     
+		SELECT  @TotalDownlines = count(1)     
+		FROM Custinfo WITH (NOLOCK)    
+		WHERE srecommend=@custID     
+ 
+	IF(@RoleID=2)     
+		SELECT  @TotalDownlines = count(1)     
+		FROM Custinfo WITH (NOLOCK)    
+		WHERE recommend=@custID     
+ END 
+
+
  SELECT  @LimitDownlines = CASE  WHEN  datename(weekday, getdate()) in ('Saturday','Sunday' ) and 
            datepart(hour, getdate()) between 7 and  14 --Weekend's peak hour, from 7PM - 2AM (GMT+8)    
           THEN  @LimitDownlinesMin    
