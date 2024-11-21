@@ -10,7 +10,7 @@ AS
 		- 20200218@Eden: First commit  [#RM:125823]
 		- 20201210@Eden: LAP - Split Transfer out of bettrans [#RM:164301]
 		- 20220928@Eden: Remove scanning on bettrans_GoldDeluxe, scan bettrans_AGCasino based on winlostdate instead of transdate [#RM:178300]
-
+		- 20241121@Eden: Remove PK of #tmpMember, fix dirty read issue  [#RM:125823]
 	Param's Explanation:
 */
 
@@ -32,10 +32,12 @@ BEGIN
 
 	CREATE TABLE #tmpMember 
 	(
-		custid INT PRIMARY KEY,
+		custid INT,
 		LastBetDate DATETIME,
 		IsUpdate BIT default 0
 	)
+
+	CREATE CLUSTERED INDEX IX_tmpMember  ON #tmpMember(custid ASC)
 
 	CREATE TABLE #BettingMember 
 	(
