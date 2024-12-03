@@ -55,6 +55,7 @@ AS
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]  
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 		- @ErrCode:
 			= 0: Insert successfully.
@@ -173,6 +174,7 @@ BEGIN
 		  , Abnormal, DoubleCommLosing, DisableSuperLive
 		  , DangerLevel, autosuspend3
 		  , BonusWalletFlag
+		  , RepUpdateTime
 		  )
 		VALUES
 		(
@@ -184,6 +186,7 @@ BEGIN
 		  , 0, 0, 0
 		  , @DangerLevel, 0
 		  , @BonusWalletFlag
+		  , dbo.f_GetDateTime2()
 		)
 
 		INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)

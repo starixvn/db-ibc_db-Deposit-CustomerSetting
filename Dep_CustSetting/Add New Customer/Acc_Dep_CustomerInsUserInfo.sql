@@ -67,6 +67,7 @@ Revisions:
 	- 20240712@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 	- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 	- 20240705@Eden : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+	- 20241205@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 Param's Explanation:
 	-@ErrCode:
 		= 0: Insert successfully.
@@ -127,7 +128,10 @@ BEGIN
 			SELECT @SiteDBGroupID = SiteDBGroupID FROM Site WITH(NOLOCK) WHERE site = @site
 
 			SET @srecommend = @custid 
-			UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET srecommend = @custid WHERE custId = @CustID
+			UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
+			SET srecommend = @custid,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			WHERE custId = @CustID
 
 			INSERT INTO Dep_CustSuper (custid, currency, username, site, CurrencyModifier,SiteDBGroupID,RepUpdateTime)
 			VALUES (@CustID, @currency, @username, @site, @CurrencyModifier, @SiteDBGroupID, SYSDATETIME())
@@ -176,10 +180,13 @@ BEGIN
 		ELSE IF @roleid = 3
 		BEGIN
 			SET @mrecommend = @custid 
-			UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET mrecommend = @custid WHERE custId = @CustID
+			UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
+			SET mrecommend = @custid,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			WHERE custId = @CustID
 
-			INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption)
-			VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+			INSERT INTO CustMaster(custId, DisableAutoMPT, IsInternal, TransferOption,RepUpdateTime)
+			VALUES(@CustID,@DisableAutoMPT, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, dbo.f_GetDateTime2())
 
 			--Virtual rate
 			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
@@ -190,10 +197,13 @@ BEGIN
 		ELSE IF @roleid = 2
 		BEGIN
 			SET @recommend = @custid
-			UPDATE Customer WITH (ROWLOCK, UPDLOCK) SET recommend = @custid WHERE custId = @CustID
+			UPDATE Customer WITH (ROWLOCK, UPDLOCK) 
+			SET recommend = @custid,
+				RepUpdateTime = dbo.f_GetDateTime2()
+			WHERE custId = @CustID
 
-			INSERT INTO CustAgent(custId,site, MaxCredit, IsInternal, TransferOption)
-			VALUES(@CustID,@site, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END)
+			INSERT INTO CustAgent(custId,site, MaxCredit, IsInternal, TransferOption, RepUpdateTime)
+			VALUES(@CustID,@site, @MaxCredit, @IsInternal, CASE WHEN @TransferOption IS NULL THEN ISNULL(@TransferOption_dec, 0) ELSE dbo.F_Binary_Decimal(ISNULL(@TransferOption, 0)) END, dbo.f_GetDateTime2())
 
 			--Virtual rate
 			INSERT INTO [dbo].[CustVirtualSetting] (custid, seqNo, bitmapVirtual, RepUpdateTime)
@@ -228,12 +238,12 @@ BEGIN
 			[custId], [currency]
 			,[roleid], srecommend, [mrecommend], [recommend], [dangercust], [autosuspend], [reject], [credit], [closed], [username], MatchLimit, VirtualMultiplier
 			,DisableOutright
-			,danger,danger2,danger3)
+			,danger,danger2,danger3,RepUpdateTime)
 		VALUES(
 			@custid, @currency
 			,@roleid, @srecommend, @mrecommend, @recommend, 0, 0, ISNULL(@suspended,0), @credit, ISNULL(@closed,0), @username, @matchlimit, @virtualmultiplier
 			,@DisableOutright
-			,@danger,@danger2,@danger3)
+			,@danger,@danger2,@danger3,dbo.f_GetDateTime2())
 	END TRY
 	BEGIN CATCH
 			SELECT @ErrMsg = CASE @Language 
