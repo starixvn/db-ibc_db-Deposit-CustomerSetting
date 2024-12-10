@@ -2,7 +2,7 @@
 ALTER PROCEDURE API_Dep_3rdProductCustStatusSel 
 	@AgentId INT
 	, @ProductId INT
-	, @IsEnabled BIT = NULL OUTPUT  
+	, @IsEnabled BIT = 0 OUTPUT  
 AS  
 /*  
  Created: 20241210@Elodie  
@@ -22,7 +22,7 @@ BEGIN
 	BEGIN		
 		SELECT @srecommend = srecommend
 		FROM dbo.Customer c WITH (NOLOCK)
-		WHERE c.CustID = @AgentId
+		WHERE c.CustID = @AgentId and roleid = 2
 
 		SELECT @IsEnabled = ISNULL(IsEnabled,0)  
 		FROM dbo.Dep_SupperProductSetting WITH (NOLOCK)  
