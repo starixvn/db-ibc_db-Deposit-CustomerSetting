@@ -19,6 +19,7 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220802@Tacy: Insert history of member bet setting (Number Game only) [RedmineID: #170739]
 		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20241217@Johnson: HF history setting for NG [redmine: #215423]
 	Param's Explanation:
 	@BetLimit	= '<ROOT>
 				<BetLimit SportType="1" BetType="1" MinBet="10" MaxBet="100" MaxPerMatch="1000" MaxPayoutPerMatch="10000" />
@@ -271,7 +272,7 @@ BEGIN
 							 FOR XML PATH ('r'), ROOT ('root')
 							)
 
-			EXECUTE Acc_Dep_CustSetting_BetLimitHistoryIns  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
 
 			IF @ErrMsg<>''
 				RETURN
