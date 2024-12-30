@@ -191,8 +191,8 @@ BEGIN
 		  , dbo.f_GetDateTime2()
 		)
 
-		INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-		VALUES(@custid,NULL,@IP,@creator,GETDATE(),0)
+		INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason,RepUpdateTime)
+		VALUES(@custid,NULL,@IP,@creator,GETDATE(),0,dbo.f_GetDateTime2())
 
 		IF @SubsidiaryID <> 0
 			AND NOT EXISTS (SELECT 1 FROM dbo.DepositCustomer WITH(NOLOCK) WHERE custid = @custid)
