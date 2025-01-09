@@ -34,9 +34,10 @@ AS
 	Original sp: 
 	
 	Revisions: 
-		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
-		- 20241009@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240705@Eden : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20241009@Helios : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20241230@Virgil : Add new parameter SiteType [RedmineID: #215391]
+		- 20250109@Virgil : HotFix - Missing handle PT for Jackpot Contribution bettype [Redmine: #216610]
 
 	Param's Explanation: 
 	Sample:
@@ -357,7 +358,7 @@ BEGIN
 								SELECT SportType AS 'SportType'
 									,Bettype AS 'BetType'
 									,IsLive AS 'IsLive'
-									,@PT * 100 AS 'PT'
+									,CASE WHEN Bettype IN (4297,4599,3898) THEN 100 ELSE (@PT * 100) END AS 'PT'
 								FROM #SportBettypeSetting
 								WHERE ProductID = @ProductID 
 									AND SettingType = @PTSettingType
