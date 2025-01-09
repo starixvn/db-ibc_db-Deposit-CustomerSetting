@@ -1,14 +1,5 @@
-Dep_CustSetting\Add New Customer\API Create New Member\API_CustomerIns_Member.sql
-Dep_CustSetting\Add New Customer\API Create New Member\Shadow\Dot_Dep_CustomerInsMember_Ag_Cust_Shadow.sql
 Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql
-Deposit-Customer-Archive\3.SP\API Reactive Member\API_CustomerReactive_Insert.sql
-Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_InsertCustomerInfo.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsUserInfo.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsLicenseeSubsidiary.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Com.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_SAg.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Ag.sql
-CreateLicensee\API SiteBuilder\API_SiteBuilder_InsCustomer_FullLine.sql
-CreateLicensee\API SiteBuilder\API_SiteBuilder_Licensee_Insert.sql
-CreateLicensee\API SiteBuilder\Acc_Dep_CustomerIns_Rollback_Multiple.sql
+CreateLicensee\_Dot_Dep_CreateCurrencyLicensee.sql
+
+
+
