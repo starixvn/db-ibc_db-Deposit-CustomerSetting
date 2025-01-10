@@ -13,6 +13,7 @@ ALTER PROCEDURE [dbo].[API_SiteBuilder_Licensee_Insert]
 	@sitename			VARCHAR(10)= NULL,
 	@SiteID				INT = NULL,
 	@SpecialPlatform	TINYINT = NULL,
+	@SiteType			TINYINT = NULL,
 	@Mode				TINYINT = 1, -- 1: New Licensee, 2: New Currency
 	@ErrCode			INT = 0	OUTPUT,
 	@ErrMsg				NVARCHAR(MAX) = ''	OUTPUT,
@@ -35,6 +36,7 @@ AS
 	Revisions: 
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20241009@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20241230@Virgil : Add new parameter SiteType [RedmineID: #215391]
 
 	Param's Explanation: 
 	Sample:
@@ -77,6 +79,7 @@ AS
 			,@LicenseeType = 'Boping'
 			,@IsChinaView = 1
 			,@SpecialPlatform = 0
+			,@SiteType		  = 0,
 			,@ErrCode			= @ErrCode OUTPUT
 			,@ErrMsg			= @ErrMsg OUTPUT
 			,@FailedCurrencies = @FailedCurrencies OUT
@@ -215,7 +218,7 @@ BEGIN
 	ELSE 
 	BEGIN
 		SELECT @ActionID = 271004
-			, @IsChinaView = NULL, @SpecialPlatform = NULL -- no need to log those values
+			, @IsChinaView = NULL, @SpecialPlatform = NULL, @SiteType = NULL -- no need to log those values
 	END
 
 	UPDATE p
@@ -557,7 +560,8 @@ BEGIN
 										, @ErrCode														AS '@ErrCode'	
 										, @ErrMsg														AS '@ErrMsg'
 										, @IsChinaView													AS '@IsChinaView'
-										, @SpecialPlatform												AS '@SpecialPlatform'	
+										, @SpecialPlatform												AS '@SpecialPlatform'
+										, @SiteType														AS '@SiteType'
 								FOR XML PATH('GeneralInfo'), 
 								TYPE
 								),

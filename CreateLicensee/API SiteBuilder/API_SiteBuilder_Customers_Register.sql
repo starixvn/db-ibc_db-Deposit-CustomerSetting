@@ -4,6 +4,7 @@ ALTER PROCEDURE [dbo].[API_SiteBuilder_Customers_Register]
 	@sitename	VARCHAR(10)= NULL,
 	@IsChinaView BIT = 0,
 	@SpecialPlatform TINYINT = 0,
+	@SiteType TINYINT = 0,
 	@SiteDBGroupID	SMALLINT = 0,
 	@IP	VARCHAR(50) = NULL,
 	@ProductStakeLevel	VARCHAR(MAX)= NULL,
@@ -22,8 +23,10 @@ AS
 	Original sp: 
 	
 	Revisions: 
-		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
-		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474] 
+		- 20240705@Eden : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240920@Helios : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474] 
+		- 20241223@Virgil : Add new column and parameter SiteType for dbo.Site table [RedmineID: #215391]
+
 	Param's Explanation: 
 		Sample Format:
 		DECLARE @ErrCode INT = 0 , @ErrMsg NVARCHAR(2000) = '', @Customers_List VARCHAR(MAX), @SiteID INT,@FailedCurrencies VARCHAR(MAX)
@@ -48,6 +51,7 @@ AS
 			,@sitename			= 'Edentest1'
 			,@IsChinaView		= 0
 			,@SpecialPlatform	= 0
+			,@SiteType		    = 0
 			,@SiteDBGroupID		= 0
 			,@Mode				= 1
 			,@ErrCode			= @ErrCode OUTPUT
@@ -122,8 +126,8 @@ BEGIN
 			RETURN
 		END
 		
-		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom,CustDBGroupID)
-		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform, @CustDBGroupID)
+		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom, CustDBGroupID, SiteType)
+		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform, @CustDBGroupID, @SiteType)
 	
 		IF @@ERROR <> 0
 		BEGIN
