@@ -17,6 +17,7 @@ AS
 		- 20230616@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230612@Eden: Enhance for Scale Out , move ActionID = 7 to sp Acc_Dep_DynamicCustSetting_11 [#179092]
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
+		- 20250113@Johnson: check inhouse for @ActionID = 5 [redmine: #207025]
 	Parameter:
 		@ActionID: 
 				1: Update Dep_Customer_Archived.status = archived
@@ -46,7 +47,13 @@ BEGIN
 		END
 		ELSE IF @ActionID = 5
 		BEGIN
-			IF dbo.f_CheckRepTable('Dep_Customer_Archived') = 1 DELETE Dep_Customer_Archived WHERE CustID = @CustID
+			IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+				AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+			)			
+			DELETE Dep_Customer_Archived 
+			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+			INTO Dep_Customer_Archived_Del_InHouse(CustID, RepUpdateTime)
+			WHERE CustID = @CustID
 		END
 		ELSE IF @ActionID = 6
 		BEGIN
@@ -102,7 +109,13 @@ BEGIN
 		END
 		ELSE IF @ActionID = 5
 		BEGIN
-			IF dbo.f_CheckRepTable('Dep_Customer_Archived') = 1 DELETE Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #LstCustID)
+			IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+				AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+			)			
+			DELETE Dep_Customer_Archived 
+			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+			INTO Dep_Customer_Archived_Del_InHouse(CustID, RepUpdateTime)
+			WHERE CustID IN (SELECT CustID FROM #LstCustID)
 		END
 		ELSE IF @ActionID = 6
 		BEGIN
