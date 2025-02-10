@@ -57,6 +57,7 @@ AS
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240830@Johnson: Apply Inhouse for BLC [redmine:#209892]
 		- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	Param's Explanation:
 		- @ErrCode:
 			= 0: Insert successfully.
