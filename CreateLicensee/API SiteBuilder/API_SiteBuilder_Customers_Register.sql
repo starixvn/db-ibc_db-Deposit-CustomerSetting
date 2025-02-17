@@ -26,6 +26,7 @@ AS
 		- 20240705@Eden : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240920@Helios : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474] 
 		- 20241223@Virgil : Add new column and parameter SiteType for dbo.Site table [RedmineID: #215391]
+		- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 
 	Param's Explanation: 
 		Sample Format:
@@ -126,8 +127,8 @@ BEGIN
 			RETURN
 		END
 		
-		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom, CustDBGroupID, SiteType)
-		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform, @CustDBGroupID, @SiteType)
+		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom, CustDBGroupID, SiteType, RepUpdateTime)
+		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform, @CustDBGroupID, @SiteType, dbo.f_GetDateTime2())
 	
 		IF @@ERROR <> 0
 		BEGIN
