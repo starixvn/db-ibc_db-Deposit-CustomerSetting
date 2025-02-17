@@ -84,8 +84,6 @@ AS
 	- 20240812@Tacy: Correct writelog [Redmine: #201239]
 	- 20240712@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	- 20240923@Tacy: Add new OddsBoostAdj dummy customers [RedmineID: #210621]
-	- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
-	
  Param's Explanation: 
  @LicenseeType = (Boping, OneWorks, Zelianta)
  @SpecialPlatform : SpecialPlatfrom=2 => Jollysports licensee
@@ -990,8 +988,8 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom, RepUpdateTime)
-		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform, dbo.f_GetDateTime2())
+		INSERT INTO dbo.Site(site, ServerID, isLicensee, isActive, isDeposit, IsChinaView, SiteDBGroupID, SpecialPlatfrom)
+		VALUES (@sitename, 0, 1, 1, 1 , @IsChinaView, @SiteDBGroupID, @SpecialPlatform)
 	
 		IF @@ERROR <> 0
 		BEGIN
