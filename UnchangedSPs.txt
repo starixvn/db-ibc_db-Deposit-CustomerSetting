@@ -1,5 +1,4 @@
 Deposit-Customer-Archive\3.SP\Dot_Dep_Customer_Archive_ReactiveCustomer.sql
 CreateLicensee\_Dot_Dep_CreateCurrencyLicensee.sql
-
-
+Deposit-Customer-Archive\3.SP\API Reactive Member\API_CustomerReactive_Insert.sql
 
