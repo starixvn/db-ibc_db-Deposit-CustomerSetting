@@ -11,7 +11,7 @@ AS
 	Revisions:
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029] 
-		
+		- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
 	Param's Explanation:
 
 	Examples:
@@ -28,7 +28,11 @@ BEGIN
 
 	IF @RoleID = 4
 	BEGIN
-		DELETE FROM CustSuper WITH (ROWLOCK) WHERE CustID = @CustID
+		DELETE c 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustSuper_Del_InHouse(CustID,RepUpdateTime)
+		FROM CustSuper c WITH (ROWLOCK) 
+		WHERE CustID = @CustID
 		
 		DELETE FROM Dep_CustSuper WITH(ROWLOCK) 
 		OUTPUT DELETED.custid, SYSDATETIME()
@@ -36,11 +40,26 @@ BEGIN
 		WHERE custId = @CustID		
 	END	
 	ELSE IF @RoleID = 3
-		DELETE FROM CustMaster WITH (ROWLOCK)  WHERE CustID = @CustID
+		DELETE c 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustMaster_Del_InHouse(CustID,RepUpdateTime)
+		FROM CustMaster c WITH (ROWLOCK)  
+		WHERE CustID = @CustID
 	ELSE IF @RoleID = 2
-		DELETE FROM CustAgent WITH (ROWLOCK)  WHERE CustID = @CustID
+		DELETE c 
+		OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+		INTO CustAgent_Del_InHouse(CustID,RepUpdateTime)
+		FROM CustAgent c WITH (ROWLOCK)  
+		WHERE CustID = @CustID
 
-	DELETE FROM custinfo WITH (ROWLOCK)  WHERE custid = @CustID  
-	DELETE FROM customer WITH (ROWLOCK)  WHERE CustID = @CustID 
+	DELETE FROM custinfo WITH (ROWLOCK)  
+	OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+	INTO custinfo_Del_InHouse(CustID,RepUpdateTime)
+	WHERE custid = @CustID  
+	
+	DELETE FROM customer WITH (ROWLOCK)  
+	OUTPUT DELETED.CustID, dbo.f_GetDateTime2()
+	INTO customer_Del_InHouse(CustID,RepUpdateTime)
+	WHERE CustID = @CustID 
 END
 GO

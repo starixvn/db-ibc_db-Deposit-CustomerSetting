@@ -21,6 +21,7 @@ AS
 		- 20210709@Johnson: initial sp [redmine:#157702]
 		- 20211101@Johnson: exclude BA members when update odds group[redmine:#163957]
 		- 20240715@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20241129@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
 	Param's Explanation:
 */
 BEGIN	
@@ -84,7 +85,7 @@ BEGIN
 			BEGIN
 				SELECT @ids = ''
 		
-				UPDATE TOP (5000) #temp
+				UPDATE TOP (2000) #temp
 				SET @ids = @ids + CASE @ids WHEN '' THEN '' ELSE ',' END + CAST(custid AS VARCHAR(12))
 					,isfinished = 1
 				FROM #temp
@@ -97,7 +98,7 @@ BEGIN
 					@oddsGroup = @oddsGroup,
 					@mode = 'UpdateOddsGroup'
 
-				IF @rowcnt < 5000 BREAK
+				IF @rowcnt < 2000 BREAK
 
 				WAITFOR DELAY '00:00:00.28'
 			END
