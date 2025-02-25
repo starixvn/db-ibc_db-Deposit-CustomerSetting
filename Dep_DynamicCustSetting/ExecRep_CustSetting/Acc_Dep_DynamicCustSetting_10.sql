@@ -17,6 +17,7 @@ AS
 		- 20240814@Winfred: Enhance Update PT in NAP[RedmineID:#201477]
 		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 		- 20241010@Johnson: remove DBKLC1 [redmine: #207025]
+		- 20250224@Johnson: remove WITH(ROWLOCK,UPDLOCK) command SELECT Dep_CustSettingMode [RedmineID: #212684]
 	Param's Explanation:
 		@PT:
 		<ROOT>
@@ -53,7 +54,7 @@ BEGIN
 	SELECT c.CustID
 	FROM dbo.Customer c WITH(NOLOCK)
 			CROSS APPLY ( SELECT TOP 1 IsGroupedPT
-								FROM dbo.Dep_CustSettingMode WITH(ROWLOCK,UPDLOCK)
+								FROM dbo.Dep_CustSettingMode WITH(NOLOCK)
 								WHERE custid=c.CustID AND IsGroupedPT=0
 							) m
 		INNER JOIN #Agent a ON c.recommend=a.CustID
