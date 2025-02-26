@@ -11,7 +11,7 @@ AS
 
 	Revisions:
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]  
-		
+		- 20240904@Johnson: Apply Inhouse for BLC [redmine:#209892]
 	Param's Explanation:
 
 	Examples:
@@ -20,7 +20,11 @@ AS
 BEGIN
 	SET NOCOUNT ON
 	
-	DELETE FROM BetLimitControlCustSetting	WITH (ROWLOCK) WHERE CustID = @CustID
+	DELETE FROM BetLimitControlCustSetting	WITH (ROWLOCK) 
+	OUTPUT DELETED.custid, DELETED.BetLimitTypeID, dbo.f_GetDateTime2()
+	INTO BetLimitControlCustSetting_Del_InHouse(custid,BetLimitTypeID,RepUpdateTime)
+	WHERE CustID = @CustID
+	
 	DELETE FROM DepositCustomer				WITH (ROWLOCK) WHERE CustID = @CustID
 
 	DELETE c
