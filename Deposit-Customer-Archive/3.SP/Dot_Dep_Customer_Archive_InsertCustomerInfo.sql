@@ -16,20 +16,16 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@remark NVARCHAR(50),
 	@refcode2 NVARCHAR(50),
 	@username2 VARCHAR(50),
-
 	@srecommend INT,
 	@mrecommend INT,
 	@recommend INT,
 	@roleid INT = 1,
-	
 	@Danger TINYINT = 0,
 	@Danger2 TINYINT = 0,
 	@Danger3 TINYINT = 0,
 	@Danger4 TINYINT = 0,
 	@Danger5 TINYINT = 0,
-
 	@Abnormal TINYINT = 0,
-	
 	@phone NVARCHAR(50),
 	@mobilephone NVARCHAR(50),
 	@email NVARCHAR(50),
@@ -41,22 +37,18 @@ ALTER PROCEDURE [dbo].[Dot_Dep_Customer_Archive_InsertCustomerInfo]
 	@postal NVARCHAR(50),
 	@TransferOption VARCHAR(8) = NULL, --pass value (not NULL) in case direct master add new agent
 	@suspended BIT = NULL,
-
 	@closed BIT = NULL,	
 	@DisableOutright BIT = 0,
 	@matchlimit SMALLMONEY,
 	@virtualmultiplier SMALLMONEY,
 	@DisableAutoMPT BIT = 1,
 	@IsInternal BIT = 0,
-	
 	@autosuspend BIT = 0,
 	@autosuspend2 BIT = 0,
-
 	@DisableSuperLive BIT = 0,
 	@maxcredit MONEY = 0,
 	@isSearchAndCopy BIT = 0,
 	@copyFromCustID INT = 0,
-	
 	@IP VARCHAR(15)='',
 	@TransferOption_dec TINYINT,
 	@SystemID	TINYINT=1,
@@ -88,6 +80,7 @@ AS
 		- 20240701@Winfred: Scale Out DBCUST - Apply In-house Replication for Virtual Rate Setting  [redmine: #207029]
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified BEGIN TRY - CATCH [redmine: #207474]
+		- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 
 	Param's Explanation:
 	- @ErrCode:
@@ -168,8 +161,8 @@ BEGIN
 		
 		IF NOT EXISTS (SELECT 1 FROM dbo.CustLoginInfo_Member WITH(NOLOCK) WHERE custid = @custid)
 		BEGIN
-			INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate])
-			VALUES(@custid,NULL,@IP,@creator,GETDATE())
+			INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate], RepUpdateTime)
+			VALUES(@custid,NULL,@IP,@creator,GETDATE(), dbo.f_GetDateTime2() )
 		END
 
 		--Set DangerLevel
