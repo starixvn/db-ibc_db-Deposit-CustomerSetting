@@ -57,6 +57,7 @@ AS
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240830@Johnson: Apply Inhouse for BLC [redmine:#209892]
 		- 20241122@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]
+		- 20241230@Aries: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
 	Param's Explanation:
 		- @ErrCode:
 			= 0: Insert successfully.
@@ -191,8 +192,8 @@ BEGIN
 		  , dbo.f_GetDateTime2()
 		)
 
-		INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason)
-		VALUES(@custid,NULL,@IP,@creator,GETDATE(),0)
+		INSERT INTO CustLoginInfo_Member([CustID],[SecurityCode],[IP],[LastChangedID],[LastChangedDate],ClosedReason,RepUpdateTime)
+		VALUES(@custid,NULL,@IP,@creator,GETDATE(),0,dbo.f_GetDateTime2())
 
 		IF @SubsidiaryID <> 0
 			AND NOT EXISTS (SELECT 1 FROM dbo.DepositCustomer WITH(NOLOCK) WHERE custid = @custid)
