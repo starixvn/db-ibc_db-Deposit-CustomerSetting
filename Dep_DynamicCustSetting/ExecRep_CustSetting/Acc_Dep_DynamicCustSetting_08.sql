@@ -5,7 +5,7 @@ ALTER PROCEDURE [dbo].Acc_Dep_DynamicCustSetting_08
 	,@Target VARCHAR(20)
 	,@XMLConfig VARCHAR(MAX) = NULL
 	,@StepID TINYINT = 0
-	,@BetSettingXML VARCHAR(MAX)
+	,@BetSettingXML VARCHAR(MAX)	
 AS
 /*
 	Created: 20220913@Eden
@@ -16,6 +16,7 @@ AS
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
 	- 20240916@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+	- 20250303@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
 	Parameter Definition
 		StepID = :
 			1: Delete existing customer setting
@@ -28,25 +29,24 @@ BEGIN
 	
 	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
 	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
-
-	IF dbo.f_CheckRepTable('CustInfo') = 0 RETURN
-	IF dbo.f_CheckRepTable('Customer') = 0 RETURN
 	
-	/*IF dbo.f_CheckRepTable('Dep_CustPTSetting_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustPTGroupSetting_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustPTSetting_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustBetSettingGame_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustBetSettingGameGroup_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustBetSettingGame_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Agent') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_CustProductStatus') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_ProductSetting') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_LicenseeProductSetting') = 0 RETURN
-	IF dbo.f_CheckRepTable('Dep_ProductStatusProfile') = 0 RETURN
-*/
+	IF OBJECT_ID('CustInfo') IS NULL RETURN
+	IF OBJECT_ID('Customer') IS NULL RETURN 
+	IF OBJECT_ID('Dep_CustPTSetting_Agent') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustPTGroupSetting_Member') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustPTSetting_Member') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustBetSetting_Agent') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustBetSetting_Member') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustBetSettingGame_Agent') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustBetSettingGameGroup_Member') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustBetSettingGame_Member') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustStakeLevel_Agent') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustStakeLevel_Member') IS NULL RETURN
+	IF OBJECT_ID('Dep_CustProductStatus') IS NULL RETURN
+	IF OBJECT_ID('Dep_ProductSetting') IS NULL RETURN
+	IF OBJECT_ID('Dep_LicenseeProductSetting') IS NULL RETURN
+	IF OBJECT_ID('Dep_ProductStatusProfile') IS NULL RETURN
+	
 	CREATE TABLE #TempConfig(
 		[SportType] [smallint],
 		[BetType] [smallint],
