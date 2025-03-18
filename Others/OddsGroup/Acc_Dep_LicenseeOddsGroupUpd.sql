@@ -22,6 +22,8 @@ AS
 		- 20211101@Johnson: exclude BA members when update odds group[redmine:#163957]
 		- 20240715@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 		- 20241129@Johnson: Apply In-house replication for Credit Setting [RedmineID: #212684]		
+		- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
+
 	Param's Explanation:
 */
 BEGIN	
@@ -76,7 +78,6 @@ BEGIN
 		WHERE recommend = @custid
 			AND roleid = 1
 			AND custid NOT IN (SELECT custid FROM [bodb_licensee].dbo.[LicenseeSpecialCust] WITH(NOLOCK))
-			AND custid NOT IN (SELECT custid FROM dbo.[Dep_CustBAActive] WITH(NOLOCK))
 			AND ugroup <> @oddsGroup
 			
 		BEGIN TRY

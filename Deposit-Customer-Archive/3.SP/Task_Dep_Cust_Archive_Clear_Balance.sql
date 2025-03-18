@@ -19,6 +19,8 @@ AS
 		- 20230424@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230612@Eden: Enhance for Scale Out [#179092]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083] 
+		- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
+
 	Parameter:
 		
 	
@@ -40,20 +42,18 @@ BEGIN
 		[CheckDate] DATETIME,
 		[Recommend] INT,
 		LicenseeID INT,
-		BAStastus TINYINT, --0: No need to turn off | 1: Need to turn off | 2: Turning off | 3: Turn off failed | 4: Turn off sucessfully 
 		TransBalStastus TINYINT --0: No need transfer balance | 1: Need to transfer balance | 2: Transfering balance | 3: Transfer balance failed | 4: Transfer balance sucessfully 
 	)
 
 	/******************************Step 1: Check data******************************/
 	--Get members to clear balance
-	INSERT INTO #Dep_Customer_Archived([CustID],[CustIDBalanceDummy],[ClosingBalance],[CheckDate],[Recommend],LicenseeID,BAStastus,TransBalStastus)
+	INSERT INTO #Dep_Customer_Archived([CustID],[CustIDBalanceDummy],[ClosingBalance],[CheckDate],[Recommend],LicenseeID,TransBalStastus)
 	SELECT TOP (@BatchSize) CusTID
 			, CustIDBalanceDummy
 			, -ClosingBalance
 			, DATEADD(DAY,-2,ArchivedDate)
 			, recommend
 			, NULL
-			, 0
 			, 0
 	FROM DBCUST.CustDB.dbo.Dep_Customer_Archived WITH(NOLOCK)
 	WHERE Status = 'waiting'
@@ -451,132 +451,8 @@ BEGIN
 		RETURN
 	END
 
-	/******************************Step 2: Turn off BA flag******************************/
-	--Log info
-	SELECT @LogLstCustID = STUFF((
-			SELECT ',' + CAST(CustID as VARCHAR(15))
-			FROM #Dep_Customer_Archived
-			ORDER BY CustID
-			FOR XML PATH('')
-			), 1, 1, '');
 
-	--If members' BA flags are turned on and they do not belong to DELA, we turn off BA flag
-	IF EXISTS(
-				SELECT 1
-				FROM DBCUST.bodb_licensee.dbo.[LicenseeBAHistory] ba WITH (NOLOCK)
-				INNER JOIN #Dep_Customer_Archived t ON ba.LicenseeID = t.LicenseeID AND ba.CustID = t.CustID
-				WHERE ba.[Status] = 'Running' AND t.LicenseeID <> 7
-			)
-	BEGIN
-		BEGIN TRY
-
-			--Update BAStastus for those members whoes BA flags need to be turned off
-			UPDATE t
-			SET t.BAStastus = 1 --Need to be turned off
-			FROM #Dep_Customer_Archived t
-			WHERE t.LicenseeID <> 7 AND 
-				EXISTS(SELECT 1
-				FROM DBCUST.bodb_licensee.dbo.[LicenseeBAHistory] ba WITH (NOLOCK)
-				WHERE ba.LicenseeID = t.LicenseeID AND ba.CustID = t.CustID AND ba.[Status] = 'Running')
-			
-			--Start a loop to turn off BA flags
-			WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE BAStastus=1)
-			BEGIN
-				UPDATE TOP (1) t
-				SET BAStastus=2 --Turning off
-					,@CustID=Custid
-					,@LicenseeID=LicenseeID
-				FROM #Dep_Customer_Archived t
-				WHERE t.BAStastus=1
-
-				SELECT @ErrCode = 0
-
-				EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
-						,@CustID=@CustID
-						,@IsAdmin=1
-						,@ModifyBy=10278938 --starixit
-						,@IsBA=0
-						,@IP=''
-						,@ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
-
-				IF @ErrCode <> 0
-				BEGIN
-					SELECT @Message = 'Failed to turn off BA flag (' + CAST(@CustID AS VARCHAR(15)) + '): ' + @ErrMsg 
-
-					EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID = @LogMinCustID
-							, @Action='CLEAR-BALANCE'
-							, @Status='Failed'
-							, @Message= @Message
-
-					--Update Dep_Customer_Archived.status = failed
-					EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @CustID=@CustID, @ActionID=3
-
-					UPDATE #Dep_Customer_Archived
-					SET BAStastus=3 --failed
-					WHERE CustID=@CustID
-
-				END
-				ELSE
-				BEGIN
-					UPDATE #Dep_Customer_Archived
-					SET BAStastus=4 --success
-					WHERE CustID=@CustID
-				END
-
-			END	
-			
-		END TRY
-		BEGIN CATCH
-
-			SELECT @Message = 'Exception error occurs while turning off BA flag: ' + ERROR_MESSAGE()
-
-			RAISERROR(@Message, 11, 1)
-
-			--Roll back for those whoes BA flags have been turned off sucessfully
-			WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE BAStastus=4)
-			BEGIN
-				UPDATE TOP (1) t
-				SET BAStastus=1
-					,@CustID=Custid
-					,@LicenseeID=LicenseeID
-				FROM #Dep_Customer_Archived t
-				WHERE t.BAStastus=4
-
-				EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
-				,@CustID=@CustID
-				,@IsAdmin=1
-				,@ModifyBy=10278938 --starixit
-				,@IsBA=1
-				,@IP=''
-				,@ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
-
-			END		
-
-			SELECT @Message='Exception error occurs while turning off BA flag: ' + @LogLstCustID
-
-			EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
-					, @Action='CLEAR-BALANCE'
-					, @Status='Failed'
-					, @Message=@Message
-
-			RETURN
-
-		END CATCH
-
-		SELECT @Message='Finish turning off BA flag: ' + @LogLstCustID
-
-		EXEC DBLOG.bodb_CustomerLog.dbo.Writelog_Dep_Cust_Archive @CustID=@LogMinCustID
-				, @Action='CLEAR-BALANCE'
-				, @Status='OnProgress'
-				, @Message=@Message
-
-	END
-
-	--Delete dormant members whoes BA-Flag can not be turned off 
-	DELETE #Dep_Customer_Archived WHERE BAStastus=3
-	
-
-	/******************************Step 3: Copy Customer/Custinfo to archive DB******************************/
+	/******************************Step 2: Copy Customer/Custinfo to archive DB******************************/
 	--Log info
 	SELECT @LogLstCustID = STUFF((
 			SELECT ',' + CAST(CustID as VARCHAR(15))
@@ -646,25 +522,6 @@ BEGIN
 		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 
-		--Roll back for those whoes BA flags have been turned off sucessfully
-		WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE BAStastus=4)
-		BEGIN
-			UPDATE TOP (1) t
-			SET BAStastus=1
-				,@CustID=Custid
-				,@LicenseeID=LicenseeID
-			FROM #Dep_Customer_Archived t
-			WHERE t.BAStastus=4
-
-			EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
-			,@CustID=@CustID
-			,@IsAdmin=1
-			,@ModifyBy=10278938 --starixit
-			,@IsBA=1
-			,@IP=''
-			,@ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
-
-		END
 
 		RAISERROR(@Message, 11, 1)
 
@@ -687,7 +544,7 @@ BEGIN
 				, @Message=@Message
 
 
-	/******************************Step 4: Transfer remaining balance******************************/
+	/******************************Step 3: Transfer remaining balance******************************/
 	--Log info
 	SELECT @LogLstCustID = STUFF((
 			SELECT ',' + CAST(CustID as VARCHAR(15))
@@ -761,26 +618,7 @@ BEGIN
 				DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer 
 				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
 			END
-			--Turn on BA flags for members who can not transfer closing balance, but have been turned off BA flags sucessfully
-			WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE TransBalStastus=3 AND BAStastus=4)
-			BEGIN
-				UPDATE TOP (1) t
-				SET BAStastus=1
-					,@CustID=Custid
-					,@ClosingBalance=ClosingBalance
-					,@CustIDBalanceDummy=CustIDBalanceDummy
-				FROM #Dep_Customer_Archived t
-				WHERE t.TransBalStastus=3 AND t.BAStastus=4
 
-				EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
-				,@CustID=@CustID
-				,@IsAdmin=1
-				,@ModifyBy=10278938 --starixit
-				,@IsBA=1
-				,@IP=''
-				,@ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
-
-			END
 
 		END
 
@@ -792,25 +630,6 @@ BEGIN
 		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
 
-		--Turn on BA
-		WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE BAStastus=4)
-		BEGIN
-			UPDATE TOP (1) t
-			SET BAStastus=1
-				,@CustID=Custid
-				,@LicenseeID=LicenseeID
-			FROM #Dep_Customer_Archived t
-			WHERE t.BAStastus=4
-
-			EXEC DBCUST.CustDB.dbo.Lrf_CustomerUpdMemberBAStatus @LicenseeID=@LicenseeID
-			,@CustID=@CustID
-			,@IsAdmin=1
-			,@ModifyBy=10278938 --starixit
-			,@IsBA=1
-			,@IP=''
-			,@ErrCode=@ErrCode output,@ErrMsg=@ErrMsg output
-
-		END
 
 		--Transfer balance back to members
 		WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE TransBalStastus=4)
@@ -874,7 +693,7 @@ BEGIN
 			FOR XML PATH('')
 			), 1, 1, '');
 
-	/******************************Step 5: Delete Customer/CustInfo in main database******************************/
+	/******************************Step 4: Delete Customer/CustInfo in main database******************************/
 		IF ((
 				SELECT COUNT(1)
 				FROM DBARCCUST.[Bodb_Archive_Customer_Licensee].dbo.customer WITH (NOLOCK)
@@ -938,7 +757,7 @@ BEGIN
 		END
 	
 
-	/******************************Step 6: Delete balance tables******************************/
+	/******************************Step 5: Delete balance tables******************************/
 	BEGIN TRY
 			--Delete CustInfo/Customer
 			EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=8
@@ -965,7 +784,7 @@ BEGIN
 			RETURN
 	END CATCH
 	
-	/******************************Step 7: Update member status******************************/
+	/******************************Step 6: Update member status******************************/
 	--Update Dep_Customer_Archived.status = archived
 	EXEC DBCUST.CustDB.dbo.Acc_CustomerInfo_Execrep_10 @LstCustID=@LstCustID, @ActionID=1
 

@@ -13,6 +13,8 @@ AS
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
 	- 20240916@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+	- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
+
 	Parameter Definition
 		StepID = :
 			3: Insert setting for new customer
@@ -28,7 +30,7 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	DECLARE @Site VARCHAR(MAX), @Currency VARCHAR(MAX), @IsBA_PTLogic BIT
+	DECLARE @Site VARCHAR(MAX), @Currency VARCHAR(MAX)
 	DECLARE @TBL_site TABLE(SiteID INT, Site NVARCHAR(50) PRIMARY KEY)
 	DECLARE @TBL_Currency TABLE(Currency INT PRIMARY KEY)
 	DECLARE @Bitmap0 BINARY(32) = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -48,8 +50,7 @@ BEGIN
 		[SpecialRequirement] [varchar](MAX),
 		[SettingName] [varchar](30),
 		[bitmapOrder] [tinyint],
-		[IsFinished] [bit] default 0,
-		[IsApplyBA] [bit]
+		[IsFinished] [bit] default 0
 	)
 
 	CREATE TABLE #TempBetSetting(
@@ -164,21 +165,6 @@ BEGIN
 			ON t.SportType = p.Sporttype
 			AND t.BetType = p.Bettype
 	WHERE t.SettingName = 'Product Status'
-
-	--> Get IsApplyBA
-	UPDATE t
-	SET t.IsApplyBA = p.IsApplyBA
-	FROM #TempConfig t
-		INNER JOIN Dep_ProductSettingDetail p WITH(NOLOCK) 
-			ON t.SportType = p.Sporttype
-			AND t.BetType = p.Bettype
-			AND t.IsLive = p.IsLive
-
-
-	IF EXISTS( SELECT 1 FROM #TempConfig WHERE IsApplyBA = 1 AND SettingName = 'Position Taking')
-		SET @IsBA_PTLogic = 1
-	ELSE
-		SET @IsBA_PTLogic = 0
 
 	--> Get ProductID
 	DECLARE @ProductID TINYINT
@@ -526,7 +512,7 @@ BEGIN
 
 			INSERT INTO dbo.Dep_CustPTGroupSetting_Member(AgentID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
 			SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0
-				,AgentPT = CASE WHEN t.Site='asiabet88' AND t.Currency IN(3,6) AND tc.IsApplyBA = 1 THEN 0 ELSE tc.DefaultValueSuper END
+				,AgentPT = tc.DefaultValueSuper
 				,dbo.f_GetDateTime2()
 			FROM #SMATemp t
 				CROSS JOIN #TempConfig tc 
@@ -561,34 +547,16 @@ BEGIN
 				IF @@ROWCOUNT = 0
 					BREAK
 
-				IF @IsBA_PTLogic = 0
-				BEGIN
-					INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
-					SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0,tc.DefaultValueSuper,dbo.f_GetDateTime2()
-					FROM #CustTempBatch t
-						CROSS JOIN #TempConfig tc 
-						INNER JOIN Dep_CustSettingMode m WITH(NOLOCK) 
-							ON t.CustID = m.CustID 
-							AND m.IsGroupedPT = 0
-					WHERE tc.SettingName = 'Position Taking'
-						AND tc.IsDefault = 1
-				END
-				ELSE
-				BEGIN
-					INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
-					SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0
-						,CASE WHEN tc.IsApplyBA = 1 AND ba.CustId IS NOT NULL THEN 0 ELSE tc.DefaultValueSuper END
-						,dbo.f_GetDateTime2()
-					FROM #CustTempBatch t
-						CROSS JOIN #TempConfig tc 
-						INNER JOIN Dep_CustSettingMode m WITH(NOLOCK) 
-							ON t.CustID = m.CustID 
-							AND m.IsGroupedPT = 0
-						LEFT JOIN Dep_CustBAActive ba WITH(NOLOCK) 
-							ON t.CustID = ba.CustId
-					WHERE tc.SettingName = 'Position Taking'
-						AND tc.IsDefault = 1
-				END
+				INSERT INTO dbo.Dep_CustPTSetting_Member(CustID,SportType,BetType,IsLive,SuperPT,MasterPT,AgentPT,RepUpdateTime)
+				SELECT t.CustID,tc.SportType,tc.BetType,tc.IsLive,0,0,tc.DefaultValueSuper,dbo.f_GetDateTime2()
+				FROM #CustTempBatch t
+					CROSS JOIN #TempConfig tc 
+					INNER JOIN Dep_CustSettingMode m WITH(NOLOCK) 
+						ON t.CustID = m.CustID 
+						AND m.IsGroupedPT = 0
+				WHERE tc.SettingName = 'Position Taking'
+					AND tc.IsDefault = 1
+
 			END
 		END
 
