@@ -1,13 +1,1 @@
-CreateLicensee\API SiteBuilder\Acc_Dep_CustomerIns_Rollback_Multiple.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsLicenseeSubsidiary.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsUserInfo.sql
-Dep_CustSetting\Add New Customer\API Create New Member\API_CustomerIns_Member.sql
-Dep_CustSetting\Add New Customer\API Create New Member\Shadow\Dot_Dep_CustomerInsMember_Ag_Cust_Shadow.sql
-Deposit-Customer-Archive\3.SP\API Reactive Member\API_CustomerReactive_Insert.sql
-Dep_CustSetting\Add New Customer\API Create New Member\Shadow\Dot_Dep_CustomerInsMember_Ag_Cust_Shadow.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Ag.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_Com.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_MAg.sql
-Dep_CustSetting\Add New Customer\Acc_Dep_CustomerInsMember_SAg.sql
-CreateLicensee\API SiteBuilder\API_SiteBuilder_InsCustomer_FullLine.sql
-CreateLicensee\API SiteBuilder\API_SiteBuilder_Licensee_Insert.sql
+Dep_DynamicCustSetting\UpdateSetting\Update\1_PT\Acc_Dep_CustSetting_PositionTakingSettingUpd.sql
