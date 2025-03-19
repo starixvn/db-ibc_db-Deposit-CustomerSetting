@@ -19,7 +19,7 @@ AS
 /*
 	Created: 20240705@Eden  
 	Task : SiteBuider --> Validate data
-	DB:  DBCUST-CustDB
+	DB:  DBGLOB-GlobCustDB
 	Original sp: 
 	
 	Revisions: 
@@ -27,6 +27,7 @@ AS
 		- 20240920@Helios : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474] 
 		- 20241223@Virgil : Add new column and parameter SiteType for dbo.Site table [RedmineID: #215391]
 		- 20241230@July: Scale Out DBCUST - Apply Inhouse replication for the remaning tables [Redmine: #215627]
+		- 20250319@Tacy: Scale Out DBCUST - Migrate tables to GlobCustDB [Redmine: #216870]
 
 	Param's Explanation: 
 		Sample Format:
@@ -464,7 +465,7 @@ BEGIN
 														)) 
 
 			--Create Global Stake level : 
-			EXEC CustDB.[dbo].[Acc_Dep_CustSetting_GlobalStakeLevelUpdate] 
+			EXEC [dbo].[Acc_Dep_CustSetting_GlobalStakeLevelUpdate] 
 					 @StakeLevel = @StakeLevel_ByCurrency	
 					,@CustID	= @SuperID
 					,@Currency	= @Currency
