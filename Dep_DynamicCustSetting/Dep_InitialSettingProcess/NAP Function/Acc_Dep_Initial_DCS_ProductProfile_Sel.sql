@@ -1,15 +1,16 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBGLOB-GlobCustDB" executers="wsv_nap" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_Initial_DCS_ProductProfile_Sel]
 AS
 /*
 	Created: 20220913@Eden
 	Task : Get Product Profile maxtrix
-	DB: DBCUST/CUSTDB
+	DB: DBGLOB-GlobCustDB
 	Original:
 
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
 	- 20240117@Tacy: NAP - Merge VS1, VS2, VS3 as Virtual Sports [Redmine: #198008]
+	- 20250120@Tacy: Move to GlobCustDB [RedmineID: #216870]
 
 	Parameter Definition
 

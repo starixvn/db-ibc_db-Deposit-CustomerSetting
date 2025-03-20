@@ -1,4 +1,4 @@
-/*<info serverAlias="DBCUST-CUSTDB" executers="" viewers="" isFunction="0"></info>*/
+/*<info serverAlias="DBGLOB-GlobCustDB" executers="" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Acc_Dep_Initial_DCS_ProcessedStep_Upd]
 	@ConfigID INT,
 	@CurrentStep TINYINT,
@@ -10,11 +10,12 @@ AS
 /*
 	Created: 20220913@Eden
 	Task : Update Dep_Initial_ProductConfig.ProcessedStep
-	DB: DBCUST/CUSTDB
+	DB: DBGLOB-GlobCustDB
 	Original:
 
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648]
+	- 20250120@Tacy: Move to GlobCustDB [RedmineID: #216870]
 
 	Parameter Definition
 
