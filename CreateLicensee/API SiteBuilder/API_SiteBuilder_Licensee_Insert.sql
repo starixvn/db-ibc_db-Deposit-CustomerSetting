@@ -38,6 +38,7 @@ AS
 		- 20241009@Helios : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20241230@Virgil : Add new parameter SiteType [RedmineID: #215391]
 		- 20250109@Virgil : HotFix - Missing handle PT for Jackpot Contribution bettype [Redmine: #216610]
+		- 20250326@Tacy : HotFix - Missing handle PT for Sports Lottery [Redmine: #221792]
 
 	Param's Explanation: 
 	Sample:
@@ -173,7 +174,7 @@ BEGIN
 					)
 
 		INSERT INTO @tmpBetSetting(ProductID, Currency, Sporttype,Bettype,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch)
-		SELECT ProductID, Currency, Sporttype,Bettype,MinBet,MaxBet,MPM,MPB
+		SELECT ProductID, bs.Currency, Sporttype,Bettype,MinBet,MaxBet,MPM,MPB
 			,MPPM = CASE WHEN ProductID = 1 THEN ISNULL(MPPM, MPM * 8) ELSE MPPM END -- if SB do not input MaxPayoutPerMatch yet, set = MaxPerMatch * 8 by default
 		FROM OPENJSON(@ProductBetSetting) WITH (
 						 ProductID INT  '$.ProductID'
@@ -185,7 +186,9 @@ BEGIN
 						,MPM MONEY	'$.MPM'
 						,MPB MONEY	'$.MPB'
 						,MPPM MONEY '$.MPPM'
-					)
+					) AS bs
+		INNER JOIN #CustomerList ci ON ci.currency = bs.currency AND ci.roleid = 4
+
 	END TRY
 	BEGIN CATCH
 		SELECT  @ErrMsg = N'Invalid Json Input'	, @ErrCode = 3 ;	
@@ -198,13 +201,25 @@ BEGIN
 		INNER JOIN Dep_ProductSettingType pt WITH(NOLOCK) ON sp.SettingType = pt.SettingType
 
 	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch,Sporttype,Bettype, PT, ProductName, Comm)
+	SELECT sbs.ProductID ,bs.Currency, bs.MinBet ,bs.MaxBet ,bs.MaxPerMatch ,bs.MaxPerNumber,bs.MaxPayoutPerMatch
+		,bs.Sporttype ,bs.Bettype
+		,pt.PT, p.ProductName, co.Comm
+	FROM #SportBettypeSetting sbs
+		LEFT JOIN @tmpPT pt ON pt.ProductID=sbs.ProductID
+		LEFT JOIN @tmpBetSetting bs ON bs.ProductID = sbs.ProductID
+		LEFT JOIN Products p WITH(NOLOCK) ON p.ProductID = sbs.ProductID
+		LEFT JOIN @tmpComm co ON p.ProductID = co.ProductID
+	WHERE sbs.SettingName='Product Status'
+		AND NOT (pt.ProductID IS NULL AND bs.ProductID IS NULL AND co.ProductID IS NULL)
+	UNION ALL
 	SELECT pt.ProductID ,bs.Currency ,bs.MinBet ,bs.MaxBet ,bs.MaxPerMatch ,bs.MaxPerNumber,bs.MaxPayoutPerMatch ,bs.Sporttype ,bs.Bettype
 		,pt.PT, p.ProductName, co.Comm
 	FROM @tmpPT pt
 		INNER JOIN @tmpBetSetting bs ON bs.ProductID = pt.ProductID
 		LEFT JOIN Products p WITH(NOLOCK) ON pt.ProductID = p.ProductID
-		INNER JOIN #CustomerList ci ON ci.currency = bs.currency AND ci.roleid = 4
 		LEFT JOIN @tmpComm co ON pt.ProductID = co.ProductID
+	WHERE pt.ProductID=1
+	
 	-------------------------------------------------------------------------------------------------
 	DECLARE @CurrencyName NVARCHAR(50), @Currency INT ,@Super_RollBack VARCHAR(MAX) = '', @srecommend INT, @AgentID INT,
 		@ProductID INT, @SporttypeID INT, @BettypeID INT, @bitmapOrder INT, @BetLimit VARCHAR(MAX), @PT_XML VARCHAR(MAX), @PT SMALLMONEY, @Discount_XML VARCHAR(MAX),
@@ -260,6 +275,12 @@ BEGIN
 	FROM #Product a
 		INNER JOIN #SportBettypeSetting sp ON a.ProductID = sp.ProductID
 	WHERE sp.SettingType = 8
+
+	--Get final products list before create setting:
+	DELETE p
+	FROM #Product p
+	WHERE (BetLimitSettingType IS NOT NULL AND (p.MinBet IS NULL OR p.MaxBet IS NULL))
+	   OR (PTSettingType IS NOT NULL AND p.PT IS NULL) 
 
 	IF EXISTS( SELECT 1 FROM #CustomerList WHERE Currency = 20 AND roleid = 4)
 	BEGIN

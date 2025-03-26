@@ -19,6 +19,8 @@ AS
 	Revisions: 
 		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
 		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified OddsBoostAdj [redmine: #207474]
+		- 20250326@Tacy : HotFix - Missing handle PT for Sports Lottery [Redmine: #221792]
+
 	Param's Explanation: 
 		Sample Format:
 		DECLARE @ErrCode INT = 0 , @ErrMsg NVARCHAR(2000) = '',@Usernames_Register VARCHAR(MAX)
@@ -59,6 +61,9 @@ BEGIN
 	DECLARE @tmpBetSetting TABLE(ProductID INT,Currency INT,Sporttype INT,Bettype INT
 			,MinBet MONEY,MaxBet MONEY,MaxPerMatch MONEY,MaxPerNumber MONEY,MaxPayoutPerMatch MONEY)
 
+	CREATE TABLE #SportBettypeSetting(ProductID	smallint,SportType smallint,Bettype smallint,IsLive bit,SettingType	tinyint,SettingName	VARCHAR(30))
+	CREATE CLUSTERED INDEX IX_TmpSportBettypeSetting ON #SportBettypeSetting(SettingName,ProductID)
+
 	CREATE TABLE #Product(
 		ProductID INT, Currency INT, Sporttype INT, Bettype INT 
 		, MinBet MONEY, MaxBet MONEY, MaxPerMatch MONEY, MaxPerNumber MONEY, MaxPayoutPerMatch MONEY
@@ -94,13 +99,32 @@ BEGIN
 		SELECT  @ErrMsg = N'Invalid Json Input'	, @ErrCode = 3 ;	
 		RETURN
 	END CATCH
+
+	--------------------------------------------------------------------------------------
+	INSERT INTO #SportBettypeSetting(ProductID,SportType,Bettype,IsLive	,SettingType,SettingName)
+	SELECT sp.ProductID,sp.SportType,sp.Bettype,sp.IsLive,sp.SettingType,pt.SettingName
+	FROM dbo.f_Dep_CustSetting_SportBetTypeSettingSelect(NULL,NULL,@SettingStatus)  sp
+		INNER JOIN Dep_ProductSettingType pt WITH(NOLOCK) ON sp.SettingType = pt.SettingType
+	
 	--------------------------------------------------------------------------------------
 	INSERT INTO #Product(ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch,Sporttype,Bettype, PT, ProductName)
-	SELECT pt.ProductID ,Currency ,MinBet ,MaxBet ,MaxPerMatch ,MaxPerNumber,MaxPayoutPerMatch ,Sporttype ,Bettype
+	SELECT sbs.ProductID ,bs.Currency, bs.MinBet ,bs.MaxBet ,bs.MaxPerMatch ,bs.MaxPerNumber,bs.MaxPayoutPerMatch
+		,bs.Sporttype ,bs.Bettype
 		,pt.PT, p.ProductName
-	FROM @tmpPT pt
-		LEFT JOIN @tmpBetSetting bs ON bs.ProductID = pt.ProductID
-		LEFT JOIN Products p WITH(NOLOCK) ON pt.ProductID = p.ProductID
+	FROM #SportBettypeSetting sbs
+		LEFT JOIN @tmpPT pt ON pt.ProductID=sbs.ProductID
+		LEFT JOIN @tmpBetSetting bs ON bs.ProductID = sbs.ProductID
+		LEFT JOIN Products p WITH(NOLOCK) ON p.ProductID = sbs.ProductID
+	WHERE sbs.SettingName='Product Status'
+		AND NOT (pt.ProductID IS NULL AND bs.ProductID IS NULL)
+	UNION ALL
+	SELECT pt.ProductID ,bs.Currency, bs.MinBet ,bs.MaxBet ,bs.MaxPerMatch ,bs.MaxPerNumber,bs.MaxPayoutPerMatch
+		,bs.Sporttype ,bs.Bettype
+		,pt.PT, p.ProductName
+	FROM @tmpPT pt 
+		LEFT JOIN @tmpBetSetting bs ON bs.ProductID = pt.ProductID 
+		LEFT JOIN Products p WITH(NOLOCK) ON p.ProductID = pt.ProductID
+	WHERE pt.ProductID=1
 
 	------------------------------------Validate data-----------------------------------------------------------
 	--Product does not support
