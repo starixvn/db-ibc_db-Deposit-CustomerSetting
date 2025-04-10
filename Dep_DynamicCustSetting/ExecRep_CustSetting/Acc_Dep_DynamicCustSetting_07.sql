@@ -1,5 +1,10 @@
-/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap" viewers="" isFunction="0" isNested="1"></info>*/
- /*
+/*<info serverAlias="DBCUST-CustDB" executers="wsv_nap,svc_tig" viewers="" isFunction="0" isNested="1"></info>*/
+ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_07]
+		@CustList	VARCHAR(MAX) = NULL,
+		@ErrMsg		NVARCHAR(200)= ''	OUTPUT
+
+AS
+/*
 	Created: 20220517@Tacy
 	Task : Insert history of member bet setting for Deposit
 	DB: DBCust/CustDB
@@ -7,20 +12,16 @@
 
 	Revisions:
 		- 20220517@Tacy: Initial SP [RedmineID: #170739]
+		- 20241205@Tacy: Capture old value - MaxPerNumber [RedmineId: #199571]
 
 	Param's Explanation:
 	• @CustList:
 		<root>
-			<r CustID= ''1400001''  SportType=''175'' BetType=''7901'' MaxBet=''600''  MaxPerMatch=''1800'' StakeLevelList=''NULL''  UpdateTime=''2022-03-10 04:10:10.000''/>
-			<r CustID= ''23700002'' SportType=''200'' BetType=''1611'' MaxBet=''NULL'' MaxPerMatch=''NULL'' StakeLevelList=''1191'' UpdateTime=''2022-03-10 04:10:10.000''/>
+			<r CustID= "1400001"  SportType="175" BetType="7901" MaxBet="600"  MaxPerMatch="1800"  MaxPerNumber="NULL" StakeLevelList="NULL" UpdateTime="2022-03-10 04:10:10.000"/>
+			<r CustID= "23700002" SportType="200" BetType="1611" MaxBet="NULL" MaxPerMatch="NULL"  MaxPerNumber="NULL" StakeLevelList="1191" UpdateTime="2022-03-10 04:10:10.000"/>
+			<r CustID= "23700002" SportType="161" BetType="81"	 MaxBet="600"  MaxPerMatch="1800"  MaxPerNumber="1800" StakeLevelList="1191" UpdateTime="2022-03-10 04:10:10.000"/>
 		</root>
- */
- 
- ALTER PROCEDURE [dbo].[Acc_Dep_DynamicCustSetting_07]
-		@CustList	VARCHAR(MAX) = NULL,
-		@ErrMsg		NVARCHAR(200)= ''	OUTPUT
-
-AS
+*/
 BEGIN
 	IF @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','DB233','DB230\SQLSERVER2008R2','TESTDBCUST')
 	BEGIN
@@ -37,6 +38,7 @@ BEGIN
 		,	BetType			INT
 		,	MaxBet			MONEY
 		,	MaxPerMatch		MONEY
+		,	MaxPerNumber	MONEY
 		,	StakeLevelList	VARCHAR(200)
 		,	UpdateTime		DATETIME
 		,	PRIMARY KEY CLUSTERED (CustID, SportType, BetType, UpdateTime)
@@ -57,10 +59,11 @@ BEGIN
 	EXEC sp_xml_preparedocument @iDoc OUTPUT
 		, @xml
 
-	INSERT INTO #tmpCustList(CustID, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList, UpdateTime)
+	INSERT INTO #tmpCustList(CustID, SportType, BetType, MaxBet, MaxPerMatch, MaxPerNumber, StakeLevelList, UpdateTime)
 	SELECT CustID, SportType, BetType
 		, CASE WHEN ISNUMERIC(MaxBet)=1			THEN MaxBet ELSE NULL END MaxBet
 		, CASE WHEN ISNUMERIC(MaxPerMatch)=1	THEN MaxPerMatch ELSE NULL END MaxPerMatch
+		, CASE WHEN ISNUMERIC(MaxPerNumber)=1	THEN MaxPerNumber ELSE NULL END MaxPerNumber
 		, CASE WHEN StakeLevelList<>'NULL'		THEN StakeLevelList ELSE NULL END StakeLevelList
 		, UpdateTime
 	FROM OPENXML(@iDoc, '/root/r', 1) WITH (
@@ -69,6 +72,7 @@ BEGIN
 		,	BetType			INT
 		,	MaxBet			VARCHAR(100)
 		,	MaxPerMatch		VARCHAR(100)
+		,	MaxPerNumber	VARCHAR(100)
 		,	StakeLevelList	VARCHAR(200)
 		,	UpdateTime		DATETIME
 		)
@@ -96,8 +100,8 @@ BEGIN
 	END
 
 	INSERT INTO Dep_CustMaxBetSetting_History 
-		  (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldStakeLevelList, UpdateTime)
-	SELECT CustID, SportType, BetType, MaxBet, MaxPerMatch, StakeLevelList, UpdateTime
+		  (CustID, SportType, BetType, OldMaxBet, OldMaxPerMatch, OldMaxPerNumber, OldStakeLevelList, UpdateTime)
+	SELECT CustID, SportType, BetType, MaxBet, MaxPerMatch, MaxPerNumber, StakeLevelList, UpdateTime
 	FROM #tmpCustList
 
 	--ROLLBACK

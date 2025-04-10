@@ -21,6 +21,7 @@ AS
 		- 20240705@Johnson: Apply In-house Replication for Deposit Customer Setting [redmine:#207025]
 		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 		- 20241001@Johnson: Enhance sp [redmine: #211130]
+		- 20241213@Tacy: Capture old value - MaxPerNumber [RedmineId: #199571]
 	Param's Explanation:
 	-- @SettingType : 2 Bet Limit , 11  New Bet limit
 */
@@ -66,6 +67,7 @@ BEGIN
 		, BetType			INT
 		, MaxBet			MONEY
 		, MaxPerMatch		MONEY
+		, MaxPerNumber		MONEY
 		, UpdateTime		DATETIME
 		)
 
@@ -117,7 +119,7 @@ BEGIN
 						, main.maxpermatch	= tmp.MaxperMatch
 						, main.RepUpdateTime = dbo.f_GetDateTime2()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-						INTO @History_BetLimitTbl
+						INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 					FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK)
 						INNER JOIN #tempMem tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 					WHERE ID >= @StartRow AND ID <= @StopRow
@@ -216,7 +218,7 @@ BEGIN
 						, main.maxbet		= tmp.MaxBet
 						, main.RepUpdateTime = dbo.f_GetDateTime2()
 					OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-						INTO @History_BetLimitTbl
+						INTO @History_BetLimitTbl(CustID, SportType, BetType, MaxBet, MaxPerMatch, UpdateTime)
 					FROM dbo.Dep_CustBetSetting_Member main WITH(ROWLOCK)
 						INNER JOIN #tempMem tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 					WHERE ID >= @StartRow AND ID <= @StopRow
@@ -326,8 +328,8 @@ BEGIN
 					, main.MaxPerNumber		= tmp.MaxPerNumber
 					, main.MaxPayoutPerMatch	= tmp.MaxPayoutPerMatch
 					, main.RepUpdateTime = dbo.f_GetDateTime2()
-				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, GETDATE()
-					INTO @History_BetLimitTbl
+				OUTPUT deleted.CustID, deleted.SportType, deleted.BetType, deleted.MaxBet, deleted.MaxPerMatch, deleted.MaxPerNumber, GETDATE()
+					INTO @History_BetLimitTbl (CustID, SportType, BetType, MaxBet, MaxPerMatch, MaxPerNumber, UpdateTime)
 				FROM dbo.Dep_CustBetSettingGame_Member main WITH(ROWLOCK)
 					INNER JOIN #tempMem tmp	ON main.CustID=tmp.CustID AND tmp.SportType = main.sporttype AND tmp.BetType = main.bettype
 				WHERE ID >= @StartRow AND ID <= @StopRow
@@ -348,6 +350,7 @@ BEGIN
 											AND new.BetType=old.BetType
 											AND new.MaxBet=old.MaxBet
 											AND new.MaxPerMatch=old.MaxPerMatch
+											AND new.MaxPerNumber=old.MaxPerNumber
 
 				--Insert history bet setting
 				IF EXISTS (SELECT 1 FROM @History_BetLimitTbl)
@@ -357,6 +360,7 @@ BEGIN
 											BetType		AS '@BetType',
 											MaxBet		AS '@MaxBet',
 											MaxPerMatch	AS '@MaxPerMatch',
+											MaxPerNumber AS '@MaxPerNumber',
 											'NULL'		AS '@StakeLevelList',
 											UpdateTime	AS '@UpdateTime'
 									 FROM @History_BetLimitTbl

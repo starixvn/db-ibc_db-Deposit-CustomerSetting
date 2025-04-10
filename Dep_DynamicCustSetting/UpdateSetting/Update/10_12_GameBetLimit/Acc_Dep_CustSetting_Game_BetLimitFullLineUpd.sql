@@ -22,6 +22,8 @@ AS
 		- 20230722@Winfred: NAP LM - Enhance performance when adjusting betlimit for big licensees  [redmine:#195079]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
 		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20241213@Tacy: Insert history of member bet setting (Number Game only) [RedmineId: #199571]
+
 	Param's Explanation:
 
 	@BetLimit	= '<ROOT>
@@ -45,7 +47,8 @@ BEGIN
 	DECLARE @logSpData		NVARCHAR(MAX)
 		, @logSpData_Old	NVARCHAR(MAX)
 		, @xml				XML
-		
+		, @CustList			NVARCHAR(MAX)
+
 	DECLARE @OldBetLimitTbl TABLE (
 		SportType			INT
 		, BetType			INT
@@ -55,6 +58,7 @@ BEGIN
 		, MaxPerNumber		MONEY
 		, MaxPayoutPerMatch	MONEY
 		)
+	
 	DECLARE @NewBetLimitTbl TABLE (
 		SportType			INT
 		, BetType			INT
@@ -63,6 +67,16 @@ BEGIN
 		, MaxPerMatch		MONEY
 		, MaxPerNumber		MONEY
 		, MaxPayoutPerMatch	MONEY
+		)
+	
+	DECLARE @History_BetLimitTbl TABLE (
+		CustID				INT
+		, SportType			INT
+		, BetType			INT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, MaxPerNumber		MONEY
+		, UpdateTime		DATETIME
 		)
 
 	DECLARE @ProductID		TINYINT,
@@ -217,6 +231,36 @@ BEGIN
 				)
 				AND main.AgentID = @AgentID
 
+		INSERT INTO @History_BetLimitTbl (CustID, SportType, BetType, MaxBet, MaxPerMatch, MaxPerNumber, UpdateTime)
+		SELECT c.custid, old.SportType, old.BetType, old.MaxBet, old.MaxPerMatch, old.MaxPerNumber, GETDATE()
+		FROM Customer c WITH (NOLOCK)
+		INNER JOIN Dep_CustSettingMode m WITH (NOLOCK) ON m.CustID=c.custid
+		CROSS APPLY (SELECT * FROM @OldBetLimitTbl t) old
+		WHERE m.IsGroupedBetLimit=1 AND c.roleid=1
+			AND c.recommend = @AgentID
+			AND old.SportType=161
+		
+		--Insert history bet setting
+		IF EXISTS (SELECT 1 FROM @History_BetLimitTbl old)
+		BEGIN
+			SET @CustList = (SELECT CustID		AS '@CustID',
+									SportType	AS '@SportType',
+									BetType		AS '@BetType',
+									MaxBet		AS '@MaxBet',
+									MaxPerMatch	AS '@MaxPerMatch',
+									MaxPerNumber AS '@MaxPerNumber',
+									UpdateTime	AS '@UpdateTime'
+							 FROM @History_BetLimitTbl
+							 FOR XML PATH ('r'), ROOT ('root')
+							)
+
+			EXECUTE Acc_Dep_DynamicCustSetting_07  @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+			IF @ErrMsg<>''
+				RETURN
+		END
+
+		--individual setting
 		EXEC Acc_Dep_DynamicCustSetting_02				
 				@CustID=@AgentID,
 				@BetLimit=@BetLimit,

@@ -1,4 +1,4 @@
-﻿/*<info serverAlias="DBCUST-CUSTDB" executers="Dot_Admin,svc_tig,svc_tig" viewers="" isFunction="0"></info>*/
+﻿/*<info serverAlias="DBCUST-CUSTDB" executers="svc_tig" viewers="" isFunction="0"></info>*/
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerUpdMemBetSettingGame_DCS]  
 	@CustID INT, --MemberID  
 	@Sporttype SMALLINT,
@@ -26,6 +26,7 @@ AS
 		- 20220415@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898]
 		- 20240318@Johnson: Write log by service broker [redmine: #199517]
 		- 20240708@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
+		- 20241213@Tacy: Capture old value - MaxPerNumber [RedmineId: #199571]
 	Param's Explanation:  
 
 	Excution sample: 
@@ -45,6 +46,16 @@ BEGIN
 	DECLARE @ErrAcc VARCHAR(4000), @ErrType VARCHAR(4000), @UserName VARCHAR(30), @UplineClosed BIT  
 	DECLARE @LogSPData VARCHAR(5000), @TrackingValue2 VARCHAR(5000) 
 	DECLARE @RoleID TINYINT, @recommend INT, @mrecommend INT, @srecommend INT, @IsGroupedBetLimit BIT, @Settingtype TINYINT
+
+	DECLARE @History_BetLimitTbl TABLE (
+		CustID				INT
+		, SportType			INT
+		, BetType			INT
+		, MaxBet			MONEY
+		, MaxPerMatch		MONEY
+		, MaxPerNumber		MONEY
+		, UpdateTime		DATETIME
+		)
 
 	SET @startRun = GETDATE()    
 
@@ -282,9 +293,10 @@ BEGIN
 	END  
 
 	--update new settings
+	DECLARE @UpdateTime	DATETIME
+
 	IF @IsGroupedBetLimit = 0
 	BEGIN
-
 		UPDATE dbo.Dep_CustBetSettingGame_Member WITH (ROWLOCK, UPDLOCK)  
 		SET MinBet = @MinBet,  
 			MaxBet = @MaxBet,
@@ -295,6 +307,8 @@ BEGIN
 		WHERE custid = @CustID 
 			AND SportType = @Sporttype 
 			AND BetType = @Bettype
+		
+		SET @UpdateTime = GETDATE()
 	END
 	ELSE
 	IF @IsGroupedBetLimit = 1 --> Break group
@@ -305,6 +319,8 @@ BEGIN
 		WHERE NOT EXISTS(	SELECT TOP 1 1 
 							FROM Dep_CustBetSettingGame_Member m WITH(NOLOCK) 
 							WHERE m.CustID = @CustID AND m.SportType = @SportType AND m.BetType = @BetType)
+		
+		SET @UpdateTime = GETDATE()
 
 		--Insert remain setting from group setting
 		INSERT INTO Dep_CustBetSettingGame_Member(CustID,SportType,BetType,MinBet,MaxBet,MaxPerMatch,MaxPerNumber,MaxPayoutPerMatch,RepUpdateTime)
@@ -321,6 +337,31 @@ BEGIN
 			AND IsGroupedBetLimit = 1
 	END	
   
+	--Insert history bet setting
+	IF @Sporttype=161
+	AND NOT (@Old_MaxBet = @MaxBet 
+		AND @Old_MaxPerMatch = @MaxPerMatch 
+		AND @Old_MaxPerNumber = @MaxPerNumber)
+	BEGIN
+		DECLARE @CustList	VARCHAR(MAX)
+
+		SET @CustList = (SELECT @CustID			AS '@CustID',
+								@SportType		AS '@SportType',
+								@BetType		AS '@BetType',
+								@Old_MaxBet			AS '@MaxBet',
+								@Old_MaxPerMatch	AS '@MaxPerMatch',
+								@Old_MaxPerNumber	AS '@MaxPerNumber',
+								@UpdateTime		AS '@UpdateTime'
+						FOR XML PATH ('r'), ROOT ('root')
+						)
+
+		EXECUTE Acc_Dep_DynamicCustSetting_07 @CustList=@CustList, @ErrMsg=@ErrMsg OUTPUT
+
+		IF @ErrMsg<>''
+			--SELECT @ErrCode = 99
+			RETURN
+	END
+
 	SELECT @LogSPData =	'<R Sport="'+ COALESCE(CAST(@SportType AS VARCHAR(50)),SPACE(1)) + '" ' +  
 						'BT="'+ COALESCE(CAST(@Bettype AS VARCHAR(50)),SPACE(1)) + '" ' +  	
 						'Min="'+ COALESCE(CAST(@minbet AS VARCHAR(50)),SPACE(1)) + '" ' +  
