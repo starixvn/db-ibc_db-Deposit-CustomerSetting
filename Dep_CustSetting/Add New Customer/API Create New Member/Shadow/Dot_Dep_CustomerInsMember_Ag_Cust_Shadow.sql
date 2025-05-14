@@ -2,8 +2,6 @@
 ALTER PROCEDURE [dbo].[Dot_Dep_CustomerInsMember_Ag_Cust_Shadow]     
 	@CustID INT,    
 	@Username VARCHAR(30),
-	@UserName2 VARCHAR(50),
-	@RealCustID INT,    
 	@AgentID INT,    
 	@ErrCode INT = 0 OUTPUT,    
 	@ErrMsg NVARCHAR(2000) = '' OUTPUT,
@@ -16,10 +14,11 @@ AS
 	Refer: Dot_Dep_CustomerInsMember_Ag_Cust_Main
 	    
 	Revisions:    
-		 - 20240404@Tacy: Deposit - Integrate Saba Coin Wallet [Redmine: #202273] 
-		 - 20240604@Tacy: Change format Username [Redmine: #202273] 
-		 - 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
-		 - 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified WriteLog , BEGIN TRY - CATCH [redmine: #207474]
+		- 20240404@Tacy: Deposit - Integrate Saba Coin Wallet [Redmine: #202273] 
+		- 20240604@Tacy: Change format Username [Redmine: #202273] 
+		- 20240705@Eden  : Scale out DBCUST - Licensee Customer in GlobCustDB [redmine: #207474]
+		- 20240920@Helios  : Scale out DBCUST - Licensee Customer in GlobCustDB - Modified WriteLog , BEGIN TRY - CATCH [redmine: #207474]
+		- 20241219@Tacy: SabaCoins - Phase 02 [redmine: #215807]
 
 	Param's Explanation:    
 		* For TEST: Real Currency --> create shadow SBC
@@ -38,7 +37,6 @@ BEGIN
 	SET NOCOUNT ON;    
 	    
 	DECLARE	 @currency INT,
-		@CustCurrency INT,	--currency's real cust
 		@recommend INT,    
 		@mrecommend INT,    
 		@srecommend INT,     
@@ -46,19 +44,13 @@ BEGIN
 		@Password VARCHAR(40),
 		@pwdexpiry DATETIME,
 		@matchlimit SMALLMONEY,    
-		@virtualmultiplier SMALLMONEY  
-	    
+		@virtualmultiplier SMALLMONEY
+	   
+	SELECT @Password='8058095B7DDB08A608811097E5DB8D'
+		, @pwdexpiry = dateadd(dd, 30, getdate()) 
+
 	--Init param    
 	SELECT @ErrCode = 0, @ErrMsg = ''
-	    
-	SELECT @RealCustID = custid 
-		, @Password=userpwd
-		, @pwdexpiry = dateadd(dd, 30, getdate())  
-		, @CustCurrency = currency
-	FROM Customer c WITH (NOLOCK)
-	WHERE custid = @RealCustID
-		AND roleid=1 
-		AND site <> 'SabaCoins'
 
 	SELECT    
 		 @srecommend = ci.srecommend,    
@@ -72,8 +64,8 @@ BEGIN
 		INNER JOIN customer c WITH(NOLOCK) ON ci.custid = c.custid    
 	WHERE ci.CustID = @AgentID AND ci.roleid = 2 
 		AND c.site='SabaCoins' 
-		AND c.currency= CASE WHEN @CustCurrency<>20 THEN 213 --SBC
-							 ELSE 72 END	--YNG : for TEST
+		AND c.currency IN (213	--SBC
+						  , 72 )--YNG : for TEST
 	-----------------------------------------------    
 	--Insert general data     
 	EXEC dbo.Dot_Dep_CustomerInsUserInfo
@@ -95,7 +87,7 @@ BEGIN
 		@Language = 'E',    
 		@ErrCode = @ErrCode OUTPUT,    
 		@ErrMsg = @ErrMsg OUTPUT,
-		@username2 = @username2,
+		@username2 = NULL,
 		@ErrExtraInfo = @ErrExtraInfo OUTPUT
 
 	IF @ErrCode <> 0    
@@ -105,7 +97,7 @@ BEGIN
 		--SportBook Setting
 		DECLARE @DCSErrCode INT = 0
 		EXEC dbo.Acc_Dep_DynamicCustSetting_00
-				  @CustID				= @CustID
+				  @CustID			= @CustID
 				, @SuperID			= @srecommend
 				, @MasterID			= @mrecommend
 				, @AgentID			= @recommend
@@ -179,7 +171,6 @@ BEGIN
 	'creator="'+ coalesce(cast(@recommend as varchar(50)),space(1)) + '" ' +    
 	'ErrCode="'+ coalesce(cast(@ErrCode as varchar(50)),space(1)) + '" ' +    
 	'username="'+ coalesce(cast(@username as varchar(30)),space(1)) + '" ' +    
-	'username2="'+ coalesce(cast(@UserName2 as varchar(50)),space(1)) + '" ' +   
 	'ErrMsg="'+ coalesce(cast(@ErrMsg as varchar(4000)),space(1)) + '" />'    
 
 	INSERT INTO @LogInfo_Tbl(UserID, CustID,ActionID,TrackingValue)
