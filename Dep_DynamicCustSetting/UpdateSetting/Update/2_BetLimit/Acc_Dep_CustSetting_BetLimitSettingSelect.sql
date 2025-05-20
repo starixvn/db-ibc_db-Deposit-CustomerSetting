@@ -13,6 +13,7 @@ AS
 	Revision:
 		- 20170302@Helen: Betradar Virtual Sports  -Integration for Cash [Redmine: 77274]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20250417@Harmony: Upgrade exchangeid datatype [RedmineID: #222339]
 		
 	Param's Explanation:
 
@@ -21,7 +22,7 @@ AS
 	*/
 BEGIN
 	
-	DECLARE @Currency TINYINT, @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT
+	DECLARE @Currency SMALLINT, @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT
 	
 	CREATE TABLE #SportBettypeFilter (productID INT,SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
 	
