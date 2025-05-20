@@ -15,12 +15,13 @@ AS
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20220921@Winfred: Licensee DCS setting - HF Get multiple bet limit . [Feature #178013]
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
+		- 20250417@Harmony: Upgrade exchangeid datatype [RedmineID: #222339]
 		
 	Param's Explanation:
 		
 	*/
 BEGIN
-	DECLARE @Currency TINYINT, @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT	
+	DECLARE @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT	
 	CREATE TABLE #SportBettypeFilter (productID INT,SportType INT,Bettype INT,IsLive BIT)
 
 	INSERT INTO #SportBettypeFilter (productID,SportType,Bettype,IsLive)

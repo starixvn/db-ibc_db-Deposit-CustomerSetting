@@ -12,6 +12,7 @@ AS
 	- 20171113@Winnie: Update Customer's Stake Level Settings - [Redmine: #85113]	
 	- 20220826@Winfred: Hide Sportbook 2 in Product drop down list [redmine:#177081]
 	- 20240429@Tacy: Licensee DCS Setting - Integrate Exchange [RedmineID: #201239]
+	- 20250417@Harmony: Upgrade exchangeid datatype [RedmineID: #222339]
 	Param's Explanation:
 */
 
@@ -19,12 +20,12 @@ BEGIN
 	SET NOCOUNT ON
 
 	SELECT  ft.ProductID,p.ProductName,ft.SettingType			
-	FROM DBEXT.bodb02.dbo.Products p WITH(NOLOCK) 
+	FROM dbo.Products p WITH(NOLOCK) 
 		CROSS APPLY dbo.f_Dep_CustSetting_SportBetTypeSettingSelect (p.ProductID,NULL,@SettingStatus) ft
 	WHERE SettingType NOT IN (9)
 	UNION 
 	SELECT ft.ProductID,p.ProductName,0 AS SettingType
-	FROM DBEXT.bodb02.dbo.Products p WITH(NOLOCK) 
+	FROM  dbo.Products p WITH(NOLOCK) 
 		CROSS APPLY dbo.f_Dep_CustSetting_SportBetTypeSettingSelect (p.ProductID,7,@SettingStatus) ft
 END
 GO

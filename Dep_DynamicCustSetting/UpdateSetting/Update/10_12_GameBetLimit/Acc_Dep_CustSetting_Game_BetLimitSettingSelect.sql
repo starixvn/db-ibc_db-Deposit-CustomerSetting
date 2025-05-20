@@ -14,13 +14,14 @@ AS
 	Revision:
 		- 20220301@Eden: Deposit - Sportsbook - Revise customer settings [Redmine: #167898] 
 		- 20240429@Tacy: Apply @SettingStatus [RedmineID: #201239]
-		
+		- 20250417@Harmony: Upgrade exchangeid datatype [RedmineID: #222339]
+
 	Param's Explanation:
 
 	*/
 BEGIN
 	
-	DECLARE @Currency TINYINT, @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT, @IsGroupedBetLimit BIT
+	DECLARE @Currency SMALLINT, @RoleID INT, @srecommend INT, @mrecommend INT, @recommend INT, @UplineID INT, @IsGroupedBetLimit BIT
 	
 	CREATE TABLE #SportBettypeFilter (productID INT,SportType SMALLINT,Bettype SMALLINT,IsLive BIT)
 	
