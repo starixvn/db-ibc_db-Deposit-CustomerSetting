@@ -11,12 +11,24 @@ AS
 	DB: DBCUST/CustDB
 	Revisions:
 		- 20230704@Eden: Enhance for Scale Out [#179092]
+		- 20250403@Tacy: Enhance Archive service to adapt IHR [#222312]
 	Parameter:
 		@ActionID: 
 				7: Delete Customer Setting
 	
 */
 BEGIN
+	IF NOT (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+			AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		RETURN
+
+	DECLARE  @IsDelete_Dep_CustStakeLevel_Member		BIT = 1
+			,@IsDelete_Dep_CustBetSetting_Member		BIT = 1
+			,@IsDelete_Dep_CustDiscountSetting_Member	BIT = 1
+			,@IsDelete_Dep_CustPTSetting_Member			BIT = 1
+			,@BatchSize INT = 2000
+
 	CREATE TABLE #LstCustID(CustID INT)
 
 	IF @CustID <> -1 -- Update Specific custID
@@ -33,17 +45,99 @@ BEGIN
 
 	IF @ActionID = 7
 	BEGIN
-		IF dbo.f_CheckRepTable('CustVirtualSetting') = 1 DELETE CustVirtualSetting WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustBetSetting_Member') = 1 DELETE Dep_CustBetSetting_Member WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustDiscountSetting_Member') = 1 DELETE Dep_CustDiscountSetting_Member WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustProductSetting') = 1 DELETE Dep_CustProductSetting WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustProductStatus') = 1 DELETE Dep_CustProductStatus WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustPTSetting_Member') = 1 DELETE Dep_CustPTSetting_Member WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustSetting_AGCasino') = 1 DELETE Dep_CustSetting_AGCasino WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustSettingGame') = 1 DELETE Dep_CustSettingGame WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustSettingMode') = 1 DELETE Dep_CustSettingMode WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustStakeLevel_Member') = 1 DELETE Dep_CustStakeLevel_Member WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		IF dbo.f_CheckRepTable('Dep_CustBetSettingGame_Member') = 1 DELETE Dep_CustBetSettingGame_Member WHERE CustID IN (SELECT CustID FROM #LstCustID)
+		DELETE CustVirtualSetting 
+			OUTPUT deleted.custid, deleted.seqNo, dbo.f_GetDateTime2()
+			INTO CustVirtualSetting_Del_InHouse (custid, seqNo, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE Dep_CustProductStatus 
+			OUTPUT deleted.custid, dbo.f_GetDateTime2()
+			INTO Dep_CustProductStatus_Del_InHouse (custid, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE Dep_CustSetting_AGCasino 
+			OUTPUT deleted.custid, dbo.f_GetDateTime2()
+			INTO Dep_CustSetting_AGCasino_Del_InHouse (custid, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE Dep_CustSettingGame 
+			OUTPUT deleted.custid, deleted.SportType, deleted.BetType, dbo.f_GetDateTime2()
+			INTO Dep_CustSettingGame_Del_InHouse (custid, Sporttype, Bettype, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+		
+		DELETE Dep_CustSettingMode 
+			OUTPUT deleted.custid, dbo.f_GetDateTime2()
+			INTO Dep_CustSettingMode_Del_InHouse (custid, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE Dep_CustProductSetting 
+			OUTPUT deleted.custid, deleted.ProductId, dbo.f_GetDateTime2()
+			INTO Dep_CustProductSetting_Del_InHouse (custid, ProductId, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE Dep_CustBetSettingGame_Member 
+			OUTPUT deleted.custid, deleted.SportType, deleted.BetType, dbo.f_GetDateTime2()
+			INTO Dep_CustBetSettingGame_Member_Del_InHouse (custid, SportType, BetType, RepUpdateTime)
+		WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		WHILE (1=1)
+		BEGIN
+			IF @IsDelete_Dep_CustBetSetting_Member = 1  
+			BEGIN 
+				DELETE TOP (@BatchSize) rmv 
+					OUTPUT deleted.custid, deleted.SportType, deleted.BetType, dbo.f_GetDateTime2()
+					INTO Dep_CustBetSetting_Member_Del_InHouse (custid, SportType, BetType, RepUpdateTime)
+				FROM Dep_CustBetSetting_Member rmv
+				WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+				IF @@ROWCOUNT = 0  
+					SELECT @IsDelete_Dep_CustBetSetting_Member = 0  
+			END
+
+			IF @IsDelete_Dep_CustDiscountSetting_Member = 1  
+			BEGIN 
+				DELETE TOP (@BatchSize) rmv 
+					OUTPUT deleted.custid, deleted.SportType, deleted.BetType, dbo.f_GetDateTime2()
+					INTO Dep_CustDiscountSetting_Member_Del_InHouse (custid, SportType, BetType, RepUpdateTime)
+				FROM Dep_CustDiscountSetting_Member rmv
+				WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+				IF @@ROWCOUNT = 0  
+					SELECT @IsDelete_Dep_CustDiscountSetting_Member = 0  
+			END
+
+			IF @IsDelete_Dep_CustPTSetting_Member = 1  
+			BEGIN 
+				DELETE TOP (@BatchSize) rmv 
+				OUTPUT deleted.custid, deleted.SportType, deleted.BetType, deleted.IsLive, dbo.f_GetDateTime2()
+				INTO Dep_CustPTSetting_Member_Del_InHouse (custid, SportType, BetType, IsLive, RepUpdateTime)
+				FROM Dep_CustPTSetting_Member rmv
+				WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+				IF @@ROWCOUNT = 0  
+					SELECT @IsDelete_Dep_CustPTSetting_Member = 0  
+			END
+
+			IF @IsDelete_Dep_CustStakeLevel_Member = 1  
+			BEGIN 
+				DELETE TOP (@BatchSize) rmv 
+				OUTPUT deleted.custid, deleted.SportType, deleted.BetType, dbo.f_GetDateTime2()
+				INTO Dep_CustStakeLevel_Member_Del_InHouse (custid, SportType, BetType, RepUpdateTime)
+				FROM Dep_CustStakeLevel_Member rmv
+				WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+				IF @@ROWCOUNT = 0  
+					SELECT @IsDelete_Dep_CustStakeLevel_Member = 0  
+			END
+
+			IF  (@IsDelete_Dep_CustBetSetting_Member = 1)  
+			 OR (@IsDelete_Dep_CustPTSetting_Member = 1)  
+			 OR (@IsDelete_Dep_CustStakeLevel_Member = 1)  
+			 OR (@IsDelete_Dep_CustDiscountSetting_Member = 1)  
+				WAITFOR DELAY '00:00:00.1'
+			ELSE
+				BREAK;
+		END
 	END
 
 	DROP TABLE #LstCustID

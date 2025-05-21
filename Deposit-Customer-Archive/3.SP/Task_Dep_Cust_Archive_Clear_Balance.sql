@@ -20,6 +20,7 @@ AS
 		- 20230612@Eden: Enhance for Scale Out [#179092]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083] 
 		- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
+		- 20250515@Tacy: Enhance rollback Custinfo at DBARRCUT [Redmine: #222312]
 
 	Parameter:
 		
@@ -34,6 +35,8 @@ BEGIN
 	DECLARE @ErrCode INT, @Message VARCHAR(MAX), @ErrMsg VARCHAR(1000)
 	
 	DECLARE @LstCustID VARCHAR(MAX),@LogLstCustID VARCHAR(MAX), @LogMinCustID INT	
+
+	DECLARE @SQL_Custinfo NVARCHAR(MAX), @SQL_Customer NVARCHAR(MAX), @CustIDs VARCHAR(MAX)
 
 	CREATE TABLE #Dep_Customer_Archived(
 		[CustID] INT,
@@ -519,8 +522,14 @@ BEGIN
 		SELECT @Message = 'Exception error occurs while copying Customer/CustomerInfo to Archive DB: ' + ERROR_MESSAGE()
 
 		--Roll back data
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
+		SELECT @CustIDs = STRING_AGG(CAST(CustID AS VARCHAR(20)), ',')
+		FROM #Dep_Customer_Archived
+
+		SET @SQL_Custinfo = 'DELETE [Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE CustID IN (' + @CustIDs + ')'
+		EXEC (@SQL_Custinfo) AT DBARCCUST
+					
+		SET @SQL_Customer = 'DELETE [Bodb_Archive_Customer_Licensee].[dbo].[customer] WHERE CustID IN (' + @CustIDs + ')'
+		EXEC (@SQL_Customer) AT DBARCCUST
 
 
 		RAISERROR(@Message, 11, 1)
@@ -612,11 +621,14 @@ BEGIN
 			--Roll back data for members who can not transfer closing balance
 			IF EXISTS (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
 			BEGIN
-				DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] 
-				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
-			
-				DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer 
-				WHERE CustID IN (SELECT CustID FROM #Dep_Customer_Archived WHERE TransBalStastus=3)
+				SELECT @CustIDs = STRING_AGG(CAST(CustID AS VARCHAR(20)), ',')
+				FROM #Dep_Customer_Archived WHERE TransBalStastus = 3
+
+				SET @SQL_Custinfo = 'DELETE [Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE CustID IN (' + @CustIDs + ')'
+				EXEC (@SQL_Custinfo) AT DBARCCUST
+					
+				SET @SQL_Customer = 'DELETE [Bodb_Archive_Customer_Licensee].[dbo].[customer] WHERE CustID IN (' + @CustIDs + ')'
+				EXEC (@SQL_Customer) AT DBARCCUST
 			END
 
 
@@ -627,9 +639,14 @@ BEGIN
 		SELECT @Message = 'Exception error occurs while transfering remaining balance: ' + ERROR_MESSAGE()
 
 		--Roll back data
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
-		DELETE DBARCCUST.[Bodb_Archive_Customer_Licensee].[dbo].Customer WHERE custid IN (SELECT CustID FROM #Dep_Customer_Archived)
+		SELECT @CustIDs = STRING_AGG(CAST(CustID AS VARCHAR(20)), ',')
+		FROM #Dep_Customer_Archived
 
+		SET @SQL_Custinfo = 'DELETE [Bodb_Archive_Customer_Licensee].[dbo].[custInfo] WHERE CustID IN (' + @CustIDs + ')'
+		EXEC (@SQL_Custinfo) AT DBARCCUST
+					
+		SET @SQL_Customer = 'DELETE [Bodb_Archive_Customer_Licensee].[dbo].[customer] WHERE CustID IN (' + @CustIDs + ')'
+		EXEC (@SQL_Customer) AT DBARCCUST
 
 		--Transfer balance back to members
 		WHILE EXISTS(SELECT 1 FROM #Dep_Customer_Archived WHERE TransBalStastus=4)
