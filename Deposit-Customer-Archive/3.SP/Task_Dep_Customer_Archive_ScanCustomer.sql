@@ -23,7 +23,7 @@ AS
 		- 20230424@Tacy: Remove columns and code used by Colossus Bets, GD product [RedmineID: #188096]
 		- 20230612@Eden: Enhance for Scale Out [#179092]
 		- 20240509@Eden: Enhance SP [#179092]
-
+		- 20240912@Tacy: Exclude OddsBoostAdj dummy [#210672]
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
 		- @CheckBettrans_CustPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in bettrans/translog..
@@ -66,11 +66,14 @@ BEGIN
 	SELECT cust.custid, cust.username, cust.username2
 	FROM customer cust WITH (NOLOCK)
 	INNER JOIN custInfo ci (NOLOCK) ON cust.custid = ci.custid
+	OUTER APPLY (SELECT f.custid FROM dbo.f_Dep_DummyMember_Select(ci.srecommend) f
+				 WHERE f.custid=ci.custid) dm
 	WHERE cust.roleid = 1
 		AND cust.recommend = @agentID
 		AND (cust.creatdate < @MinBettingDate)
 		AND cust.srecommend IN (SELECT custid FROM Dep_CustSuper (NOLOCK))
 		AND ISNULL(BonusWalletFlag,0) = 0
+		AND dm.custid IS NULL  -- Remove account like BetTrade and CashOut, ClearBal, 01OddsAdj, OddsBoost
 		
 	DELETE FROM #Member
 	WHERE custid IN (SELECT custid FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH (NOLOCK))
@@ -81,9 +84,6 @@ BEGIN
 	-- Remove CustIDBalanceDummy out of the list betting member if exist
 	DELETE FROM #Member
 	WHERE custid = @custIDBalanceDummy
-	-- Remove account like BetTrade and CashOut, ClearBal, 01OddsAdj
-	DELETE FROM #Member
-	WHERE  username LIKE '%BetTrade%' OR username LIKE '%CashOut%' OR username LIKE '%ClearBal%' OR username LIKE '%01OddsAdj%'
 
 	DELETE m
 	FROM #Member m

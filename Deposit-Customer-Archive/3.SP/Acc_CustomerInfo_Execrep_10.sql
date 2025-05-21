@@ -18,6 +18,7 @@ AS
 		- 20230612@Eden: Enhance for Scale Out , move ActionID = 7 to sp Acc_Dep_DynamicCustSetting_11 [#179092]
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
 		- 20250113@Johnson: check inhouse for @ActionID = 5 [redmine: #207025]
+		- 20250403@Tacy: Enhance Archive service to adapt IHR [#222312]
 	Parameter:
 		@ActionID: 
 				1: Update Dep_Customer_Archived.status = archived
@@ -26,78 +27,34 @@ AS
 				4: Update Dep_Customer_Archived.status = reactivation
 				5: Delete Dep_Customer_Archived 
 				6: Delete CustInfo/Customer
-				7: Delete Customer Setting 
+				7: Delete Customer Setting (Dep_CustSpecialLevel)
 				8: Delete balance tables
 	
 */
 BEGIN
-	IF @CustID <> -1 --Update data for a specific customer
+	CREATE TABLE #LstCustID(CustID INT)
+
+	--get cust list
+	IF @CustID <> -1 -- Update Specific custID
 	BEGIN
-		IF @ActionID IN (1,2,3,4)
-		BEGIN
-			IF dbo.f_CheckRepTable('Dep_Customer_Archived') = 1
-			UPDATE Dep_Customer_Archived
-			SET status= CASE 
-							WHEN @ActionID = 1 THEN 'archived'
-							WHEN @ActionID = 2 THEN 'completed'
-							WHEN @ActionID = 3 THEN 'failed'
-							WHEN @ActionID = 4 THEN 'reactivation'
-						END
-			WHERE CustID = @CustID
-		END
-		ELSE IF @ActionID = 5
-		BEGIN
-			IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
-				AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
-			)			
-			DELETE Dep_Customer_Archived 
-			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
-			INTO Dep_Customer_Archived_Del_InHouse(CustID, RepUpdateTime)
-			WHERE CustID = @CustID
-		END
-		ELSE IF @ActionID = 6
-		BEGIN
-			IF dbo.f_CheckRepTable('Customer') = 1 DELETE Customer WHERE CustID = @CustID
-			IF dbo.f_CheckRepTable('custInfo') = 1 DELETE custInfo WHERE CustID = @CustID
-		END
-		ELSE IF @ActionID = 7
-		BEGIN
-			IF dbo.f_CheckRepTable('Dep_CustSpecialLevel') = 1 DELETE Dep_CustSpecialLevel WHERE CustID = @CustID
-		END
-		ELSE IF @ActionID = 8 
-			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS')  
-				   OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
-				   OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
-				   OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
-				   OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
-				   OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local  
-				   )  -- @DBTRANS => delete balance tables
-		BEGIN
-		
-			DELETE bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-			DELETE bodb02.dbo.BalDebitSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-
-			DELETE bodb02.dbo.BalCreditCasino WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-			DELETE bodb02.dbo.BalDebitCasino WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-
-			DELETE bodb02.dbo.BalCreditOthers WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-			DELETE bodb02.dbo.BalDebitOthers WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-
-			DELETE bodb02.dbo.BalCreditTransfer WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-			DELETE bodb02.dbo.BalDebitTransfer WITH(ROWLOCK,UPDLOCK)  WHERE CustID = @CustID
-		END
+		INSERT INTO #LstCustID(CustID) 
+		SELECT @CustID
 	END
-	ELSE
-	BEGIN --Update data for a list of customers
-		CREATE TABLE #LstCustID(CustID INT)
-
+	ELSE -- Update list of customer
+	BEGIN
 		INSERT INTO #LstCustID(CustID) 
 		SELECT value 
 		FROM string_split(@LstCustID,',')
+	END
 
+	--@ActionID
+	IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
+		AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
+		)
+		AND @ActionID < 8	
+	BEGIN
 		IF @ActionID IN (1,2,3,4)
 		BEGIN
-			IF dbo.f_CheckRepTable('Dep_Customer_Archived') = 1
 			UPDATE Dep_Customer_Archived
 			SET status= CASE 
 							WHEN @ActionID = 1 THEN 'archived'
@@ -105,13 +62,11 @@ BEGIN
 							WHEN @ActionID = 3 THEN 'failed'
 							WHEN @ActionID = 4 THEN 'reactivation'
 						END
+				,RepUpdateTime=dbo.f_GetDateTime2()
 			WHERE CustID IN (SELECT CustID FROM #LstCustID)
 		END
 		ELSE IF @ActionID = 5
-		BEGIN
-			IF (dbo.f_CheckServerName() = 1 -- run on DBCUST ONLY	
-				AND dbo.f_CheckEnvironment() = 'Active' -- run on KBT	
-			)			
+		BEGIN		
 			DELETE Dep_Customer_Archived 
 			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
 			INTO Dep_Customer_Archived_Del_InHouse(CustID, RepUpdateTime)
@@ -119,36 +74,47 @@ BEGIN
 		END
 		ELSE IF @ActionID = 6
 		BEGIN
-			IF dbo.f_CheckRepTable('Customer') = 1 DELETE Customer WHERE CustID IN (SELECT CustID FROM #LstCustID)
-			IF dbo.f_CheckRepTable('custInfo') = 1 DELETE custInfo WHERE CustID IN (SELECT CustID FROM #LstCustID)
+			DELETE Customer 
+			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+			INTO Customer_Del_InHouse(CustID, RepUpdateTime)
+			WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+			DELETE custInfo 
+			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+			INTO custInfo_Del_InHouse(CustID, RepUpdateTime)
+			WHERE CustID IN (SELECT CustID FROM #LstCustID)
 		END
 		ELSE IF @ActionID = 7
 		BEGIN
-			IF dbo.f_CheckRepTable('Dep_CustSpecialLevel') = 1 DELETE Dep_CustSpecialLevel WHERE CustID IN (SELECT CustID FROM #LstCustID)
+			DELETE Dep_CustSpecialLevel 
+			OUTPUT DELETED.custid, dbo.f_GetDateTime2()
+			INTO Dep_CustSpecialLevel_Del_InHouse(CustID, RepUpdateTime)
+			WHERE CustID IN (SELECT CustID FROM #LstCustID)
 		END
-		ELSE IF @ActionID = 8 
-			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DB66')  
-				   OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
-				   OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
-				   OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
-				   OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
-				   OR  @@SERVERNAME LIKE 'TESTSITEDB%'  --Local
-				   )  -- @DBTRANS => delete balance tables
-		BEGIN
-		
-			DELETE bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-			DELETE bodb02.dbo.BalDebitSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-
-			DELETE bodb02.dbo.BalCreditCasino WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-			DELETE bodb02.dbo.BalDebitCasino WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-
-			DELETE bodb02.dbo.BalCreditOthers WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-			DELETE bodb02.dbo.BalDebitOthers WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-
-			DELETE bodb02.dbo.BalCreditTransfer WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-			DELETE bodb02.dbo.BalDebitTransfer WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
-		END
-
-		DROP TABLE #LstCustID
 	END
+	ELSE IF @ActionID = 8 
+			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS')  
+				OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
+				OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
+				OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
+				OR  @@SERVERNAME LIKE 'SITDBSITEC%'  --SIT 
+				OR  @@SERVERNAME IN	('db67'	-- TESTDBGRP01L
+									, 'TESTSITEDB2'			   --Local TEST
+									,'db62\devsitedb', 'DEVDB061\DEVSITEDB2')  --Local DEV
+				)  -- @DBTRANS => delete balance tables
+	BEGIN
+		DELETE bodb02.dbo.BalCreditSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+		DELETE bodb02.dbo.BalDebitSports WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE bodb02.dbo.BalCreditCasino WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+		DELETE bodb02.dbo.BalDebitCasino WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE bodb02.dbo.BalCreditOthers WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+		DELETE bodb02.dbo.BalDebitOthers WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+
+		DELETE bodb02.dbo.BalCreditTransfer WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+		DELETE bodb02.dbo.BalDebitTransfer WITH(ROWLOCK,UPDLOCK)  WHERE CustID IN (SELECT CustID FROM #LstCustID)
+	END
+	
+	DROP TABLE #LstCustID
 END
