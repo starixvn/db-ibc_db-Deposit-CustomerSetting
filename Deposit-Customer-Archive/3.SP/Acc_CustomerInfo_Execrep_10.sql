@@ -19,6 +19,7 @@ AS
 		- 20240724@Elodie: Replace SiteDB [RedmineID: #207738]
 		- 20250113@Johnson: check inhouse for @ActionID = 5 [redmine: #207025]
 		- 20250403@Tacy: Enhance Archive service to adapt IHR [#222312]
+		- 20250516@Dave: Add Instance Name DBTRANS\INST2 [Redmine: #227628]
 	Parameter:
 		@ActionID: 
 				1: Update Dep_Customer_Archived.status = archived
@@ -93,7 +94,7 @@ BEGIN
 		END
 	END
 	ELSE IF @ActionID = 8 
-			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS')  
+			AND (@@SERVERNAME IN ('DBTRANS','SITDBTRANS','TESTDBTRANS','DBTRANS\INST2')  
 				OR  @@SERVERNAME LIKE 'DBGRP%'   -- PRO
 				OR  @@SERVERNAME LIKE 'SITDBGRP%'  --SIT 
 				OR  @@SERVERNAME LIKE 'DBSITEC%'   -- PRO
