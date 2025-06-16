@@ -20,7 +20,8 @@ AS
 		- 20230612@Eden: Enhance for Scale Out [#179092]
 		- 20230310@Helios: Customer Setting - Migrate Sportsbook to DCS -Remove column DisableEsports [RedmineID: #193083] 
 		- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
-		- 20250515@Tacy: Enhance rollback Custinfo at DBARRCUT [Redmine: #222312]
+		- 20250515@Tacy: Enhance rollback Custinfo at DBARCCUST [Redmine: #222312]
+		- 20250610@Tacy: Check Exchange ticket  [#RM:230025]
 
 	Parameter:
 		
@@ -352,12 +353,20 @@ BEGIN
 
 	CREATE TABLE #Active_Cust (CustID INT PRIMARY KEY)
 	CREATE TABLE #BettingMember_AGC(CustID INT PRIMARY KEY)
+	CREATE TABLE #BettingMember_Exchange(CustID INT PRIMARY KEY)
 
 	INSERT INTO #BettingMember_AGC(CustID)
 	SELECT custid
 	FROM OPENQUERY (DBPTCS, 'SELECT DISTINCT b.custid
 							 FROM bodb_PlaytechCS.dbo.bettrans_AGCasino b with (NOLOCK)
 							 WHERE transdate >= CONVERT(DATE,GETDATE() - 1)')
+	
+	--Bettrans_Exchange:
+	INSERT INTO #BettingMember_Exchange(CustID)
+	SELECT custid
+	FROM OPENQUERY (DBLIC, 'SELECT DISTINCT b.custid
+							FROM bodb_3rdProduct.dbo.Bettrans_Exchange b with (NOLOCK)
+							WHERE betPlaced >= CONVERT(DATE, DATEADD(HOUR, 12, GETDATE()) - 1)') -- convert: GMT-4 --> GMT+8
 
 	INSERT INTO #Active_Cust(custid)
 	SELECT CustID 
@@ -389,6 +398,9 @@ BEGIN
 	UNION
 	SELECT CustID 
 	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_AGC)
+	UNION
+	SELECT CustID 
+	FROM #Dep_Customer_Archived WHERE CustID IN (SELECT CustID FROM #BettingMember_Exchange)
 
 	IF EXISTS(SELECT 1 FROM #Active_Cust)
 	BEGIN
@@ -812,7 +824,7 @@ BEGIN
 				, @Status='Done'
 				, @Message=@Message
 
-	DROP TABLE #BettingMember_AGC
+	DROP TABLE #BettingMember_AGC, #BettingMember_Exchange
 	DROP TABLE #Dep_Customer_Archived
 END
 GO
