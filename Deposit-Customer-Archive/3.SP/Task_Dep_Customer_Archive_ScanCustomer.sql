@@ -24,6 +24,7 @@ AS
 		- 20230612@Eden: Enhance for Scale Out [#179092]
 		- 20240509@Eden: Enhance SP [#179092]
 		- 20240912@Tacy: Exclude OddsBoostAdj dummy [#210672]
+		- 20250610@Tacy: Check Exchange ticket  [#RM:230025]
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
 		- @CheckBettrans_CustPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in bettrans/translog..
@@ -60,6 +61,8 @@ BEGIN
 	)
 
 	CREATE TABLE #BettingMember_AGC(CustID INT PRIMARY KEY)
+	CREATE TABLE #BettingMember_Exchange(CustID INT PRIMARY KEY)
+
 
 -- 1.Get infor of all customer in Customer and custinfo table
 	INSERT INTO #Member (custid, username, username2)
@@ -164,6 +167,16 @@ BEGIN
 		DELETE FROM #Member
 		WHERE custid IN (SELECT custid FROM #BettingMember_AGC)
 
+		--Bettrans_Exchange:
+		INSERT INTO #BettingMember_Exchange(CustID)
+		SELECT custid
+		FROM OPENQUERY (DBLIC, 'SELECT DISTINCT b.custid
+								FROM bodb_3rdProduct.dbo.Bettrans_Exchange b with (NOLOCK)
+								WHERE betPlaced >= CONVERT(DATE, DATEADD(HOUR, 12, GETDATE()) - 1)') -- convert: GMT-4 --> GMT+8
+
+		DELETE FROM #Member
+		WHERE custid IN (SELECT custid FROM #BettingMember_Exchange)
+
 		-- 3. Update balance of all member in #Member (can apply batch processing)
 		WHILE(1=1)
 		BEGIN
@@ -208,5 +221,5 @@ BEGIN
 	DROP TABLE #tmpMember
 	DROP TABLE #BettingMember
 	DROP TABLE #Member
-	DROP TABLE #BettingMember_AGC
+	DROP TABLE #BettingMember_AGC, #BettingMember_Exchange
 END
