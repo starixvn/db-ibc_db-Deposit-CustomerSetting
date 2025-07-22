@@ -25,6 +25,8 @@ AS
 		- 20240509@Eden: Enhance SP [#179092]
 		- 20240912@Tacy: Exclude OddsBoostAdj dummy [#210672]
 		- 20250610@Tacy: Check Exchange ticket  [#RM:230025]
+		- 20250722@Tacy: Exclude the 'qatest' accounts  [#RM:233777]
+
 	Param's Explanation:
 		- @CheckStatement_DaysPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in statement
 		- @CheckBettrans_CustPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in bettrans/translog..
@@ -69,15 +71,16 @@ BEGIN
 	SELECT cust.custid, cust.username, cust.username2
 	FROM customer cust WITH (NOLOCK)
 	INNER JOIN custInfo ci (NOLOCK) ON cust.custid = ci.custid
+	INNER JOIN Dep_CustSuper cs with (NOLOCK) ON cs.custid=cust.srecommend
 	OUTER APPLY (SELECT f.custid FROM dbo.f_Dep_DummyMember_Select(ci.srecommend) f
 				 WHERE f.custid=ci.custid) dm
 	WHERE cust.roleid = 1
 		AND cust.recommend = @agentID
 		AND (cust.creatdate < @MinBettingDate)
-		AND cust.srecommend IN (SELECT custid FROM Dep_CustSuper (NOLOCK))
 		AND ISNULL(BonusWalletFlag,0) = 0
 		AND dm.custid IS NULL  -- Remove account like BetTrade and CashOut, ClearBal, 01OddsAdj, OddsBoost
-		
+		AND cust.username2 NOT LIKE cust.site+'$qatest[0-9][0-9]'
+
 	DELETE FROM #Member
 	WHERE custid IN (SELECT custid FROM DBCUST.CustDB.dbo.Dep_Customer_Archived_Exception WITH (NOLOCK))
 

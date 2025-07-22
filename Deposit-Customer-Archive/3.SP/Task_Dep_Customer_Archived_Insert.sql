@@ -12,6 +12,7 @@ AS
 		- 20190424@Dominic: Increase the waiting time to 3s - Feature #111652
 		- 20230612@Eden: Enhance for Scale Out [#179092]
 		- 20250403@Tacy: Enhance Archive service to adapt IHR [#222312]
+		- 20250722@Tacy: Performance tuning  [#233777]
 
 	Explaination:
 		- @InsertRepTable_CustPerBatch: Number of customers which will be inserted into replicated table in one transaction
@@ -27,8 +28,18 @@ BEGIN
 		[Recommend] [int] NULL,
 		[ClosingBalance] [money] NULL,
 		[CustIDBalanceDummy] [int] NULL,
-		[Status] [varchar](50) NULL,
-		IsInserted BIT DEFAULT(0)
+		[Status] [varchar](50) NULL
+	)
+
+	CREATE TABLE #Tmp_Dep_Customer_Archived_Batch(
+		[CustID] [int] NOT NULL,
+		[ArchivedDate] [datetime] NULL,
+		[Username] [varchar](50) NULL,
+		[Username2] [varchar](50) NULL,
+		[Recommend] [int] NULL,
+		[ClosingBalance] [money] NULL,
+		[CustIDBalanceDummy] [int] NULL,
+		[Status] [varchar](50) NULL
 	)
 
 	INSERT INTO #Tmp_Dep_Customer_Archived ([CustID],[ArchivedDate],[Username],[Username2],[Recommend],[ClosingBalance],[CustIDBalanceDummy],[Status])
@@ -52,8 +63,15 @@ BEGIN
 
 	WHILE (1=1)
 	BEGIN
-		UPDATE TOP(@InsertRepTable_CustPerBatch) #Tmp_Dep_Customer_Archived
-		SET IsInserted = 1
+		TRUNCATE TABLE #Tmp_Dep_Customer_Archived_Batch
+
+		DELETE TOP(@InsertRepTable_CustPerBatch) T 
+		OUTPUT [deleted].[CustID], [deleted].[ArchivedDate]
+			 , [deleted].[Username], [deleted].[Username2], [deleted].[Recommend]
+			 , [deleted].[ClosingBalance], [deleted].[CustIDBalanceDummy], [deleted].[Status]
+		INTO #Tmp_Dep_Customer_Archived_Batch 
+			([CustID],[ArchivedDate],[Username],[Username2],[Recommend],[ClosingBalance],[CustIDBalanceDummy],[Status])
+		FROM #Tmp_Dep_Customer_Archived T
 
 		INSERT INTO [dbo].[Dep_Customer_Archived]
 			   ([CustID]
@@ -74,11 +92,7 @@ BEGIN
 			   ,[CustIDBalanceDummy]
 			   ,[Status]
 			   ,dbo.f_GetDateTime2()
-		FROM #Tmp_Dep_Customer_Archived
-		WHERE IsInserted = 1
-
-		DELETE #Tmp_Dep_Customer_Archived
-		WHERE IsInserted = 1
+		FROM #Tmp_Dep_Customer_Archived_Batch
 
 		IF @@ROWCOUNT < @InsertRepTable_CustPerBatch
 			BREAK
@@ -86,5 +100,5 @@ BEGIN
 		WAITFOR DELAY '00:00:00.100'
 	END
 
-	DROP TABLE #Tmp_Dep_Customer_Archived
+	DROP TABLE #Tmp_Dep_Customer_Archived, #Tmp_Dep_Customer_Archived_Batch
 END
