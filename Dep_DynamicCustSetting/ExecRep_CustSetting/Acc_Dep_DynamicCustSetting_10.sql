@@ -19,6 +19,7 @@ AS
 		- 20241010@Johnson: remove DBKLC1 [redmine: #207025]
 		- 20250224@Johnson: remove WITH(ROWLOCK,UPDLOCK) command SELECT Dep_CustSettingMode [RedmineID: #212684]
 		- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
+		- 20250730@Tacy: Add DBSPARE1 [RedmineID: #234728]
 
 	Param's Explanation:
 		@PT:
@@ -31,7 +32,7 @@ AS
 		</ROOT>
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','DBSPARE1','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	DECLARE @Threshold	INT, 

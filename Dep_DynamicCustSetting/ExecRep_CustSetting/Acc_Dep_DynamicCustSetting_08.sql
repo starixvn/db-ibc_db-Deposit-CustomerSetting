@@ -18,6 +18,7 @@ AS
 	- 20240916@Johnson: Apply In-house Replication for Customer Setting [redmine:#207025]
 	- 20250213@Virgil.Phan: Drop BA functions [RedmineID: #216882]
 	- 20250303@Johnson: remove f_CheckRepTable for customer/custinfo [RedmineID: #212684]
+	- 20250730@Tacy: Add DBSPARE1 [RedmineID: #234728]
 
 	Parameter Definition
 		StepID = :
@@ -29,8 +30,8 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 	
-	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at all replicated servers
-	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBBACKUP2')) RETURN -- run at dbcust only
+	IF (@target = 'REPLICATED' AND @@SERVERNAME IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBSPARE1','DBBACKUP2')) RETURN -- run at all replicated servers
+	IF (@target = 'DBCUST' AND @@SERVERNAME NOT IN ('DBCUST','SITDBCUST','TESTDBCUST','DB-60\DevDBcust','DBSPARE','DBSPARE1','DBBACKUP2')) RETURN -- run at dbcust only
 	
 	IF OBJECT_ID('CustInfo') IS NULL RETURN
 	IF OBJECT_ID('Customer') IS NULL RETURN 

@@ -14,6 +14,7 @@ AS
 	Revisions:  
 	- 20220913@Eden: Flexible Initializing Deposit Customer Setting [RedmineID: #169648] 
 	- 20250120@Tacy: Move to GlobCustDB [RedmineID: #216870]
+	- 20250730@Tacy: Add DBSPARE1 [RedmineID: #234728]
 
 	Value Mapping
 		CurrentStep = :
@@ -152,7 +153,7 @@ BEGIN
 		SELECT @MaxcustID = custid 
 		FROM @MaxCustTBL
 	END
-	ELSE IF @@SERVERNAME IN ( 'DBSPARE','DBBACKUP2') -- DBTEST --> Get MaxcustID to test new accs steps
+	ELSE IF @@SERVERNAME IN ( 'DBSPARE','DBSPARE1','DBBACKUP2') -- DBTEST --> Get MaxcustID to test new accs steps
 	BEGIN 
 		SELECT @MaxcustID = MIN(custid)
 		FROM
