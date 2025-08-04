@@ -22,11 +22,12 @@ AS
 		- 20240925@Johnson: Add DBKLC1 [redmine: #207025]
 		- 20241001@Johnson: Enhance sp [redmine: #211130]
 		- 20241213@Tacy: Capture old value - MaxPerNumber [RedmineId: #199571]
+		- 20250730@Tacy: Add DBSPARE1 [RedmineID: #234728]
 	Param's Explanation:
 	-- @SettingType : 2 Bet Limit , 11  New Bet limit
 */
 BEGIN
-	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
+	IF @@SERVERNAME NOT IN ('DBCUST','DBSPARE','DBSPARE1','SITDBCUST','TESTDBCUST','DB-60\DEVDBCUST')
 		RETURN;
 		
 	SET NOCOUNT ON
