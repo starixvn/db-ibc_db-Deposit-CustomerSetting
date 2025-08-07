@@ -16,6 +16,7 @@ AS
 
 	Revisions:
 		- 20230612@Eden: First commit [#179092]
+		- 20250806@Tacy: Adjust Writelog after Finish inserting Dep_Customer_Archived [#235437]
 
 	Param's Explanation:
 		- @CheckBettrans_CustPerBatch: Number of cutomers in a batch which will be checked if they have bet tickets in bettrans/translog..
@@ -92,6 +93,10 @@ BEGIN
 					, @Message=@Msg
 			
 				EXEC DBCUST.CustDB.dbo.Task_Dep_Customer_Archived_Insert @InsertRepTable_CustPerBatch=@InsertRepTable_CustPerBatch
+				
+				SELECT @NumberOfDormant = COUNT(1)
+				FROM Dep_Customer_Archived WITH (NOLOCK) 
+				WHERE recommend=@recommend AND Status='waiting'
 			
 				SELECT @Msg = 'Finish inserting Dep_Customer_Archived on CustDB@DBCUST: ' 
 						+ CAST(@NumberOfDormant AS VARCHAR(100)) + ' rows'
