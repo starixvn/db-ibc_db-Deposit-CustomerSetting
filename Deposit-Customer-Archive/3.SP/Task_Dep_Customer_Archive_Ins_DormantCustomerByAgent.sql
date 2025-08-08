@@ -94,8 +94,9 @@ BEGIN
 			
 				EXEC DBCUST.CustDB.dbo.Task_Dep_Customer_Archived_Insert @InsertRepTable_CustPerBatch=@InsertRepTable_CustPerBatch
 				
+				-- cause: data has a little latency from dbcust to dbacc
 				SELECT @NumberOfDormant = COUNT(1)
-				FROM Dep_Customer_Archived WITH (NOLOCK) 
+				FROM DBCUST.CustDB.dbo.Dep_Customer_Archived WITH (NOLOCK) 
 				WHERE recommend=@recommend AND Status='waiting'
 			
 				SELECT @Msg = 'Finish inserting Dep_Customer_Archived on CustDB@DBCUST: ' 
