@@ -15,6 +15,7 @@ AS
 		- 20220829@Eden: LAP - Scale Out DBTrans  [redmine: #158293/#175297]
 		- 20221227@Eden: Add waiting time before reinit balance  [redmine: #182048]
 		- 20240705@Eden: Scale out DBCUST [redmine: #207474]
+		- 20250826@Tacy: Remove Waiting time [redmine: #236390]
 
 	Param's Explanation:    
 	- @CustID: return old deposit member CustID    
@@ -30,7 +31,7 @@ AS
 BEGIN
 	SET NOCOUNT ON    
 	--Add waiting 3s before reinit Balance in Reactivate process (wait tranfer done to avoid duplicate error)
-	WAITFOR DELAY '00:00:03'
+	--WAITFOR DELAY '00:00:03'
 	
 	IF NOT EXISTS( SELECT TOP 1 1 FROM dbo.BalCreditSports WITH(NOLOCK) WHERE custid = @CustID)
 	BEGIN
